@@ -9,6 +9,7 @@ from enlace.base import AppConfig, PlatformConfig
 
 # -- Helpers ------------------------------------------------------------------
 
+
 def _asgi_app(**overrides):
     """Build a minimal valid asgi-mode AppConfig."""
     defaults = dict(
@@ -62,6 +63,7 @@ def _static_app(**overrides):
 
 # -- Mode defaults & backward compat ------------------------------------------
 
+
 def test_default_mode_is_asgi():
     app = _asgi_app()
     assert app.mode == "asgi"
@@ -77,6 +79,7 @@ def test_existing_fields_unchanged():
 
 
 # -- Process mode validation ---------------------------------------------------
+
 
 def test_process_mode_valid():
     app = _process_app()
@@ -124,6 +127,7 @@ def test_process_mode_default_fields():
 
 # -- External mode validation --------------------------------------------------
 
+
 def test_external_mode_valid():
     app = _external_app()
     assert app.mode == "external"
@@ -136,6 +140,7 @@ def test_external_mode_requires_upstream_url():
 
 
 # -- Static mode validation ----------------------------------------------------
+
 
 def test_static_mode_valid_with_public_dir():
     app = _static_app()
@@ -155,6 +160,7 @@ def test_static_mode_requires_dir():
 
 
 # -- PlatformConfig extensions -------------------------------------------------
+
 
 def test_platform_config_new_defaults():
     config = PlatformConfig()

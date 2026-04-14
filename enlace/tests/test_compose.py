@@ -1,6 +1,5 @@
 """Tests for enlace.compose — ASGI app composition."""
 
-
 from starlette.testclient import TestClient
 
 from enlace.base import PlatformConfig

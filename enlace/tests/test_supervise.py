@@ -31,7 +31,8 @@ def _make_proc(
 def _http_server_command(port: int) -> list[str]:
     """Command to start a Python HTTP server on the given port."""
     return [
-        sys.executable, "-c",
+        sys.executable,
+        "-c",
         f"from http.server import HTTPServer, BaseHTTPRequestHandler; "
         f"HTTPServer(('127.0.0.1', {port}), BaseHTTPRequestHandler)"
         f".serve_forever()",
@@ -41,6 +42,7 @@ def _http_server_command(port: int) -> list[str]:
 def _find_free_port() -> int:
     """Find an available TCP port."""
     import socket
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
@@ -56,6 +58,7 @@ def _run(coro):
 
 def test_start_and_stop():
     """A process can be started and stopped cleanly."""
+
     async def go():
         proc = _make_proc(
             command=[sys.executable, "-c", "import time; time.sleep(60)"],
@@ -74,6 +77,7 @@ def test_start_and_stop():
 
 def test_stop_already_exited():
     """Stopping a process that already exited is a no-op."""
+
     async def go():
         proc = _make_proc(command=[sys.executable, "-c", "pass"])
         await proc.start()
@@ -110,6 +114,7 @@ def test_health_check_passes():
 
 def test_health_check_no_port():
     """If no port is configured, health check passes immediately."""
+
     async def go():
         proc = _make_proc(
             command=[sys.executable, "-c", "import time; time.sleep(60)"],
@@ -156,6 +161,7 @@ def test_should_restart_on_failure():
 
     class FakeProcess:
         returncode = 1
+
     proc.process = FakeProcess()
 
     assert proc.should_restart() is True
@@ -167,6 +173,7 @@ def test_should_not_restart_clean_exit():
 
     class FakeProcess:
         returncode = 0
+
     proc.process = FakeProcess()
 
     assert proc.should_restart() is False
@@ -178,6 +185,7 @@ def test_should_not_restart_never_policy():
 
     class FakeProcess:
         returncode = 1
+
     proc.process = FakeProcess()
 
     assert proc.should_restart() is False
@@ -189,6 +197,7 @@ def test_should_restart_always_policy():
 
     class FakeProcess:
         returncode = 0
+
     proc.process = FakeProcess()
 
     assert proc.should_restart() is True
@@ -201,6 +210,7 @@ def test_max_retries_exceeded():
 
     class FakeProcess:
         returncode = 1
+
     proc.process = FakeProcess()
 
     assert proc.should_restart() is False
@@ -259,6 +269,7 @@ def test_backoff_not_reset_too_soon():
 
 def test_log_streaming(capsys):
     """Process stdout is captured and printed with name prefix."""
+
     async def go():
         proc = _make_proc(
             command=[sys.executable, "-c", "print('hello from child')"],

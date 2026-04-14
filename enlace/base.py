@@ -83,9 +83,7 @@ class AppConfig(BaseModel):
                     f"App '{self.name}': mode='process' requires 'command'"
                 )
             if self.port is not None and self.socket is not None:
-                raise ValueError(
-                    f"App '{self.name}': set 'port' or 'socket', not both"
-                )
+                raise ValueError(f"App '{self.name}': set 'port' or 'socket', not both")
             if self.port is None and self.socket is None:
                 raise ValueError(
                     f"App '{self.name}': mode='process' requires 'port' or 'socket'"

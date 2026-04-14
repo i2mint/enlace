@@ -52,9 +52,7 @@ class _HttpxProxy:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             # WebSocket proxying deferred to a future release
-            await _send_error(
-                send, 501, b"WebSocket proxying not yet supported"
-            )
+            await _send_error(send, 501, b"WebSocket proxying not yet supported")
             return
 
         client = await self._get_client()
@@ -62,7 +60,7 @@ class _HttpxProxy:
         # Build the upstream path
         path = scope.get("path", "/")
         if self.strip_prefix and path.startswith(self.strip_prefix):
-            path = path[len(self.strip_prefix):] or "/"
+            path = path[len(self.strip_prefix) :] or "/"
 
         query = scope.get("query_string", b"")
         url = path
@@ -105,41 +103,50 @@ class _HttpxProxy:
             response_headers = [
                 (k.encode("latin-1"), v.encode("latin-1"))
                 for k, v in response.headers.multi_items()
-                if k.lower()
-                not in ("transfer-encoding", "connection", "keep-alive")
+                if k.lower() not in ("transfer-encoding", "connection", "keep-alive")
             ]
 
-            await send({
-                "type": "http.response.start",
-                "status": response.status_code,
-                "headers": response_headers,
-            })
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": response.status_code,
+                    "headers": response_headers,
+                }
+            )
 
             async for chunk in response.aiter_bytes():
-                await send({
-                    "type": "http.response.body",
-                    "body": chunk,
-                    "more_body": True,
-                })
+                await send(
+                    {
+                        "type": "http.response.body",
+                        "body": chunk,
+                        "more_body": True,
+                    }
+                )
 
-            await send({
-                "type": "http.response.body",
-                "body": b"",
-                "more_body": False,
-            })
+            await send(
+                {
+                    "type": "http.response.body",
+                    "body": b"",
+                    "more_body": False,
+                }
+            )
         finally:
             await response.aclose()
 
 
 async def _send_error(send, status: int, body: bytes) -> None:
     """Send a simple error response."""
-    await send({
-        "type": "http.response.start",
-        "status": status,
-        "headers": [(b"content-type", b"text/plain")],
-    })
-    await send({
-        "type": "http.response.body",
-        "body": body,
-        "more_body": False,
-    })
+    await send(
+        {
+            "type": "http.response.start",
+            "status": status,
+            "headers": [(b"content-type", b"text/plain")],
+        }
+    )
+    await send(
+        {
+            "type": "http.response.body",
+            "body": body,
+            "more_body": False,
+        }
+    )

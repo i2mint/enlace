@@ -76,7 +76,8 @@ def _build_uvicorn_cmd(
 
 
 def _auto_allocate_ports(
-    process_apps: list[AppConfig], start_port: int,
+    process_apps: list[AppConfig],
+    start_port: int,
 ) -> list[AppConfig]:
     """Assign ports to process-mode apps that don't have one."""
     result = []
@@ -152,17 +153,25 @@ def serve(
     else:
         # Mixed-mode path — run async supervisor
         process_apps = _auto_allocate_ports(
-            process_apps, platform.process_port_start,
+            process_apps,
+            platform.process_port_start,
         )
         # Update the env so compose.py sees the allocated ports
         _set_port_env(process_apps)
         _serve_mixed(
-            effective_host, effective_port, mode, reload_dirs, process_apps,
+            effective_host,
+            effective_port,
+            mode,
+            reload_dirs,
+            process_apps,
         )
 
 
 def _serve_asgi_only(
-    host: str, port: int, mode: str, reload_dirs: list[str],
+    host: str,
+    port: int,
+    mode: str,
+    reload_dirs: list[str],
 ) -> None:
     """Original serve path: single Uvicorn subprocess."""
     cmd = _build_uvicorn_cmd(host, port, mode, reload_dirs)
@@ -254,4 +263,5 @@ def _set_port_env(process_apps: list[AppConfig]) -> None:
             port_map[app.name] = str(app.port)
     if port_map:
         import json
+
         os.environ["ENLACE_PROCESS_PORTS"] = json.dumps(port_map)

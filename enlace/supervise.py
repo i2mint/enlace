@@ -58,9 +58,7 @@ class ManagedProcess:
 
     # Runtime state (not constructor args)
     state: str = field(default="stopped", repr=False)
-    process: Optional[asyncio.subprocess.Process] = field(
-        default=None, repr=False
-    )
+    process: Optional[asyncio.subprocess.Process] = field(default=None, repr=False)
     _consecutive_failures: int = field(default=0, repr=False)
     _started_at: Optional[float] = field(default=None, repr=False)
 
@@ -161,18 +159,14 @@ class ManagedProcess:
         if self.restart_policy == "on-failure" and rc == 0:
             return False
         if self._consecutive_failures >= self.max_retries:
-            self._log(
-                f"max retries ({self.max_retries}) exceeded, giving up"
-            )
+            self._log(f"max retries ({self.max_retries}) exceeded, giving up")
             self.state = "fatal"
             return False
         return True
 
     def backoff_delay(self) -> float:
         """Compute exponential backoff delay in seconds."""
-        delay = (self.restart_delay_ms / 1000.0) * (
-            1.5 ** self._consecutive_failures
-        )
+        delay = (self.restart_delay_ms / 1000.0) * (1.5**self._consecutive_failures)
         return min(delay, 15.0)  # cap at 15 seconds
 
     def record_failure(self) -> None:
@@ -180,10 +174,7 @@ class ManagedProcess:
 
     def maybe_reset_backoff(self) -> None:
         """Reset backoff if process has been stable for 30 seconds."""
-        if (
-            self._started_at is not None
-            and time.monotonic() - self._started_at > 30.0
-        ):
+        if self._started_at is not None and time.monotonic() - self._started_at > 30.0:
             self._consecutive_failures = 0
 
     # ---- log streaming ------------------------------------------------------

@@ -78,7 +78,12 @@ class ConventionDiscoverer:
 
         if declared_mode != "asgi":
             return self._build_non_asgi_config(
-                name, route_prefix, apps_dir, app_dir, toml_data, declared_mode,
+                name,
+                route_prefix,
+                apps_dir,
+                app_dir,
+                toml_data,
+                declared_mode,
             )
 
         # -- Standard asgi-mode discovery (current behavior) --
@@ -161,7 +166,10 @@ class ConventionDiscoverer:
 
         # Apply all TOML fields (same mapping as _apply_overrides)
         fields, provenance = _overlay_toml_fields(
-            fields, provenance, toml_data, app_dir,
+            fields,
+            provenance,
+            toml_data,
+            app_dir,
         )
         fields["provenance"] = provenance
         return AppConfig(**fields)
@@ -214,13 +222,19 @@ class ConventionDiscoverer:
         return "asgi_app", f"detected: has '{app_attr}' attribute (fallback)"
 
     def _apply_overrides(
-        self, config: AppConfig, app_dir: Path, toml_data: dict,
+        self,
+        config: AppConfig,
+        app_dir: Path,
+        toml_data: dict,
     ) -> AppConfig:
         """Apply per-app TOML overrides to a discovered asgi-mode config."""
         updates: dict = {}
         provenance = dict(config.provenance)
         updates, provenance = _overlay_toml_fields(
-            updates, provenance, toml_data, app_dir,
+            updates,
+            provenance,
+            toml_data,
+            app_dir,
         )
         updates["provenance"] = provenance
         return config.model_copy(update=updates)
