@@ -27,6 +27,7 @@ Homepage = "https://github.com/i2mint/enlace"
 enlace = "enlace.__main__:main"
 
 [project.optional-dependencies]
+process = ["httpx>=0.24.0"]
 dev = ["pytest", "httpx", "pytest-asyncio"]
 
 [tool.pytest.ini_options]

@@ -7,6 +7,7 @@ objects with provenance tracking.
 
 import importlib
 import inspect
+import shlex
 import sys
 from pathlib import Path
 from typing import Optional, Protocol
@@ -65,6 +66,22 @@ class ConventionDiscoverer:
 
     def _discover_app(self, app_dir: Path, apps_dir: Path) -> Optional[AppConfig]:
         """Discover a single app from its directory."""
+        name = app_dir.name
+        route_prefix = derive_route_prefix(name)
+
+        # Check app.toml first — if it declares a non-asgi mode, skip Python
+        # introspection entirely (the app may not even be Python).
+        override_file = app_dir / "app.toml"
+        toml_data = _load_toml(override_file) if override_file.exists() else {}
+
+        declared_mode = toml_data.get("mode", "asgi")
+
+        if declared_mode != "asgi":
+            return self._build_non_asgi_config(
+                name, route_prefix, apps_dir, app_dir, toml_data, declared_mode,
+            )
+
+        # -- Standard asgi-mode discovery (current behavior) --
         entry_path = self._find_entry_point(app_dir)
         frontend_dir = self._find_frontend_dir(app_dir)
 
@@ -72,8 +89,6 @@ class ConventionDiscoverer:
             return None  # Not an app directory
 
         provenance: dict[str, str] = {}
-        name = app_dir.name
-        route_prefix = derive_route_prefix(name)
         provenance["route_prefix"] = "convention: directory_name"
 
         if entry_path is not None:
@@ -102,12 +117,54 @@ class ConventionDiscoverer:
             provenance=provenance,
         )
 
-        # Apply per-app overrides
-        override_file = app_dir / "app.toml"
-        if override_file.exists():
-            config = self._apply_overrides(config, override_file)
+        # Apply per-app overrides (asgi-mode — remaining TOML fields)
+        if toml_data:
+            config = self._apply_overrides(config, app_dir, toml_data)
 
         return config
+
+    def _build_non_asgi_config(
+        self,
+        name: str,
+        route_prefix: str,
+        apps_dir: Path,
+        app_dir: Path,
+        toml_data: dict,
+        declared_mode: str,
+    ) -> AppConfig:
+        """Build an AppConfig for process/external/static modes from app.toml.
+
+        Skips Python introspection — the app may not be Python at all.
+        """
+        provenance: dict[str, str] = {
+            "mode": "override: app.toml",
+            "route_prefix": "convention: directory_name",
+            "source_dir": str(apps_dir),
+            "app_type": f"inferred from mode={declared_mode}",
+        }
+
+        # Infer app_type from mode
+        if declared_mode == "static":
+            app_type = "frontend_only"
+        else:
+            app_type = "asgi_app"  # process/external — opaque to enlace
+
+        # Start with convention defaults, then overlay TOML fields
+        fields: dict = dict(
+            name=name,
+            route_prefix=route_prefix,
+            app_type=app_type,
+            mode=declared_mode,
+            source_dir=apps_dir,
+            provenance=provenance,
+        )
+
+        # Apply all TOML fields (same mapping as _apply_overrides)
+        fields, provenance = _overlay_toml_fields(
+            fields, provenance, toml_data, app_dir,
+        )
+        fields["provenance"] = provenance
+        return AppConfig(**fields)
 
     def _find_entry_point(self, app_dir: Path) -> Optional[Path]:
         """Find the first matching entry point in the app directory."""
@@ -156,36 +213,15 @@ class ConventionDiscoverer:
 
         return "asgi_app", f"detected: has '{app_attr}' attribute (fallback)"
 
-    def _apply_overrides(self, config: AppConfig, toml_path: Path) -> AppConfig:
-        """Apply per-app TOML overrides to a discovered config."""
-        try:
-            with open(toml_path, "rb") as f:
-                overrides = tomllib.load(f)
-        except Exception as e:
-            raise ValueError(f"Failed to parse {toml_path}: {e}") from e
-
+    def _apply_overrides(
+        self, config: AppConfig, app_dir: Path, toml_data: dict,
+    ) -> AppConfig:
+        """Apply per-app TOML overrides to a discovered asgi-mode config."""
         updates: dict = {}
         provenance = dict(config.provenance)
-
-        field_map = {
-            "route": "route_prefix",
-            "entry_point": "entry_module_path",
-            "app_attr": "app_attr",
-            "access": "access",
-            "display_name": "display_name",
-            "frontend_dir": "frontend_dir",
-        }
-
-        for toml_key, field_name in field_map.items():
-            if toml_key in overrides:
-                value = overrides[toml_key]
-                if toml_key == "entry_point":
-                    value = toml_path.parent / value
-                elif toml_key == "frontend_dir":
-                    value = toml_path.parent / value
-                updates[field_name] = value
-                provenance[field_name] = "override: app.toml"
-
+        updates, provenance = _overlay_toml_fields(
+            updates, provenance, toml_data, app_dir,
+        )
         updates["provenance"] = provenance
         return config.model_copy(update=updates)
 
@@ -206,6 +242,68 @@ class ConventionDiscoverer:
         if is_skippable(app_dir.name):
             return None
         return self._discover_app(app_dir, app_dir.parent)
+
+
+def _load_toml(path: Path) -> dict:
+    """Load a TOML file, returning an empty dict on missing file."""
+    try:
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+    except Exception as e:
+        raise ValueError(f"Failed to parse {path}: {e}") from e
+
+
+# Mapping from TOML key → AppConfig field name.
+_TOML_FIELD_MAP = {
+    "route": "route_prefix",
+    "entry_point": "entry_module_path",
+    "app_attr": "app_attr",
+    "access": "access",
+    "display_name": "display_name",
+    "frontend_dir": "frontend_dir",
+    # New fields for process/external/static modes
+    "mode": "mode",
+    "command": "command",
+    "port": "port",
+    "socket": "socket",
+    "env": "env",
+    "build": "build",
+    "health_check_path": "health_check_path",
+    "ready_timeout": "ready_timeout",
+    "restart_policy": "restart_policy",
+    "max_retries": "max_retries",
+    "restart_delay_ms": "restart_delay_ms",
+    "upstream_url": "upstream_url",
+    "public_dir": "public_dir",
+}
+
+# Keys whose TOML values are paths relative to the app directory.
+_PATH_KEYS = {"entry_point", "frontend_dir", "public_dir"}
+
+
+def _overlay_toml_fields(
+    fields: dict,
+    provenance: dict,
+    toml_data: dict,
+    app_dir: Path,
+) -> tuple[dict, dict]:
+    """Apply TOML overrides to a fields dict and provenance dict.
+
+    Returns the updated (fields, provenance) pair.
+    """
+    for toml_key, field_name in _TOML_FIELD_MAP.items():
+        if toml_key not in toml_data:
+            continue
+        value = toml_data[toml_key]
+        # Resolve relative paths
+        if toml_key in _PATH_KEYS:
+            value = app_dir / value
+        # command: accept string (split via shlex) or array
+        if toml_key == "command" and isinstance(value, str):
+            value = shlex.split(value)
+        fields[field_name] = value
+        provenance[field_name] = "override: app.toml"
+    return fields, provenance
 
 
 def _import_module_from_path(entry_path: Path, apps_dir: Path) -> object:

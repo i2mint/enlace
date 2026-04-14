@@ -26,9 +26,11 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     """Compose all app backends into a single ASGI application.
 
     For each discovered app:
-    - asgi_app: mount the ASGI object at the route prefix
-    - functions: build an APIRouter with POST routes and include it
-    - frontend_only: skip (no backend to mount)
+    - mode=asgi, asgi_app: mount the ASGI object at the route prefix
+    - mode=asgi, functions: build an APIRouter with POST routes and include it
+    - mode=process/external: mount a reverse proxy at the route prefix
+    - mode=static: mount StaticFiles at the route prefix
+    - frontend_only (mode=asgi): skip (no backend to mount)
 
     Args:
         config: Platform configuration with apps already discovered.
@@ -45,6 +47,18 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     sub_apps: list[tuple[str, object]] = []
 
     for app_config in config.apps:
+        # Process and external modes are proxied, not imported
+        if app_config.mode in ("process", "external"):
+            proxy_app = _make_proxy_for(app_config)
+            if proxy_app is not None:
+                sub_apps.append((app_config.route_prefix, proxy_app))
+            continue
+
+        # Static mode is handled separately below (with frontend files)
+        if app_config.mode == "static":
+            continue
+
+        # asgi mode — original behavior
         if app_config.app_type == "frontend_only":
             continue
         sub_app = _load_sub_app(app_config)
@@ -84,10 +98,24 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     for prefix, sub_app in sub_apps:
         parent.mount(prefix, sub_app)
 
+    # Serve static-mode apps at their route prefix.
+    for app_config in config.apps:
+        if app_config.mode == "static":
+            static_dir = app_config.public_dir or app_config.frontend_dir
+            if static_dir and static_dir.is_dir():
+                parent.mount(
+                    app_config.route_prefix,
+                    StaticFiles(directory=str(static_dir), html=True),
+                )
+
     # Serve frontend static files for apps that have a frontend/ directory.
     # Mounted at /{app_name}/ so the frontend is accessible alongside the API.
     for app_config in config.apps:
-        if app_config.frontend_dir and app_config.frontend_dir.is_dir():
+        if (
+            app_config.mode != "static"
+            and app_config.frontend_dir
+            and app_config.frontend_dir.is_dir()
+        ):
             frontend_prefix = f"/{app_config.name}"
             parent.mount(
                 frontend_prefix,
@@ -103,6 +131,27 @@ def build_backend(config: PlatformConfig) -> FastAPI:
         )
 
     return parent
+
+
+def _make_proxy_for(app_config: AppConfig) -> Optional[object]:
+    """Create a reverse proxy ASGI app for a process or external backend.
+
+    Returns None if the upstream cannot be determined (no port/upstream_url).
+    """
+    from enlace.proxy import make_proxy_app
+
+    if app_config.mode == "external" and app_config.upstream_url:
+        return make_proxy_app(
+            upstream=app_config.upstream_url,
+            strip_prefix=app_config.route_prefix,
+        )
+    elif app_config.mode == "process" and app_config.port is not None:
+        upstream = f"http://127.0.0.1:{app_config.port}"
+        return make_proxy_app(
+            upstream=upstream,
+            strip_prefix=app_config.route_prefix,
+        )
+    return None
 
 
 def _load_sub_app(app_config: AppConfig) -> Optional[object]:
@@ -177,4 +226,33 @@ def create_app() -> FastAPI:
     and builds the composed backend.
     """
     config = discover_apps()
+    config = _apply_port_env(config)
     return build_backend(config)
+
+
+def _apply_port_env(config: PlatformConfig) -> PlatformConfig:
+    """Apply auto-allocated ports from the ENLACE_PROCESS_PORTS env var.
+
+    When serve.py runs in mixed mode, it auto-allocates ports for process
+    apps and stores them in an env var so the gateway subprocess can read
+    them and set up correct proxy routes.
+    """
+    import json
+    import os
+
+    raw = os.environ.get("ENLACE_PROCESS_PORTS", "")
+    if not raw:
+        return config
+    try:
+        port_map = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return config
+
+    updated_apps = []
+    for app in config.apps:
+        if app.mode == "process" and app.name in port_map:
+            port = int(port_map[app.name])
+            app = app.model_copy(update={"port": port})
+        updated_apps.append(app)
+
+    return config.model_copy(update={"apps": updated_apps})

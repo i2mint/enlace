@@ -47,10 +47,60 @@ class AppConfig(BaseModel):
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
 
+    # Mode: how this app is served (orthogonal to app_type which is what was detected)
+    mode: Literal["asgi", "process", "external", "static"] = "asgi"
+
+    # Process-mode fields
+    command: Optional[list[str]] = None
+    port: Optional[int] = None
+    socket: Optional[str] = None
+    env: dict[str, str] = Field(default_factory=dict)
+    build: Optional[str] = None
+    health_check_path: str = "/health"
+    ready_timeout: float = 30.0
+    restart_policy: Literal["always", "on-failure", "never"] = "on-failure"
+    max_retries: int = 5
+    restart_delay_ms: int = 100
+
+    # External-mode fields
+    upstream_url: Optional[str] = None
+
+    # Static-mode fields
+    public_dir: Optional[Path] = None
+
     @model_validator(mode="after")
     def _default_display_name(self):
         if not self.display_name:
             self.display_name = self.name.replace("_", " ").title()
+        return self
+
+    @model_validator(mode="after")
+    def _validate_mode_fields(self):
+        """Enforce per-mode field requirements."""
+        if self.mode == "process":
+            if not self.command:
+                raise ValueError(
+                    f"App '{self.name}': mode='process' requires 'command'"
+                )
+            if self.port is not None and self.socket is not None:
+                raise ValueError(
+                    f"App '{self.name}': set 'port' or 'socket', not both"
+                )
+            if self.port is None and self.socket is None:
+                raise ValueError(
+                    f"App '{self.name}': mode='process' requires 'port' or 'socket'"
+                )
+        elif self.mode == "external":
+            if not self.upstream_url:
+                raise ValueError(
+                    f"App '{self.name}': mode='external' requires 'upstream_url'"
+                )
+        elif self.mode == "static":
+            if self.public_dir is None and self.frontend_dir is None:
+                raise ValueError(
+                    f"App '{self.name}': mode='static' requires "
+                    "'public_dir' or 'frontend_dir'"
+                )
         return self
 
 
@@ -72,6 +122,8 @@ class PlatformConfig(BaseModel):
     domain: str = "localhost"
     backend_port: int = 8000
     frontend_port: int = 3000
+    process_port_start: int = 9100
+    socket_dir: Path = Field(default=Path("/tmp/enlace"))
     conventions: ConventionsConfig = Field(default_factory=ConventionsConfig)
     apps: list[AppConfig] = Field(default_factory=list)
 
@@ -161,5 +213,17 @@ class PlatformConfig(BaseModel):
                 )
             else:
                 routes[app.route_prefix] = app.name
+
+        # Check duplicate ports among process-mode apps
+        ports: dict[int, str] = {}
+        for app in self.apps:
+            if app.mode == "process" and app.port is not None:
+                if app.port in ports:
+                    errors.append(
+                        f"Port conflict: port {app.port} claimed by both "
+                        f"'{ports[app.port]}' and '{app.name}'"
+                    )
+                else:
+                    ports[app.port] = app.name
 
         return errors
