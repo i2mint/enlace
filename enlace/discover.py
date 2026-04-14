@@ -162,9 +162,7 @@ class ConventionDiscoverer:
             with open(toml_path, "rb") as f:
                 overrides = tomllib.load(f)
         except Exception as e:
-            raise ValueError(
-                f"Failed to parse {toml_path}: {e}"
-            ) from e
+            raise ValueError(f"Failed to parse {toml_path}: {e}") from e
 
         updates: dict = {}
         provenance = dict(config.provenance)
@@ -186,11 +184,10 @@ class ConventionDiscoverer:
                 elif toml_key == "frontend_dir":
                     value = toml_path.parent / value
                 updates[field_name] = value
-                provenance[field_name] = f"override: app.toml"
+                provenance[field_name] = "override: app.toml"
 
         updates["provenance"] = provenance
         return config.model_copy(update=updates)
-
 
     def discover_app_dir(self, app_dir: Path) -> Optional[AppConfig]:
         """Discover a single directory that IS the app itself.

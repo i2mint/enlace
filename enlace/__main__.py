@@ -197,10 +197,7 @@ def list_apps(
     route_w = max(len(a.route_prefix) for a in config.apps)
     type_w = max(len(a.app_type) for a in config.apps)
 
-    header = (
-        f"{'Name':<{name_w}}  {'Route':<{route_w}}  "
-        f"{'Type':<{type_w}}  Access"
-    )
+    header = f"{'Name':<{name_w}}  {'Route':<{route_w}}  {'Type':<{type_w}}  Access"
     print(header)
     print("-" * len(header))
     for app in config.apps:

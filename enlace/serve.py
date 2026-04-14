@@ -73,9 +73,7 @@ def serve(
         if apps_dir:
             all_apps_dirs.append(apps_dir)
         if apps_dirs:
-            all_apps_dirs.extend(
-                d.strip() for d in apps_dirs.split(",") if d.strip()
-            )
+            all_apps_dirs.extend(d.strip() for d in apps_dirs.split(",") if d.strip())
     else:
         all_apps_dirs = [str(d) for d in platform.apps_dirs]
 

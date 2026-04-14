@@ -1,6 +1,5 @@
 """Tests for enlace.discover — convention-based app discovery."""
 
-import textwrap
 from pathlib import Path
 
 import pytest
@@ -93,9 +92,7 @@ def test_discover_app_toml_override(single_app_dir):
     """Per-app TOML overrides are applied and provenance is tracked."""
     override_toml = single_app_dir / "foo" / "app.toml"
     override_toml.write_text(
-        'route = "/api/custom"\n'
-        'display_name = "My Custom Foo"\n'
-        'access = "public"\n'
+        'route = "/api/custom"\ndisplay_name = "My Custom Foo"\naccess = "public"\n'
     )
 
     discoverer = _make_discoverer()
@@ -220,16 +217,12 @@ def test_discover_duplicate_name_conflict(tmp_path):
     source_a = tmp_path / "source_a"
     source_a.mkdir()
     (source_a / "foo").mkdir()
-    (source_a / "foo" / "server.py").write_text(
-        _make_app_code("foo_a")
-    )
+    (source_a / "foo" / "server.py").write_text(_make_app_code("foo_a"))
 
     source_b = tmp_path / "source_b"
     source_b.mkdir()
     (source_b / "foo").mkdir()
-    (source_b / "foo" / "server.py").write_text(
-        _make_app_code("foo_b")
-    )
+    (source_b / "foo" / "server.py").write_text(_make_app_code("foo_b"))
 
     config = PlatformConfig(apps_dirs=[source_a, source_b])
     with pytest.raises(RuntimeError, match="Name conflict.*foo"):

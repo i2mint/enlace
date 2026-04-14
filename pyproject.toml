@@ -40,6 +40,9 @@ target-version = "py310"
 select = ["E", "F", "W", "I", "D100"]
 ignore = ["D203"]
 
+[tool.ruff.lint.per-file-ignores]
+"enlace/diagnose.py" = ["E501"]  # Long lines in diagnostic prose strings
+
 [project.entry-points."skill.skill_packs"]
 enlace = "enlace:skills_dir"
 

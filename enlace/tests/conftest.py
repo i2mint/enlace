@@ -1,14 +1,14 @@
 """Shared test fixtures for enlace unit tests."""
 
 import textwrap
-from pathlib import Path
 
 import pytest
 
-from enlace.base import ConventionsConfig, PlatformConfig
+from enlace.base import PlatformConfig
+
 
 def _make_app_code(name: str) -> str:
-    return textwrap.dedent(f'''\
+    return textwrap.dedent(f"""\
         from fastapi import FastAPI
 
         app = FastAPI()
@@ -20,7 +20,8 @@ def _make_app_code(name: str) -> str:
         @app.get("/health")
         def health():
             return {{"status": "ok"}}
-    ''')
+    """)
+
 
 FUNCTIONS_MODULE = textwrap.dedent("""\
     def greet(name: str) -> dict:

@@ -1,14 +1,11 @@
 """Tests for enlace.compose — ASGI app composition."""
 
-from pathlib import Path
 
-import pytest
 from starlette.testclient import TestClient
 
-from enlace.base import AppConfig, PlatformConfig
+from enlace.base import PlatformConfig
 from enlace.compose import build_backend
-from enlace.discover import ConventionDiscoverer, discover_apps
-from enlace.tests.conftest import _make_app_code
+from enlace.discover import discover_apps
 
 
 def test_build_backend_mounts_single_app(single_app_dir):

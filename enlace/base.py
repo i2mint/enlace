@@ -124,9 +124,7 @@ class PlatformConfig(BaseModel):
             ]
         env_app_dirs = os.environ.get("ENLACE_APP_DIRS", "")
         if env_app_dirs:
-            platform_data["app_dirs"] = [
-                d for d in env_app_dirs.split(os.pathsep) if d
-            ]
+            platform_data["app_dirs"] = [d for d in env_app_dirs.split(os.pathsep) if d]
         env_apps_dir = os.environ.get("ENLACE_APPS_DIR", "")
         if env_apps_dir and "apps_dirs" not in platform_data:
             platform_data["apps_dir"] = env_apps_dir

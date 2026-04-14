@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
@@ -39,6 +39,7 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     # Signal to sub-apps that they're running under enlace, so they can skip
     # their own CORS middleware, standalone startup blocks, etc.
     import os
+
     os.environ["ENLACE_MANAGED"] = "1"
 
     sub_apps: list[tuple[str, object]] = []
@@ -146,10 +147,7 @@ def _build_router_from_functions(module, app_config: AppConfig) -> FastAPI:
             continue
         # Use GET for no-param functions, POST for functions with params
         sig = inspect.signature(func)
-        params = [
-            p for p in sig.parameters.values()
-            if p.name not in ("self", "cls")
-        ]
+        params = [p for p in sig.parameters.values() if p.name not in ("self", "cls")]
         method = "GET" if not params else "POST"
         sub_app.add_api_route(f"/{name}", func, methods=[method])
 
