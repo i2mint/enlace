@@ -21,7 +21,7 @@ dependencies = [
 text = "Apache-2.0"
 
 [project.urls]
-Homepage = "https://github.com/thorwhalen/enlace"
+Homepage = "https://github.com/i2mint/enlace"
 
 [project.scripts]
 enlace = "enlace.__main__:main"
