@@ -1,0 +1,23 @@
+{
+  "skill_name": "enlace",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to add a new app to my enlace platform that exposes a couple of Python functions as API endpoints -- one that takes a text string and returns the word count, and another that reverses the string. I don't want to deal with FastAPI boilerplate, just the functions. Set it up for me in apps/text_utils/",
+      "expected_output": "Creates apps/text_utils/server.py with two typed functions (word_count and reverse_text), no FastAPI app object. The agent understands this will be auto-detected as a 'functions' type app and served at /api/text_utils/.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I'm getting an error when I run enlace serve -- it says route conflict. I have three apps in my apps directory: todo, notes, and dashboard. The dashboard app has an app.toml that sets route = '/api/notes'. Can you help me figure out what's going on and fix it?",
+      "expected_output": "The agent identifies the conflict between the 'notes' app (convention route /api/notes) and 'dashboard' app (overridden to /api/notes via app.toml). Suggests running enlace check, then fixes dashboard's app.toml to use a different route like /api/dashboard or /api/dash.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I need to set up a new enlace project from scratch. I want two apps: a chord_analyzer with a FastAPI backend and a React frontend, and a simple notes app that's backend-only. The chord_analyzer should be public access and the notes app should be protected with a shared password. Walk me through the whole setup.",
+      "expected_output": "The agent creates the full directory structure: platform.toml with conventions, apps/chord_analyzer/server.py with FastAPI app, apps/chord_analyzer/frontend/ placeholder, apps/chord_analyzer/app.toml with access=public, apps/notes/server.py with FastAPI app, apps/notes/app.toml with access=protected:shared. Mentions running enlace show-config to verify.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill_name": "enlace-dev",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to add structured request logging to enlace as a middleware that logs every request with timestamp, method, path, status, duration, and the app name extracted from the route prefix. This is part of Phase 4 in the spec. Add it to compose.py's middleware stack.",
+      "expected_output": "The agent creates a pure ASGI middleware (NOT BaseHTTPMiddleware), extracts app_id from path prefix, uses time.perf_counter_ns for duration, wraps the send callable to capture status code. Adds it to the middleware stack in build_backend(). Reads the deployment_observability research doc for the structlog pattern.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "The show-config command currently works but it re-does the full discovery+import every time. I want to add a new enlace init command that creates a platform.toml and apps/ directory in the current directory. Keep it simple.",
+      "expected_output": "The agent adds an init() function, creates a default platform.toml and apps/ directory, registers the command in __main__.py's dispatch list, and exports from __init__.py. Follows the argh pattern used by existing commands.",
+      "files": []
+    }
+  ]
+}
