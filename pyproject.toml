@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "enlace"
 version = "0.0.1"
-description = "Compose, serve, and deploy multiple web apps from a single codebase"
+description = "Serve all your web apps from a single process — they don't import it, they don't know it's there"
 readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["web", "platform", "fastapi", "asgi", "multi-app", "composition"]
@@ -42,6 +42,14 @@ ignore = ["D203"]
 
 [project.entry-points."skill.skill_packs"]
 enlace = "enlace:skills_dir"
+
+[tool.wads.ci]
+installer = "uv"
+
+[tool.wads.ci.testing]
+python_versions = ["3.10", "3.12"]
+coverage_enabled = false
+test_on_windows = false
 
 [tool.hatch.build.targets.wheel]
 packages = ["enlace"]

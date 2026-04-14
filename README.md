@@ -1,11 +1,14 @@
 # enlace
 
-Compose, serve, and deploy multiple web apps under a single domain.
+Serve all your web apps from a single process.
+They don't import it. They don't know it's there.
 
-**`enlace` is not a framework, it's a runtime orchestrator.** Apps don't import it, don't depend on it, and
-don't know it exists. You write a standard FastAPI app (or plain Python
-functions). `enlace` discovers it from the outside, mounts it alongside other
-apps, and serves them all — without touching your code.
+Tired of launching a separate server for each app? Register your
+apps with `enlace` — point it at where they live — and serve them
+all with one command. Backends (any Python ASGI app — FastAPI,
+Starlette, or plain functions) get mounted at route prefixes.
+Frontends (any static HTML/JS/CSS) get served alongside them.
+Your apps stay independent — no code changes, no shared dependencies.
 
 ## Philosophy
 
