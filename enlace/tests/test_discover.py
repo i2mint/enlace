@@ -237,3 +237,146 @@ def test_discover_source_dir_populated(single_app_dir):
     assert len(config.apps) == 1
     assert config.apps[0].source_dir == single_app_dir
     assert "source_dir" in config.apps[0].provenance
+
+
+# --- Non-asgi mode discovery tests ---
+
+
+def test_discover_process_mode_from_toml(tmp_apps_dir):
+    """A process-mode app is discovered from app.toml without any Python files."""
+    node_dir = tmp_apps_dir / "blog"
+    node_dir.mkdir()
+    (node_dir / "app.toml").write_text(
+        'mode = "process"\ncommand = ["node", "server.js"]\nport = 3001\n'
+    )
+    (node_dir / "server.js").write_text("// Node.js app")
+
+    discoverer = _make_discoverer()
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 1
+    app = apps[0]
+    assert app.name == "blog"
+    assert app.mode == "process"
+    assert app.command == ["node", "server.js"]
+    assert app.port == 3001
+    assert app.entry_module_path is None  # No Python import
+    assert app.provenance["mode"] == "override: app.toml"
+
+
+def test_discover_process_mode_command_string(tmp_apps_dir):
+    """A string command in TOML is split via shlex."""
+    node_dir = tmp_apps_dir / "api"
+    node_dir.mkdir()
+    (node_dir / "app.toml").write_text(
+        'mode = "process"\ncommand = "uvicorn myapp:app --host 0.0.0.0"\nport = 8001\n'
+    )
+
+    discoverer = _make_discoverer()
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 1
+    assert apps[0].command == ["uvicorn", "myapp:app", "--host", "0.0.0.0"]
+
+
+def test_discover_external_mode_from_toml(tmp_apps_dir):
+    """An external-mode app is discovered from app.toml."""
+    ext_dir = tmp_apps_dir / "dashboard"
+    ext_dir.mkdir()
+    (ext_dir / "app.toml").write_text(
+        'mode = "external"\nupstream_url = "http://192.168.1.50:3000"\n'
+    )
+
+    discoverer = _make_discoverer()
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 1
+    app = apps[0]
+    assert app.name == "dashboard"
+    assert app.mode == "external"
+    assert app.upstream_url == "http://192.168.1.50:3000"
+    assert app.entry_module_path is None
+
+
+def test_discover_static_mode_from_toml(tmp_apps_dir):
+    """A static-mode app is discovered from app.toml."""
+    docs_dir = tmp_apps_dir / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "app.toml").write_text('mode = "static"\npublic_dir = "dist"\n')
+    (docs_dir / "dist").mkdir()
+    (docs_dir / "dist" / "index.html").write_text("<html>Docs</html>")
+
+    discoverer = _make_discoverer()
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 1
+    app = apps[0]
+    assert app.name == "docs"
+    assert app.mode == "static"
+    assert app.app_type == "frontend_only"
+    assert app.public_dir == docs_dir / "dist"
+
+
+def test_discover_process_mode_missing_command_raises(tmp_apps_dir):
+    """Process mode without command in app.toml raises a validation error."""
+    bad_dir = tmp_apps_dir / "bad"
+    bad_dir.mkdir()
+    (bad_dir / "app.toml").write_text('mode = "process"\nport = 3000\n')
+
+    discoverer = _make_discoverer()
+    with pytest.raises(Exception, match="requires 'command'"):
+        discoverer.discover(tmp_apps_dir)
+
+
+def test_discover_asgi_mode_explicit_still_imports(single_app_dir):
+    """Explicitly setting mode='asgi' in app.toml still imports the Python module."""
+    (single_app_dir / "foo" / "app.toml").write_text('mode = "asgi"\n')
+
+    discoverer = _make_discoverer()
+    apps = discoverer.discover(single_app_dir)
+
+    assert len(apps) == 1
+    assert apps[0].mode == "asgi"
+    assert apps[0].app_type == "asgi_app"
+    assert apps[0].entry_module_path is not None
+
+
+def test_discover_process_mode_skips_python_import(tmp_apps_dir):
+    """Process mode does not attempt to import Python — even if server.py exists."""
+    app_dir = tmp_apps_dir / "heavy"
+    app_dir.mkdir()
+    # server.py has a broken import — but it should never be imported
+    (app_dir / "server.py").write_text(BROKEN_MODULE)
+    (app_dir / "app.toml").write_text(
+        'mode = "process"\ncommand = ["python", "-m", "uvicorn", "heavy:app"]\n'
+        "port = 8002\n"
+    )
+
+    discoverer = _make_discoverer()
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 1
+    assert apps[0].mode == "process"
+    # The broken import was NOT triggered
+
+
+def test_discover_mixed_asgi_and_process(tmp_apps_dir):
+    """Container directory with both asgi and process apps discovers both."""
+    # asgi app
+    py_dir = tmp_apps_dir / "alpha"
+    py_dir.mkdir()
+    (py_dir / "server.py").write_text(_make_app_code("alpha"))
+
+    # process app
+    node_dir = tmp_apps_dir / "beta"
+    node_dir.mkdir()
+    (node_dir / "app.toml").write_text(
+        'mode = "process"\ncommand = ["node", "index.js"]\nport = 9100\n'
+    )
+
+    discoverer = _make_discoverer()
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 2
+    modes = {a.name: a.mode for a in apps}
+    assert modes == {"alpha": "asgi", "beta": "process"}

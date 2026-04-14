@@ -1,14 +1,15 @@
 # enlace
 
-Serve all your web apps from a single process.
+Serve all your web apps from a single command.
 They don't import it. They don't know it's there.
 
 Tired of launching a separate server for each app? Register your
 apps with `enlace` — point it at where they live — and serve them
-all with one command. Backends (any Python ASGI app — FastAPI,
-Starlette, or plain functions) get mounted at route prefixes.
-Frontends (any static HTML/JS/CSS) get served alongside them.
-Your apps stay independent — no code changes, no shared dependencies.
+all with one command. Python ASGI apps get mounted in-process.
+Non-Python apps (Node.js, Go, etc.) get spawned as supervised
+child processes and routed via reverse proxy. External services
+and static sites work too. Your apps stay independent — no code
+changes, no shared dependencies.
 
 ## Philosophy
 
@@ -16,16 +17,17 @@ Your apps stay independent — no code changes, no shared dependencies.
 your app imports. Your app is a standard Python module with `app = FastAPI()`.
 It runs standalone with `uvicorn server:app`. `enlace` just happens to know how
 to find it, mount it at a route prefix, and serve it alongside other apps.
-(See [Zero Coupling](misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#1-zero-coupling-apps-dont-import-enlace)
+(See [Zero Coupling](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#1-zero-coupling-apps-dont-import-enlace)
 for how `enlace` provides services like auth and storage without creating a
 dependency.)
 
 ```
-enlace (the platform)          your app
-├── fastapi                    ├── fastapi
+enlace (the platform)          your app (Python, Node, Go, ...)
+├── fastapi                    ├── fastapi (or express, gin, ...)
 ├── uvicorn                    ├── pandas (or whatever you need)
 ├── pydantic                   └── ... your domain libs
-└── argh
+├── argh
+└── httpx (optional, for proxy)
                                ← no arrow here: your app does NOT import enlace
 ```
 
@@ -38,12 +40,12 @@ enlace (the platform)          your app
 2. **Enlaced apps must still work alone.** When changes are suggested, they
    preserve standalone operation. The pattern: env-var with current value as
    default — standalone uses the original, `enlace` overrides at build time.
-   (See [Standalone Preservation](misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#2-standalone-preservation-enlaced-apps-must-still-work-alone)
+   (See [Standalone Preservation](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#2-standalone-preservation-enlaced-apps-must-still-work-alone)
    for the env-var-with-default pattern and fix classification.)
 
 For the full rationale — including how these principles interact, where the
 balance sits today, and what `enlace` aspires to handle better — see the
-[Design Principles](misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md) document.
+[Design Principles](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md) document.
 
 ## Using `enlace` with an AI agent
 
@@ -165,13 +167,17 @@ apps/
 │       └── index.html      # served at /dashboard/
 ├── calculator/
 │   └── server.py           # typed functions, no `app` → auto-wrapped as routes
-└── blog/
-    └── frontend/
-        └── index.html      # frontend-only, no backend
+├── blog_node/
+│   ├── app.toml            # mode = "process", command = ["node", "server.js"]
+│   └── server.js           # spawned + proxied at /api/blog_node
+└── docs/
+    ├── app.toml            # mode = "static", public_dir = "dist"
+    └── dist/index.html     # served directly
 ```
 
 | Convention | Default | Override in `app.toml` |
 |-----------|---------|----------------------|
+| Serving mode | `asgi` | `mode` (`asgi`, `process`, `external`, `static`) |
 | Route prefix | `/api/{dir_name}` | `route` |
 | Entry point | First of `server.py`, `app.py`, `main.py` | `entry_point` |
 | ASGI app object | Attribute named `app` | `app_attr` |
@@ -199,11 +205,28 @@ frontend_dir = "frontend"
 **`app.toml`** (per-app, in app directory):
 
 ```toml
+# Python ASGI (default mode — just overrides)
 route = "/api/custom-route"
 entry_point = "backend/main.py"
 access = "public"
 display_name = "My App"
 ```
+
+```toml
+# Non-Python or separate process
+mode = "process"
+command = ["node", "server.js"]
+port = 3001
+route = "/api/blog"
+```
+
+```toml
+# External upstream
+mode = "external"
+upstream_url = "http://192.168.1.50:3000"
+```
+
+For process/external modes: `pip install enlace[process]`
 
 **Override precedence** (lowest → highest):
 
@@ -211,7 +234,16 @@ display_name = "My App"
 defaults → filesystem conventions → app.toml → platform.toml → env vars → CLI flags
 ```
 
-### App types
+### App modes
+
+| Mode | Description | How it works |
+|------|-------------|-------------|
+| `asgi` (default) | Python ASGI apps | Imported + mounted on gateway FastAPI |
+| `process` | Any app as a child process | Spawned, health-checked, reverse-proxied |
+| `external` | Pre-existing upstream | Proxied, no lifecycle management |
+| `static` | Static file directory | Served directly |
+
+Within `asgi` mode, apps are further classified:
 
 | Type | How detected | How mounted |
 |------|-------------|-------------|

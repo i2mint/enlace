@@ -2,11 +2,11 @@
 name: enlace-dev
 description: >
   Use when developing or modifying the enlace package itself — adding features,
-  fixing bugs, extending the ASGI composition, adding middleware, or working on
-  any module in the enlace/ source directory. Triggers on: editing enlace source
-  files (base.py, discover.py, compose.py, serve.py, auth.py, stores.py),
-  implementing spec phases 2-4, or when the user says "add X to enlace" or
-  "implement Y in enlace".
+  fixing bugs, extending the ASGI composition, adding middleware, process
+  supervision, or working on any module in the enlace/ source directory. Triggers
+  on: editing enlace source files (base.py, discover.py, compose.py, serve.py,
+  supervise.py, proxy.py, auth.py, stores.py), implementing spec phases 2-4, or
+  when the user says "add X to enlace" or "implement Y in enlace".
 ---
 
 # Developing enlace
@@ -56,19 +56,24 @@ See `misc/docs/design_principles__*.md` for the full rationale.
 
 ```
 enlace/
-├── base.py        # Pydantic models: AppConfig, PlatformConfig, ConventionsConfig
+├── base.py        # Pydantic models: AppConfig (mode field), PlatformConfig
 ├── util.py        # Pure helpers: derive_display_name, derive_route_prefix, is_skippable
-├── discover.py    # ConventionDiscoverer: walks apps/, detects types, loads TOML
-├── compose.py     # build_backend(): mounts sub-apps, cascade_lifespan
+├── discover.py    # ConventionDiscoverer: reads app.toml early, detects types
+├── compose.py     # build_backend(): mounts ASGI sub-apps + proxy routes + static
+├── proxy.py       # Lightweight ASGI reverse proxy for process/external (httpx)
+├── supervise.py   # Dev-mode asyncio process supervisor (health, restart, logs)
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
-├── serve.py       # Uvicorn subprocess orchestration, signal forwarding
+├── serve.py       # Orchestrates gateway + supervised process-mode children
 ├── __main__.py    # CLI via argh.dispatch_commands
 ├── __init__.py    # Public API facade
-└── tests/         # Unit tests (test_discover.py, test_compose.py)
+└── tests/         # test_base, test_discover, test_compose, test_supervise
 ```
 
-**Data flow:** `PlatformConfig.from_toml()` → `ConventionDiscoverer.discover()` →
-`config.check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
+**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover()` →
+`check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
+
+**Data flow (mixed-mode):** `discover()` → partition by `mode` →
+gateway Uvicorn (asgi + proxy) + `ProcessSupervisor` (process children)
 
 ## Critical Rules
 
@@ -140,6 +145,9 @@ Read the relevant doc before modifying its subsystem.
 ## Implementation Phases (from spec)
 
 **Phase 1 (done):** Core discovery, composition, CLI, serve
+**Phase 1.5 (done):** Multi-mode orchestration — `mode` field on AppConfig
+  (asgi/process/external/static), app.toml-first discovery, dev process
+  supervisor (supervise.py), ASGI reverse proxy (proxy.py), mixed-mode serve
 **Phase 2:** frontend.py (SPAStaticFiles, launcher), auth.py (PlatformAuthMiddleware,
   shared-password login, signed cookies), inject.py (HTML injection), hash-password
   and create-session-secret CLI commands
@@ -147,6 +155,9 @@ Read the relevant doc before modifying its subsystem.
   StoreInjectionMiddleware, per-user sessions, CSRF, WebSocket origin validation
 **Phase 4:** deploy.py (Caddyfile/systemd generation), structlog middleware,
   analytics injection, `generate` CLI namespace
+**Deferred:** Caddy config generation, systemd unit generation, convention
+  detection (package.json/go.mod heuristics), WebSocket proxying, file watching
+  for process-mode apps
 
 ## Testing Pattern
 

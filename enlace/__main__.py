@@ -92,6 +92,8 @@ def show_config(
         print(f"  app_dirs: {[str(d) for d in config.app_dirs]}")
     print()
 
+    has_non_asgi = any(a.mode != "asgi" for a in config.apps)
+
     if not config.apps:
         print("Discovered Apps: None")
     else:
@@ -99,6 +101,11 @@ def show_config(
         for app in config.apps:
             print(f"  {app.name}")
             prov = app.provenance
+
+            # Show mode when non-asgi apps exist
+            if has_non_asgi:
+                mode_src = f"  [{prov.get('mode', 'default')}]" if verbose else ""
+                print(f"    mode:     {app.mode}{mode_src}")
 
             route_src = f"  [{prov.get('route_prefix', 'default')}]" if verbose else ""
             print(f"    route:    {app.route_prefix}{route_src}")
@@ -114,6 +121,19 @@ def show_config(
 
             access_src = f"  [{prov.get('access', 'default')}]" if verbose else ""
             print(f"    access:   {app.access}{access_src}")
+
+            # Show process-mode details
+            if app.mode == "process":
+                if app.command:
+                    print(f"    command:  {' '.join(app.command)}")
+                if app.port is not None:
+                    print(f"    port:     {app.port}")
+            elif app.mode == "external":
+                if app.upstream_url:
+                    print(f"    upstream: {app.upstream_url}")
+            elif app.mode == "static":
+                if app.public_dir:
+                    print(f"    dir:      {app.public_dir}")
 
             if app.frontend_dir:
                 print(f"    frontend: {app.frontend_dir}")
@@ -192,19 +212,36 @@ def list_apps(
         print("No apps discovered.")
         return
 
+    has_non_asgi = any(a.mode != "asgi" for a in config.apps)
+
     # Column widths
     name_w = max(len(a.name) for a in config.apps)
     route_w = max(len(a.route_prefix) for a in config.apps)
     type_w = max(len(a.app_type) for a in config.apps)
 
-    header = f"{'Name':<{name_w}}  {'Route':<{route_w}}  {'Type':<{type_w}}  Access"
-    print(header)
-    print("-" * len(header))
-    for app in config.apps:
-        print(
-            f"{app.name:<{name_w}}  {app.route_prefix:<{route_w}}  "
-            f"{app.app_type:<{type_w}}  {app.access}"
+    if has_non_asgi:
+        mode_w = max(len(a.mode) for a in config.apps)
+        header = (
+            f"{'Name':<{name_w}}  {'Mode':<{mode_w}}  "
+            f"{'Route':<{route_w}}  {'Type':<{type_w}}  Access"
         )
+        print(header)
+        print("-" * len(header))
+        for app in config.apps:
+            print(
+                f"{app.name:<{name_w}}  {app.mode:<{mode_w}}  "
+                f"{app.route_prefix:<{route_w}}  "
+                f"{app.app_type:<{type_w}}  {app.access}"
+            )
+    else:
+        header = f"{'Name':<{name_w}}  {'Route':<{route_w}}  {'Type':<{type_w}}  Access"
+        print(header)
+        print("-" * len(header))
+        for app in config.apps:
+            print(
+                f"{app.name:<{name_w}}  {app.route_prefix:<{route_w}}  "
+                f"{app.app_type:<{type_w}}  {app.access}"
+            )
 
 
 def diagnose(

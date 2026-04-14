@@ -61,19 +61,38 @@ Read `misc/docs/enlace_spec.md` for the full architecture and design rationale.
 
 ```
 enlace/
-├── base.py        # Pydantic models: AppConfig, PlatformConfig, ConventionsConfig
+├── base.py        # Pydantic models: AppConfig (mode, process fields), PlatformConfig
 ├── util.py        # Pure helpers: derive_display_name, derive_route_prefix, is_skippable
-├── discover.py    # ConventionDiscoverer: walks apps/, detects types, loads TOML
-├── compose.py     # build_backend(): mounts sub-apps, cascade_lifespan, sets ENLACE_MANAGED
+├── discover.py    # ConventionDiscoverer: walks apps/, reads app.toml, detects types
+├── compose.py     # build_backend(): mounts ASGI sub-apps, proxy routes, static files
+├── proxy.py       # Lightweight ASGI reverse proxy for process/external backends (httpx)
+├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
-├── serve.py       # Uvicorn subprocess orchestration, signal forwarding
+├── serve.py       # Orchestrates gateway Uvicorn + supervised process-mode children
 ├── __main__.py    # CLI via argh.dispatch_commands
 ├── __init__.py    # Public API facade
-└── tests/         # Unit tests (test_discover.py, test_compose.py)
+└── tests/         # Unit tests (test_base, test_discover, test_compose, test_supervise)
 ```
 
-**Data flow:** `PlatformConfig.from_toml()` → `ConventionDiscoverer.discover()` →
-`config.check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
+**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover()` →
+`check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
+
+**Data flow (mixed-mode):** `discover()` → partition by `mode` →
+gateway Uvicorn (asgi + proxy routes) + `ProcessSupervisor` (process-mode children)
+
+### App Modes
+
+The `mode` field on `AppConfig` determines how an app is served:
+
+| Mode | Description | Lifecycle |
+|------|-------------|-----------|
+| `asgi` | Import + mount on gateway FastAPI (default) | In-process |
+| `process` | Spawn as child, health-check, restart, proxy | Supervised subprocess |
+| `external` | Route to pre-existing upstream | No lifecycle management |
+| `static` | Serve files from a directory | StaticFiles mount |
+
+`mode` is orthogonal to `app_type` (asgi_app/functions/frontend_only).
+`app_type` describes what was detected; `mode` describes how to run it.
 
 ## Before Making Changes
 
@@ -88,8 +107,11 @@ enlace/
 - **All middleware must be pure ASGI** (scope, receive, send pattern).
 - **Conflict detection is fail-fast** — report ALL conflicts, don't stop at first.
 - **CORS on parent only** — sub-apps must not add their own CORSMiddleware. If they do, enlace still works (MEDIUM issue, not a blocker), but the diagnostic flags it.
-- **`ENLACE_MANAGED=1`** — set by `build_backend()` so sub-apps can condition on it.
+- **`ENLACE_MANAGED=1`** — set by `build_backend()` and passed to supervised children so sub-apps can condition on it.
 - **Suggestions to app developers must preserve standalone operation** — use the env-var-with-default pattern, never suggest changes that break the app's ability to run alone.
+- **Process-mode apps are NOT imported** — if `app.toml` declares `mode="process"`, discovery skips Python introspection entirely. The app may not even be Python.
+- **Dev supervisor is pure asyncio** — no external dependencies for process supervision. Health checks use stdlib `asyncio.open_connection`. Production supervision is delegated to systemd (future).
+- **Reverse proxy requires httpx** — `pip install enlace[process]`. Import is lazy; asgi-only users don't need it.
 
 ## Research Docs
 
@@ -104,6 +126,9 @@ Consult these before modifying subsystems:
 | Frontend serving | `misc/docs/frontend_serving__*.md` |
 | Data persistence | `misc/docs/user_data_persistence__*.md` |
 | Design principles | `misc/docs/design_principles__*.md` |
+| Process orchestration | `misc/docs/Process orchestration and multi-backend composition for enlace.md` |
+| ASGI assumption audit | `misc/docs/audit_backend_generality.md` |
+| Generalization plan | `misc/docs/Enlace Generalization Plan*.md` |
 
 ## Testing
 

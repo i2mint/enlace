@@ -4,14 +4,17 @@ description: >
   Use when working with the enlace multi-app platform — creating apps, configuring
   platform.toml or app.toml, diagnosing discovery issues, understanding conventions,
   or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory
-  structures, platform.toml/app.toml files, multi-app ASGI composition, or when the
-  user mentions enlace, app discovery, app mounting, or personal app platform.
+  structures, platform.toml/app.toml files, multi-app ASGI composition, process
+  supervision, or when the user mentions enlace, app discovery, app mounting, or
+  personal app platform.
 ---
 
 # enlace — Multi-App Platform
 
-enlace discovers Python modules and React apps in a directory, mounts them as
-sub-applications under a single ASGI server, and serves them.
+enlace discovers apps in a directory and serves them together. Python ASGI apps
+are mounted in-process. Non-Python apps (Node.js, Go, etc.) are spawned as
+supervised child processes and routed via reverse proxy. External services are
+proxied without lifecycle management. Static sites are served directly.
 
 **enlace is not a framework.** Apps don't import it, don't depend on it, and
 don't know it exists. You write a standard FastAPI app (or plain Python
@@ -32,16 +35,22 @@ Drop files in `apps/`, enlace finds and serves them:
 ```
 apps/
 ├── my_tool/
-│   └── server.py          # has `app = FastAPI()` → served at /api/my_tool
+│   └── server.py          # has `app = FastAPI()` → mounted at /api/my_tool
 ├── dashboard/
 │   ├── server.py           # backend
 │   └── frontend/
 │       └── index.html      # SPA assets
 ├── calculator/
-│   └── server.py           # has typed functions, no `app` → auto-wrapped
-└── blog/
-    └── frontend/
-        └── index.html      # frontend-only, no backend
+│   └── server.py           # typed functions, no `app` → auto-wrapped
+├── blog_node/
+│   ├── app.toml            # mode = "process", command = ["node", "server.js"]
+│   └── server.js           # Node.js app → spawned + proxied
+├── legacy_api/
+│   └── app.toml            # mode = "external", upstream_url = "http://10.0.0.5:3000"
+└── docs/
+    ├── app.toml            # mode = "static", public_dir = "dist"
+    └── dist/
+        └── index.html      # served directly
 ```
 
 Everything enlace infers is inspectable (`enlace show-config`) and overridable
@@ -113,6 +122,7 @@ No backend mounted. Assets served at `/apps/blog/` (in production via Caddy).
 
 | What | Convention | Override key in `app.toml` |
 |------|-----------|---------------------------|
+| Serving mode | `asgi` (default) | `mode` (`asgi`, `process`, `external`, `static`) |
 | Route prefix | `/api/{directory_name}` | `route` |
 | Backend entry | First of `server.py`, `app.py`, `main.py` | `entry_point` |
 | ASGI app object | Attribute named `app` | `app_attr` |
@@ -120,6 +130,9 @@ No backend mounted. Assets served at `/apps/blog/` (in production via Caddy).
 | Display name | Dir name, `_` → space, title-cased | `display_name` |
 | Access level | `local` (default) | `access` |
 | Skip directory | Starts with `_` or `.` | — |
+
+When `mode` is set to `process`, `external`, or `static` in `app.toml`,
+Python introspection is skipped entirely — the app doesn't need to be Python.
 
 ## Multi-Source App Discovery
 
@@ -175,12 +188,36 @@ The legacy `apps_dir = "apps"` (scalar) is still supported for backward compat.
 
 ### `app.toml` (per-app, in app directory)
 
+For asgi-mode apps (default), only overrides are needed:
 ```toml
 route = "/api/custom-route"
 access = "public"
 display_name = "My Custom App"
 entry_point = "application.py"
 app_attr = "my_app"
+```
+
+For process-mode apps (non-Python or separate process):
+```toml
+mode = "process"
+command = ["node", "server.js"]  # or a string: "uvicorn myapp:app"
+port = 3001
+route = "/api/blog"
+
+[env]
+NODE_ENV = "production"
+```
+
+For external upstreams:
+```toml
+mode = "external"
+upstream_url = "http://192.168.1.50:3000"
+```
+
+For static file serving:
+```toml
+mode = "static"
+public_dir = "dist"
 ```
 
 ### Override Precedence (lowest → highest)
@@ -191,13 +228,33 @@ hardcoded defaults → filesystem conventions → app.toml → platform.toml →
 
 Environment variables: `ENLACE_APPS_DIRS`, `ENLACE_APP_DIRS` (pathsep-delimited).
 
-## App Types
+## App Modes
+
+The `mode` field in `app.toml` determines how an app is served:
+
+| Mode | How it works | Requires |
+|------|-------------|----------|
+| `asgi` (default) | Import + mount on gateway FastAPI | Python entry point |
+| `process` | Spawn as child process, health-check, reverse-proxy | `command` + `port` or `socket` |
+| `external` | Route to pre-existing upstream | `upstream_url` |
+| `static` | Serve files directly | `public_dir` or `frontend_dir` |
+
+Process-mode apps get colored log streaming, exponential backoff restart, and
+graceful shutdown in dev. Production supervision will use systemd (future).
+
+For `process` and `external` modes, install the proxy dependency:
+`pip install enlace[process]`
+
+## App Types (within asgi mode)
 
 | Type | Detection | Mounting |
 |------|-----------|---------|
 | `asgi_app` | Module has `app` attribute (callable) | `parent.mount(prefix, sub_app)` |
 | `functions` | No `app` attr, has typed public functions | Auto-wrapped as APIRouter |
 | `frontend_only` | No backend entry, has `frontend/index.html` | Static file serving only |
+
+`app_type` is orthogonal to `mode`. It describes what was detected; `mode`
+describes how to run it. For non-asgi modes, `app_type` is set automatically.
 
 ## Diagnosing Issues
 
