@@ -1,0 +1,1241 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.diagnose &mdash; enlace 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../enlace.html">enlace</a></li>
+      <li class="breadcrumb-item active">enlace.diagnose</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for enlace.diagnose</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Diagnose app compatibility with enlace.</span>
+
+<span class="sd">Scans an app directory for patterns that would prevent or complicate mounting</span>
+<span class="sd">under the enlace multi-app platform. Reports issues at three severity levels</span>
+<span class="sd">(CRITICAL, MEDIUM, LOW) with specific file locations, explanations, and</span>
+<span class="sd">suggested fixes.</span>
+
+<span class="sd">Usage::</span>
+
+<span class="sd">    from enlace.diagnose import diagnose_app</span>
+<span class="sd">    report = diagnose_app(&quot;/path/to/my_app&quot;)</span>
+<span class="sd">    print(report)</span>
+
+<span class="sd">Or from the CLI::</span>
+
+<span class="sd">    enlace diagnose /path/to/my_app</span>
+<span class="sd">    enlace diagnose /path/to/my_app --json</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">json_module</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Data structures</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="Severity">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.Severity">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Severity</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Issue severity levels.&quot;&quot;&quot;</span>
+
+    <span class="n">CRITICAL</span> <span class="o">=</span> <span class="s2">&quot;CRITICAL&quot;</span>
+    <span class="n">MEDIUM</span> <span class="o">=</span> <span class="s2">&quot;MEDIUM&quot;</span>
+    <span class="n">LOW</span> <span class="o">=</span> <span class="s2">&quot;LOW&quot;</span>
+    <span class="n">INFO</span> <span class="o">=</span> <span class="s2">&quot;INFO&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Category">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.Category">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Category</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Issue categories.&quot;&quot;&quot;</span>
+
+    <span class="n">HARDCODED_URL</span> <span class="o">=</span> <span class="s2">&quot;hardcoded_url&quot;</span>
+    <span class="n">CORS</span> <span class="o">=</span> <span class="s2">&quot;cors&quot;</span>
+    <span class="n">FRONTEND_FRAMEWORK</span> <span class="o">=</span> <span class="s2">&quot;frontend_framework&quot;</span>
+    <span class="n">PORT_HARDCODED</span> <span class="o">=</span> <span class="s2">&quot;port_hardcoded&quot;</span>
+    <span class="n">MISSING_ENTRY_POINT</span> <span class="o">=</span> <span class="s2">&quot;missing_entry_point&quot;</span>
+    <span class="n">MISSING_FRONTEND</span> <span class="o">=</span> <span class="s2">&quot;missing_frontend&quot;</span>
+    <span class="n">BARE_IMPORTS</span> <span class="o">=</span> <span class="s2">&quot;bare_imports&quot;</span>
+    <span class="n">DATA_PATH</span> <span class="o">=</span> <span class="s2">&quot;data_path&quot;</span>
+    <span class="n">SUBAPP_CORS</span> <span class="o">=</span> <span class="s2">&quot;subapp_cors&quot;</span>
+    <span class="n">BASE_HTTP_MIDDLEWARE</span> <span class="o">=</span> <span class="s2">&quot;base_http_middleware&quot;</span>
+    <span class="n">BASE_PATH</span> <span class="o">=</span> <span class="s2">&quot;base_path&quot;</span>
+    <span class="n">WEBSOCKET</span> <span class="o">=</span> <span class="s2">&quot;websocket&quot;</span>
+    <span class="n">SERVER_SIDE_RENDERING</span> <span class="o">=</span> <span class="s2">&quot;ssr&quot;</span>
+    <span class="n">ENV_CONFIG</span> <span class="o">=</span> <span class="s2">&quot;env_config&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Issue">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.Issue">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Issue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single compatibility issue found during diagnosis.&quot;&quot;&quot;</span>
+
+    <span class="n">severity</span><span class="p">:</span> <span class="n">Severity</span>
+    <span class="n">category</span><span class="p">:</span> <span class="n">Category</span>
+    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">line_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">suggestion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="c1"># True when the suggested fix would break the app&#39;s ability to run standalone.</span>
+    <span class="c1"># The diagnostic should try to avoid this — prefer suggestions that keep both</span>
+    <span class="c1"># modes working (e.g. env-var with current value as default).</span>
+    <span class="n">breaks_standalone</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;summary&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">summary</span><span class="p">,</span>
+            <span class="s2">&quot;detail&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail</span><span class="p">,</span>
+            <span class="s2">&quot;suggestion&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">suggestion</span><span class="p">,</span>
+            <span class="s2">&quot;breaks_standalone&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">breaks_standalone</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_number</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+
+
+<div class="viewcode-block" id="DiagnosticReport">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.DiagnosticReport">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiagnosticReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Full diagnostic report for an app directory.&quot;&quot;&quot;</span>
+
+    <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">issues</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Issue</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="c1"># Detected characteristics (informational)</span>
+    <span class="n">has_backend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">has_frontend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">backend_framework</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">frontend_framework</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">entry_point</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">critical_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">medium_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">low_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_enlaceable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if no CRITICAL issues were found.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">critical_count</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;app_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="p">),</span>
+            <span class="s2">&quot;app_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_name</span><span class="p">,</span>
+            <span class="s2">&quot;enlaceable&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_enlaceable</span><span class="p">,</span>
+            <span class="s2">&quot;has_backend&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_backend</span><span class="p">,</span>
+            <span class="s2">&quot;has_frontend&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_frontend</span><span class="p">,</span>
+            <span class="s2">&quot;backend_framework&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend_framework</span><span class="p">,</span>
+            <span class="s2">&quot;frontend_framework&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">frontend_framework</span><span class="p">,</span>
+            <span class="s2">&quot;entry_point&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span><span class="p">,</span>
+            <span class="s2">&quot;summary&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;critical&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">critical_count</span><span class="p">,</span>
+                <span class="s2">&quot;medium&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">medium_count</span><span class="p">,</span>
+                <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">low_count</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span><span class="p">],</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">json_module</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DiagnosticReport.format_text">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.DiagnosticReport.format_text">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">format_text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Human-readable formatted report.&quot;&quot;&quot;</span>
+        <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Enlace Compatibility Report: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">app_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># App overview</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Directory:  </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Backend:    </span><span class="si">{</span><span class="s1">&#39;yes&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">has_backend</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;no&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">backend_framework</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backend_framework</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Frontend:   </span><span class="si">{</span><span class="s1">&#39;yes&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">has_frontend</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;no&#39;</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frontend_framework</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frontend_framework</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Entry:      </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Verdict</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_enlaceable</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Verdict: COMPATIBLE (no critical issues)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Verdict: BLOCKED (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">critical_count</span><span class="si">}</span><span class="s2"> critical issue(s))&quot;</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Issues by severity</span>
+        <span class="k">for</span> <span class="n">sev</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span> <span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span> <span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span> <span class="n">Severity</span><span class="o">.</span><span class="n">INFO</span><span class="p">):</span>
+            <span class="n">sev_issues</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">issues</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="n">sev</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">sev_issues</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;--- </span><span class="si">{</span><span class="n">sev</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sev_issues</span><span class="p">)</span><span class="si">}</span><span class="s2">) ---&quot;</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">sev_issues</span><span class="p">:</span>
+                <span class="n">loc</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">file_path</span><span class="p">:</span>
+                    <span class="n">loc</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">line_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">loc</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">line_number</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">loc</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">summary</span><span class="si">}{</span><span class="n">loc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">detail</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">detail_line</span> <span class="ow">in</span> <span class="n">issue</span><span class="o">.</span><span class="n">detail</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+                        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">detail_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">suggestion</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Fix: </span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">suggestion</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">breaks_standalone</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="s2">&quot;    WARNING: This fix would break standalone operation.&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_text</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Checker functions — each inspects one aspect and appends to report.issues</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_entry_points</span><span class="p">(</span>
+    <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">entry_point_names</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;server.py&quot;</span><span class="p">,</span> <span class="s2">&quot;app.py&quot;</span><span class="p">,</span> <span class="s2">&quot;main.py&quot;</span><span class="p">),</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for conventional backend entry points.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">entry_point_names</span><span class="p">:</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">has_backend</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">entry_point</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="k">return</span>
+
+    <span class="c1"># Check subdirectories (e.g., backend/main.py)</span>
+    <span class="k">for</span> <span class="n">subdir_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;api&quot;</span><span class="p">):</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">subdir_name</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">subdir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">entry_point_names</span><span class="p">:</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="n">subdir</span> <span class="o">/</span> <span class="n">name</span>
+            <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">has_backend</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">entry_point</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">subdir_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Issue</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                        <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">MISSING_ENTRY_POINT</span><span class="p">,</span>
+                        <span class="n">summary</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Backend entry point is in subdirectory &#39;</span><span class="si">{</span><span class="n">subdir_name</span><span class="si">}</span><span class="s2">/&#39;&quot;</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">subdir_name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;enlace looks for entry points (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">entry_point_names</span><span class="p">)</span><span class="si">}</span><span class="s2">) &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;in the app&#39;s root directory by convention. It found one in &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">subdir_name</span><span class="si">}</span><span class="s2">/&#39; — enlace just needs a hint to find it.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Create an app.toml in the app root (no app code changes needed):</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="sa">f</span><span class="s1">&#39;  entry_point = &quot;</span><span class="si">{</span><span class="n">subdir_name</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&quot;&#39;</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">has_frontend</span><span class="p">:</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Issue</span><span class="p">(</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">MISSING_ENTRY_POINT</span><span class="p">,</span>
+                <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;No backend entry point found&quot;</span><span class="p">,</span>
+                <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Looked for </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">entry_point_names</span><span class="p">)</span><span class="si">}</span><span class="s2"> in the app root &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;and in backend/, src/, api/ subdirectories.&quot;</span>
+                <span class="p">),</span>
+                <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Create a server.py with a FastAPI `app` object, or use app.toml &quot;</span>
+                    <span class="s2">&quot;to specify a custom entry_point.&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_frontend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for frontend directory and detect framework.&quot;&quot;&quot;</span>
+    <span class="c1"># Check common build output dirs</span>
+    <span class="k">for</span> <span class="n">candidate_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;dist&quot;</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;build&quot;</span><span class="p">,</span> <span class="s2">&quot;public&quot;</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">candidate_name</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">candidate</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">has_frontend</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span> <span class="o">=</span> <span class="s2">&quot;static&quot;</span>
+            <span class="k">return</span>
+
+    <span class="c1"># Check for framework-specific configs at app level</span>
+    <span class="n">package_json</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;package.json&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">package_json</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="c1"># Check in frontend/ subdir</span>
+        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">,</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="s2">&quot;app&quot;</span><span class="p">):</span>
+            <span class="n">package_json</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">subdir</span> <span class="o">/</span> <span class="s2">&quot;package.json&quot;</span>
+            <span class="k">if</span> <span class="n">package_json</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">package_json</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">package_json</span> <span class="ow">and</span> <span class="n">package_json</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">has_frontend</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pkg</span> <span class="o">=</span> <span class="n">json_module</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">package_json</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">deps</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">pkg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;dependencies&quot;</span><span class="p">,</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">pkg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;devDependencies&quot;</span><span class="p">,</span> <span class="p">{})}</span>
+        <span class="n">framework</span> <span class="o">=</span> <span class="n">_detect_js_framework</span><span class="p">(</span><span class="n">deps</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">framework</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span> <span class="o">=</span> <span class="n">framework</span>
+
+    <span class="c1"># Also check for next.config.* files</span>
+    <span class="k">for</span> <span class="n">config_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;next.config.ts&quot;</span><span class="p">,</span> <span class="s2">&quot;next.config.js&quot;</span><span class="p">,</span> <span class="s2">&quot;next.config.mjs&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">config_name</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">d</span> <span class="o">/</span> <span class="n">config_name</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">,</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="s2">&quot;app&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">has_frontend</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span> <span class="o">=</span> <span class="s2">&quot;next.js&quot;</span>
+            <span class="k">break</span>
+
+    <span class="c1"># Nuxt</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;nuxt.config.ts&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;nuxt.config.js&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">has_frontend</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span> <span class="o">=</span> <span class="s2">&quot;nuxt&quot;</span>
+
+    <span class="c1"># SvelteKit</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;svelte.config.js&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">has_frontend</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span> <span class="o">=</span> <span class="s2">&quot;sveltekit&quot;</span>
+
+    <span class="c1"># Vite (generic)</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">)]:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;vite.config.ts&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;vite.config.js&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">has_frontend</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span><span class="p">:</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span> <span class="o">=</span> <span class="s2">&quot;vite&quot;</span>
+            <span class="k">break</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_detect_js_framework</span><span class="p">(</span><span class="n">deps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect frontend framework from package.json dependencies.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;next&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;next.js&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;nuxt&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;nuxt&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;@sveltejs/kit&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;sveltekit&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;vite&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;vite&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;react&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;react&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;vue&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;vue&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;svelte&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;svelte&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;@angular/core&quot;</span> <span class="ow">in</span> <span class="n">deps</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;angular&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_ssr_framework</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if frontend framework requires a server runtime (SSR).</span>
+
+<span class="sd">    Frameworks like Next.js, Nuxt, and SvelteKit need their own Node.js</span>
+<span class="sd">    process unless configured for static export.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fw</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span>
+    <span class="k">if</span> <span class="n">fw</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;next.js&quot;</span><span class="p">,</span> <span class="s2">&quot;nuxt&quot;</span><span class="p">,</span> <span class="s2">&quot;sveltekit&quot;</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Check if static export is configured</span>
+    <span class="n">static_export_configured</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="n">fw</span> <span class="o">==</span> <span class="s2">&quot;next.js&quot;</span><span class="p">:</span>
+        <span class="n">static_export_configured</span> <span class="o">=</span> <span class="n">_next_has_static_export</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">static_export_configured</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">SERVER_SIDE_RENDERING</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Next.js frontend requires server runtime (not static-exportable as-is)&quot;</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Next.js needs a Node.js process for SSR/ISR. enlace currently &quot;</span>
+                        <span class="s2">&quot;serves frontends as static files via StaticFiles mount. &quot;</span>
+                        <span class="s2">&quot;If the app is a pure client-side SPA (no getServerSideProps, &quot;</span>
+                        <span class="s2">&quot;no API routes in app/api/), static export is likely viable.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;If the app is a pure client-side SPA, add to next.config.ts:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  output: &#39;export&#39;,</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  basePath: process.env.NEXT_PUBLIC_BASE_PATH || &#39;&#39;,</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Then build for enlace: NEXT_PUBLIC_BASE_PATH=/</span><span class="si">{app_name}</span><span class="s2"> npm run build</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;The `out/` directory becomes the static frontend enlace serves.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Standalone (no env var): `npm run dev` works at / as before.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;If SSR is truly needed, enlace would need a reverse proxy mount.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">fw</span> <span class="o">==</span> <span class="s2">&quot;nuxt&quot;</span><span class="p">:</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Issue</span><span class="p">(</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">SERVER_SIDE_RENDERING</span><span class="p">,</span>
+                <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Nuxt frontend may require server runtime&quot;</span><span class="p">,</span>
+                <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Configure Nuxt for static generation: set `ssr: false` or &quot;</span>
+                    <span class="s2">&quot;`target: &#39;static&#39;` in nuxt.config.ts, then `nuxt generate`.&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">fw</span> <span class="o">==</span> <span class="s2">&quot;sveltekit&quot;</span><span class="p">:</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Issue</span><span class="p">(</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">SERVER_SIDE_RENDERING</span><span class="p">,</span>
+                <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;SvelteKit frontend may require server runtime&quot;</span><span class="p">,</span>
+                <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Use `@sveltejs/adapter-static` for static output. &quot;</span>
+                    <span class="s2">&quot;Set `export const prerender = true` in root layout.&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Check for basePath / base configuration</span>
+    <span class="n">_check_base_path</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_next_has_static_export</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a Next.js app has output: &#39;export&#39; configured.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">,</span> <span class="s2">&quot;web&quot;</span><span class="p">)]:</span>
+        <span class="k">for</span> <span class="n">config_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;next.config.ts&quot;</span><span class="p">,</span> <span class="s2">&quot;next.config.js&quot;</span><span class="p">,</span> <span class="s2">&quot;next.config.mjs&quot;</span><span class="p">):</span>
+            <span class="n">config_file</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">config_name</span>
+            <span class="k">if</span> <span class="n">config_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">text</span> <span class="o">=</span> <span class="n">config_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;output\s*:\s*[&#39;&quot;]export[&#39;&quot;]&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">pass</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_base_path</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if SPA framework has basePath configured for subpath mounting.&quot;&quot;&quot;</span>
+    <span class="n">fw</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">frontend_framework</span>
+
+    <span class="k">if</span> <span class="n">fw</span> <span class="o">==</span> <span class="s2">&quot;next.js&quot;</span><span class="p">:</span>
+        <span class="n">has_base</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">,</span> <span class="s2">&quot;web&quot;</span><span class="p">)]:</span>
+            <span class="k">for</span> <span class="n">config_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;next.config.ts&quot;</span><span class="p">,</span> <span class="s2">&quot;next.config.js&quot;</span><span class="p">,</span> <span class="s2">&quot;next.config.mjs&quot;</span><span class="p">):</span>
+                <span class="n">config_file</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">config_name</span>
+                <span class="k">if</span> <span class="n">config_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">text</span> <span class="o">=</span> <span class="n">config_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;basePath\s*:&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+                            <span class="n">has_base</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="k">pass</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_base</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">BASE_PATH</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;No basePath configured in Next.js config&quot;</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Under enlace, the frontend is served at /</span><span class="si">{app_name}</span><span class="s2">/. &quot;</span>
+                        <span class="s2">&quot;Without basePath, Next.js internal routing and asset loading &quot;</span>
+                        <span class="s2">&quot;will use root-relative paths that won&#39;t resolve correctly. &quot;</span>
+                        <span class="s2">&quot;However, adding a hardcoded basePath would break standalone &quot;</span>
+                        <span class="s2">&quot;operation (where the app is served at /).&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Make basePath configurable via environment variable:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  basePath: process.env.NEXT_PUBLIC_BASE_PATH || &#39;&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Then build for enlace with:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  NEXT_PUBLIC_BASE_PATH=/</span><span class="si">{app_name}</span><span class="s2"> npm run build</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Standalone (no env var): serves at / as before.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Note: a hardcoded basePath (without env var) would break standalone.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">fw</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;vite&quot;</span><span class="p">,</span> <span class="s2">&quot;react&quot;</span><span class="p">):</span>
+        <span class="c1"># Check for vite base config</span>
+        <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">)]:</span>
+            <span class="k">for</span> <span class="n">config_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;vite.config.ts&quot;</span><span class="p">,</span> <span class="s2">&quot;vite.config.js&quot;</span><span class="p">):</span>
+                <span class="n">config_file</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">config_name</span>
+                <span class="k">if</span> <span class="n">config_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">text</span> <span class="o">=</span> <span class="n">config_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;base\s*:&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+                            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="n">Issue</span><span class="p">(</span>
+                                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+                                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">BASE_PATH</span><span class="p">,</span>
+                                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;No `base` configured in Vite config&quot;</span><span class="p">,</span>
+                                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                                        <span class="s2">&quot;Make base configurable via environment variable:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                                        <span class="s2">&quot;  base: process.env.VITE_BASE_PATH || &#39;/&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                                        <span class="s2">&quot;Build for enlace: VITE_BASE_PATH=/</span><span class="si">{app_name}</span><span class="s2">/ npm run build</span><span class="se">\n</span><span class="s2">&quot;</span>
+                                        <span class="s2">&quot;Standalone: serves at / as before.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                                        <span class="s2">&quot;Note: a hardcoded base (without env var) would break standalone.&quot;</span>
+                                    <span class="p">),</span>
+                                <span class="p">)</span>
+                            <span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                    <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_python_backend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan Python files for enlace compatibility issues.&quot;&quot;&quot;</span>
+    <span class="n">py_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">subdir_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;api&quot;</span><span class="p">):</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">subdir_name</span>
+        <span class="k">if</span> <span class="n">subdir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="n">py_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subdir</span><span class="p">)</span>
+
+    <span class="n">py_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">py_dirs</span><span class="p">:</span>
+        <span class="n">py_files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.py&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">py_files</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">report</span><span class="o">.</span><span class="n">backend_framework</span> <span class="o">=</span> <span class="s2">&quot;python&quot;</span>
+
+    <span class="k">for</span> <span class="n">py_file</span> <span class="ow">in</span> <span class="n">py_files</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">py_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">rel</span> <span class="o">=</span> <span class="n">_relative</span><span class="p">(</span><span class="n">py_file</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
+
+        <span class="c1"># Detect FastAPI</span>
+        <span class="k">if</span> <span class="s2">&quot;FastAPI&quot;</span> <span class="ow">in</span> <span class="n">source</span> <span class="ow">or</span> <span class="s2">&quot;fastapi&quot;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">backend_framework</span> <span class="o">=</span> <span class="s2">&quot;fastapi&quot;</span>
+
+        <span class="c1"># Detect Flask</span>
+        <span class="k">if</span> <span class="s2">&quot;Flask(&quot;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">backend_framework</span> <span class="o">=</span> <span class="s2">&quot;flask&quot;</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">MISSING_ENTRY_POINT</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Flask app detected — enlace supports ASGI apps&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Flask is a WSGI framework. enlace expects ASGI apps (FastAPI, &quot;</span>
+                        <span class="s2">&quot;Starlette, etc.). Flask can work through asgiref&#39;s WsgiToAsgi &quot;</span>
+                        <span class="s2">&quot;adapter, but native FastAPI is preferred.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Port to FastAPI for best enlace integration, or wrap with &quot;</span>
+                        <span class="s2">&quot;`from asgiref.wsgi import WsgiToAsgi; app = WsgiToAsgi(flask_app)`&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">_scan_python_for_cors</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_base_http_middleware</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_hardcoded_ports</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_hardcoded_urls</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_bare_imports</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">py_file</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_cors</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect CORS middleware in Python backend files.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;CORSMiddleware&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;add_middleware&quot;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">):</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">SUBAPP_CORS</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Sub-app adds its own CORS middleware&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Under enlace, the parent app handles CORS for all sub-apps. &quot;</span>
+                        <span class="s2">&quot;A sub-app also adding CORSMiddleware can cause double &quot;</span>
+                        <span class="s2">&quot;Access-Control-* headers. enlace will still mount the app, &quot;</span>
+                        <span class="s2">&quot;but the duplicate headers may confuse some browsers.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Make CORS conditional so the app works both standalone and &quot;</span>
+                        <span class="s2">&quot;under enlace. For example:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  import os</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  if not os.environ.get(&#39;ENLACE_MANAGED&#39;):</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;      app.add_middleware(CORSMiddleware, ...)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;This keeps standalone operation intact while avoiding double &quot;</span>
+                        <span class="s2">&quot;headers under enlace.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>  <span class="c1"># One finding per file</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_base_http_middleware</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect BaseHTTPMiddleware usage (known Starlette bugs).&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;BaseHTTPMiddleware&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">BASE_HTTP_MIDDLEWARE</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Uses BaseHTTPMiddleware (known Starlette bugs)&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;BaseHTTPMiddleware has unfixable bugs: exception swallowing, &quot;</span>
+                        <span class="s2">&quot;ContextVar corruption, synchronous background task execution. &quot;</span>
+                        <span class="s2">&quot;The Starlette maintainer has called it unfixable.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Replace with pure ASGI middleware: a class with &quot;</span>
+                        <span class="s2">&quot;__init__(self, app) and __call__(self, scope, receive, send).&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_hardcoded_ports</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect hardcoded port numbers in uvicorn.run() calls.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="s2">&quot;uvicorn.run&quot;</span> <span class="ow">in</span> <span class="n">line</span>
+            <span class="ow">or</span> <span class="s2">&quot;uvicorn.run&quot;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">-</span> <span class="mi">200</span><span class="p">)</span> <span class="p">:]</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;port\s*=\s*\d+&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Issue</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+                        <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">PORT_HARDCODED</span><span class="p">,</span>
+                        <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Hardcoded port in uvicorn.run()&quot;</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                        <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                        <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Under enlace, this __main__ block is never executed &quot;</span>
+                            <span class="s2">&quot;(enlace imports the app object directly). No fix needed, &quot;</span>
+                            <span class="s2">&quot;but be aware this block is dead code under enlace.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">suggestion</span><span class="o">=</span><span class="s2">&quot;No action required — dead code under enlace.&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_hardcoded_urls</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect hardcoded localhost URLs in Python code.&quot;&quot;&quot;</span>
+    <span class="n">url_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;(?:[&#39;&quot;])https?://localhost(?::\d+)?[/\w]*(?:[&#39;&quot;])&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">url_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="c1"># Skip if inside a comment</span>
+            <span class="n">stripped</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="c1"># Skip if inside uvicorn.run (already handled)</span>
+            <span class="k">if</span> <span class="s2">&quot;uvicorn.run&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">url</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Distinguish CORS allow_origins (handled by CORS checker) from</span>
+            <span class="c1"># other hardcoded URLs</span>
+            <span class="k">if</span> <span class="s2">&quot;allow_origins&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">or</span> <span class="s2">&quot;CORS&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span>
+                <span class="c1"># Already covered by the CORS checker — skip to avoid duplicate</span>
+                <span class="k">continue</span>
+
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">HARDCODED_URL</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Hardcoded localhost URL: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Hardcoded URLs may not resolve under enlace because the app &quot;</span>
+                        <span class="s2">&quot;will be served at a different origin/port.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Make it configurable with the current value as default so &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;standalone operation is preserved:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;  import os</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;  MY_URL = os.environ.get(&#39;MY_URL&#39;, &#39;</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&#39;)&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_bare_imports</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">py_file</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect bare imports that could collide on sys.path.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">SyntaxError</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Collect sibling module names (files in same dir)</span>
+    <span class="n">sibling_names</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">stem</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">py_file</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.py&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">stem</span> <span class="o">!=</span> <span class="s2">&quot;__init__&quot;</span>
+    <span class="p">}</span>
+
+    <span class="n">bare_imports</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ImportFrom</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">level</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># It&#39;s an absolute import — check if it refers to a local sibling</span>
+            <span class="n">top_module</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">top_module</span> <span class="ow">in</span> <span class="n">sibling_names</span> <span class="ow">and</span> <span class="n">top_module</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+                <span class="s2">&quot;os&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;sys&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;re&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pathlib&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;typing&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;datetime&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;collections&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;functools&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;itertools&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;math&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;uuid&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;dataclasses&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;enum&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;abc&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;io&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;logging&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;copy&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;contextlib&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;inspect&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;importlib&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;textwrap&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pydantic&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;fastapi&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;starlette&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;uvicorn&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;numpy&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pandas&quot;</span><span class="p">,</span>
+            <span class="p">}:</span>
+                <span class="n">bare_imports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">module</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">bare_imports</span><span class="p">:</span>
+        <span class="n">unique</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">bare_imports</span><span class="p">))</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Issue</span><span class="p">(</span>
+                <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+                <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">BARE_IMPORTS</span><span class="p">,</span>
+                <span class="n">summary</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Bare imports that resolve to local siblings: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unique</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;These imports work because enlace adds the parent directory to &quot;</span>
+                    <span class="s2">&quot;sys.path, but a name collision with any other package could cause &quot;</span>
+                    <span class="s2">&quot;silent bugs.&quot;</span>
+                <span class="p">),</span>
+                <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Consider using relative imports or a package structure with &quot;</span>
+                    <span class="s2">&quot;__init__.py to make the import resolution unambiguous.&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_js_frontend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan JavaScript/TypeScript files for compatibility issues.&quot;&quot;&quot;</span>
+    <span class="n">frontend_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">,</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="n">frontend_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">frontend_dirs</span><span class="p">:</span>
+        <span class="n">frontend_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span>
+
+    <span class="n">js_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">frontend_dirs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;**/*.ts&quot;</span><span class="p">,</span> <span class="s2">&quot;**/*.tsx&quot;</span><span class="p">,</span> <span class="s2">&quot;**/*.js&quot;</span><span class="p">,</span> <span class="s2">&quot;**/*.jsx&quot;</span><span class="p">):</span>
+            <span class="n">js_files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">))</span>
+
+    <span class="c1"># Filter out node_modules, .next, dist, etc.</span>
+    <span class="n">js_files</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">f</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">js_files</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">part</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;node_modules&quot;</span><span class="p">,</span> <span class="s2">&quot;.next&quot;</span><span class="p">,</span> <span class="s2">&quot;dist&quot;</span><span class="p">,</span> <span class="s2">&quot;.nuxt&quot;</span><span class="p">,</span> <span class="s2">&quot;.svelte-kit&quot;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">parts</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">js_file</span> <span class="ow">in</span> <span class="n">js_files</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">js_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">rel</span> <span class="o">=</span> <span class="n">_relative</span><span class="p">(</span><span class="n">js_file</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
+
+        <span class="n">_scan_js_for_hardcoded_urls</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_js_for_websocket</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_js_for_hardcoded_urls</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect hardcoded API base URLs in JS/TS code.&quot;&quot;&quot;</span>
+    <span class="c1"># Pattern: string literal containing http://localhost with optional port</span>
+    <span class="n">url_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;(?:[&#39;&quot;`])https?://localhost(?::(\d+))?(/[^&#39;&quot;`\s]*)?(?:[&#39;&quot;`])&quot;&quot;&quot;</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># Skip comments</span>
+        <span class="n">stripped</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;//&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">stripped</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">match</span> <span class="o">=</span> <span class="n">url_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">` &quot;</span><span class="p">)</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">HARDCODED_URL</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Hardcoded localhost URL in frontend: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Frontend makes requests to a hardcoded localhost address. &quot;</span>
+                        <span class="s2">&quot;Under enlace, the API is at /api/</span><span class="si">{app_name}</span><span class="s2">/ on the same &quot;</span>
+                        <span class="s2">&quot;origin, so fetch calls should use relative paths.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Make the URL configurable with the current value as default, &quot;</span>
+                        <span class="s2">&quot;so the app still works standalone:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s1">&#39;  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || &quot;</span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s1">&quot;;</span><span class="se">\n</span><span class="s1">&#39;</span>
+                        <span class="s2">&quot;Then, when building for enlace, set the env var:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  NEXT_PUBLIC_API_BASE=/api/</span><span class="si">{app_name}</span><span class="s2"> npm run build</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Standalone (no env var): uses the original localhost URL unchanged.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Also check for env var patterns that reference localhost</span>
+    <span class="n">env_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;NEXT_PUBLIC_API|VITE_API|REACT_APP_API&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">env_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;localhost&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">ENV_CONFIG</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Environment variable defaults to localhost (already configurable)&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;The URL is already read from an environment variable — good. &quot;</span>
+                        <span class="s2">&quot;The default falls back to localhost, which is correct for &quot;</span>
+                        <span class="s2">&quot;standalone development.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;When building for enlace, set the env var to the enlace path:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  NEXT_PUBLIC_API_BASE=/api/</span><span class="si">{app_name}</span><span class="s2"> npm run build</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;No code change needed — just a build-time override.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_js_for_websocket</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect WebSocket usage that may need special routing.&quot;&quot;&quot;</span>
+    <span class="n">ws_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;new\s+WebSocket\s*\(|\.connect\s*\(\s*[&#39;&quot;`]ws[s]?://&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ws_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">WEBSOCKET</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;WebSocket connection detected&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;WebSocket connections need special routing consideration &quot;</span>
+                        <span class="s2">&quot;under enlace. The ASGI mount handles WebSocket upgrade &quot;</span>
+                        <span class="s2">&quot;natively, but the connection URL must use the correct path.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Ensure WebSocket URL uses relative path and the enlace &quot;</span>
+                        <span class="s2">&quot;route prefix: ws://</span><span class="si">{host}</span><span class="s2">/api/</span><span class="si">{app_name}</span><span class="s2">/ws&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>  <span class="c1"># One per file is enough</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_env_files</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check .env files for hardcoded configuration.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">env_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.env&quot;</span><span class="p">,</span> <span class="s2">&quot;.env.local&quot;</span><span class="p">,</span> <span class="s2">&quot;.env.development&quot;</span><span class="p">,</span> <span class="s2">&quot;.env.production&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="n">app_dir</span> <span class="o">/</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">)</span>
+        <span class="p">]:</span>
+            <span class="n">env_file</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">env_name</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">env_file</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="n">env_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">rel</span> <span class="o">=</span> <span class="n">_relative</span><span class="p">(</span><span class="n">env_file</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="s2">&quot;localhost&quot;</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+                    <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">Issue</span><span class="p">(</span>
+                            <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+                            <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">ENV_CONFIG</span><span class="p">,</span>
+                            <span class="n">summary</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Environment file references localhost: </span><span class="si">{</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()[:</span><span class="mi">60</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                            <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                            <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                            <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                                <span class="s2">&quot;This is normal for standalone development. When &quot;</span>
+                                <span class="s2">&quot;deploying under enlace, override these values via &quot;</span>
+                                <span class="s2">&quot;a .env.production or build-time env vars.&quot;</span>
+                            <span class="p">),</span>
+                            <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                                <span class="s2">&quot;No change needed for standalone. For enlace, create a &quot;</span>
+                                <span class="s2">&quot;.env.production (or set at build time) with the enlace &quot;</span>
+                                <span class="s2">&quot;paths, e.g. NEXT_PUBLIC_API_BASE=/api/</span><span class="si">{app_name}</span><span class="s2">&quot;</span>
+                            <span class="p">),</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_node_backend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check for Node.js/Express backend (non-Python).&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;server.js&quot;</span><span class="p">,</span> <span class="s2">&quot;index.js&quot;</span><span class="p">,</span> <span class="s2">&quot;app.js&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">root</span> <span class="ow">in</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;api&quot;</span><span class="p">)]:</span>
+            <span class="n">js_entry</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">name</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">js_entry</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">js_entry</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="s2">&quot;express&quot;</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;require(&#39;express&#39;)&quot;</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">backend_framework</span><span class="p">:</span>
+                    <span class="n">report</span><span class="o">.</span><span class="n">backend_framework</span> <span class="o">=</span> <span class="s2">&quot;express&quot;</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Issue</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                        <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">MISSING_ENTRY_POINT</span><span class="p">,</span>
+                        <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Express/Node.js backend detected — enlace expects Python (ASGI)&quot;</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">_relative</span><span class="p">(</span><span class="n">js_entry</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">),</span>
+                        <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;enlace composes ASGI applications (FastAPI, Starlette). &quot;</span>
+                            <span class="s2">&quot;Node.js backends need to be either ported to Python or &quot;</span>
+                            <span class="s2">&quot;run as a separate process with enlace proxying to them.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Port the Express routes to FastAPI (see enlace&#39;s &quot;</span>
+                            <span class="s2">&quot;twp-migrate-app skill for a recipe). Most Express → FastAPI &quot;</span>
+                            <span class="s2">&quot;ports are straightforward 1:1 route translations.&quot;</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_html_for_issues</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan HTML files for hardcoded URLs and absolute asset paths.&quot;&quot;&quot;</span>
+    <span class="n">html_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span> <span class="s2">&quot;public&quot;</span><span class="p">,</span> <span class="s2">&quot;dist&quot;</span><span class="p">,</span> <span class="s2">&quot;out&quot;</span><span class="p">,</span> <span class="s2">&quot;build&quot;</span><span class="p">):</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="n">html_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">html_dirs</span><span class="p">:</span>
+        <span class="n">html_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">app_dir</span><span class="p">]</span>
+
+    <span class="n">html_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">html_dirs</span><span class="p">:</span>
+        <span class="n">html_files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;**/*.html&quot;</span><span class="p">))</span>
+    <span class="n">html_files</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">html_files</span> <span class="k">if</span> <span class="s2">&quot;node_modules&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;.next&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">html_file</span> <span class="ow">in</span> <span class="n">html_files</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">html_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">rel</span> <span class="o">=</span> <span class="n">_relative</span><span class="p">(</span><span class="n">html_file</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
+
+        <span class="c1"># Check for hardcoded localhost in script srcs, fetch, etc.</span>
+        <span class="n">url_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;https?://localhost(?::\d+)?[/\w.-]*&quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">url_pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Issue</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+                        <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">HARDCODED_URL</span><span class="p">,</span>
+                        <span class="n">summary</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Hardcoded localhost URL in HTML: </span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()[:</span><span class="mi">60</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                        <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                        <span class="n">suggestion</span><span class="o">=</span><span class="s2">&quot;Use relative paths instead of absolute localhost URLs.&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_data_paths</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if data storage uses conventional paths.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">subdir_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;backend&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;api&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">subdir_name</span> <span class="k">if</span> <span class="n">subdir_name</span> <span class="k">else</span> <span class="n">app_dir</span>
+        <span class="k">for</span> <span class="n">py_file</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.py&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">py_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">rel</span> <span class="o">=</span> <span class="n">_relative</span><span class="p">(</span><span class="n">py_file</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
+
+            <span class="c1"># Detect Path(__file__).parent / &quot;data&quot; pattern</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;Path\s*\(\s*__file__\s*\).*[&#39;&quot;]data[&#39;&quot;]&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+                <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">Issue</span><span class="p">(</span>
+                        <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+                        <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">DATA_PATH</span><span class="p">,</span>
+                        <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Data stored relative to script location&quot;</span><span class="p">,</span>
+                        <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                        <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Data is stored alongside the code. This works under enlace &quot;</span>
+                            <span class="s2">&quot;(the module path is preserved), but differs from the papp &quot;</span>
+                            <span class="s2">&quot;convention of ~/.local/share/papp/</span><span class="si">{app_name}</span><span class="s2">/.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                            <span class="s2">&quot;Consider using a configurable data directory, e.g.:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                            <span class="s2">&quot;  DATA_DIR = Path(os.environ.get(&#39;APP_DATA_DIR&#39;, &quot;</span>
+                            <span class="s2">&quot;Path.home() / &#39;.local/share/papp/</span><span class="si">{app_name}</span><span class="s2">&#39;))&quot;</span>
+                        <span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Helpers</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_relative</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">base</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a clean relative path string, or the full path if not relative.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">base</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Public API</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="diagnose_app">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.diagnose_app">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DiagnosticReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Diagnose an app directory for enlace compatibility.</span>
+
+<span class="sd">    Scans for hardcoded URLs, CORS middleware, SSR requirements, missing</span>
+<span class="sd">    entry points, and other patterns that prevent or complicate mounting</span>
+<span class="sd">    under the enlace platform.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        app_dir: Path to the app directory to diagnose.</span>
+<span class="sd">        app_name: Override app name (defaults to directory name).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        DiagnosticReport with all findings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">app_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">app_name</span><span class="p">:</span>
+        <span class="n">app_name</span> <span class="o">=</span> <span class="n">app_dir</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">DiagnosticReport</span><span class="p">(</span><span class="n">app_dir</span><span class="o">=</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">)</span>
+
+    <span class="c1"># Run all checks</span>
+    <span class="n">_check_frontend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_entry_points</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_python_backend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_node_backend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_js_frontend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_html_for_issues</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_ssr_framework</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_env_files</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+    <span class="n">_check_data_paths</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+
+    <span class="c1"># Sort issues by severity</span>
+    <span class="n">severity_order</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">Severity</span><span class="o">.</span><span class="n">LOW</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="n">Severity</span><span class="o">.</span><span class="n">INFO</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">severity_order</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">severity</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">report</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

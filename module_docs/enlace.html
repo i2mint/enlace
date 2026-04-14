@@ -1,0 +1,393 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace &mdash; enlace 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="enlace.__main__" href="enlace/__main__.html" />
+    <link rel="prev" title="Welcome to enlace’s documentation!" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">enlace</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.AppConfig"><code class="docutils literal notranslate"><span class="pre">AppConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.AppConfig.model_config"><code class="docutils literal notranslate"><span class="pre">AppConfig.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.ConventionDiscoverer"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.ConventionDiscoverer.discover"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer.discover()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.ConventionDiscoverer.discover_app_dir"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer.discover_app_dir()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.ConventionsConfig"><code class="docutils literal notranslate"><span class="pre">ConventionsConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.ConventionsConfig.model_config"><code class="docutils literal notranslate"><span class="pre">ConventionsConfig.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.DiagnosticReport"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.DiagnosticReport.format_text"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport.format_text()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.DiagnosticReport.is_enlaceable"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport.is_enlaceable</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.PlatformConfig"><code class="docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.PlatformConfig.all_source_dirs"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.all_source_dirs</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.PlatformConfig.check_conflicts"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.check_conflicts()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.PlatformConfig.from_toml"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.from_toml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.PlatformConfig.model_config"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.build_backend"><code class="docutils literal notranslate"><span class="pre">build_backend()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.diagnose_app"><code class="docutils literal notranslate"><span class="pre">diagnose_app()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.discover_apps"><code class="docutils literal notranslate"><span class="pre">discover_apps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.serve"><code class="docutils literal notranslate"><span class="pre">serve()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.skills_dir"><code class="docutils literal notranslate"><span class="pre">skills_dir()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">enlace</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/module_docs/enlace.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-enlace">
+<span id="enlace"></span><h1>enlace<a class="headerlink" href="#module-enlace" title="Link to this heading"></a></h1>
+<p>enlace – Compose, serve, and deploy multiple web apps from a single codebase.</p>
+<p>Drop a Python module or a React app into a directory, and enlace discovers it,
+mounts it, serves it, and optionally gates it behind auth – with zero boilerplate.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.AppConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">AppConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">*,</span> <span class="pre">name:</span> <span class="pre">str,</span> <span class="pre">route_prefix:</span> <span class="pre">str,</span> <span class="pre">entry_module_path:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">app_type:</span> <span class="pre">~typing.Literal['asgi_app',</span> <span class="pre">'functions',</span> <span class="pre">'frontend_only'],</span> <span class="pre">app_attr:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'app',</span> <span class="pre">frontend_dir:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">source_dir:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">access:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'local',</span> <span class="pre">display_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'',</span> <span class="pre">provenance:</span> <span class="pre">dict[str,</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">mode:</span> <span class="pre">~typing.Literal['asgi',</span> <span class="pre">'process',</span> <span class="pre">'external',</span> <span class="pre">'static']</span> <span class="pre">=</span> <span class="pre">'asgi',</span> <span class="pre">command:</span> <span class="pre">list[str]</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">port:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">socket:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">env:</span> <span class="pre">dict[str,</span> <span class="pre">str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;,</span> <span class="pre">build:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">health_check_path:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'/health',</span> <span class="pre">ready_timeout:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">30.0,</span> <span class="pre">restart_policy:</span> <span class="pre">~typing.Literal['always',</span> <span class="pre">'on-failure',</span> <span class="pre">'never']</span> <span class="pre">=</span> <span class="pre">'on-failure',</span> <span class="pre">max_retries:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">5,</span> <span class="pre">restart_delay_ms:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">100,</span> <span class="pre">upstream_url:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">public_dir:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#AppConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.AppConfig" title="Link to this definition"></a></dt>
+<dd><p>Resolved configuration for a single discovered app.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.AppConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#enlace.AppConfig.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.ConventionDiscoverer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">ConventionDiscoverer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conventions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="enlace/base.html#enlace.base.ConventionsConfig" title="enlace.base.ConventionsConfig"><span class="pre">ConventionsConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/discover.html#ConventionDiscoverer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ConventionDiscoverer" title="Link to this definition"></a></dt>
+<dd><p>Discovers apps by filesystem conventions.</p>
+<p>Walks the apps directory, finds entry points, detects app types,
+loads TOML overrides, and returns validated AppConfig objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conventions</strong> – Meta-conventions controlling discovery behavior.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.ConventionDiscoverer.discover">
+<span class="sig-name descname"><span class="pre">discover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="enlace/base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/enlace/discover.html#ConventionDiscoverer.discover"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ConventionDiscoverer.discover" title="Link to this definition"></a></dt>
+<dd><p>Discover all apps in the given directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>apps_dir</strong> – Path to the directory containing app subdirectories.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of AppConfig objects, sorted by name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.ConventionDiscoverer.discover_app_dir">
+<span class="sig-name descname"><span class="pre">discover_app_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="enlace/base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/enlace/discover.html#ConventionDiscoverer.discover_app_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ConventionDiscoverer.discover_app_dir" title="Link to this definition"></a></dt>
+<dd><p>Discover a single directory that IS the app itself.</p>
+<p>Unlike discover(), which walks children of a container directory,
+this treats app_dir itself as the app directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>app_dir</strong> – Path to the app directory (the directory IS the app).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>AppConfig if the directory is a valid app, None otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.ConventionsConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">ConventionsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">['server.py',</span> <span class="pre">'app.py',</span> <span class="pre">'main.py']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_attr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'app'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontend_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'frontend'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#ConventionsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ConventionsConfig" title="Link to this definition"></a></dt>
+<dd><p>Meta-conventions controlling how apps are discovered.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.ConventionsConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#enlace.ConventionsConfig.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.DiagnosticReport">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">DiagnosticReport</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_dir:</span> <span class="pre">~pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_name:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">issues:</span> <span class="pre">list[~enlace.diagnose.Issue]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_backend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_frontend:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_framework:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontend_framework:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_point:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/diagnose.html#DiagnosticReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.DiagnosticReport" title="Link to this definition"></a></dt>
+<dd><p>Full diagnostic report for an app directory.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.DiagnosticReport.format_text">
+<span class="sig-name descname"><span class="pre">format_text</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/enlace/diagnose.html#DiagnosticReport.format_text"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.DiagnosticReport.format_text" title="Link to this definition"></a></dt>
+<dd><p>Human-readable formatted report.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="enlace.DiagnosticReport.is_enlaceable">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_enlaceable</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#enlace.DiagnosticReport.is_enlaceable" title="Link to this definition"></a></dt>
+<dd><p>True if no CRITICAL issues were found.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.Issue">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">Issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="enlace/diagnose.html#enlace.diagnose.Severity" title="enlace.diagnose.Severity"><span class="pre">Severity</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="enlace/diagnose.html#enlace.diagnose.Category" title="enlace.diagnose.Category"><span class="pre">Category</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">summary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">breaks_standalone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/diagnose.html#Issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.Issue" title="Link to this definition"></a></dt>
+<dd><p>A single compatibility issue found during diagnosis.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.PlatformConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">PlatformConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dir:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dirs:</span> <span class="pre">list[~pathlib.Path]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dirs:</span> <span class="pre">list[~pathlib.Path]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shared_assets_dir:</span> <span class="pre">~pathlib.Path</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">domain:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'localhost'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_port:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">8000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontend_port:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">3000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">process_port_start:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">9100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">socket_dir:</span> <span class="pre">~pathlib.Path</span> <span class="pre">=</span> <span class="pre">PosixPath('/tmp/enlace')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conventions:</span> <span class="pre">~enlace.base.ConventionsConfig</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps:</span> <span class="pre">list[~enlace.base.AppConfig]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#PlatformConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.PlatformConfig" title="Link to this definition"></a></dt>
+<dd><p>Resolved configuration for the entire platform.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="enlace.PlatformConfig.all_source_dirs">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">all_source_dirs</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#enlace.PlatformConfig.all_source_dirs" title="Link to this definition"></a></dt>
+<dd><p>All directories to watch (for reload, etc.).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.PlatformConfig.check_conflicts">
+<span class="sig-name descname"><span class="pre">check_conflicts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/enlace/base.html#PlatformConfig.check_conflicts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.PlatformConfig.check_conflicts" title="Link to this definition"></a></dt>
+<dd><p>Check for name and route conflicts across all apps.</p>
+<p>Returns all conflicts found (not just the first), so the user can fix
+them all at once.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.PlatformConfig.from_toml">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_toml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">PosixPath('platform.toml')</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="enlace/base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></span><a class="reference internal" href="../_modules/enlace/base.html#PlatformConfig.from_toml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.PlatformConfig.from_toml" title="Link to this definition"></a></dt>
+<dd><p>Load configuration from a TOML file, falling back to defaults.</p>
+<p>Reads environment variables as overrides:
+- ENLACE_APPS_DIRS (pathsep-delimited): container directories
+- ENLACE_APP_DIRS (pathsep-delimited): individual app directories
+- ENLACE_APPS_DIR (legacy): single container directory</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> – Path to platform.toml. If the file doesn’t exist, returns
+a PlatformConfig with all default values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.PlatformConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#enlace.PlatformConfig.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.build_backend">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">build_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="enlace/base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FastAPI</span></span></span><a class="reference internal" href="../_modules/enlace/compose.html#build_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build_backend" title="Link to this definition"></a></dt>
+<dd><p>Compose all app backends into a single ASGI application.</p>
+<p>For each discovered app:
+- mode=asgi, asgi_app: mount the ASGI object at the route prefix
+- mode=asgi, functions: build an APIRouter with POST routes and include it
+- mode=process/external: mount a reverse proxy at the route prefix
+- mode=static: mount StaticFiles at the route prefix
+- frontend_only (mode=asgi): skip (no backend to mount)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> – Platform configuration with apps already discovered.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A FastAPI application with all sub-apps mounted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.create_app">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">create_app</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FastAPI</span></span></span><a class="reference internal" href="../_modules/enlace/compose.html#create_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.create_app" title="Link to this definition"></a></dt>
+<dd><p>App factory for Uvicorn’s –factory flag.</p>
+<p>Loads platform config, discovers apps, checks conflicts,
+and builds the composed backend.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.diagnose_app">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">diagnose_app</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_dir</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="enlace/diagnose.html#enlace.diagnose.DiagnosticReport" title="enlace.diagnose.DiagnosticReport"><span class="pre">DiagnosticReport</span></a></span></span><a class="reference internal" href="../_modules/enlace/diagnose.html#diagnose_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.diagnose_app" title="Link to this definition"></a></dt>
+<dd><p>Diagnose an app directory for enlace compatibility.</p>
+<p>Scans for hardcoded URLs, CORS middleware, SSR requirements, missing
+entry points, and other patterns that prevent or complicate mounting
+under the enlace platform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>app_dir</strong> – Path to the app directory to diagnose.</p></li>
+<li><p><strong>app_name</strong> – Override app name (defaults to directory name).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DiagnosticReport with all findings.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.discover_apps">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">discover_apps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="enlace/base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="enlace/base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></span><a class="reference internal" href="../_modules/enlace/discover.html#discover_apps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover_apps" title="Link to this definition"></a></dt>
+<dd><p>High-level discovery: load config, discover apps, check conflicts.</p>
+<p>Iterates over all configured source directories:
+- <code class="docutils literal notranslate"><span class="pre">config.apps_dirs</span></code>: container directories (walk children)
+- <code class="docutils literal notranslate"><span class="pre">config.app_dirs</span></code>: individual app directories (discover directly)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> – Platform configuration. If None, loads from platform.toml.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PlatformConfig with apps populated.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If name or route conflicts are detected.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.serve">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">serve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'dev'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'platform.toml'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/serve.html#serve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.serve" title="Link to this definition"></a></dt>
+<dd><p>Start the enlace backend server.</p>
+<p>Reads platform.toml as the source of truth for directories and ports.
+CLI arguments override TOML values when provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> – ‘dev’ for development (hot reload) or ‘prod’ for production.</p></li>
+<li><p><strong>apps_dir</strong> – Path to the apps directory (backward compat, overrides TOML).</p></li>
+<li><p><strong>apps_dirs</strong> – Comma-separated container directories (overrides TOML).</p></li>
+<li><p><strong>app_dirs</strong> – Comma-separated individual app directories (overrides TOML).</p></li>
+<li><p><strong>port</strong> – Port to listen on (0 = use TOML value or default 8000).</p></li>
+<li><p><strong>host</strong> – Host to bind to (empty = use default 127.0.0.1).</p></li>
+<li><p><strong>config</strong> – Path to platform.toml.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.skills_dir">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">skills_dir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../_modules/enlace.html#skills_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.skills_dir" title="Link to this definition"></a></dt>
+<dd><p>Return the path to this package’s bundled skills directory.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to enlace’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="enlace/__main__.html" class="btn btn-neutral float-right" title="enlace.__main__" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,210 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.discover &mdash; enlace 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="enlace.proxy" href="proxy.html" />
+    <link rel="prev" title="enlace.diagnose" href="diagnose.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.discover</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.discover.AppDiscoverer"><code class="docutils literal notranslate"><span class="pre">AppDiscoverer</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.discover.ConventionDiscoverer"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.discover.ConventionDiscoverer.discover"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer.discover()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.discover.ConventionDiscoverer.discover_app_dir"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer.discover_app_dir()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.discover.discover_apps"><code class="docutils literal notranslate"><span class="pre">discover_apps()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">enlace.discover</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/enlace/discover.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-enlace.discover">
+<span id="enlace-discover"></span><h1>enlace.discover<a class="headerlink" href="#module-enlace.discover" title="Link to this heading"></a></h1>
+<p>Convention-based app discovery for enlace.</p>
+<p>Walks an apps directory, discovers backend entry points and frontend assets,
+detects app types, loads per-app TOML overrides, and returns validated AppConfig
+objects with provenance tracking.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.discover.AppDiscoverer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">AppDiscoverer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/discover.html#AppDiscoverer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.AppDiscoverer" title="Link to this definition"></a></dt>
+<dd><p>Protocol for app discovery strategies.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.discover.ConventionDiscoverer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">ConventionDiscoverer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conventions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.ConventionsConfig" title="enlace.base.ConventionsConfig"><span class="pre">ConventionsConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/discover.html#ConventionDiscoverer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.ConventionDiscoverer" title="Link to this definition"></a></dt>
+<dd><p>Discovers apps by filesystem conventions.</p>
+<p>Walks the apps directory, finds entry points, detects app types,
+loads TOML overrides, and returns validated AppConfig objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conventions</strong> – Meta-conventions controlling discovery behavior.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.discover.ConventionDiscoverer.discover">
+<span class="sig-name descname"><span class="pre">discover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/enlace/discover.html#ConventionDiscoverer.discover"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.ConventionDiscoverer.discover" title="Link to this definition"></a></dt>
+<dd><p>Discover all apps in the given directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>apps_dir</strong> – Path to the directory containing app subdirectories.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of AppConfig objects, sorted by name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.discover.ConventionDiscoverer.discover_app_dir">
+<span class="sig-name descname"><span class="pre">discover_app_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/discover.html#ConventionDiscoverer.discover_app_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.ConventionDiscoverer.discover_app_dir" title="Link to this definition"></a></dt>
+<dd><p>Discover a single directory that IS the app itself.</p>
+<p>Unlike discover(), which walks children of a container directory,
+this treats app_dir itself as the app directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>app_dir</strong> – Path to the app directory (the directory IS the app).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>AppConfig if the directory is a valid app, None otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.discover.discover_apps">
+<span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">discover_apps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></span><a class="reference internal" href="../../_modules/enlace/discover.html#discover_apps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.discover_apps" title="Link to this definition"></a></dt>
+<dd><p>High-level discovery: load config, discover apps, check conflicts.</p>
+<p>Iterates over all configured source directories:
+- <code class="docutils literal notranslate"><span class="pre">config.apps_dirs</span></code>: container directories (walk children)
+- <code class="docutils literal notranslate"><span class="pre">config.app_dirs</span></code>: individual app directories (discover directly)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> – Platform configuration. If None, loads from platform.toml.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>PlatformConfig with apps populated.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>RuntimeError</strong> – If name or route conflicts are detected.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="diagnose.html" class="btn btn-neutral float-left" title="enlace.diagnose" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="proxy.html" class="btn btn-neutral float-right" title="enlace.proxy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
