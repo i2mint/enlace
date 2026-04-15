@@ -9,7 +9,72 @@ all with one command. Python ASGI apps get mounted in-process.
 Non-Python apps (Node.js, Go, etc.) get spawned as supervised
 child processes and routed via reverse proxy. External services
 and static sites work too. Your apps stay independent — no code
-changes, no shared dependencies.
+changes, no shared dependencies. 
+For more details, see the [Philosopy](#philosophy) section. 
+
+## Quick start
+
+The quickest way to start is to use enlace via AI. 
+That's what we'll demo here. 
+For those want to work in CLI or python, see the late [Under the hood](#under-the-hood) sectiob. 
+
+### Install
+
+```bash
+pip install enlace
+```
+
+Skills are bundled with the package. To make them available to Claude Code:
+
+```bash
+# Link enlace's skills into your project (or globally)
+skill link-skills "$(python -c 'import enlace; print(enlace.__path__[0])')"
+
+# Or symlink manually
+ln -s "$(python -c 'from enlace import skills_dir; print(skills_dir())')"/* .claude/skills/
+```
+
+### Using `enlace` with an AI agent
+
+`enlace` ships with AI agent skills that let Claude Code (or any compatible
+agent) handle the entire workflow through natural language:
+
+```
+"Add my_app to the platform"
+"Can my_app be enlaced?"
+"Diagnose /path/to/my_app and fix what you can"
+"List my apps"
+"List the apps configurations"
+"Serve all my apps"
+```
+
+
+### Available skills
+
+| Skill | What it does | Trigger phrases |
+|-------|-------------|-----------------|
+| **enlace** | Create apps, configure platform.toml, understand conventions, serve | "add an app", "serve my apps", "configure enlace" |
+| **enlace-diagnose** | Analyze an app for compatibility, suggest fixes that preserve standalone operation | "can this be enlaced?", "diagnose this app", "what needs to change?" |
+| **enlace-dev** | Modify the enlace package itself — add features, fix bugs, extend middleware | "add X to enlace", "implement Y in enlace" |
+
+### What the AI does for you
+
+**Onboarding an existing app:**
+The agent runs `enlace diagnose`, reads the report, and presents findings in
+three tiers: `enlace`-side fixes (no app changes), app changes that preserve
+standalone, and warnings. It proposes specific code changes and applies them
+with your approval.
+
+**Creating a new app:**
+The agent scaffolds the directory structure, writes `server.py` with a FastAPI
+app, optionally creates `frontend/index.html`, registers it in `platform.toml`,
+runs `enlace check`, and starts serving.
+
+**Day-to-day operations:**
+The agent runs `enlace serve`, `enlace check`, `enlace show-config` as needed,
+interprets the output, and explains what's happening.
+
+
 
 ## Philosophy
 
@@ -47,65 +112,15 @@ For the full rationale — including how these principles interact, where the
 balance sits today, and what `enlace` aspires to handle better — see the
 [Design Principles](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md) document.
 
-## Using `enlace` with an AI agent
 
-`enlace` ships with AI agent skills that let Claude Code (or any compatible
-agent) handle the entire workflow through natural language:
 
-```
-"Add my_app to the platform"
-"Can s_conditions be enlaced?"
-"Diagnose /path/to/app and fix what you can"
-"Serve all my apps"
-```
-
-### Install
-
-```bash
-pip install enlace
-```
-
-Skills are bundled with the package. To make them available to Claude Code:
-
-```bash
-# Link enlace's skills into your project (or globally)
-skill link-skills "$(python -c 'import enlace; print(enlace.__path__[0])')"
-
-# Or symlink manually
-ln -s "$(python -c 'from enlace import skills_dir; print(skills_dir())')"/* .claude/skills/
-```
-
-### Available skills
-
-| Skill | What it does | Trigger phrases |
-|-------|-------------|-----------------|
-| **enlace** | Create apps, configure platform.toml, understand conventions, serve | "add an app", "serve my apps", "configure enlace" |
-| **enlace-diagnose** | Analyze an app for compatibility, suggest fixes that preserve standalone operation | "can this be enlaced?", "diagnose this app", "what needs to change?" |
-| **enlace-dev** | Modify the enlace package itself — add features, fix bugs, extend middleware | "add X to enlace", "implement Y in enlace" |
-
-### What the AI does for you
-
-**Onboarding an existing app:**
-The agent runs `enlace diagnose`, reads the report, and presents findings in
-three tiers: `enlace`-side fixes (no app changes), app changes that preserve
-standalone, and warnings. It proposes specific code changes and applies them
-with your approval.
-
-**Creating a new app:**
-The agent scaffolds the directory structure, writes `server.py` with a FastAPI
-app, optionally creates `frontend/index.html`, registers it in `platform.toml`,
-runs `enlace check`, and starts serving.
-
-**Day-to-day operations:**
-The agent runs `enlace serve`, `enlace check`, `enlace show-config` as needed,
-interprets the output, and explains what's happening.
 
 ## Under the hood
 
 For those who want direct control, here's the CLI, Python API, and
 configuration system that the skills use internally.
 
-### Quick start
+### Simple FastAPI example
 
 ```bash
 pip install enlace

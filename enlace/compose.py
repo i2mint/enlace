@@ -14,12 +14,14 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
 
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps
+from enlace.frontend import SPAStaticFiles
 
 
 def build_backend(config: PlatformConfig) -> FastAPI:
@@ -95,6 +97,9 @@ def build_backend(config: PlatformConfig) -> FastAPI:
         allow_headers=["*"],
     )
 
+    if config.index_page:
+        _add_index_route(parent, config)
+
     for prefix, sub_app in sub_apps:
         parent.mount(prefix, sub_app)
 
@@ -110,6 +115,8 @@ def build_backend(config: PlatformConfig) -> FastAPI:
 
     # Serve frontend static files for apps that have a frontend/ directory.
     # Mounted at /{app_name}/ so the frontend is accessible alongside the API.
+    # Uses SPAStaticFiles so client-side routing (e.g. /projects/{id}) falls
+    # back to index.html instead of returning 404.
     for app_config in config.apps:
         if (
             app_config.mode != "static"
@@ -117,9 +124,16 @@ def build_backend(config: PlatformConfig) -> FastAPI:
             and app_config.frontend_dir.is_dir()
         ):
             frontend_prefix = f"/{app_config.name}"
+
+            # Starlette mounts only match paths with trailing slash.
+            # Add a redirect so /{app_name} → /{app_name}/ works.
+            @parent.get(frontend_prefix, include_in_schema=False)
+            async def _redirect(prefix=frontend_prefix):
+                return RedirectResponse(f"{prefix}/")
+
             parent.mount(
                 frontend_prefix,
-                StaticFiles(directory=str(app_config.frontend_dir), html=True),
+                SPAStaticFiles(directory=str(app_config.frontend_dir), html=True),
             )
 
     # Serve platform-level shared assets (e.g. shared.css) at the root.
@@ -131,6 +145,42 @@ def build_backend(config: PlatformConfig) -> FastAPI:
         )
 
     return parent
+
+
+def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
+    """Add a GET / route that lists all discovered apps as a simple HTML page."""
+    apps = config.apps
+
+    @parent.get("/", response_class=HTMLResponse)
+    async def index():
+        items = []
+        for app in apps:
+            has_frontend = app.frontend_dir and app.frontend_dir.is_dir()
+            has_api = app.app_type != "frontend_only"
+            links = []
+            if has_frontend:
+                links.append(f'<a href="/{app.name}/">open</a>')
+            if has_api:
+                links.append(
+                    f'<a href="{app.route_prefix}/docs">api docs</a>'
+                )
+            link_html = " · ".join(links) if links else "(no routes)"
+            items.append(f"<li><strong>{app.display_name}</strong> — {link_html}</li>")
+        app_list = "\n".join(items) if items else "<li>No apps discovered.</li>"
+        return (
+            "<!doctype html>"
+            "<html><head><meta charset='utf-8'>"
+            "<title>enlace</title>"
+            "<style>"
+            "body{font-family:system-ui,sans-serif;max-width:640px;"
+            "margin:40px auto;padding:0 20px;color:#333}"
+            "a{color:#2563eb} li{margin:8px 0}"
+            "</style></head><body>"
+            "<h1>enlace</h1>"
+            f"<p>{len(apps)} app{'s' if len(apps) != 1 else ''} running:</p>"
+            f"<ul>{app_list}</ul>"
+            "</body></html>"
+        )
 
 
 def _make_proxy_for(app_config: AppConfig) -> Optional[object]:

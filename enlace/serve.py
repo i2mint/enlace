@@ -8,8 +8,10 @@ supervises both the gateway Uvicorn and all process-mode children.
 """
 
 import asyncio
+import errno
 import os
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -42,7 +44,34 @@ def _graceful_shutdown(signum, frame):
             proc.kill()
             proc.wait()
 
-    sys.exit(0)
+
+def _check_port_available(host: str, port: int) -> None:
+    """Check if the port is available before starting uvicorn.
+
+    Raises SystemExit with an actionable error message if the port is in use.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.bind((host, port))
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            print(
+                f"\nERROR: Address {host}:{port} is already in use.\n"
+                f"\n"
+                f"  To see what's using it:\n"
+                f"    lsof -i :{port}\n"
+                f"\n"
+                f"  To kill whatever is on that port:\n"
+                f"    kill $(lsof -t -i :{port})\n"
+                f"\n"
+                f"  Or run enlace on a different port:\n"
+                f"    enlace serve --port {port + 1}\n",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        raise
+    finally:
+        sock.close()
 
 
 def _build_uvicorn_cmd(
@@ -174,6 +203,7 @@ def _serve_asgi_only(
     reload_dirs: list[str],
 ) -> None:
     """Original serve path: single Uvicorn subprocess."""
+    _check_port_available(host, port)
     cmd = _build_uvicorn_cmd(host, port, mode, reload_dirs)
 
     signal.signal(signal.SIGTERM, _graceful_shutdown)
@@ -183,9 +213,12 @@ def _serve_asgi_only(
     _children.append(proc)
 
     try:
-        proc.wait()
+        rc = proc.wait()
     except KeyboardInterrupt:
         _graceful_shutdown(signal.SIGINT, None)
+        rc = proc.returncode or 0
+
+    sys.exit(rc)
 
 
 def _serve_mixed(
@@ -196,6 +229,7 @@ def _serve_mixed(
     process_apps: list[AppConfig],
 ) -> None:
     """Mixed-mode serve: asyncio supervisor + gateway Uvicorn."""
+    _check_port_available(host, port)
     from enlace.supervise import ManagedProcess, supervise_all
 
     async def _run():

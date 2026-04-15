@@ -117,6 +117,10 @@ class PlatformConfig(BaseModel):
     # Directory containing shared static assets (e.g. shared.css) served at /.
     shared_assets_dir: Optional[Path] = None
 
+    index_page: bool = Field(
+        default=True,
+        description="Serve an auto-generated index page at / listing all apps",
+    )
     domain: str = "localhost"
     backend_port: int = 8000
     frontend_port: int = 3000
