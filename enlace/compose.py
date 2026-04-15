@@ -161,9 +161,7 @@ def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
             if has_frontend:
                 links.append(f'<a href="/{app.name}/">open</a>')
             if has_api:
-                links.append(
-                    f'<a href="{app.route_prefix}/docs">api docs</a>'
-                )
+                links.append(f'<a href="{app.route_prefix}/docs">api docs</a>')
             link_html = " · ".join(links) if links else "(no routes)"
             items.append(f"<li><strong>{app.display_name}</strong> — {link_html}</li>")
         app_list = "\n".join(items) if items else "<li>No apps discovered.</li>"

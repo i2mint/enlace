@@ -84,16 +84,12 @@ class SPAStaticFiles(StaticFiles):
 
         for segment in segments:
             candidate = "/".join(resolved + [segment]) if resolved else segment
-            _, stat_result = await anyio.to_thread.run_sync(
-                self.lookup_path, candidate
-            )
+            _, stat_result = await anyio.to_thread.run_sync(self.lookup_path, candidate)
             if stat_result is not None:
                 resolved.append(segment)
             else:
                 # Try the wildcard placeholder instead.
-                wildcard_candidate = (
-                    "/".join(resolved + ["_"]) if resolved else "_"
-                )
+                wildcard_candidate = "/".join(resolved + ["_"]) if resolved else "_"
                 _, stat_w = await anyio.to_thread.run_sync(
                     self.lookup_path, wildcard_candidate
                 )
@@ -110,11 +106,11 @@ class SPAStaticFiles(StaticFiles):
         # StaticFiles(html=True) would look for _/index.html inside it,
         # but Next.js puts the page at _.html (sibling, not child).
         # Try the explicit .html path first.
-        html_path = "/".join(resolved[:-1] + [resolved[-1] + ".html"]) if resolved else None
+        html_path = (
+            "/".join(resolved[:-1] + [resolved[-1] + ".html"]) if resolved else None
+        )
         if html_path:
-            _, stat_html = await anyio.to_thread.run_sync(
-                self.lookup_path, html_path
-            )
+            _, stat_html = await anyio.to_thread.run_sync(self.lookup_path, html_path)
             if stat_html is not None:
                 return html_path
 
