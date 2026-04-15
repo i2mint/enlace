@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.0.1 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -52,6 +52,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
@@ -105,12 +106,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.cors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mount</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">PlatformConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_apps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.frontend</span><span class="w"> </span><span class="kn">import</span> <span class="n">SPAStaticFiles</span>
 
 
 <div class="viewcode-block" id="build_backend">
@@ -188,6 +191,9 @@
         <span class="n">allow_headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">],</span>
     <span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">index_page</span><span class="p">:</span>
+        <span class="n">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
     <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">sub_app</span> <span class="ow">in</span> <span class="n">sub_apps</span><span class="p">:</span>
         <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">sub_app</span><span class="p">)</span>
 
@@ -203,6 +209,8 @@
 
     <span class="c1"># Serve frontend static files for apps that have a frontend/ directory.</span>
     <span class="c1"># Mounted at /{app_name}/ so the frontend is accessible alongside the API.</span>
+    <span class="c1"># Uses SPAStaticFiles so client-side routing (e.g. /projects/{id}) falls</span>
+    <span class="c1"># back to index.html instead of returning 404.</span>
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;static&quot;</span>
@@ -210,9 +218,16 @@
             <span class="ow">and</span> <span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
         <span class="p">):</span>
             <span class="n">frontend_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="c1"># Starlette mounts only match paths with trailing slash.</span>
+            <span class="c1"># Add a redirect so /{app_name} → /{app_name}/ works.</span>
+            <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">frontend_prefix</span><span class="p">,</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_redirect</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">frontend_prefix</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+
             <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
                 <span class="n">frontend_prefix</span><span class="p">,</span>
-                <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                <span class="n">SPAStaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="p">)</span>
 
     <span class="c1"># Serve platform-level shared assets (e.g. shared.css) at the root.</span>
@@ -225,6 +240,42 @@
 
     <span class="k">return</span> <span class="n">parent</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a GET / route that lists all discovered apps as a simple HTML page.&quot;&quot;&quot;</span>
+    <span class="n">apps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
+
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">index</span><span class="p">():</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
+            <span class="n">has_frontend</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
+            <span class="n">has_api</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">&quot;frontend_only&quot;</span>
+            <span class="n">links</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">has_frontend</span><span class="p">:</span>
+                <span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;a href=&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/&quot;&gt;open&lt;/a&gt;&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">has_api</span><span class="p">:</span>
+                <span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;&lt;a href=&quot;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">}</span><span class="s1">/docs&quot;&gt;api docs&lt;/a&gt;&#39;</span>
+                <span class="p">)</span>
+            <span class="n">link_html</span> <span class="o">=</span> <span class="s2">&quot; · &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">links</span><span class="p">)</span> <span class="k">if</span> <span class="n">links</span> <span class="k">else</span> <span class="s2">&quot;(no routes)&quot;</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;li&gt;&lt;strong&gt;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="si">}</span><span class="s2">&lt;/strong&gt; — </span><span class="si">{</span><span class="n">link_html</span><span class="si">}</span><span class="s2">&lt;/li&gt;&quot;</span><span class="p">)</span>
+        <span class="n">app_list</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="k">if</span> <span class="n">items</span> <span class="k">else</span> <span class="s2">&quot;&lt;li&gt;No apps discovered.&lt;/li&gt;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;!doctype html&gt;&quot;</span>
+            <span class="s2">&quot;&lt;html&gt;&lt;head&gt;&lt;meta charset=&#39;utf-8&#39;&gt;&quot;</span>
+            <span class="s2">&quot;&lt;title&gt;enlace&lt;/title&gt;&quot;</span>
+            <span class="s2">&quot;&lt;style&gt;&quot;</span>
+            <span class="s2">&quot;body{font-family:system-ui,sans-serif;max-width:640px;&quot;</span>
+            <span class="s2">&quot;margin:40px auto;padding:0 20px;color:#333}&quot;</span>
+            <span class="s2">&quot;a{color:#2563eb} li{margin:8px 0}&quot;</span>
+            <span class="s2">&quot;&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&quot;</span>
+            <span class="s2">&quot;&lt;h1&gt;enlace&lt;/h1&gt;&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;&lt;p&gt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">apps</span><span class="p">)</span><span class="si">}</span><span class="s2"> app</span><span class="si">{</span><span class="s1">&#39;s&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">apps</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2"> running:&lt;/p&gt;&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;&lt;ul&gt;</span><span class="si">{</span><span class="n">app_list</span><span class="si">}</span><span class="s2">&lt;/ul&gt;&quot;</span>
+            <span class="s2">&quot;&lt;/body&gt;&lt;/html&gt;&quot;</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_make_proxy_for</span><span class="p">(</span><span class="n">app_config</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]:</span>

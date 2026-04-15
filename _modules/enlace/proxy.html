@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.proxy &mdash; enlace 0.0.1 documentation</title>
+  <title>enlace.proxy &mdash; enlace 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -52,6 +52,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
@@ -146,9 +147,7 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;http&quot;</span><span class="p">:</span>
             <span class="c1"># WebSocket proxying deferred to a future release</span>
-            <span class="k">await</span> <span class="n">_send_error</span><span class="p">(</span>
-                <span class="n">send</span><span class="p">,</span> <span class="mi">501</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;WebSocket proxying not yet supported&quot;</span>
-            <span class="p">)</span>
+            <span class="k">await</span> <span class="n">_send_error</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="mi">501</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;WebSocket proxying not yet supported&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="n">client</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_client</span><span class="p">()</span>
@@ -156,7 +155,7 @@
         <span class="c1"># Build the upstream path</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span><span class="p">):</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span><span class="p">):]</span> <span class="ow">or</span> <span class="s2">&quot;/&quot;</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span><span class="p">)</span> <span class="p">:]</span> <span class="ow">or</span> <span class="s2">&quot;/&quot;</span>
 
         <span class="n">query</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;query_string&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="n">url</span> <span class="o">=</span> <span class="n">path</span>
@@ -199,44 +198,53 @@
             <span class="n">response_headers</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;latin-1&quot;</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;latin-1&quot;</span><span class="p">))</span>
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">multi_items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-                <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;transfer-encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;connection&quot;</span><span class="p">,</span> <span class="s2">&quot;keep-alive&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;transfer-encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;connection&quot;</span><span class="p">,</span> <span class="s2">&quot;keep-alive&quot;</span><span class="p">)</span>
             <span class="p">]</span>
 
-            <span class="k">await</span> <span class="n">send</span><span class="p">({</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
-                <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">response_headers</span><span class="p">,</span>
-            <span class="p">})</span>
+            <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+                    <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">response_headers</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
 
             <span class="k">async</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">aiter_bytes</span><span class="p">():</span>
-                <span class="k">await</span> <span class="n">send</span><span class="p">({</span>
-                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">chunk</span><span class="p">,</span>
-                    <span class="s2">&quot;more_body&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                <span class="p">})</span>
+                <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">chunk</span><span class="p">,</span>
+                        <span class="s2">&quot;more_body&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
 
-            <span class="k">await</span> <span class="n">send</span><span class="p">({</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;more_body&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="p">})</span>
+            <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;more_body&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">aclose</span><span class="p">()</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send_error</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Send a simple error response.&quot;&quot;&quot;</span>
-    <span class="k">await</span> <span class="n">send</span><span class="p">({</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
-        <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="sa">b</span><span class="s2">&quot;content-type&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;text/plain&quot;</span><span class="p">)],</span>
-    <span class="p">})</span>
-    <span class="k">await</span> <span class="n">send</span><span class="p">({</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">body</span><span class="p">,</span>
-        <span class="s2">&quot;more_body&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">})</span>
+    <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
+            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="sa">b</span><span class="s2">&quot;content-type&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;text/plain&quot;</span><span class="p">)],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">body</span><span class="p">,</span>
+            <span class="s2">&quot;more_body&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>

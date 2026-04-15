@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.serve &mdash; enlace 0.0.1 documentation</title>
+  <title>enlace.serve &mdash; enlace 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/documentation_options.js?v=47de8214"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -52,6 +52,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
@@ -99,8 +100,10 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">errno</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">signal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
@@ -133,7 +136,34 @@
             <span class="n">proc</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
             <span class="n">proc</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 
-    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_port_available</span><span class="p">(</span><span class="n">host</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the port is available before starting uvicorn.</span>
+
+<span class="sd">    Raises SystemExit with an actionable error message if the port is in use.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sock</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EADDRINUSE</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ERROR: Address </span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2"> is already in use.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;  To see what&#39;s using it:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;    lsof -i :</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;  To kill whatever is on that port:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;    kill $(lsof -t -i :</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;  Or run enlace on a different port:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;    enlace serve --port </span><span class="si">{</span><span class="n">port</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">raise</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_uvicorn_cmd</span><span class="p">(</span>
@@ -167,7 +197,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_auto_allocate_ports</span><span class="p">(</span>
-    <span class="n">process_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">],</span> <span class="n">start_port</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">process_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">],</span>
+    <span class="n">start_port</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Assign ports to process-mode apps that don&#39;t have one.&quot;&quot;&quot;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
@@ -245,20 +276,29 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Mixed-mode path — run async supervisor</span>
         <span class="n">process_apps</span> <span class="o">=</span> <span class="n">_auto_allocate_ports</span><span class="p">(</span>
-            <span class="n">process_apps</span><span class="p">,</span> <span class="n">platform</span><span class="o">.</span><span class="n">process_port_start</span><span class="p">,</span>
+            <span class="n">process_apps</span><span class="p">,</span>
+            <span class="n">platform</span><span class="o">.</span><span class="n">process_port_start</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># Update the env so compose.py sees the allocated ports</span>
         <span class="n">_set_port_env</span><span class="p">(</span><span class="n">process_apps</span><span class="p">)</span>
         <span class="n">_serve_mixed</span><span class="p">(</span>
-            <span class="n">effective_host</span><span class="p">,</span> <span class="n">effective_port</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">reload_dirs</span><span class="p">,</span> <span class="n">process_apps</span><span class="p">,</span>
+            <span class="n">effective_host</span><span class="p">,</span>
+            <span class="n">effective_port</span><span class="p">,</span>
+            <span class="n">mode</span><span class="p">,</span>
+            <span class="n">reload_dirs</span><span class="p">,</span>
+            <span class="n">process_apps</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_serve_asgi_only</span><span class="p">(</span>
-    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reload_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">reload_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Original serve path: single Uvicorn subprocess.&quot;&quot;&quot;</span>
+    <span class="n">_check_port_available</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
     <span class="n">cmd</span> <span class="o">=</span> <span class="n">_build_uvicorn_cmd</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">reload_dirs</span><span class="p">)</span>
 
     <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGTERM</span><span class="p">,</span> <span class="n">_graceful_shutdown</span><span class="p">)</span>
@@ -268,9 +308,12 @@
     <span class="n">_children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proc</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">proc</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
         <span class="n">_graceful_shutdown</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span> <span class="ow">or</span> <span class="mi">0</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_serve_mixed</span><span class="p">(</span>
@@ -281,6 +324,7 @@
     <span class="n">process_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixed-mode serve: asyncio supervisor + gateway Uvicorn.&quot;&quot;&quot;</span>
+    <span class="n">_check_port_available</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.supervise</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManagedProcess</span><span class="p">,</span> <span class="n">supervise_all</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">():</span>
@@ -348,6 +392,7 @@
             <span class="n">port_map</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">port_map</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ENLACE_PROCESS_PORTS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">port_map</span><span class="p">)</span>
 </pre></div>
 

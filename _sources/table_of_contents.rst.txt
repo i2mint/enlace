@@ -8,6 +8,7 @@
    module_docs/enlace/compose
    module_docs/enlace/diagnose
    module_docs/enlace/discover
+   module_docs/enlace/frontend
    module_docs/enlace/proxy
    module_docs/enlace/serve
    module_docs/enlace/supervise

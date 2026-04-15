@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.tests.test_supervise &mdash; enlace 0.0.1 documentation</title>
+  <title>enlace.tests.test_supervise &mdash; enlace 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../_static/documentation_options.js?v=47de8214"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -52,6 +52,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/serve.html">enlace.serve</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
@@ -122,7 +123,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_http_server_command</span><span class="p">(</span><span class="n">port</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Command to start a Python HTTP server on the given port.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span>
-        <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span>
+        <span class="s2">&quot;-c&quot;</span><span class="p">,</span>
         <span class="sa">f</span><span class="s2">&quot;from http.server import HTTPServer, BaseHTTPRequestHandler; &quot;</span>
         <span class="sa">f</span><span class="s2">&quot;HTTPServer((&#39;127.0.0.1&#39;, </span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">), BaseHTTPRequestHandler)&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;.serve_forever()&quot;</span><span class="p">,</span>
@@ -132,6 +134,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_find_free_port</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Find an available TCP port.&quot;&quot;&quot;</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+
     <span class="k">with</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span>
         <span class="n">s</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">getsockname</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
@@ -149,6 +152,7 @@
 <a class="viewcode-back" href="../../../module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_start_and_stop">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_start_and_stop</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A process can be started and stopped cleanly.&quot;&quot;&quot;</span>
+
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">go</span><span class="p">():</span>
         <span class="n">proc</span> <span class="o">=</span> <span class="n">_make_proc</span><span class="p">(</span>
             <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;import time; time.sleep(60)&quot;</span><span class="p">],</span>
@@ -170,6 +174,7 @@
 <a class="viewcode-back" href="../../../module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_stop_already_exited">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_stop_already_exited</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stopping a process that already exited is a no-op.&quot;&quot;&quot;</span>
+
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">go</span><span class="p">():</span>
         <span class="n">proc</span> <span class="o">=</span> <span class="n">_make_proc</span><span class="p">(</span><span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;pass&quot;</span><span class="p">])</span>
         <span class="k">await</span> <span class="n">proc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
@@ -212,6 +217,7 @@
 <a class="viewcode-back" href="../../../module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_health_check_no_port">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_health_check_no_port</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;If no port is configured, health check passes immediately.&quot;&quot;&quot;</span>
+
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">go</span><span class="p">():</span>
         <span class="n">proc</span> <span class="o">=</span> <span class="n">_make_proc</span><span class="p">(</span>
             <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;import time; time.sleep(60)&quot;</span><span class="p">],</span>
@@ -264,6 +270,7 @@
 
     <span class="k">class</span><span class="w"> </span><span class="nc">FakeProcess</span><span class="p">:</span>
         <span class="n">returncode</span> <span class="o">=</span> <span class="mi">1</span>
+
     <span class="n">proc</span><span class="o">.</span><span class="n">process</span> <span class="o">=</span> <span class="n">FakeProcess</span><span class="p">()</span>
 
     <span class="k">assert</span> <span class="n">proc</span><span class="o">.</span><span class="n">should_restart</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">True</span></div>
@@ -278,6 +285,7 @@
 
     <span class="k">class</span><span class="w"> </span><span class="nc">FakeProcess</span><span class="p">:</span>
         <span class="n">returncode</span> <span class="o">=</span> <span class="mi">0</span>
+
     <span class="n">proc</span><span class="o">.</span><span class="n">process</span> <span class="o">=</span> <span class="n">FakeProcess</span><span class="p">()</span>
 
     <span class="k">assert</span> <span class="n">proc</span><span class="o">.</span><span class="n">should_restart</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span></div>
@@ -292,6 +300,7 @@
 
     <span class="k">class</span><span class="w"> </span><span class="nc">FakeProcess</span><span class="p">:</span>
         <span class="n">returncode</span> <span class="o">=</span> <span class="mi">1</span>
+
     <span class="n">proc</span><span class="o">.</span><span class="n">process</span> <span class="o">=</span> <span class="n">FakeProcess</span><span class="p">()</span>
 
     <span class="k">assert</span> <span class="n">proc</span><span class="o">.</span><span class="n">should_restart</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span></div>
@@ -306,6 +315,7 @@
 
     <span class="k">class</span><span class="w"> </span><span class="nc">FakeProcess</span><span class="p">:</span>
         <span class="n">returncode</span> <span class="o">=</span> <span class="mi">0</span>
+
     <span class="n">proc</span><span class="o">.</span><span class="n">process</span> <span class="o">=</span> <span class="n">FakeProcess</span><span class="p">()</span>
 
     <span class="k">assert</span> <span class="n">proc</span><span class="o">.</span><span class="n">should_restart</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">True</span></div>
@@ -321,6 +331,7 @@
 
     <span class="k">class</span><span class="w"> </span><span class="nc">FakeProcess</span><span class="p">:</span>
         <span class="n">returncode</span> <span class="o">=</span> <span class="mi">1</span>
+
     <span class="n">proc</span><span class="o">.</span><span class="n">process</span> <span class="o">=</span> <span class="n">FakeProcess</span><span class="p">()</span>
 
     <span class="k">assert</span> <span class="n">proc</span><span class="o">.</span><span class="n">should_restart</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span>
@@ -394,6 +405,7 @@
 <a class="viewcode-back" href="../../../module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_log_streaming">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_log_streaming</span><span class="p">(</span><span class="n">capsys</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Process stdout is captured and printed with name prefix.&quot;&quot;&quot;</span>
+
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">go</span><span class="p">():</span>
         <span class="n">proc</span> <span class="o">=</span> <span class="n">_make_proc</span><span class="p">(</span>
             <span class="n">command</span><span class="o">=</span><span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;print(&#39;hello from child&#39;)&quot;</span><span class="p">],</span>
