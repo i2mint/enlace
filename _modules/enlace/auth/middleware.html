@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.auth.middleware &mdash; enlace 0.0.7 documentation</title>
+  <title>enlace.auth.middleware &mdash; enlace 0.0.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=bbaf98b3"></script>
+      <script src="../../../_static/documentation_options.js?v=53b53b71"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -465,6 +465,13 @@
         <span class="n">cookie_header</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_cookie</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">signed</span><span class="si">}</span><span class="s2">; Path=/; SameSite=Lax&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span>
             <span class="s2">&quot;latin-1&quot;</span>
         <span class="p">)</span>
+
+        <span class="c1"># Expose the minted unsigned value to downstream handlers (e.g.</span>
+        <span class="c1"># /auth/csrf) so they can return it in the body without minting a</span>
+        <span class="c1"># second token — otherwise two Set-Cookie headers race and the</span>
+        <span class="c1"># body-vs-cookie values disagree.</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">state</span><span class="p">[</span><span class="s2">&quot;csrf_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span>
 
         <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wrapped_send</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">:</span>
