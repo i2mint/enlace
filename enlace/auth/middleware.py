@@ -278,9 +278,13 @@ class CSRFMiddleware:
     present. On state-changing requests, requires the cookie and an
     ``X-CSRF-Token`` header to match after signature verification.
 
-    Exempt paths skip the check entirely — typically OAuth callbacks and
-    the shared-login endpoint, which receive state-changing requests from
-    cross-origin redirects.
+    Exempt paths skip the check entirely. Defaults exempt sub-app APIs
+    under ``/api/`` because the ``enlace_session`` cookie is ``SameSite=Lax``:
+    a cross-site POST from an attacker site arrives without credentials and
+    is rejected by PlatformAuthMiddleware regardless of CSRF. This keeps
+    pre-enlace apps working out of the box without each having to implement
+    the ``/auth/csrf`` double-submit flow. The auth endpoints themselves
+    (``/auth/login``, ``/auth/register``, ``/auth/logout``) stay protected.
     """
 
     def __init__(
@@ -290,7 +294,11 @@ class CSRFMiddleware:
         signing_key: str,
         cookie_name: str = "enlace_csrf",
         header_name: str = "X-CSRF-Token",
-        exempt_prefixes: Iterable[str] = ("/auth/callback", "/auth/login/"),
+        exempt_prefixes: Iterable[str] = (
+            "/auth/callback",
+            "/auth/login/",
+            "/api/",
+        ),
     ):
         self.app = app
         self._signing_key = signing_key
