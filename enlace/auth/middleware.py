@@ -190,11 +190,23 @@ class PlatformAuthMiddleware:
         if rule is not None:
             state["app_id"] = rule.app_id
 
+        cookies = _get_cookies(scope)
+
         if level in ("public", "local"):
+            # Public paths still opportunistically populate user_id if the
+            # session cookie is valid, so downstream handlers (e.g. /_apps)
+            # can filter by access level for authenticated users.
+            token = cookies.get(self._cookie)
+            if token:
+                session_id = verify_cookie(
+                    token, self._signing_key, max_age=self._max_age, salt="session"
+                )
+                session = self._sessions.get(session_id) if session_id else None
+                if session is not None:
+                    state["user_id"] = session.get("user_id")
+                    state["user_email"] = session.get("email")
             await self.app(scope, receive, send)
             return
-
-        cookies = _get_cookies(scope)
 
         if level == "protected:shared":
             app_id = rule.app_id if rule is not None else ""

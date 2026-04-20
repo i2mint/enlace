@@ -1,4 +1,4 @@
-"""Auth HTTP routes: register, login, logout, shared-login.
+"""Auth HTTP routes: register, login, logout, shared-login, csrf.
 
 OAuth routes live in ``enlace.auth.oauth`` and are attached separately so the
 Authlib dependency stays lazy.
@@ -6,13 +6,14 @@ Authlib dependency stays lazy.
 
 from __future__ import annotations
 
+import secrets
 import time
 from typing import Any, Callable, Optional
 
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr
 
-from enlace.auth.cookies import sign_cookie
+from enlace.auth.cookies import sign_cookie, verify_cookie
 from enlace.auth.passwords import hash_password, verify_password
 from enlace.auth.sessions import SessionStore
 
@@ -109,8 +110,6 @@ def make_auth_router(
 
     @router.post("/logout")
     async def logout(request: Request, response: Response) -> dict[str, Any]:
-        from enlace.auth.cookies import verify_cookie
-
         token = request.cookies.get(cookie_name)
         if token:
             session_id = verify_cookie(token, signing_key, salt="session")
@@ -148,5 +147,31 @@ def make_auth_router(
             "user_id": getattr(request.state, "user_id", None),
             "email": getattr(request.state, "user_email", None),
         }
+
+    @router.get("/csrf")
+    async def csrf(request: Request, response: Response) -> dict[str, Any]:
+        """Return the unsigned CSRF token, priming the cookie if needed.
+
+        Frontends call this once on load and send the returned value in the
+        ``X-CSRF-Token`` header on state-changing requests. The paired signed
+        cookie is either reused (if already set by CSRFMiddleware on a prior
+        safe request) or created here.
+        """
+        token: Optional[str] = None
+        existing = request.cookies.get("enlace_csrf")
+        if existing:
+            token = verify_cookie(existing, signing_key, salt="csrf")
+        if token is None:
+            token = secrets.token_urlsafe(32)
+            signed = sign_cookie(token, signing_key, salt="csrf")
+            attrs = [
+                f"enlace_csrf={signed}",
+                "Path=/",
+                "SameSite=Lax",
+            ]
+            if secure_cookies:
+                attrs.append("Secure")
+            response.headers.append("set-cookie", "; ".join(attrs))
+        return {"csrf": token}
 
     return router

@@ -158,6 +158,14 @@ class PlatformConfig(BaseModel):
         default=True,
         description="Serve an auto-generated index page at / listing all apps",
     )
+    landing_app: Optional[str] = Field(
+        default=None,
+        description=(
+            "Name of a discovered app whose frontend should serve /. "
+            "Overrides the built-in index_page. The app's frontend assets "
+            "replace the default enlace index."
+        ),
+    )
     domain: str = "localhost"
     backend_port: int = 8000
     frontend_port: int = 3000

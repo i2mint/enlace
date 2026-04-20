@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount
@@ -99,7 +99,24 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     # Auth + store wiring (pure ASGI middleware only — no BaseHTTPMiddleware).
     _wire_auth_and_stores(parent, config)
 
-    if config.index_page:
+    # JSON listing is always on (cheap, useful for frontends even when the
+    # HTML index_page is disabled).
+    _add_apps_listing_route(parent, config)
+
+    # landing_app takes precedence over the default Python index. When set
+    # to a discovered app's name, the later frontend-mount loop will mount
+    # that app's frontend at / (see below). The built-in index is skipped.
+    landing_app_name = config.landing_app
+    if landing_app_name and not any(
+        a.name == landing_app_name for a in config.apps
+    ):
+        raise ValueError(
+            f"platform.landing_app = {landing_app_name!r} but no such app "
+            f"was discovered. Known apps: "
+            f"{sorted(a.name for a in config.apps)}"
+        )
+
+    if config.index_page and not landing_app_name:
         _add_index_route(parent, config)
 
     for prefix, app_id, sub_app in sub_apps:
@@ -119,12 +136,18 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     # Mounted at /{app_name}/ so the frontend is accessible alongside the API.
     # Uses SPAStaticFiles so client-side routing (e.g. /projects/{id}) falls
     # back to index.html instead of returning 404.
+    # The landing_app (if any) is mounted LAST at / so it catches the root.
+    landing_app_config: Optional[AppConfig] = None
     for app_config in config.apps:
         if (
             app_config.mode != "static"
             and app_config.frontend_dir
             and app_config.frontend_dir.is_dir()
         ):
+            if app_config.name == landing_app_name:
+                landing_app_config = app_config
+                # Still also mount at /{name}/ so the app is reachable by
+                # name; some deployments may link to both.
             frontend_prefix = f"/{app_config.name}"
 
             # Starlette mounts only match paths with trailing slash.
@@ -138,6 +161,15 @@ def build_backend(config: PlatformConfig) -> FastAPI:
                 SPAStaticFiles(directory=str(app_config.frontend_dir), html=True),
             )
 
+    # landing_app: mount the chosen app's frontend at / as well, so the
+    # platform's root URL serves it instead of the default Python index.
+    # Mounted BEFORE shared_assets_dir so the landing's index.html wins at /.
+    if landing_app_config is not None:
+        parent.mount(
+            "/",
+            SPAStaticFiles(directory=str(landing_app_config.frontend_dir), html=True),
+        )
+
     # Serve platform-level shared assets (e.g. shared.css) at the root.
     # Mounted last so it never shadows API or app-specific routes.
     if config.shared_assets_dir and config.shared_assets_dir.is_dir():
@@ -147,6 +179,57 @@ def build_backend(config: PlatformConfig) -> FastAPI:
         )
 
     return parent
+
+
+def _can_access(access: str, user_id: Optional[str]) -> bool:
+    """Whether a request with the given user_id can see an app of this access level.
+
+    `public` / `local` → always.
+    `protected:user`   → only if the request is authenticated (user_id set).
+    `protected:shared` → visible in the listing either way (gated at open-time,
+                         not discovery-time — users should know the app exists
+                         so they can ask for the password).
+    """
+    if access in ("public", "local", "protected:shared"):
+        return True
+    if access == "protected:user":
+        return user_id is not None
+    return False
+
+
+def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
+    """Add GET /_apps returning a JSON list filtered by the caller's access.
+
+    Used by frontend landing pages (e.g. ``apps/landing/``) to render the
+    app grid. The response is deliberately minimal — just what the UI needs.
+    """
+    apps = config.apps
+
+    @parent.get("/_apps")
+    async def apps_listing(request: Request) -> dict:
+        user_id = getattr(request.state, "user_id", None)
+        user_email = getattr(request.state, "user_email", None)
+        items = []
+        for app in apps:
+            if not _can_access(app.access, user_id):
+                continue
+            items.append(
+                {
+                    "name": app.name,
+                    "display_name": app.display_name,
+                    "route": f"/{app.name}/",
+                    "api_route": app.route_prefix,
+                    "access": app.access,
+                    "has_frontend": bool(
+                        app.frontend_dir and app.frontend_dir.is_dir()
+                    ),
+                    "has_api": app.app_type != "frontend_only",
+                }
+            )
+        return {
+            "apps": items,
+            "user": {"id": user_id, "email": user_email} if user_id else None,
+        }
 
 
 def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
@@ -239,6 +322,9 @@ def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
         user_data_backend = user_data_factory("user_data")
 
     # Build access rules and shared-password lookup.
+    # Two rules per app: the API prefix (/api/{name}) AND the frontend prefix
+    # (/{name}) — otherwise browser requests to the frontend fall through to
+    # the middleware's deny-by-default clause (issue #7).
     shared_hashes: dict[str, str] = {}
     access_rules: list[AccessRule] = []
     protected_user_apps: set[str] = set()
@@ -258,6 +344,22 @@ def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
                 shared_password_hash=h,
             )
         )
+        frontend_prefix = f"/{app.name}"
+        if frontend_prefix != app.route_prefix:
+            access_rules.append(
+                AccessRule(
+                    prefix=frontend_prefix,
+                    level=app.access,
+                    app_id=app.name,
+                    shared_password_hash=h,
+                )
+            )
+    # Root (/) and shared static assets (/shared.css etc) — public. The platform
+    # landing page must be reachable to anyone; per-app gating already covers
+    # everything beneath a more specific prefix via longest-prefix match.
+    access_rules.append(
+        AccessRule(prefix="/", level="public", app_id="_root")
+    )
 
     auth_router = make_auth_router(
         session_store=session_store,
