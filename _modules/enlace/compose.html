@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.0.8 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.0.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=53b53b71"></script>
+      <script src="../../_static/documentation_options.js?v=f7cdbf68"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -295,19 +295,30 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_can_access</span><span class="p">(</span><span class="n">access</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether a request with the given user_id can see an app of this access level.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_can_access</span><span class="p">(</span>
+    <span class="n">access</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">user_email</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">allowed_users</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether a request can see an app of this access level in /_apps.</span>
 
 <span class="sd">    `public` / `local` → always.</span>
-<span class="sd">    `protected:user`   → only if the request is authenticated (user_id set).</span>
-<span class="sd">    `protected:shared` → visible in the listing either way (gated at open-time,</span>
-<span class="sd">                         not discovery-time — users should know the app exists</span>
+<span class="sd">    `protected:user`   → only if authenticated AND (no allowed_users list, or</span>
+<span class="sd">                         the user&#39;s email is in it).</span>
+<span class="sd">    `protected:shared` → visible either way (gated at open-time, not</span>
+<span class="sd">                         discovery-time — users should know the app exists</span>
 <span class="sd">                         so they can ask for the password).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">access</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;public&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;protected:shared&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">if</span> <span class="n">access</span> <span class="o">==</span> <span class="s2">&quot;protected:user&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">allowed_users</span><span class="p">:</span>
+            <span class="n">who</span> <span class="o">=</span> <span class="n">user_email</span> <span class="ow">or</span> <span class="n">user_id</span>
+            <span class="k">return</span> <span class="n">who</span> <span class="ow">in</span> <span class="n">allowed_users</span>
+        <span class="k">return</span> <span class="kc">True</span>
     <span class="k">return</span> <span class="kc">False</span>
 
 
@@ -316,8 +327,10 @@
 
 <span class="sd">    Used by frontend landing pages (e.g. ``apps/landing/``) to render the</span>
 <span class="sd">    app grid. The response is deliberately minimal — just what the UI needs.</span>
+<span class="sd">    The landing app itself is hidden — it&#39;s the shell, not a listable app.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">apps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
+    <span class="n">landing_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">landing_app</span>
 
     <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_apps&quot;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apps_listing</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -325,7 +338,9 @@
         <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_email&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_name</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">user_email</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">allowed_users</span><span class="p">):</span>
                 <span class="k">continue</span>
             <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
@@ -450,12 +465,14 @@
                 <span class="n">shared_hashes</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
         <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span> <span class="o">==</span> <span class="s2">&quot;protected:user&quot;</span><span class="p">:</span>
             <span class="n">protected_user_apps</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">allowed_users</span><span class="p">)</span>
         <span class="n">access_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">AccessRule</span><span class="p">(</span>
                 <span class="n">prefix</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
                 <span class="n">level</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
                 <span class="n">app_id</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="n">shared_password_hash</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+                <span class="n">allowed_users</span><span class="o">=</span><span class="n">allowed</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">frontend_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -466,6 +483,7 @@
                     <span class="n">level</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
                     <span class="n">app_id</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="n">shared_password_hash</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+                    <span class="n">allowed_users</span><span class="o">=</span><span class="n">allowed</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
     <span class="c1"># Root (/) and shared static assets (/shared.css etc) — public. The platform</span>
