@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.auth.middleware &mdash; enlace 0.0.6 documentation</title>
+  <title>enlace.auth.middleware &mdash; enlace 0.0.7 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=1fd71caa"></script>
+      <script src="../../../_static/documentation_options.js?v=bbaf98b3"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -308,11 +308,23 @@
         <span class="k">if</span> <span class="n">rule</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">state</span><span class="p">[</span><span class="s2">&quot;app_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rule</span><span class="o">.</span><span class="n">app_id</span>
 
+        <span class="n">cookies</span> <span class="o">=</span> <span class="n">_get_cookies</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">level</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;public&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">):</span>
+            <span class="c1"># Public paths still opportunistically populate user_id if the</span>
+            <span class="c1"># session cookie is valid, so downstream handlers (e.g. /_apps)</span>
+            <span class="c1"># can filter by access level for authenticated users.</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="n">cookies</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cookie</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+                <span class="n">session_id</span> <span class="o">=</span> <span class="n">verify_cookie</span><span class="p">(</span>
+                    <span class="n">token</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_signing_key</span><span class="p">,</span> <span class="n">max_age</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_age</span><span class="p">,</span> <span class="n">salt</span><span class="o">=</span><span class="s2">&quot;session&quot;</span>
+                <span class="p">)</span>
+                <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sessions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">session_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">session_id</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">session</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">)</span>
+                    <span class="n">state</span><span class="p">[</span><span class="s2">&quot;user_email&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;email&quot;</span><span class="p">)</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
             <span class="k">return</span>
-
-        <span class="n">cookies</span> <span class="o">=</span> <span class="n">_get_cookies</span><span class="p">(</span><span class="n">scope</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s2">&quot;protected:shared&quot;</span><span class="p">:</span>
             <span class="n">app_id</span> <span class="o">=</span> <span class="n">rule</span><span class="o">.</span><span class="n">app_id</span> <span class="k">if</span> <span class="n">rule</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>

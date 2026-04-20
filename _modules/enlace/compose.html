@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.0.6 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.0.7 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=1fd71caa"></script>
+      <script src="../../_static/documentation_options.js?v=bbaf98b3"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -127,7 +127,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.cors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mount</span>
@@ -214,7 +214,24 @@
     <span class="c1"># Auth + store wiring (pure ASGI middleware only — no BaseHTTPMiddleware).</span>
     <span class="n">_wire_auth_and_stores</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">index_page</span><span class="p">:</span>
+    <span class="c1"># JSON listing is always on (cheap, useful for frontends even when the</span>
+    <span class="c1"># HTML index_page is disabled).</span>
+    <span class="n">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># landing_app takes precedence over the default Python index. When set</span>
+    <span class="c1"># to a discovered app&#39;s name, the later frontend-mount loop will mount</span>
+    <span class="c1"># that app&#39;s frontend at / (see below). The built-in index is skipped.</span>
+    <span class="n">landing_app_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">landing_app</span>
+    <span class="k">if</span> <span class="n">landing_app_name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_app_name</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;platform.landing_app = </span><span class="si">{</span><span class="n">landing_app_name</span><span class="si">!r}</span><span class="s2"> but no such app &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;was discovered. Known apps: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">index_page</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">landing_app_name</span><span class="p">:</span>
         <span class="n">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">app_id</span><span class="p">,</span> <span class="n">sub_app</span> <span class="ow">in</span> <span class="n">sub_apps</span><span class="p">:</span>
@@ -234,12 +251,18 @@
     <span class="c1"># Mounted at /{app_name}/ so the frontend is accessible alongside the API.</span>
     <span class="c1"># Uses SPAStaticFiles so client-side routing (e.g. /projects/{id}) falls</span>
     <span class="c1"># back to index.html instead of returning 404.</span>
+    <span class="c1"># The landing_app (if any) is mounted LAST at / so it catches the root.</span>
+    <span class="n">landing_app_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;static&quot;</span>
             <span class="ow">and</span> <span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span>
             <span class="ow">and</span> <span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
         <span class="p">):</span>
+            <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_app_name</span><span class="p">:</span>
+                <span class="n">landing_app_config</span> <span class="o">=</span> <span class="n">app_config</span>
+                <span class="c1"># Still also mount at /{name}/ so the app is reachable by</span>
+                <span class="c1"># name; some deployments may link to both.</span>
             <span class="n">frontend_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
 
             <span class="c1"># Starlette mounts only match paths with trailing slash.</span>
@@ -253,6 +276,15 @@
                 <span class="n">SPAStaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="p">)</span>
 
+    <span class="c1"># landing_app: mount the chosen app&#39;s frontend at / as well, so the</span>
+    <span class="c1"># platform&#39;s root URL serves it instead of the default Python index.</span>
+    <span class="c1"># Mounted BEFORE shared_assets_dir so the landing&#39;s index.html wins at /.</span>
+    <span class="k">if</span> <span class="n">landing_app_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
+            <span class="s2">&quot;/&quot;</span><span class="p">,</span>
+            <span class="n">SPAStaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">landing_app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+
     <span class="c1"># Serve platform-level shared assets (e.g. shared.css) at the root.</span>
     <span class="c1"># Mounted last so it never shadows API or app-specific routes.</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">shared_assets_dir</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">shared_assets_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
@@ -263,6 +295,57 @@
 
     <span class="k">return</span> <span class="n">parent</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_can_access</span><span class="p">(</span><span class="n">access</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether a request with the given user_id can see an app of this access level.</span>
+
+<span class="sd">    `public` / `local` → always.</span>
+<span class="sd">    `protected:user`   → only if the request is authenticated (user_id set).</span>
+<span class="sd">    `protected:shared` → visible in the listing either way (gated at open-time,</span>
+<span class="sd">                         not discovery-time — users should know the app exists</span>
+<span class="sd">                         so they can ask for the password).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">access</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;public&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;protected:shared&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">access</span> <span class="o">==</span> <span class="s2">&quot;protected:user&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add GET /_apps returning a JSON list filtered by the caller&#39;s access.</span>
+
+<span class="sd">    Used by frontend landing pages (e.g. ``apps/landing/``) to render the</span>
+<span class="sd">    app grid. The response is deliberately minimal — just what the UI needs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">apps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
+
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_apps&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apps_listing</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_email&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
+                    <span class="s2">&quot;route&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;api_route&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
+                    <span class="s2">&quot;access&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
+                    <span class="s2">&quot;has_frontend&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span>
+                        <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
+                    <span class="p">),</span>
+                    <span class="s2">&quot;has_api&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">&quot;frontend_only&quot;</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;apps&quot;</span><span class="p">:</span> <span class="n">items</span><span class="p">,</span>
+            <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">user_email</span><span class="p">}</span> <span class="k">if</span> <span class="n">user_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -355,6 +438,9 @@
         <span class="n">user_data_backend</span> <span class="o">=</span> <span class="n">user_data_factory</span><span class="p">(</span><span class="s2">&quot;user_data&quot;</span><span class="p">)</span>
 
     <span class="c1"># Build access rules and shared-password lookup.</span>
+    <span class="c1"># Two rules per app: the API prefix (/api/{name}) AND the frontend prefix</span>
+    <span class="c1"># (/{name}) — otherwise browser requests to the frontend fall through to</span>
+    <span class="c1"># the middleware&#39;s deny-by-default clause (issue #7).</span>
     <span class="n">shared_hashes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">access_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AccessRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">protected_user_apps</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
@@ -374,6 +460,22 @@
                 <span class="n">shared_password_hash</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
+        <span class="n">frontend_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">frontend_prefix</span> <span class="o">!=</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">:</span>
+            <span class="n">access_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">AccessRule</span><span class="p">(</span>
+                    <span class="n">prefix</span><span class="o">=</span><span class="n">frontend_prefix</span><span class="p">,</span>
+                    <span class="n">level</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
+                    <span class="n">app_id</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">shared_password_hash</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="c1"># Root (/) and shared static assets (/shared.css etc) — public. The platform</span>
+    <span class="c1"># landing page must be reachable to anyone; per-app gating already covers</span>
+    <span class="c1"># everything beneath a more specific prefix via longest-prefix match.</span>
+    <span class="n">access_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">AccessRule</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;public&quot;</span><span class="p">,</span> <span class="n">app_id</span><span class="o">=</span><span class="s2">&quot;_root&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="n">auth_router</span> <span class="o">=</span> <span class="n">make_auth_router</span><span class="p">(</span>
         <span class="n">session_store</span><span class="o">=</span><span class="n">session_store</span><span class="p">,</span>
