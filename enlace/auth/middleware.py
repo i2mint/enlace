@@ -55,6 +55,10 @@ class AccessRule:
     level: str  # "public" | "protected:shared" | "protected:user" | "local"
     app_id: str
     shared_password_hash: Optional[str] = None
+    # Optional user whitelist (tuple for hashability). When non-empty, only
+    # sessions whose email is in this set can access the app. Evaluated after
+    # the standard session check, so it's a second gate on top of level.
+    allowed_users: tuple[str, ...] = ()
 
 
 def _normalize_path(raw_path: str) -> Optional[str]:
@@ -239,6 +243,11 @@ class PlatformAuthMiddleware:
                 return await self._deny(scope, send, "user")
             state["user_id"] = session.get("user_id")
             state["user_email"] = session.get("email")
+            # Optional per-app user whitelist.
+            if rule is not None and rule.allowed_users:
+                who = state.get("user_email") or state.get("user_id")
+                if who not in rule.allowed_users:
+                    return await self._deny(scope, send, "forbidden")
             await self.app(scope, receive, send)
             return
 

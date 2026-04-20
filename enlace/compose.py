@@ -179,19 +179,30 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     return parent
 
 
-def _can_access(access: str, user_id: Optional[str]) -> bool:
-    """Whether a request with the given user_id can see an app of this access level.
+def _can_access(
+    access: str,
+    user_id: Optional[str],
+    user_email: Optional[str],
+    allowed_users: list[str],
+) -> bool:
+    """Whether a request can see an app of this access level in /_apps.
 
     `public` / `local` → always.
-    `protected:user`   → only if the request is authenticated (user_id set).
-    `protected:shared` → visible in the listing either way (gated at open-time,
-                         not discovery-time — users should know the app exists
+    `protected:user`   → only if authenticated AND (no allowed_users list, or
+                         the user's email is in it).
+    `protected:shared` → visible either way (gated at open-time, not
+                         discovery-time — users should know the app exists
                          so they can ask for the password).
     """
     if access in ("public", "local", "protected:shared"):
         return True
     if access == "protected:user":
-        return user_id is not None
+        if user_id is None:
+            return False
+        if allowed_users:
+            who = user_email or user_id
+            return who in allowed_users
+        return True
     return False
 
 
@@ -200,8 +211,10 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
 
     Used by frontend landing pages (e.g. ``apps/landing/``) to render the
     app grid. The response is deliberately minimal — just what the UI needs.
+    The landing app itself is hidden — it's the shell, not a listable app.
     """
     apps = config.apps
+    landing_name = config.landing_app
 
     @parent.get("/_apps")
     async def apps_listing(request: Request) -> dict:
@@ -209,7 +222,9 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
         user_email = getattr(request.state, "user_email", None)
         items = []
         for app in apps:
-            if not _can_access(app.access, user_id):
+            if app.name == landing_name:
+                continue
+            if not _can_access(app.access, user_id, user_email, app.allowed_users):
                 continue
             items.append(
                 {
@@ -334,12 +349,14 @@ def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
                 shared_hashes[app.name] = h
         if app.access == "protected:user":
             protected_user_apps.add(app.name)
+        allowed = tuple(app.allowed_users)
         access_rules.append(
             AccessRule(
                 prefix=app.route_prefix,
                 level=app.access,
                 app_id=app.name,
                 shared_password_hash=h,
+                allowed_users=allowed,
             )
         )
         frontend_prefix = f"/{app.name}"
@@ -350,6 +367,7 @@ def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
                     level=app.access,
                     app_id=app.name,
                     shared_password_hash=h,
+                    allowed_users=allowed,
                 )
             )
     # Root (/) and shared static assets (/shared.css etc) — public. The platform

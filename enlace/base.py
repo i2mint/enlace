@@ -81,6 +81,15 @@ class AppConfig(BaseModel):
     source_dir: Optional[Path] = None
     access: AccessLevel = "local"
     shared_password_env: Optional[str] = None
+    allowed_users: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Restrict access to these specific user emails. When non-empty, "
+            "requests authenticated as anyone else are rejected (for "
+            "access=protected:user apps) or the app is hidden (from /_apps). "
+            "Empty list means any authenticated user allowed."
+        ),
+    )
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
 
