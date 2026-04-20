@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "enlace"
-version = "0.0.6"
+version = "0.0.7"
 description = "Serve all your web apps from a single process — they don't import it, they don't know it's there"
 readme = "README.md"
 requires-python = ">=3.10"
