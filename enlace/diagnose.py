@@ -56,6 +56,13 @@ class Category(str, Enum):
     WEBSOCKET = "websocket"
     SERVER_SIDE_RENDERING = "ssr"
     ENV_CONFIG = "env_config"
+    SUBAPP_AUTH_MIDDLEWARE = "subapp_auth_middleware"
+    CLIENT_IDENTITY_HEADER = "client_identity_header"
+    HARDCODED_USER_ID = "hardcoded_user_id"
+    SESSION_COOKIE_IN_SUBAPP = "session_cookie_in_subapp"
+    STORE_IMPORT_IN_APP = "store_import_in_app"
+    UNSAFE_KEY_IN_STORE = "unsafe_key_in_store"
+    MISSING_SIGNING_KEY = "missing_signing_key"
 
 
 @dataclass
@@ -558,6 +565,12 @@ def _check_python_backend(app_dir: Path, report: DiagnosticReport):
         _scan_python_for_hardcoded_ports(source, rel, report)
         _scan_python_for_hardcoded_urls(source, rel, report)
         _scan_python_for_bare_imports(source, rel, py_file, app_dir, report)
+        _scan_python_for_subapp_auth(source, rel, report)
+        _scan_python_for_identity_headers(source, rel, report)
+        _scan_python_for_hardcoded_user_id(source, rel, report)
+        _scan_python_for_session_cookie(source, rel, report)
+        _scan_python_for_enlace_imports(source, rel, report)
+        _scan_python_for_unsafe_store_keys(source, rel, report)
 
 
 def _scan_python_for_cors(source: str, rel: str, report: DiagnosticReport):
@@ -762,6 +775,186 @@ def _scan_python_for_bare_imports(
                 ),
             )
         )
+
+
+def _scan_python_for_subapp_auth(source: str, rel: str, report: DiagnosticReport):
+    """Detect sub-app auth middleware that would conflict with platform auth."""
+    pattern = re.compile(
+        r"""(AuthenticationMiddleware|SessionMiddleware|add_middleware\s*\([^)]*[Aa]uth)"""
+    )
+    for i, line in enumerate(source.splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        if pattern.search(line):
+            report.issues.append(
+                Issue(
+                    severity=Severity.CRITICAL,
+                    category=Category.SUBAPP_AUTH_MIDDLEWARE,
+                    summary="Sub-app adds its own auth middleware",
+                    file_path=rel,
+                    line_number=i,
+                    detail=(
+                        "Under enlace the platform owns authentication. An "
+                        "auth middleware inside a sub-app either duplicates "
+                        "platform checks or — worse — silently overrides "
+                        "request.state.user_id with spoofable values."
+                    ),
+                    suggestion=(
+                        "Gate the middleware on standalone mode:\n"
+                        "  import os\n"
+                        "  if not os.environ.get('ENLACE_MANAGED'):\n"
+                        "      app.add_middleware(AuthenticationMiddleware, ...)\n"
+                        "Under enlace, read request.state.user_id instead."
+                    ),
+                )
+            )
+            return
+
+
+def _scan_python_for_identity_headers(source: str, rel: str, report: DiagnosticReport):
+    """Flag apps that read client identity headers directly."""
+    pattern = re.compile(
+        r"""headers(?:\.get)?\s*\(?\s*['"](?:x-user-id|x-user-email|x-forwarded-user|x-forwarded-email|x-remote-user)['"]""",
+        re.IGNORECASE,
+    )
+    for i, line in enumerate(source.splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        if pattern.search(line):
+            report.issues.append(
+                Issue(
+                    severity=Severity.CRITICAL,
+                    category=Category.CLIENT_IDENTITY_HEADER,
+                    summary="App reads client-provided identity header",
+                    file_path=rel,
+                    line_number=i,
+                    detail=(
+                        "Clients can forge these headers; enlace strips them "
+                        "before handing the request to your app. Reading them "
+                        "is always wrong."
+                    ),
+                    suggestion=(
+                        "Use request.state.user_id with a standalone fallback:\n"
+                        "  user_id = getattr(request.state, 'user_id', None) \\\n"
+                        "             or os.environ.get('DEV_USER')"
+                    ),
+                )
+            )
+            return
+
+
+def _scan_python_for_hardcoded_user_id(source: str, rel: str, report: DiagnosticReport):
+    """Flag literal user-id assignments."""
+    pattern = re.compile(r"""user_id\s*=\s*['"]([A-Za-z0-9_@.+-]+)['"]""")
+    for i, line in enumerate(source.splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        m = pattern.search(line)
+        if m:
+            report.issues.append(
+                Issue(
+                    severity=Severity.MEDIUM,
+                    category=Category.HARDCODED_USER_ID,
+                    summary=f"Hardcoded user_id literal: {m.group(1)!r}",
+                    file_path=rel,
+                    line_number=i,
+                    suggestion=(
+                        "Read user_id from request.state; for standalone "
+                        "development fall back to os.environ['DEV_USER']."
+                    ),
+                )
+            )
+            return
+
+
+def _scan_python_for_session_cookie(source: str, rel: str, report: DiagnosticReport):
+    """Flag set_cookie calls for session-looking cookie names."""
+    pattern = re.compile(
+        r"""set_cookie\s*\([^)]*['"](session|sessionid|auth|auth_token)['"]""",
+        re.IGNORECASE,
+    )
+    for i, line in enumerate(source.splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        if pattern.search(line):
+            report.issues.append(
+                Issue(
+                    severity=Severity.MEDIUM,
+                    category=Category.SESSION_COOKIE_IN_SUBAPP,
+                    summary="Sub-app sets its own session cookie",
+                    file_path=rel,
+                    line_number=i,
+                    detail=(
+                        "Under enlace the platform issues the session cookie; "
+                        "a sub-app writing its own usually means the app still "
+                        "thinks it's doing auth."
+                    ),
+                    suggestion=(
+                        "Delete the set_cookie call and rely on "
+                        "request.state.user_id. Guard with ENLACE_MANAGED if "
+                        "you need the cookie in standalone mode."
+                    ),
+                )
+            )
+            return
+
+
+def _scan_python_for_enlace_imports(source: str, rel: str, report: DiagnosticReport):
+    """Apps must never import enlace — this would create a hard dependency."""
+    for i, line in enumerate(source.splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        if re.search(r"""^\s*(?:from|import)\s+enlace\b""", line):
+            report.issues.append(
+                Issue(
+                    severity=Severity.CRITICAL,
+                    category=Category.STORE_IMPORT_IN_APP,
+                    summary="App imports from enlace — violates zero-coupling invariant",
+                    file_path=rel,
+                    line_number=i,
+                    detail=(
+                        "Apps must run standalone. An `import enlace` line "
+                        "means the app can't start without the platform."
+                    ),
+                    suggestion=(
+                        "Remove the import. If you need a store, use "
+                        "request.state.store with a dict fallback:\n"
+                        "  store = getattr(request.state, 'store', None) or {}\n"
+                        "That keeps standalone working."
+                    ),
+                )
+            )
+            return
+
+
+def _scan_python_for_unsafe_store_keys(source: str, rel: str, report: DiagnosticReport):
+    """Heuristic: store[<user input>] without a validation call nearby."""
+    pattern = re.compile(
+        r"""\bstore\s*\[\s*(request\.\w+|body\.\w+|\w+\.json\(\)|\w+\[\s*['"][^'"]+['"]\s*\])"""
+    )
+    for i, line in enumerate(source.splitlines(), 1):
+        if line.lstrip().startswith("#"):
+            continue
+        if pattern.search(line) and "sanitize" not in line and "validate" not in line:
+            report.issues.append(
+                Issue(
+                    severity=Severity.CRITICAL,
+                    category=Category.UNSAFE_KEY_IN_STORE,
+                    summary="User-supplied input used as store key without sanitization",
+                    file_path=rel,
+                    line_number=i,
+                    detail=(
+                        "Keys built from request data can escape the tenant "
+                        "prefix with '..' or similar. enlace's PrefixedStore "
+                        "sanitizes keys, but only if you pass them through it."
+                    ),
+                    suggestion=(
+                        "Validate the key before indexing (e.g. assert it's "
+                        "short, contains only [a-zA-Z0-9._-], and lacks '..')."
+                    ),
+                )
+            )
+            return
 
 
 def _check_js_frontend(app_dir: Path, report: DiagnosticReport):

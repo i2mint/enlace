@@ -9,7 +9,10 @@ Usage::
 """
 
 import json as json_module
+import os
+import secrets
 import sys
+from getpass import getpass
 from pathlib import Path
 
 import argh
@@ -173,6 +176,7 @@ def check(
     config = _build_config(apps_dir, apps_dirs, app_dirs)
 
     errors = config.check_conflicts()
+    errors.extend(_check_auth_env(config))
     warnings: list[str] = []
 
     if json:
@@ -271,8 +275,150 @@ def diagnose(
         sys.exit(1)
 
 
+def _check_auth_env(config: PlatformConfig) -> list[str]:
+    """Return a list of errors for missing auth-related env vars."""
+    errors: list[str] = []
+    auth = config.auth
+    if not auth.enabled:
+        return errors
+
+    if not os.environ.get(auth.signing_key_env):
+        errors.append(
+            f"Missing env var {auth.signing_key_env} (required when auth.enabled). "
+            "Run `enlace auth-generate-signing-key` to create one."
+        )
+
+    for app in config.apps:
+        if app.access == "protected:shared":
+            if not app.shared_password_env:
+                errors.append(
+                    f"App '{app.name}' uses access='protected:shared' but has "
+                    "no shared_password_env set in its config."
+                )
+            elif not os.environ.get(app.shared_password_env):
+                errors.append(
+                    f"App '{app.name}': env var {app.shared_password_env} is unset. "
+                    "Hash a password with `enlace auth-hash-password` and export it."
+                )
+
+    for name, provider in auth.oauth.items():
+        if not os.environ.get(provider.client_id_env):
+            errors.append(
+                f"OAuth provider '{name}': env var {provider.client_id_env} is unset."
+            )
+        if not os.environ.get(provider.client_secret_env):
+            errors.append(
+                f"OAuth provider '{name}': env var "
+                f"{provider.client_secret_env} is unset."
+            )
+
+    return errors
+
+
+def auth_init():
+    """Print a starter ``[auth]`` block for platform.toml."""
+    print(
+        "# Copy into your platform.toml and edit as needed.\n"
+        "[auth]\n"
+        "enabled = true\n"
+        'session_cookie_name = "enlace_session"\n'
+        "session_max_age_seconds = 86400\n"
+        'signing_key_env = "ENLACE_SIGNING_KEY"\n'
+        "secure_cookies = true\n"
+        "\n"
+        "[auth.stores]\n"
+        'backend = "file"\n'
+        'path = "~/.enlace/platform_store"\n'
+        "\n"
+        "[stores.user_data]\n"
+        'backend = "file"\n'
+        'path = "~/.enlace/user_data"\n'
+    )
+
+
+def auth_generate_signing_key():
+    """Print a URL-safe 32-byte signing key suitable for ENLACE_SIGNING_KEY."""
+    print(secrets.token_urlsafe(32))
+
+
+def auth_hash_password():
+    """Prompt for a password and print its argon2id hash."""
+    try:
+        from enlace.auth import hash_password
+    except ImportError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(2)
+    pw = getpass("Password: ")
+    confirm = getpass("Confirm:  ")
+    if pw != confirm:
+        print("Passwords did not match.", file=sys.stderr)
+        sys.exit(1)
+    print(hash_password(pw))
+
+
+def _load_session_store():
+    """Build a SessionStore pointing at the configured platform store."""
+    from enlace.auth import SessionStore
+    from enlace.stores import make_file_store_factory
+
+    config = PlatformConfig.from_toml()
+    factory = make_file_store_factory(config.auth.stores.path)
+    return SessionStore(factory("sessions"))
+
+
+def auth_list_sessions(*, json: bool = False):
+    """List active sessions from the platform store.
+
+    Args:
+        json: Output as JSON.
+    """
+    sessions = _load_session_store().list_all()
+    if json:
+        print(
+            json_module.dumps(
+                [{"session_id": sid, **info} for sid, info in sessions], indent=2
+            )
+        )
+        return
+    if not sessions:
+        print("No active sessions.")
+        return
+    for sid, info in sessions:
+        user = info.get("user_id") or "?"
+        email = info.get("email") or "-"
+        created = info.get("created_at") or 0
+        print(f"{sid}  user={user}  email={email}  created_at={created:.0f}")
+
+
+def auth_revoke_session(session_id: str):
+    """Delete a session by id.
+
+    Args:
+        session_id: The session id to revoke.
+    """
+    ok = _load_session_store().delete(session_id)
+    if ok:
+        print(f"Revoked {session_id}")
+    else:
+        print(f"No session named {session_id}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
-    argh.dispatch_commands([serve, show_config, check, list_apps, diagnose])
+    argh.dispatch_commands(
+        [
+            serve,
+            show_config,
+            check,
+            list_apps,
+            diagnose,
+            auth_init,
+            auth_generate_signing_key,
+            auth_hash_password,
+            auth_list_sessions,
+            auth_revoke_session,
+        ]
+    )
 
 
 if __name__ == "__main__":

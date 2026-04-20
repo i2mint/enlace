@@ -8,6 +8,7 @@ cross-cutting middleware. Handles lifespan cascading to mounted sub-apps
 import contextlib
 import importlib
 import inspect
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -42,18 +43,16 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     """
     # Signal to sub-apps that they're running under enlace, so they can skip
     # their own CORS middleware, standalone startup blocks, etc.
-    import os
-
     os.environ["ENLACE_MANAGED"] = "1"
 
-    sub_apps: list[tuple[str, object]] = []
+    sub_apps: list[tuple[str, str, object]] = []  # (route_prefix, app_id, asgi_app)
 
     for app_config in config.apps:
         # Process and external modes are proxied, not imported
         if app_config.mode in ("process", "external"):
             proxy_app = _make_proxy_for(app_config)
             if proxy_app is not None:
-                sub_apps.append((app_config.route_prefix, proxy_app))
+                sub_apps.append((app_config.route_prefix, app_config.name, proxy_app))
             continue
 
         # Static mode is handled separately below (with frontend files)
@@ -65,7 +64,7 @@ def build_backend(config: PlatformConfig) -> FastAPI:
             continue
         sub_app = _load_sub_app(app_config)
         if sub_app is not None:
-            sub_apps.append((app_config.route_prefix, sub_app))
+            sub_apps.append((app_config.route_prefix, app_config.name, sub_app))
 
     @asynccontextmanager
     async def cascade_lifespan(app: FastAPI):
@@ -97,11 +96,14 @@ def build_backend(config: PlatformConfig) -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Auth + store wiring (pure ASGI middleware only — no BaseHTTPMiddleware).
+    _wire_auth_and_stores(parent, config)
+
     if config.index_page:
         _add_index_route(parent, config)
 
-    for prefix, sub_app in sub_apps:
-        parent.mount(prefix, sub_app)
+    for prefix, app_id, sub_app in sub_apps:
+        parent.mount(prefix, _AppIdInjector(sub_app, app_id))
 
     # Serve static-mode apps at their route prefix.
     for app_config in config.apps:
@@ -179,6 +181,136 @@ def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
             f"<ul>{app_list}</ul>"
             "</body></html>"
         )
+
+
+class _AppIdInjector:
+    """Pure-ASGI wrapper that stamps the app's name into scope state.
+
+    Sub-apps never read this themselves — ``StoreInjectionMiddleware`` does,
+    so it knows which app's per-user store to attach.
+    """
+
+    def __init__(self, app, app_id: str):
+        self.app = app
+        self.app_id = app_id
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            state = scope.setdefault("state", {})
+            state["app_id"] = self.app_id
+        await self.app(scope, receive, send)
+
+
+def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
+    """Wire auth + store middleware and mount /auth/* and /api/{app}/store routes.
+
+    No-op when ``config.auth.enabled`` is False, so pre-auth deployments
+    behave exactly as before.
+    """
+    auth_cfg = config.auth
+    if not auth_cfg.enabled:
+        return
+
+    signing_key = os.environ.get(auth_cfg.signing_key_env)
+    if not signing_key:
+        # Surface this via `enlace check` rather than crashing at startup —
+        # the gateway should still boot so operators can diagnose.
+        return
+
+    from enlace.auth import (
+        CSRFMiddleware,
+        PlatformAuthMiddleware,
+        SessionStore,
+        make_auth_router,
+    )
+    from enlace.auth.middleware import AccessRule
+    from enlace.stores import StoreInjectionMiddleware, make_file_store_factory
+    from enlace.stores.middleware import make_store_router
+
+    platform_factory = make_file_store_factory(auth_cfg.stores.path)
+    session_backend = platform_factory("sessions")
+    user_backend = platform_factory("users")
+    session_store = SessionStore(session_backend)
+
+    user_data_cfg = config.stores.get("user_data")
+    user_data_backend: Optional[object] = None
+    if user_data_cfg is not None:
+        user_data_factory = make_file_store_factory(user_data_cfg.path)
+        user_data_backend = user_data_factory("user_data")
+
+    # Build access rules and shared-password lookup.
+    shared_hashes: dict[str, str] = {}
+    access_rules: list[AccessRule] = []
+    protected_user_apps: set[str] = set()
+    for app in config.apps:
+        h: Optional[str] = None
+        if app.access == "protected:shared" and app.shared_password_env:
+            h = os.environ.get(app.shared_password_env)
+            if h:
+                shared_hashes[app.name] = h
+        if app.access == "protected:user":
+            protected_user_apps.add(app.name)
+        access_rules.append(
+            AccessRule(
+                prefix=app.route_prefix,
+                level=app.access,
+                app_id=app.name,
+                shared_password_hash=h,
+            )
+        )
+
+    auth_router = make_auth_router(
+        session_store=session_store,
+        user_store=user_backend,
+        signing_key=signing_key,
+        cookie_name=auth_cfg.session_cookie_name,
+        session_max_age=auth_cfg.session_max_age_seconds,
+        secure_cookies=auth_cfg.secure_cookies,
+        shared_password_for=shared_hashes.get,
+    )
+    parent.include_router(auth_router)
+
+    # Optional OAuth router (lazy import of Authlib).
+    if auth_cfg.oauth:
+        try:
+            from enlace.auth.oauth import make_oauth_router
+
+            oauth_router = make_oauth_router(
+                providers=auth_cfg.oauth,
+                session_store=session_store,
+                user_store=user_backend,
+                signing_key=signing_key,
+                cookie_name=auth_cfg.session_cookie_name,
+                session_max_age=auth_cfg.session_max_age_seconds,
+                secure_cookies=auth_cfg.secure_cookies,
+            )
+            if oauth_router is not None:
+                parent.include_router(oauth_router)
+        except ImportError:
+            # authlib not installed — skip but keep platform functional.
+            pass
+
+    # Per-user store API.
+    store_router = make_store_router(
+        base_store_getter=lambda: user_data_backend,
+        protected_apps=protected_user_apps,
+    )
+    parent.include_router(store_router)
+
+    # Register middleware in the order requests traverse them:
+    # outermost = first added last. FastAPI/Starlette runs middleware in
+    # reverse insertion order, so the last `add_middleware` call is the
+    # outermost wrapper. We want: auth (outermost) -> store -> csrf -> app.
+    parent.add_middleware(CSRFMiddleware, signing_key=signing_key)
+    parent.add_middleware(StoreInjectionMiddleware, base_store=user_data_backend)
+    parent.add_middleware(
+        PlatformAuthMiddleware,
+        access_rules=access_rules,
+        session_store=session_store,
+        signing_key=signing_key,
+        cookie_name=auth_cfg.session_cookie_name,
+        max_age=auth_cfg.session_max_age_seconds,
+    )
 
 
 def _make_proxy_for(app_config: AppConfig) -> Optional[object]:
