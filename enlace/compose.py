@@ -107,9 +107,7 @@ def build_backend(config: PlatformConfig) -> FastAPI:
     # to a discovered app's name, the later frontend-mount loop will mount
     # that app's frontend at / (see below). The built-in index is skipped.
     landing_app_name = config.landing_app
-    if landing_app_name and not any(
-        a.name == landing_app_name for a in config.apps
-    ):
+    if landing_app_name and not any(a.name == landing_app_name for a in config.apps):
         raise ValueError(
             f"platform.landing_app = {landing_app_name!r} but no such app "
             f"was discovered. Known apps: "
@@ -357,9 +355,7 @@ def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
     # Root (/) and shared static assets (/shared.css etc) — public. The platform
     # landing page must be reachable to anyone; per-app gating already covers
     # everything beneath a more specific prefix via longest-prefix match.
-    access_rules.append(
-        AccessRule(prefix="/", level="public", app_id="_root")
-    )
+    access_rules.append(AccessRule(prefix="/", level="public", app_id="_root"))
 
     auth_router = make_auth_router(
         session_store=session_store,
