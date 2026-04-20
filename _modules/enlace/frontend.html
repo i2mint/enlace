@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.frontend &mdash; enlace 0.0.3 documentation</title>
+  <title>enlace.frontend &mdash; enlace 0.0.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../_static/documentation_options.js?v=8c5712d9"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -181,16 +181,12 @@
 
         <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
             <span class="n">candidate</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span> <span class="o">+</span> <span class="p">[</span><span class="n">segment</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="n">segment</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">stat_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">candidate</span>
-            <span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">stat_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">stat_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Try the wildcard placeholder instead.</span>
-                <span class="n">wildcard_candidate</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;_&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="s2">&quot;_&quot;</span>
-                <span class="p">)</span>
+                <span class="n">wildcard_candidate</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;_&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="s2">&quot;_&quot;</span>
                 <span class="n">_</span><span class="p">,</span> <span class="n">stat_w</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">wildcard_candidate</span>
                 <span class="p">)</span>
@@ -207,11 +203,11 @@
         <span class="c1"># StaticFiles(html=True) would look for _/index.html inside it,</span>
         <span class="c1"># but Next.js puts the page at _.html (sibling, not child).</span>
         <span class="c1"># Try the explicit .html path first.</span>
-        <span class="n">html_path</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;.html&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">html_path</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;.html&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">html_path</span><span class="p">:</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">stat_html</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">html_path</span>
-            <span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">stat_html</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">html_path</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">stat_html</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">html_path</span>
 
