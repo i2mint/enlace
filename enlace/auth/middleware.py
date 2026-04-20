@@ -345,6 +345,13 @@ class CSRFMiddleware:
             "latin-1"
         )
 
+        # Expose the minted unsigned value to downstream handlers (e.g.
+        # /auth/csrf) so they can return it in the body without minting a
+        # second token — otherwise two Set-Cookie headers race and the
+        # body-vs-cookie values disagree.
+        state = scope.setdefault("state", {})
+        state["csrf_token"] = new_value
+
         async def wrapped_send(message):
             if message["type"] == "http.response.start":
                 message = dict(message)

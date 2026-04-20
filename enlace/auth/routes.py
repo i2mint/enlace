@@ -6,7 +6,6 @@ Authlib dependency stays lazy.
 
 from __future__ import annotations
 
-import secrets
 import time
 from typing import Any, Callable, Optional
 
@@ -149,29 +148,30 @@ def make_auth_router(
         }
 
     @router.get("/csrf")
-    async def csrf(request: Request, response: Response) -> dict[str, Any]:
-        """Return the unsigned CSRF token, priming the cookie if needed.
+    async def csrf(request: Request) -> dict[str, Any]:
+        """Return the unsigned CSRF token.
 
-        Frontends call this once on load and send the returned value in the
-        ``X-CSRF-Token`` header on state-changing requests. The paired signed
-        cookie is either reused (if already set by CSRFMiddleware on a prior
-        safe request) or created here.
+        Three cases, in priority order:
+        1. CSRFMiddleware just minted a token for this request (no inbound
+           cookie). It exposes the unsigned value via ``request.state.csrf_token``
+           and sets the signed cookie in the response itself — we just echo.
+        2. The request already carried a valid signed cookie — unseal it and
+           return the unsigned value. No new cookie is set.
+        3. No cookie and no minted token (shouldn't happen in practice, but
+           defensive): fall through to a 500-like empty string. Prefer to let
+           the next request set the cookie via the middleware.
         """
-        token: Optional[str] = None
+        minted = getattr(request.state, "csrf_token", None)
+        if minted:
+            return {"csrf": minted}
         existing = request.cookies.get("enlace_csrf")
         if existing:
             token = verify_cookie(existing, signing_key, salt="csrf")
-        if token is None:
-            token = secrets.token_urlsafe(32)
-            signed = sign_cookie(token, signing_key, salt="csrf")
-            attrs = [
-                f"enlace_csrf={signed}",
-                "Path=/",
-                "SameSite=Lax",
-            ]
-            if secure_cookies:
-                attrs.append("Secure")
-            response.headers.append("set-cookie", "; ".join(attrs))
-        return {"csrf": token}
+            if token:
+                return {"csrf": token}
+        # Degenerate: no cookie, no minted token. Let the client retry.
+        raise HTTPException(
+            status_code=503, detail="CSRF token unavailable; retry this request"
+        )
 
     return router
