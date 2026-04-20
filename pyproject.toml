@@ -28,7 +28,23 @@ enlace = "enlace.__main__:main"
 
 [project.optional-dependencies]
 process = ["httpx>=0.24.0"]
-dev = ["pytest", "httpx", "pytest-asyncio"]
+auth = [
+    "itsdangerous>=2.1",
+    "argon2-cffi>=23",
+    "dol>=0.2",
+    "email-validator>=2.0",
+]
+oauth = ["authlib>=1.3", "httpx>=0.24.0"]
+dev = [
+    "pytest",
+    "httpx",
+    "pytest-asyncio",
+    "itsdangerous>=2.1",
+    "argon2-cffi>=23",
+    "dol>=0.2",
+    "authlib>=1.3",
+    "email-validator>=2.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["enlace/tests", "tests"]
@@ -43,6 +59,8 @@ ignore = ["D203"]
 
 [tool.ruff.lint.per-file-ignores]
 "enlace/diagnose.py" = ["E501"]  # Long lines in diagnostic prose strings
+"tests/test_auth_e2e.py" = ["E501"]  # Embedded fixture source with long lines
+"tests/test_standalone_preservation.py" = ["E501"]
 
 [project.entry-points."skill.skill_packs"]
 enlace = "enlace:skills_dir"

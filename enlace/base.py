@@ -7,6 +7,42 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
+# Access levels for apps. "local" is kept as a legacy alias for "public" so
+# pre-auth configs keep parsing; middleware treats it as public.
+AccessLevel = Literal["public", "protected:shared", "protected:user", "local"]
+
+
+class StoreBackendConfig(BaseModel):
+    """Backend configuration for a MutableMapping-backed store."""
+
+    backend: str = "file"
+    path: str = "~/.enlace/platform_store"
+
+
+class OAuthProviderConfig(BaseModel):
+    """Configuration for a single OAuth2/OIDC provider."""
+
+    client_id_env: str
+    client_secret_env: str
+    scopes: list[str] = Field(default_factory=list)
+    authorize_url: Optional[str] = None
+    token_url: Optional[str] = None
+    userinfo_url: Optional[str] = None
+    server_metadata_url: Optional[str] = None
+
+
+class AuthConfig(BaseModel):
+    """Platform-wide authentication configuration."""
+
+    enabled: bool = False
+    session_cookie_name: str = "enlace_session"
+    session_max_age_seconds: int = 86400
+    signing_key_env: str = "ENLACE_SIGNING_KEY"
+    secure_cookies: bool = True
+    stores: StoreBackendConfig = Field(default_factory=StoreBackendConfig)
+    oauth: dict[str, OAuthProviderConfig] = Field(default_factory=dict)
+
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -43,7 +79,8 @@ class AppConfig(BaseModel):
     app_attr: str = "app"
     frontend_dir: Optional[Path] = None
     source_dir: Optional[Path] = None
-    access: str = "local"
+    access: AccessLevel = "local"
+    shared_password_env: Optional[str] = None
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
 
@@ -128,6 +165,8 @@ class PlatformConfig(BaseModel):
     socket_dir: Path = Field(default=Path("/tmp/enlace"))
     conventions: ConventionsConfig = Field(default_factory=ConventionsConfig)
     apps: list[AppConfig] = Field(default_factory=list)
+    auth: AuthConfig = Field(default_factory=AuthConfig)
+    stores: dict[str, StoreBackendConfig] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _normalize_dirs(self):
@@ -169,6 +208,20 @@ class PlatformConfig(BaseModel):
         conventions_data = data.get("conventions", {})
         if conventions_data:
             platform_data["conventions"] = conventions_data
+
+        auth_data = data.get("auth")
+        if auth_data is not None:
+            auth_stores = auth_data.pop("stores", None)
+            auth_oauth = auth_data.pop("oauth", None)
+            if auth_stores is not None:
+                auth_data["stores"] = auth_stores
+            if auth_oauth is not None:
+                auth_data["oauth"] = auth_oauth
+            platform_data["auth"] = auth_data
+
+        stores_data = data.get("stores")
+        if stores_data is not None:
+            platform_data["stores"] = stores_data
 
         # Environment variable overrides
         env_apps_dirs = os.environ.get("ENLACE_APPS_DIRS", "")

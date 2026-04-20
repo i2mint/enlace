@@ -6,7 +6,14 @@ mounts it, serves it, and optionally gates it behind auth -- with zero boilerpla
 
 from pathlib import Path
 
-from enlace.base import AppConfig, ConventionsConfig, PlatformConfig
+from enlace.base import (
+    AppConfig,
+    AuthConfig,
+    ConventionsConfig,
+    OAuthProviderConfig,
+    PlatformConfig,
+    StoreBackendConfig,
+)
 from enlace.compose import build_backend, create_app
 from enlace.diagnose import DiagnosticReport, Issue, diagnose_app
 from enlace.discover import ConventionDiscoverer, discover_apps
@@ -16,10 +23,13 @@ __version__ = "0.0.1"
 
 __all__ = [
     "AppConfig",
+    "AuthConfig",
     "ConventionsConfig",
     "DiagnosticReport",
     "Issue",
+    "OAuthProviderConfig",
     "PlatformConfig",
+    "StoreBackendConfig",
     "ConventionDiscoverer",
     "build_backend",
     "create_app",

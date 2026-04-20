@@ -273,6 +273,7 @@ _TOML_FIELD_MAP = {
     "entry_point": "entry_module_path",
     "app_attr": "app_attr",
     "access": "access",
+    "shared_password_env": "shared_password_env",
     "display_name": "display_name",
     "frontend_dir": "frontend_dir",
     # New fields for process/external/static modes

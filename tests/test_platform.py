@@ -1,7 +1,6 @@
 """Integration tests for the full enlace pipeline."""
 
 import textwrap
-from pathlib import Path
 
 from starlette.testclient import TestClient
 
