@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.auth.middleware &mdash; enlace 0.0.9 documentation</title>
+  <title>enlace.auth.middleware &mdash; enlace 0.0.10 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=f7cdbf68"></script>
+      <script src="../../../_static/documentation_options.js?v=a83ce22a"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -399,9 +399,13 @@
 <span class="sd">    present. On state-changing requests, requires the cookie and an</span>
 <span class="sd">    ``X-CSRF-Token`` header to match after signature verification.</span>
 
-<span class="sd">    Exempt paths skip the check entirely — typically OAuth callbacks and</span>
-<span class="sd">    the shared-login endpoint, which receive state-changing requests from</span>
-<span class="sd">    cross-origin redirects.</span>
+<span class="sd">    Exempt paths skip the check entirely. Defaults exempt sub-app APIs</span>
+<span class="sd">    under ``/api/`` because the ``enlace_session`` cookie is ``SameSite=Lax``:</span>
+<span class="sd">    a cross-site POST from an attacker site arrives without credentials and</span>
+<span class="sd">    is rejected by PlatformAuthMiddleware regardless of CSRF. This keeps</span>
+<span class="sd">    pre-enlace apps working out of the box without each having to implement</span>
+<span class="sd">    the ``/auth/csrf`` double-submit flow. The auth endpoints themselves</span>
+<span class="sd">    (``/auth/login``, ``/auth/register``, ``/auth/logout``) stay protected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -411,7 +415,11 @@
         <span class="n">signing_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">cookie_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;enlace_csrf&quot;</span><span class="p">,</span>
         <span class="n">header_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;X-CSRF-Token&quot;</span><span class="p">,</span>
-        <span class="n">exempt_prefixes</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;/auth/callback&quot;</span><span class="p">,</span> <span class="s2">&quot;/auth/login/&quot;</span><span class="p">),</span>
+        <span class="n">exempt_prefixes</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;/auth/callback&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;/auth/login/&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;/api/&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_signing_key</span> <span class="o">=</span> <span class="n">signing_key</span>

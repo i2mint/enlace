@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.auth.middleware &mdash; enlace 0.0.9 documentation</title>
+  <title>enlace.auth.middleware &mdash; enlace 0.0.10 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=f7cdbf68"></script>
+      <script src="../../../_static/documentation_options.js?v=a83ce22a"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -151,14 +151,18 @@ failure return 401.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.auth.middleware.CSRFMiddleware">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.auth.middleware.</span></span><span class="sig-name descname"><span class="pre">CSRFMiddleware</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signing_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cookie_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'enlace_csrf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'X-CSRF-Token'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exempt_prefixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('/auth/callback',</span> <span class="pre">'/auth/login/')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/enlace/auth/middleware.html#CSRFMiddleware"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.auth.middleware.CSRFMiddleware" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.auth.middleware.</span></span><span class="sig-name descname"><span class="pre">CSRFMiddleware</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signing_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cookie_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'enlace_csrf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'X-CSRF-Token'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exempt_prefixes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('/auth/callback',</span> <span class="pre">'/auth/login/',</span> <span class="pre">'/api/')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/enlace/auth/middleware.html#CSRFMiddleware"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.auth.middleware.CSRFMiddleware" title="Link to this definition"></a></dt>
 <dd><p>Signed double-submit CSRF for state-changing requests.</p>
 <p>On safe-method requests, sets an <code class="docutils literal notranslate"><span class="pre">enlace_csrf</span></code> cookie if one isn’t
 present. On state-changing requests, requires the cookie and an
 <code class="docutils literal notranslate"><span class="pre">X-CSRF-Token</span></code> header to match after signature verification.</p>
-<p>Exempt paths skip the check entirely — typically OAuth callbacks and
-the shared-login endpoint, which receive state-changing requests from
-cross-origin redirects.</p>
+<p>Exempt paths skip the check entirely. Defaults exempt sub-app APIs
+under <code class="docutils literal notranslate"><span class="pre">/api/</span></code> because the <code class="docutils literal notranslate"><span class="pre">enlace_session</span></code> cookie is <code class="docutils literal notranslate"><span class="pre">SameSite=Lax</span></code>:
+a cross-site POST from an attacker site arrives without credentials and
+is rejected by PlatformAuthMiddleware regardless of CSRF. This keeps
+pre-enlace apps working out of the box without each having to implement
+the <code class="docutils literal notranslate"><span class="pre">/auth/csrf</span></code> double-submit flow. The auth endpoints themselves
+(<code class="docutils literal notranslate"><span class="pre">/auth/login</span></code>, <code class="docutils literal notranslate"><span class="pre">/auth/register</span></code>, <code class="docutils literal notranslate"><span class="pre">/auth/logout</span></code>) stay protected.</p>
 </dd></dl>
 
 <dl class="py class">
