@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.0.4 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.0.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=8c5712d9"></script>
+      <script src="../../_static/documentation_options.js?v=282f96c0"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -48,6 +48,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth.html">enlace.auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/cookies.html">enlace.auth.cookies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/middleware.html">enlace.auth.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/oauth.html">enlace.auth.oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/passwords.html">enlace.auth.passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/routes.html">enlace.auth.routes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/sessions.html">enlace.auth.sessions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
@@ -55,11 +62,25 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores.html">enlace.stores</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/backends.html">enlace.stores.backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/middleware.html">enlace.stores.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/prefixed.html">enlace.stores.prefixed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/validation.html">enlace.stores.validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_sessions.html">enlace.tests.test_sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_store_middleware.html">enlace.tests.test_store_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
 </ul>
@@ -100,6 +121,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -136,18 +158,16 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Signal to sub-apps that they&#39;re running under enlace, so they can skip</span>
     <span class="c1"># their own CORS middleware, standalone startup blocks, etc.</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ENLACE_MANAGED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
 
-    <span class="n">sub_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sub_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># (route_prefix, app_id, asgi_app)</span>
 
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="c1"># Process and external modes are proxied, not imported</span>
         <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;process&quot;</span><span class="p">,</span> <span class="s2">&quot;external&quot;</span><span class="p">):</span>
             <span class="n">proxy_app</span> <span class="o">=</span> <span class="n">_make_proxy_for</span><span class="p">(</span><span class="n">app_config</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">proxy_app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">sub_apps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span> <span class="n">proxy_app</span><span class="p">))</span>
+                <span class="n">sub_apps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">proxy_app</span><span class="p">))</span>
             <span class="k">continue</span>
 
         <span class="c1"># Static mode is handled separately below (with frontend files)</span>
@@ -159,7 +179,7 @@
             <span class="k">continue</span>
         <span class="n">sub_app</span> <span class="o">=</span> <span class="n">_load_sub_app</span><span class="p">(</span><span class="n">app_config</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">sub_app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sub_apps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span> <span class="n">sub_app</span><span class="p">))</span>
+            <span class="n">sub_apps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">sub_app</span><span class="p">))</span>
 
     <span class="nd">@asynccontextmanager</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cascade_lifespan</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">):</span>
@@ -191,11 +211,14 @@
         <span class="n">allow_headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">],</span>
     <span class="p">)</span>
 
+    <span class="c1"># Auth + store wiring (pure ASGI middleware only — no BaseHTTPMiddleware).</span>
+    <span class="n">_wire_auth_and_stores</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">index_page</span><span class="p">:</span>
         <span class="n">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">sub_app</span> <span class="ow">in</span> <span class="n">sub_apps</span><span class="p">:</span>
-        <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">sub_app</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">app_id</span><span class="p">,</span> <span class="n">sub_app</span> <span class="ow">in</span> <span class="n">sub_apps</span><span class="p">:</span>
+        <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">_AppIdInjector</span><span class="p">(</span><span class="n">sub_app</span><span class="p">,</span> <span class="n">app_id</span><span class="p">))</span>
 
     <span class="c1"># Serve static-mode apps at their route prefix.</span>
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
@@ -274,6 +297,136 @@
             <span class="sa">f</span><span class="s2">&quot;&lt;ul&gt;</span><span class="si">{</span><span class="n">app_list</span><span class="si">}</span><span class="s2">&lt;/ul&gt;&quot;</span>
             <span class="s2">&quot;&lt;/body&gt;&lt;/html&gt;&quot;</span>
         <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_AppIdInjector</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pure-ASGI wrapper that stamps the app&#39;s name into scope state.</span>
+
+<span class="sd">    Sub-apps never read this themselves — ``StoreInjectionMiddleware`` does,</span>
+<span class="sd">    so it knows which app&#39;s per-user store to attach.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">=</span> <span class="n">app_id</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;websocket&quot;</span><span class="p">):</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;app_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wire_auth_and_stores</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wire auth + store middleware and mount /auth/* and /api/{app}/store routes.</span>
+
+<span class="sd">    No-op when ``config.auth.enabled`` is False, so pre-auth deployments</span>
+<span class="sd">    behave exactly as before.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">auth_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">auth</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">auth_cfg</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">signing_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">signing_key_env</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">signing_key</span><span class="p">:</span>
+        <span class="c1"># Surface this via `enlace check` rather than crashing at startup —</span>
+        <span class="c1"># the gateway should still boot so operators can diagnose.</span>
+        <span class="k">return</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.auth</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">CSRFMiddleware</span><span class="p">,</span>
+        <span class="n">PlatformAuthMiddleware</span><span class="p">,</span>
+        <span class="n">SessionStore</span><span class="p">,</span>
+        <span class="n">make_auth_router</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.auth.middleware</span><span class="w"> </span><span class="kn">import</span> <span class="n">AccessRule</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.stores</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoreInjectionMiddleware</span><span class="p">,</span> <span class="n">make_file_store_factory</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.stores.middleware</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_store_router</span>
+
+    <span class="n">platform_factory</span> <span class="o">=</span> <span class="n">make_file_store_factory</span><span class="p">(</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">stores</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">session_backend</span> <span class="o">=</span> <span class="n">platform_factory</span><span class="p">(</span><span class="s2">&quot;sessions&quot;</span><span class="p">)</span>
+    <span class="n">user_backend</span> <span class="o">=</span> <span class="n">platform_factory</span><span class="p">(</span><span class="s2">&quot;users&quot;</span><span class="p">)</span>
+    <span class="n">session_store</span> <span class="o">=</span> <span class="n">SessionStore</span><span class="p">(</span><span class="n">session_backend</span><span class="p">)</span>
+
+    <span class="n">user_data_cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">stores</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;user_data&quot;</span><span class="p">)</span>
+    <span class="n">user_data_backend</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">user_data_cfg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">user_data_factory</span> <span class="o">=</span> <span class="n">make_file_store_factory</span><span class="p">(</span><span class="n">user_data_cfg</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">user_data_backend</span> <span class="o">=</span> <span class="n">user_data_factory</span><span class="p">(</span><span class="s2">&quot;user_data&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Build access rules and shared-password lookup.</span>
+    <span class="n">shared_hashes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">access_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AccessRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">protected_user_apps</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">h</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span> <span class="o">==</span> <span class="s2">&quot;protected:shared&quot;</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">shared_password_env</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">shared_password_env</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">h</span><span class="p">:</span>
+                <span class="n">shared_hashes</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span> <span class="o">==</span> <span class="s2">&quot;protected:user&quot;</span><span class="p">:</span>
+            <span class="n">protected_user_apps</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">access_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">AccessRule</span><span class="p">(</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
+                <span class="n">level</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
+                <span class="n">app_id</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">shared_password_hash</span><span class="o">=</span><span class="n">h</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">auth_router</span> <span class="o">=</span> <span class="n">make_auth_router</span><span class="p">(</span>
+        <span class="n">session_store</span><span class="o">=</span><span class="n">session_store</span><span class="p">,</span>
+        <span class="n">user_store</span><span class="o">=</span><span class="n">user_backend</span><span class="p">,</span>
+        <span class="n">signing_key</span><span class="o">=</span><span class="n">signing_key</span><span class="p">,</span>
+        <span class="n">cookie_name</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">session_cookie_name</span><span class="p">,</span>
+        <span class="n">session_max_age</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">session_max_age_seconds</span><span class="p">,</span>
+        <span class="n">secure_cookies</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">secure_cookies</span><span class="p">,</span>
+        <span class="n">shared_password_for</span><span class="o">=</span><span class="n">shared_hashes</span><span class="o">.</span><span class="n">get</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">auth_router</span><span class="p">)</span>
+
+    <span class="c1"># Optional OAuth router (lazy import of Authlib).</span>
+    <span class="k">if</span> <span class="n">auth_cfg</span><span class="o">.</span><span class="n">oauth</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.auth.oauth</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_oauth_router</span>
+
+            <span class="n">oauth_router</span> <span class="o">=</span> <span class="n">make_oauth_router</span><span class="p">(</span>
+                <span class="n">providers</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">oauth</span><span class="p">,</span>
+                <span class="n">session_store</span><span class="o">=</span><span class="n">session_store</span><span class="p">,</span>
+                <span class="n">user_store</span><span class="o">=</span><span class="n">user_backend</span><span class="p">,</span>
+                <span class="n">signing_key</span><span class="o">=</span><span class="n">signing_key</span><span class="p">,</span>
+                <span class="n">cookie_name</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">session_cookie_name</span><span class="p">,</span>
+                <span class="n">session_max_age</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">session_max_age_seconds</span><span class="p">,</span>
+                <span class="n">secure_cookies</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">secure_cookies</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">oauth_router</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">oauth_router</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="c1"># authlib not installed — skip but keep platform functional.</span>
+            <span class="k">pass</span>
+
+    <span class="c1"># Per-user store API.</span>
+    <span class="n">store_router</span> <span class="o">=</span> <span class="n">make_store_router</span><span class="p">(</span>
+        <span class="n">base_store_getter</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">user_data_backend</span><span class="p">,</span>
+        <span class="n">protected_apps</span><span class="o">=</span><span class="n">protected_user_apps</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">store_router</span><span class="p">)</span>
+
+    <span class="c1"># Register middleware in the order requests traverse them:</span>
+    <span class="c1"># outermost = first added last. FastAPI/Starlette runs middleware in</span>
+    <span class="c1"># reverse insertion order, so the last `add_middleware` call is the</span>
+    <span class="c1"># outermost wrapper. We want: auth (outermost) -&gt; store -&gt; csrf -&gt; app.</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">CSRFMiddleware</span><span class="p">,</span> <span class="n">signing_key</span><span class="o">=</span><span class="n">signing_key</span><span class="p">)</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">StoreInjectionMiddleware</span><span class="p">,</span> <span class="n">base_store</span><span class="o">=</span><span class="n">user_data_backend</span><span class="p">)</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
+        <span class="n">PlatformAuthMiddleware</span><span class="p">,</span>
+        <span class="n">access_rules</span><span class="o">=</span><span class="n">access_rules</span><span class="p">,</span>
+        <span class="n">session_store</span><span class="o">=</span><span class="n">session_store</span><span class="p">,</span>
+        <span class="n">signing_key</span><span class="o">=</span><span class="n">signing_key</span><span class="p">,</span>
+        <span class="n">cookie_name</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">session_cookie_name</span><span class="p">,</span>
+        <span class="n">max_age</span><span class="o">=</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">session_max_age_seconds</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_make_proxy_for</span><span class="p">(</span><span class="n">app_config</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]:</span>

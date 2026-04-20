@@ -1,0 +1,273 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.stores.middleware &mdash; enlace 0.0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=282f96c0"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth.html">enlace.auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/cookies.html">enlace.auth.cookies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/middleware.html">enlace.auth.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/oauth.html">enlace.auth.oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/passwords.html">enlace.auth.passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/routes.html">enlace.auth.routes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/sessions.html">enlace.auth.sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores.html">enlace.stores</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/backends.html">enlace.stores.backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/middleware.html">enlace.stores.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/prefixed.html">enlace.stores.prefixed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/validation.html">enlace.stores.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_sessions.html">enlace.tests.test_sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_store_middleware.html">enlace.tests.test_store_middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../enlace.html">enlace</a></li>
+      <li class="breadcrumb-item active">enlace.stores.middleware</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for enlace.stores.middleware</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Store injection middleware and per-app store router.</span>
+
+<span class="sd">``StoreInjectionMiddleware`` runs after the auth middleware. It reads</span>
+<span class="sd">``scope[&quot;state&quot;][&quot;user_id&quot;]`` and ``scope[&quot;state&quot;][&quot;app_id&quot;]`` (the latter set</span>
+<span class="sd">by the per-mount wrapper in ``enlace.compose``) and attaches a</span>
+<span class="sd">``PrefixedStore(base, f&quot;{user_id}/{app_id}/&quot;)`` to ``scope[&quot;state&quot;][&quot;store&quot;]``.</span>
+
+<span class="sd">If either id is missing, ``store`` is ``None`` — apps are expected to handle</span>
+<span class="sd">that case gracefully (they do so naturally by providing a dict fallback in</span>
+<span class="sd">standalone mode).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">MutableMapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">HTTPException</span><span class="p">,</span> <span class="n">Request</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.stores.prefixed</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrefixedStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.stores.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">sanitize_key</span>
+
+
+<div class="viewcode-block" id="StoreInjectionMiddleware">
+<a class="viewcode-back" href="../../../module_docs/enlace/stores/middleware.html#enlace.stores.StoreInjectionMiddleware">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StoreInjectionMiddleware</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pure-ASGI middleware that injects ``request.state.store``.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">base_store</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MutableMapping</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base</span> <span class="o">=</span> <span class="n">base_store</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;websocket&quot;</span><span class="p">):</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">)</span>
+        <span class="n">app_id</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;app_id&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">user_id</span> <span class="ow">and</span> <span class="n">app_id</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sanitize_key</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sanitize_key</span><span class="p">(</span><span class="n">app_id</span><span class="p">)</span><span class="si">}</span><span class="s2">/&quot;</span>
+                <span class="n">state</span><span class="p">[</span><span class="s2">&quot;store&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrefixedStore</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">state</span><span class="p">[</span><span class="s2">&quot;store&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;store&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_store_router">
+<a class="viewcode-back" href="../../../module_docs/enlace/stores/middleware.html#enlace.stores.make_store_router">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_store_router</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">base_store_getter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MutableMapping</span><span class="p">]],</span>
+    <span class="n">protected_apps</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">APIRouter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a router exposing ``/api/{app_id}/store/{key}`` endpoints.</span>
+
+<span class="sd">    Only apps whose name is in ``protected_apps`` (i.e. ``protected:user``</span>
+<span class="sd">    access level) can have their store accessed this way. The router assumes</span>
+<span class="sd">    ``PlatformAuthMiddleware`` has already set ``request.state.user_id``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_scoped_store</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PrefixedStore</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">app_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">protected_apps</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
+                <span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;No user store for app &#39;</span><span class="si">{</span><span class="n">app_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+            <span class="p">)</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">user_id</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">401</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Not authenticated&quot;</span><span class="p">)</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">base_store_getter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">503</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;User data store disabled&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sanitize_key</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sanitize_key</span><span class="p">(</span><span class="n">app_id</span><span class="p">)</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">return</span> <span class="n">PrefixedStore</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+
+    <span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/api/</span><span class="si">{app_id}</span><span class="s2">/store/{key:path}&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_value</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="n">_scoped_store</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">app_id</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sanitize_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">store</span><span class="p">[</span><span class="n">key</span><span class="p">]}</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found&quot;</span><span class="p">)</span>
+
+    <span class="nd">@router</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;/api/</span><span class="si">{app_id}</span><span class="s2">/store/{key:path}&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">put_value</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="n">_scoped_store</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">app_id</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sanitize_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Body must be JSON&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;value&quot;</span> <span class="ow">in</span> <span class="n">body</span> <span class="k">else</span> <span class="n">body</span>
+        <span class="p">)</span>
+        <span class="n">store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="nd">@router</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/api/</span><span class="si">{app_id}</span><span class="s2">/store/{key:path}&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_value</span><span class="p">(</span><span class="n">app_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="n">_scoped_store</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">app_id</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sanitize_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">store</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; not found&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;ok&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">router</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

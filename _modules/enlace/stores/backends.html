@@ -1,0 +1,263 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.stores.backends &mdash; enlace 0.0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=282f96c0"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth.html">enlace.auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/cookies.html">enlace.auth.cookies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/middleware.html">enlace.auth.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/oauth.html">enlace.auth.oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/passwords.html">enlace.auth.passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/routes.html">enlace.auth.routes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/sessions.html">enlace.auth.sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores.html">enlace.stores</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/backends.html">enlace.stores.backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/middleware.html">enlace.stores.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/prefixed.html">enlace.stores.prefixed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/validation.html">enlace.stores.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_sessions.html">enlace.tests.test_sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_store_middleware.html">enlace.tests.test_store_middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../enlace.html">enlace</a></li>
+      <li class="breadcrumb-item active">enlace.stores.backends</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for enlace.stores.backends</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;MutableMapping-backed store factories for enlace.</span>
+
+<span class="sd">The file backend is the MVP default: one directory per named store under a</span>
+<span class="sd">platform root (``~/.enlace/platform_store/`` by default). Values are JSON.</span>
+
+<span class="sd">When ``dol`` is installed (via ``enlace[auth]``), ``make_file_store_factory``</span>
+<span class="sd">uses ``dol.Files`` + a JSON codec. When it isn&#39;t, we fall back to a tiny</span>
+<span class="sd">stdlib implementation so the core package keeps working.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">MutableMapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="n">StoreFactory</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">MutableMapping</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_FileDict</span><span class="p">(</span><span class="n">MutableMapping</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimal JSON-file-per-key MutableMapping. Used when dol isn&#39;t available.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">/</span> <span class="n">key</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">p</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">suffix</span> <span class="o">+</span> <span class="s2">&quot;.tmp&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tmp</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.tmp&quot;</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_dol_factory</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StoreFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a factory using dol.Files with a JSON codec.</span>
+
+<span class="sd">    dol.Files uses absolute filesystem paths as keys but doesn&#39;t auto-create</span>
+<span class="sd">    parent directories on write; we wrap setitem to ``mkdir -p`` the parent</span>
+<span class="sd">    so per-user subpaths like ``alice/chord/settings`` work out of the box.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">dol</span><span class="w"> </span><span class="kn">import</span> <span class="n">Files</span><span class="p">,</span> <span class="n">wrap_kvs</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">_MkdirFiles</span><span class="p">(</span><span class="n">Files</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">factory</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MutableMapping</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">root</span> <span class="o">/</span> <span class="n">name</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">_MkdirFiles</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_postget</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">)):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_preset</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrap_kvs</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">postget</span><span class="o">=</span><span class="n">_postget</span><span class="p">,</span> <span class="n">preset</span><span class="o">=</span><span class="n">_preset</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">factory</span>
+
+
+<div class="viewcode-block" id="make_file_store_factory">
+<a class="viewcode-back" href="../../../module_docs/enlace/stores/backends.html#enlace.stores.make_file_store_factory">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_file_store_factory</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">use_dol</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StoreFactory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a ``StoreFactory`` backed by JSON files under ``root``.</span>
+
+<span class="sd">    ``factory(name)`` returns a ``MutableMapping`` rooted at ``root/name/``.</span>
+
+<span class="sd">    Defaults to a small stdlib implementation that auto-creates parent</span>
+<span class="sd">    directories on write. Pass ``use_dol=True`` to use ``dol.Files`` instead</span>
+<span class="sd">    (pulls in the soft dep and expects flat keys).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">root_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">root</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">use_dol</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_make_dol_factory</span><span class="p">(</span><span class="n">root_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">factory</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MutableMapping</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_FileDict</span><span class="p">(</span><span class="n">root_path</span> <span class="o">/</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">factory</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

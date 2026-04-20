@@ -1,0 +1,4 @@
+enlace.tests.test_diagnose_auth
+===============================
+.. automodule:: enlace.tests.test_diagnose_auth
+   :members:

@@ -1,0 +1,205 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.stores.validation &mdash; enlace 0.0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=282f96c0"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth.html">enlace.auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/cookies.html">enlace.auth.cookies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/middleware.html">enlace.auth.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/oauth.html">enlace.auth.oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/passwords.html">enlace.auth.passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/routes.html">enlace.auth.routes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/auth/sessions.html">enlace.auth.sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores.html">enlace.stores</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/backends.html">enlace.stores.backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/middleware.html">enlace.stores.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/prefixed.html">enlace.stores.prefixed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/stores/validation.html">enlace.stores.validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_sessions.html">enlace.tests.test_sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_store_middleware.html">enlace.tests.test_store_middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../../enlace.html">enlace</a></li>
+      <li class="breadcrumb-item active">enlace.stores.validation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for enlace.stores.validation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Key sanitization for user-supplied store keys.</span>
+
+<span class="sd">Blocks the standard path-traversal attack surface: ``..`` segments, backslashes,</span>
+<span class="sd">null bytes, control characters, absolute paths, and URL-encoded variants. Keys</span>
+<span class="sd">that survive sanitization are still filesystem-safe and can be composed into a</span>
+<span class="sd">prefix without risk of escaping the tenant namespace.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">unquote</span>
+
+<span class="n">_BAD_SEGMENTS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># URL-encoded forms of ``..``, ``/``, ``\``, ``%`` that attackers use to slip</span>
+<span class="c1"># traversal past naive validators.</span>
+<span class="n">_ENCODED_MARKERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">%2e</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%2f</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%5c</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;%00&quot;</span><span class="p">,</span> <span class="s2">&quot;%25&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="sanitize_key">
+<a class="viewcode-back" href="../../../module_docs/enlace/stores/validation.html#enlace.stores.sanitize_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sanitize_key</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``key`` unchanged if safe for use as a store path component.</span>
+
+<span class="sd">    Raises ``ValueError`` with a specific reason if the key is unsafe. The goal</span>
+<span class="sd">    is fail-fast: we want the caller to see exactly why a key was rejected, not</span>
+<span class="sd">    a silently rewritten value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key must be a string, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;key must be non-empty&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1024</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;key is too long (max 1024 chars)&quot;</span><span class="p">)</span>
+
+    <span class="n">lowered</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">marker</span> <span class="ow">in</span> <span class="n">_ENCODED_MARKERS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">marker</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;key contains URL-encoded marker &#39;</span><span class="si">{</span><span class="n">marker</span><span class="si">}</span><span class="s2">&#39; — &quot;</span>
+                <span class="s2">&quot;decode and sanitize before passing in&quot;</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Decode once as a defence in depth; if the decoded form differs, the</span>
+    <span class="c1"># caller was trying something clever. Compare case-insensitively so the</span>
+    <span class="c1"># check doesn&#39;t reject plain percent-less keys that happened to round-trip.</span>
+    <span class="n">decoded</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">decoded</span> <span class="o">!=</span> <span class="n">key</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;key contains percent-encoding&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">_BAD_SEGMENTS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key contains disallowed substring &#39;</span><span class="si">{</span><span class="n">seg</span><span class="si">!r}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;key must not start with &#39;/&#39; or &#39;.&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="o">&lt;</span> <span class="mh">0x20</span> <span class="ow">or</span> <span class="n">code</span> <span class="o">==</span> <span class="mh">0x7F</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key contains control character U+</span><span class="si">{</span><span class="n">code</span><span class="si">:</span><span class="s2">04X</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">key</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

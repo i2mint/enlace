@@ -1,0 +1,4 @@
+enlace.tests.test_prefixed_store
+================================
+.. automodule:: enlace.tests.test_prefixed_store
+   :members:

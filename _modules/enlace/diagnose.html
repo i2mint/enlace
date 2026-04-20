@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.diagnose &mdash; enlace 0.0.4 documentation</title>
+  <title>enlace.diagnose &mdash; enlace 0.0.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=8c5712d9"></script>
+      <script src="../../_static/documentation_options.js?v=282f96c0"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -48,6 +48,13 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth.html">enlace.auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/cookies.html">enlace.auth.cookies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/middleware.html">enlace.auth.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/oauth.html">enlace.auth.oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/passwords.html">enlace.auth.passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/routes.html">enlace.auth.routes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/auth/sessions.html">enlace.auth.sessions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
@@ -55,11 +62,25 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores.html">enlace.stores</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/backends.html">enlace.stores.backends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/middleware.html">enlace.stores.middleware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/prefixed.html">enlace.stores.prefixed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/validation.html">enlace.stores.validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_sessions.html">enlace.tests.test_sessions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_store_middleware.html">enlace.tests.test_store_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
 </ul>
@@ -152,7 +173,14 @@
     <span class="n">BASE_PATH</span> <span class="o">=</span> <span class="s2">&quot;base_path&quot;</span>
     <span class="n">WEBSOCKET</span> <span class="o">=</span> <span class="s2">&quot;websocket&quot;</span>
     <span class="n">SERVER_SIDE_RENDERING</span> <span class="o">=</span> <span class="s2">&quot;ssr&quot;</span>
-    <span class="n">ENV_CONFIG</span> <span class="o">=</span> <span class="s2">&quot;env_config&quot;</span></div>
+    <span class="n">ENV_CONFIG</span> <span class="o">=</span> <span class="s2">&quot;env_config&quot;</span>
+    <span class="n">SUBAPP_AUTH_MIDDLEWARE</span> <span class="o">=</span> <span class="s2">&quot;subapp_auth_middleware&quot;</span>
+    <span class="n">CLIENT_IDENTITY_HEADER</span> <span class="o">=</span> <span class="s2">&quot;client_identity_header&quot;</span>
+    <span class="n">HARDCODED_USER_ID</span> <span class="o">=</span> <span class="s2">&quot;hardcoded_user_id&quot;</span>
+    <span class="n">SESSION_COOKIE_IN_SUBAPP</span> <span class="o">=</span> <span class="s2">&quot;session_cookie_in_subapp&quot;</span>
+    <span class="n">STORE_IMPORT_IN_APP</span> <span class="o">=</span> <span class="s2">&quot;store_import_in_app&quot;</span>
+    <span class="n">UNSAFE_KEY_IN_STORE</span> <span class="o">=</span> <span class="s2">&quot;unsafe_key_in_store&quot;</span>
+    <span class="n">MISSING_SIGNING_KEY</span> <span class="o">=</span> <span class="s2">&quot;missing_signing_key&quot;</span></div>
 
 
 
@@ -665,6 +693,12 @@
         <span class="n">_scan_python_for_hardcoded_ports</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
         <span class="n">_scan_python_for_hardcoded_urls</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
         <span class="n">_scan_python_for_bare_imports</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">py_file</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_subapp_auth</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_identity_headers</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_hardcoded_user_id</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_session_cookie</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_enlace_imports</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="n">_scan_python_for_unsafe_store_keys</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_cors</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
@@ -869,6 +903,186 @@
                 <span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_subapp_auth</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detect sub-app auth middleware that would conflict with platform auth.&quot;&quot;&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;(AuthenticationMiddleware|SessionMiddleware|add_middleware\s*\([^)]*[Aa]uth)&quot;&quot;&quot;</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">SUBAPP_AUTH_MIDDLEWARE</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Sub-app adds its own auth middleware&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Under enlace the platform owns authentication. An &quot;</span>
+                        <span class="s2">&quot;auth middleware inside a sub-app either duplicates &quot;</span>
+                        <span class="s2">&quot;platform checks or — worse — silently overrides &quot;</span>
+                        <span class="s2">&quot;request.state.user_id with spoofable values.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Gate the middleware on standalone mode:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  import os</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  if not os.environ.get(&#39;ENLACE_MANAGED&#39;):</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;      app.add_middleware(AuthenticationMiddleware, ...)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;Under enlace, read request.state.user_id instead.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_identity_headers</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag apps that read client identity headers directly.&quot;&quot;&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;headers(?:\.get)?\s*\(?\s*[&#39;&quot;](?:x-user-id|x-user-email|x-forwarded-user|x-forwarded-email|x-remote-user)[&#39;&quot;]&quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">CLIENT_IDENTITY_HEADER</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;App reads client-provided identity header&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Clients can forge these headers; enlace strips them &quot;</span>
+                        <span class="s2">&quot;before handing the request to your app. Reading them &quot;</span>
+                        <span class="s2">&quot;is always wrong.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Use request.state.user_id with a standalone fallback:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  user_id = getattr(request.state, &#39;user_id&#39;, None) </span><span class="se">\\\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;             or os.environ.get(&#39;DEV_USER&#39;)&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_hardcoded_user_id</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag literal user-id assignments.&quot;&quot;&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;user_id\s*=\s*[&#39;&quot;]([A-Za-z0-9_@.+-]+)[&#39;&quot;]&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">HARDCODED_USER_ID</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Hardcoded user_id literal: </span><span class="si">{</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Read user_id from request.state; for standalone &quot;</span>
+                        <span class="s2">&quot;development fall back to os.environ[&#39;DEV_USER&#39;].&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_session_cookie</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag set_cookie calls for session-looking cookie names.&quot;&quot;&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;set_cookie\s*\([^)]*[&#39;&quot;](session|sessionid|auth|auth_token)[&#39;&quot;]&quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">MEDIUM</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">SESSION_COOKIE_IN_SUBAPP</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;Sub-app sets its own session cookie&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Under enlace the platform issues the session cookie; &quot;</span>
+                        <span class="s2">&quot;a sub-app writing its own usually means the app still &quot;</span>
+                        <span class="s2">&quot;thinks it&#39;s doing auth.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Delete the set_cookie call and rely on &quot;</span>
+                        <span class="s2">&quot;request.state.user_id. Guard with ENLACE_MANAGED if &quot;</span>
+                        <span class="s2">&quot;you need the cookie in standalone mode.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_enlace_imports</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apps must never import enlace — this would create a hard dependency.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;&quot;&quot;^\s*(?:from|import)\s+enlace\b&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">STORE_IMPORT_IN_APP</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;App imports from enlace — violates zero-coupling invariant&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Apps must run standalone. An `import enlace` line &quot;</span>
+                        <span class="s2">&quot;means the app can&#39;t start without the platform.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Remove the import. If you need a store, use &quot;</span>
+                        <span class="s2">&quot;request.state.store with a dict fallback:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;  store = getattr(request.state, &#39;store&#39;, None) or </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;That keeps standalone working.&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan_python_for_unsafe_store_keys</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Heuristic: store[&lt;user input&gt;] without a validation call nearby.&quot;&quot;&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;\bstore\s*\[\s*(request\.\w+|body\.\w+|\w+\.json\(\)|\w+\[\s*[&#39;&quot;][^&#39;&quot;]+[&#39;&quot;]\s*\])&quot;&quot;&quot;</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;sanitize&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="s2">&quot;validate&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+            <span class="n">report</span><span class="o">.</span><span class="n">issues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">Issue</span><span class="p">(</span>
+                    <span class="n">severity</span><span class="o">=</span><span class="n">Severity</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">Category</span><span class="o">.</span><span class="n">UNSAFE_KEY_IN_STORE</span><span class="p">,</span>
+                    <span class="n">summary</span><span class="o">=</span><span class="s2">&quot;User-supplied input used as store key without sanitization&quot;</span><span class="p">,</span>
+                    <span class="n">file_path</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
+                    <span class="n">line_number</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Keys built from request data can escape the tenant &quot;</span>
+                        <span class="s2">&quot;prefix with &#39;..&#39; or similar. enlace&#39;s PrefixedStore &quot;</span>
+                        <span class="s2">&quot;sanitizes keys, but only if you pass them through it.&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">suggestion</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">&quot;Validate the key before indexing (e.g. assert it&#39;s &quot;</span>
+                        <span class="s2">&quot;short, contains only [a-zA-Z0-9._-], and lacks &#39;..&#39;).&quot;</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_js_frontend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span> <span class="n">DiagnosticReport</span><span class="p">):</span>
