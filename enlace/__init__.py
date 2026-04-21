@@ -14,7 +14,7 @@ from enlace.base import (
     PlatformConfig,
     StoreBackendConfig,
 )
-from enlace.compose import build_backend, create_app
+from enlace.compose import EnlaceConfigError, build_backend, create_app
 from enlace.diagnose import DiagnosticReport, Issue, diagnose_app
 from enlace.discover import ConventionDiscoverer, discover_apps
 from enlace.serve import serve
@@ -31,6 +31,7 @@ __all__ = [
     "PlatformConfig",
     "StoreBackendConfig",
     "ConventionDiscoverer",
+    "EnlaceConfigError",
     "build_backend",
     "create_app",
     "diagnose_app",
