@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.0.10 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.0.11 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=a83ce22a"></script>
+      <script src="../../_static/documentation_options.js?v=0c446633"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -59,6 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/doctor.html">enlace.doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
@@ -69,6 +70,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/stores/validation.html">enlace.stores.validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_auth_failfast.html">enlace.tests.test_auth_failfast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
@@ -76,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_doctor.html">enlace.tests.test_doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
@@ -121,6 +124,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
@@ -136,6 +140,25 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">PlatformConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_apps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.frontend</span><span class="w"> </span><span class="kn">import</span> <span class="n">SPAStaticFiles</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;enlace&quot;</span><span class="p">)</span>
+
+<span class="c1"># Minimum accepted signing-key length. `secrets.token_urlsafe(32)` yields 43</span>
+<span class="c1"># chars; anything much shorter is a stub or placeholder and should be rejected.</span>
+<span class="n">_MIN_SIGNING_KEY_LEN</span> <span class="o">=</span> <span class="mi">32</span>
+
+<span class="n">_UNSAFE_OPT_OUT_ENV</span> <span class="o">=</span> <span class="s2">&quot;ENLACE_ALLOW_UNSIGNED&quot;</span>
+
+
+<div class="viewcode-block" id="EnlaceConfigError">
+<a class="viewcode-back" href="../../module_docs/enlace/compose.html#enlace.EnlaceConfigError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnlaceConfigError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when platform configuration is unusable at startup.</span>
+
+<span class="sd">    Distinct from ``ValueError`` / ``RuntimeError`` so callers and tests can</span>
+<span class="sd">    target this specific class.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="build_backend">
@@ -413,6 +436,54 @@
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_signing_key</span><span class="p">(</span><span class="n">env_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the auth signing key, enforcing fail-fast by default.</span>
+
+<span class="sd">    Returns the key when usable. Returns ``None`` when the key is missing or</span>
+<span class="sd">    malformed AND ``ENLACE_ALLOW_UNSIGNED=1`` is set — the caller should then</span>
+<span class="sd">    skip auth wiring (logging a loud warning is already done here). Raises</span>
+<span class="sd">    ``EnlaceConfigError`` when the key is missing/malformed and the opt-out is</span>
+<span class="sd">    NOT set.</span>
+
+<span class="sd">    A deployment that silently runs without a signing key when auth is enabled</span>
+<span class="sd">    is strictly broken: ``/auth/*`` routes aren&#39;t mounted, so the SPA catch-all</span>
+<span class="sd">    returns HTML for ``fetch(&#39;/auth/csrf&#39;)`` and every protected mount becomes</span>
+<span class="sd">    unreachable. See i2mint/enlace#11.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env_var</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">stripped</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">stripped</span><span class="p">:</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;env var </span><span class="si">{</span><span class="n">env_var</span><span class="si">}</span><span class="s2"> is unset or empty&quot;</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">_MIN_SIGNING_KEY_LEN</span><span class="p">:</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;env var </span><span class="si">{</span><span class="n">env_var</span><span class="si">}</span><span class="s2"> is too short &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stripped</span><span class="p">)</span><span class="si">}</span><span class="s2"> chars; need &gt;= </span><span class="si">{</span><span class="n">_MIN_SIGNING_KEY_LEN</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">problem</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stripped</span>
+
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_UNSAFE_OPT_OUT_ENV</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;enlace auth is ENABLED but </span><span class="si">%s</span><span class="s2"> — booting with /auth/* DISABLED &quot;</span>
+            <span class="s2">&quot;because </span><span class="si">%s</span><span class="s2">=1. This gateway cannot authenticate users. Unset the &quot;</span>
+            <span class="s2">&quot;opt-out and set </span><span class="si">%s</span><span class="s2"> to restore auth.&quot;</span><span class="p">,</span>
+            <span class="n">problem</span><span class="p">,</span>
+            <span class="n">_UNSAFE_OPT_OUT_ENV</span><span class="p">,</span>
+            <span class="n">env_var</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">raise</span> <span class="n">EnlaceConfigError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;enlace auth is enabled but </span><span class="si">{</span><span class="n">problem</span><span class="si">}</span><span class="s2">. Generate one with &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;`enlace auth-generate-signing-key` and export it as </span><span class="si">{</span><span class="n">env_var</span><span class="si">}</span><span class="s2">. &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;To boot without auth (diagnostics only), set &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_UNSAFE_OPT_OUT_ENV</span><span class="si">}</span><span class="s2">=1. See `enlace check` / `enlace doctor` &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;for details.&quot;</span>
+    <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_wire_auth_and_stores</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wire auth + store middleware and mount /auth/* and /api/{app}/store routes.</span>
 
@@ -423,10 +494,10 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">auth_cfg</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
         <span class="k">return</span>
 
-    <span class="n">signing_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">signing_key_env</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">signing_key</span><span class="p">:</span>
-        <span class="c1"># Surface this via `enlace check` rather than crashing at startup —</span>
-        <span class="c1"># the gateway should still boot so operators can diagnose.</span>
+    <span class="n">signing_key</span> <span class="o">=</span> <span class="n">_require_signing_key</span><span class="p">(</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">signing_key_env</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">signing_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Opt-out path: ENLACE_ALLOW_UNSIGNED=1 kept us from raising, but the</span>
+        <span class="c1"># gateway must still boot without auth so operators can diagnose.</span>
         <span class="k">return</span>
 
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.auth</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -519,8 +590,17 @@
             <span class="k">if</span> <span class="n">oauth_router</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">parent</span><span class="o">.</span><span class="n">include_router</span><span class="p">(</span><span class="n">oauth_router</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="c1"># authlib not installed — skip but keep platform functional.</span>
-            <span class="k">pass</span>
+            <span class="c1"># authlib not installed but [auth.oauth.*] was configured. This</span>
+            <span class="c1"># silently breaks /auth/login/{provider}. Keep the platform</span>
+            <span class="c1"># functional (base auth still works) but make the degradation</span>
+            <span class="c1"># loud so ops don&#39;t chase a 404 in the dark.</span>
+            <span class="n">providers</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">auth_cfg</span><span class="o">.</span><span class="n">oauth</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;(none)&quot;</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;enlace: [auth.oauth.*] is configured (</span><span class="si">%s</span><span class="s2">) but authlib is &quot;</span>
+                <span class="s2">&quot;not installed. OAuth endpoints will be MISSING. &quot;</span>
+                <span class="s2">&quot;Install with `pip install enlace[oauth]` to fix.&quot;</span><span class="p">,</span>
+                <span class="n">providers</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="c1"># Per-user store API.</span>
     <span class="n">store_router</span> <span class="o">=</span> <span class="n">make_store_router</span><span class="p">(</span>

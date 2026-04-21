@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace &mdash; enlace 0.0.10 documentation</title>
+  <title>enlace &mdash; enlace 0.0.11 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=a83ce22a"></script>
+      <script src="../_static/documentation_options.js?v=0c446633"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -72,6 +72,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#enlace.DiagnosticReport.is_enlaceable"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport.is_enlaceable</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.EnlaceConfigError"><code class="docutils literal notranslate"><span class="pre">EnlaceConfigError</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.OAuthProviderConfig"><code class="docutils literal notranslate"><span class="pre">OAuthProviderConfig</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.OAuthProviderConfig.model_config"><code class="docutils literal notranslate"><span class="pre">OAuthProviderConfig.model_config</span></code></a></li>
@@ -108,6 +109,7 @@
 <li class="toctree-l1"><a class="reference internal" href="enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/doctor.html">enlace.doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/serve.html">enlace.serve</a></li>
@@ -118,6 +120,7 @@
 <li class="toctree-l1"><a class="reference internal" href="enlace/stores/validation.html">enlace.stores.validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_auth_failfast.html">enlace.tests.test_auth_failfast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
@@ -125,6 +128,7 @@
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_doctor.html">enlace.tests.test_doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
 <li class="toctree-l1"><a class="reference internal" href="enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
@@ -258,6 +262,14 @@ this treats app_dir itself as the app directory.</p>
 <dd><p>True if no CRITICAL issues were found.</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="enlace.EnlaceConfigError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">EnlaceConfigError</span></span><a class="reference internal" href="../_modules/enlace/compose.html#EnlaceConfigError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.EnlaceConfigError" title="Link to this definition"></a></dt>
+<dd><p>Raised when platform configuration is unusable at startup.</p>
+<p>Distinct from <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> / <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> so callers and tests can
+target this specific class.</p>
 </dd></dl>
 
 <dl class="py class">

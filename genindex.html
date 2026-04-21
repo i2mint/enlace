@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; enlace 0.0.10 documentation</title>
+  <title>Index &mdash; enlace 0.0.11 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=a83ce22a"></script>
+      <script src="_static/documentation_options.js?v=0c446633"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -59,6 +59,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/doctor.html">enlace.doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/serve.html">enlace.serve</a></li>
@@ -69,6 +70,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/stores/validation.html">enlace.stores.validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_auth_failfast.html">enlace.tests.test_auth_failfast</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
@@ -76,6 +78,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_csrf.html">enlace.tests.test_csrf</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_doctor.html">enlace.tests.test_doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_oauth.html">enlace.tests.test_oauth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_passwords.html">enlace.tests.test_passwords</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
@@ -125,6 +128,7 @@
  | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
  | <a href="#V"><strong>V</strong></a>
@@ -191,6 +195,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/diagnose.html#enlace.diagnose.Category">Category (class in enlace.diagnose)</a>
+</li>
+      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Check">Check (class in enlace.doctor)</a>
 </li>
       <li><a href="module_docs/enlace/__main__.html#enlace.__main__.check">check() (in module enlace.__main__)</a>
 </li>
@@ -266,6 +272,8 @@
         <li><a href="module_docs/enlace/discover.html#enlace.discover.discover_apps">(in module enlace.discover)</a>
 </li>
       </ul></li>
+      <li><a href="module_docs/enlace/__main__.html#enlace.__main__.doctor">doctor() (in module enlace.__main__)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -340,6 +348,13 @@
 
       <ul>
         <li><a href="module_docs/enlace/discover.html#module-enlace.discover">module</a>
+</li>
+      </ul></li>
+      <li>
+    enlace.doctor
+
+      <ul>
+        <li><a href="module_docs/enlace/doctor.html#module-enlace.doctor">module</a>
 </li>
       </ul></li>
       <li>
@@ -442,6 +457,8 @@
         <li><a href="module_docs/enlace/util.html#module-enlace.util">module</a>
 </li>
       </ul></li>
+      <li><a href="module_docs/enlace.html#enlace.EnlaceConfigError">EnlaceConfigError</a>, <a href="module_docs/enlace/compose.html#enlace.compose.EnlaceConfigError">[1]</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -452,6 +469,8 @@
 
       <ul>
         <li><a href="module_docs/enlace.html#enlace.DiagnosticReport.format_text">(enlace.DiagnosticReport method)</a>
+</li>
+        <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report.format_text">(enlace.doctor.Report method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -582,6 +601,8 @@
 </li>
         <li><a href="module_docs/enlace/discover.html#module-enlace.discover">enlace.discover</a>
 </li>
+        <li><a href="module_docs/enlace/doctor.html#module-enlace.doctor">enlace.doctor</a>
+</li>
         <li><a href="module_docs/enlace/frontend.html#module-enlace.frontend">enlace.frontend</a>
 </li>
         <li><a href="module_docs/enlace/proxy.html#module-enlace.proxy">enlace.proxy</a>
@@ -624,6 +645,10 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report.ok">ok (enlace.doctor.Report property)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="P">P</h2>
@@ -645,6 +670,18 @@
         <li><a href="module_docs/enlace/stores/prefixed.html#enlace.stores.prefixed.PrefixedStore">(class in enlace.stores.prefixed)</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.run_doctor">run_doctor() (in module enlace.doctor)</a>
+</li>
   </ul></td>
 </tr></table>
 

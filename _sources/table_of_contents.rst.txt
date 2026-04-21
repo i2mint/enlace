@@ -15,6 +15,7 @@
    module_docs/enlace/compose
    module_docs/enlace/diagnose
    module_docs/enlace/discover
+   module_docs/enlace/doctor
    module_docs/enlace/frontend
    module_docs/enlace/proxy
    module_docs/enlace/serve
@@ -25,6 +26,7 @@
    module_docs/enlace/stores/validation
    module_docs/enlace/supervise
    module_docs/enlace/tests/conftest
+   module_docs/enlace/tests/test_auth_failfast
    module_docs/enlace/tests/test_auth_middleware
    module_docs/enlace/tests/test_base
    module_docs/enlace/tests/test_base_auth_config
@@ -32,6 +34,7 @@
    module_docs/enlace/tests/test_csrf
    module_docs/enlace/tests/test_diagnose_auth
    module_docs/enlace/tests/test_discover
+   module_docs/enlace/tests/test_doctor
    module_docs/enlace/tests/test_oauth
    module_docs/enlace/tests/test_passwords
    module_docs/enlace/tests/test_prefixed_store
