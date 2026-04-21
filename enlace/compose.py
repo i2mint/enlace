@@ -8,6 +8,7 @@ cross-cutting middleware. Handles lifespan cascading to mounted sub-apps
 import contextlib
 import importlib
 import inspect
+import logging
 import os
 import sys
 from contextlib import asynccontextmanager
@@ -23,6 +24,22 @@ from starlette.staticfiles import StaticFiles
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps
 from enlace.frontend import SPAStaticFiles
+
+_logger = logging.getLogger("enlace")
+
+# Minimum accepted signing-key length. `secrets.token_urlsafe(32)` yields 43
+# chars; anything much shorter is a stub or placeholder and should be rejected.
+_MIN_SIGNING_KEY_LEN = 32
+
+_UNSAFE_OPT_OUT_ENV = "ENLACE_ALLOW_UNSIGNED"
+
+
+class EnlaceConfigError(RuntimeError):
+    """Raised when platform configuration is unusable at startup.
+
+    Distinct from ``ValueError`` / ``RuntimeError`` so callers and tests can
+    target this specific class.
+    """
 
 
 def build_backend(config: PlatformConfig) -> FastAPI:
@@ -297,6 +314,54 @@ class _AppIdInjector:
         await self.app(scope, receive, send)
 
 
+def _require_signing_key(env_var: str) -> Optional[str]:
+    """Resolve the auth signing key, enforcing fail-fast by default.
+
+    Returns the key when usable. Returns ``None`` when the key is missing or
+    malformed AND ``ENLACE_ALLOW_UNSIGNED=1`` is set — the caller should then
+    skip auth wiring (logging a loud warning is already done here). Raises
+    ``EnlaceConfigError`` when the key is missing/malformed and the opt-out is
+    NOT set.
+
+    A deployment that silently runs without a signing key when auth is enabled
+    is strictly broken: ``/auth/*`` routes aren't mounted, so the SPA catch-all
+    returns HTML for ``fetch('/auth/csrf')`` and every protected mount becomes
+    unreachable. See i2mint/enlace#11.
+    """
+    raw = os.environ.get(env_var) or ""
+    stripped = raw.strip()
+    problem: Optional[str] = None
+    if not stripped:
+        problem = f"env var {env_var} is unset or empty"
+    elif len(stripped) < _MIN_SIGNING_KEY_LEN:
+        problem = (
+            f"env var {env_var} is too short "
+            f"({len(stripped)} chars; need >= {_MIN_SIGNING_KEY_LEN})"
+        )
+
+    if problem is None:
+        return stripped
+
+    if os.environ.get(_UNSAFE_OPT_OUT_ENV) == "1":
+        _logger.error(
+            "enlace auth is ENABLED but %s — booting with /auth/* DISABLED "
+            "because %s=1. This gateway cannot authenticate users. Unset the "
+            "opt-out and set %s to restore auth.",
+            problem,
+            _UNSAFE_OPT_OUT_ENV,
+            env_var,
+        )
+        return None
+
+    raise EnlaceConfigError(
+        f"enlace auth is enabled but {problem}. Generate one with "
+        f"`enlace auth-generate-signing-key` and export it as {env_var}. "
+        f"To boot without auth (diagnostics only), set "
+        f"{_UNSAFE_OPT_OUT_ENV}=1. See `enlace check` / `enlace doctor` "
+        f"for details."
+    )
+
+
 def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
     """Wire auth + store middleware and mount /auth/* and /api/{app}/store routes.
 
@@ -307,10 +372,10 @@ def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
     if not auth_cfg.enabled:
         return
 
-    signing_key = os.environ.get(auth_cfg.signing_key_env)
-    if not signing_key:
-        # Surface this via `enlace check` rather than crashing at startup —
-        # the gateway should still boot so operators can diagnose.
+    signing_key = _require_signing_key(auth_cfg.signing_key_env)
+    if signing_key is None:
+        # Opt-out path: ENLACE_ALLOW_UNSIGNED=1 kept us from raising, but the
+        # gateway must still boot without auth so operators can diagnose.
         return
 
     from enlace.auth import (
@@ -403,8 +468,17 @@ def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
             if oauth_router is not None:
                 parent.include_router(oauth_router)
         except ImportError:
-            # authlib not installed — skip but keep platform functional.
-            pass
+            # authlib not installed but [auth.oauth.*] was configured. This
+            # silently breaks /auth/login/{provider}. Keep the platform
+            # functional (base auth still works) but make the degradation
+            # loud so ops don't chase a 404 in the dark.
+            providers = ", ".join(sorted(auth_cfg.oauth)) or "(none)"
+            _logger.error(
+                "enlace: [auth.oauth.*] is configured (%s) but authlib is "
+                "not installed. OAuth endpoints will be MISSING. "
+                "Install with `pip install enlace[oauth]` to fix.",
+                providers,
+            )
 
     # Per-user store API.
     store_router = make_store_router(

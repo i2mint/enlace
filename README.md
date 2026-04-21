@@ -151,6 +151,9 @@ enlace show-config        # Resolved config with provenance
 enlace check              # Validate config, check route conflicts
 enlace list-apps          # Table: name, route, type, access
 enlace diagnose <dir>     # Analyze an app for enlace compatibility
+enlace doctor --base-url http://127.0.0.1:8000
+                          # Post-deploy smoke: probe /auth/csrf and every
+                          # mounted app; exit nonzero on any failure.
 ```
 
 ### Python API

@@ -61,6 +61,7 @@ ignore = ["D203"]
 "enlace/diagnose.py" = ["E501"]  # Long lines in diagnostic prose strings
 "tests/test_auth_e2e.py" = ["E501"]  # Embedded fixture source with long lines
 "tests/test_standalone_preservation.py" = ["E501"]
+"enlace/tests/test_doctor.py" = ["E501"]  # Inline HTTP-mock fixture dicts
 
 [project.entry-points."skill.skill_packs"]
 enlace = "enlace:skills_dir"
