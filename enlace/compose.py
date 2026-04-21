@@ -15,6 +15,16 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Mount
+from starlette.staticfiles import StaticFiles
+
+from enlace.base import AppConfig, PlatformConfig
+from enlace.discover import discover_apps
+from enlace.frontend import SPAStaticFiles
+
 _logger = logging.getLogger("enlace")
 
 # Minimum accepted signing-key length. `secrets.token_urlsafe(32)` yields 43
@@ -30,16 +40,6 @@ class EnlaceConfigError(RuntimeError):
     Distinct from ``ValueError`` / ``RuntimeError`` so callers and tests can
     target this specific class.
     """
-
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from starlette.middleware.cors import CORSMiddleware
-from starlette.routing import Mount
-from starlette.staticfiles import StaticFiles
-
-from enlace.base import AppConfig, PlatformConfig
-from enlace.discover import discover_apps
-from enlace.frontend import SPAStaticFiles
 
 
 def build_backend(config: PlatformConfig) -> FastAPI:
