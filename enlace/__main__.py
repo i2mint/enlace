@@ -14,12 +14,14 @@ import secrets
 import sys
 from getpass import getpass
 from pathlib import Path
+from typing import Optional
 
 import argh
 
 from enlace.base import PlatformConfig
 from enlace.diagnose import diagnose_app
 from enlace.discover import discover_apps
+from enlace.doctor import run_doctor
 from enlace.serve import serve
 
 
@@ -275,6 +277,97 @@ def diagnose(
         sys.exit(1)
 
 
+def _load_envfile(path: str) -> None:
+    """Parse a simple KEY=VALUE envfile into ``os.environ``.
+
+    Only handles the systemd/shell common case: blank lines, ``#`` comments,
+    and ``KEY=VALUE`` (value may be wrapped in single or double quotes). This
+    is intentionally not a full shell parser — deploy envfiles are expected
+    to avoid exotic syntax.
+    """
+    p = Path(path).expanduser()
+    if not p.is_file():
+        print(f"envfile not found: {p}", file=sys.stderr)
+        sys.exit(2)
+    for lineno, raw in enumerate(p.read_text().splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        os.environ[key] = value
+
+
+def doctor(
+    *,
+    base_url: str = "",
+    timeout: float = 5.0,
+    apps: str = "",
+    json: bool = False,
+    envfile: str = "",
+    skip_env_checks: bool = False,
+    apps_dir: str = "",
+    apps_dirs: str = "",
+    app_dirs: str = "",
+):
+    """Probe a running enlace gateway for silent-degradation failures.
+
+    Static checks cover signing-key / shared-password env vars (only
+    meaningful when run in the gateway's env — see ``--envfile`` /
+    ``--skip-env-checks``), oauth importability, and frontend_dir sanity.
+    HTTP probes run when ``--base-url`` is given, against ``/auth/csrf``,
+    each app's frontend, and each app's API prefix.
+
+    Exits nonzero if any check fails. Intended as a post-deploy smoke tool.
+
+    Args:
+        base_url: Base URL of a running gateway (e.g. http://127.0.0.1:8010).
+            When omitted, runs static checks only.
+        timeout: Per-request timeout for HTTP probes, seconds.
+        apps: Comma-separated app names to restrict HTTP probes to.
+            Static checks still run across all apps.
+        json: Output as JSON (for CI / deploy pipelines).
+        envfile: Path to a KEY=VALUE envfile to load before running env
+            checks. Use this when probing from outside the service process
+            (e.g. a deploy script sourcing /opt/tw_platform/.env).
+        skip_env_checks: Skip signing-key / shared-password env checks
+            entirely. Use when you are running from a shell that doesn't
+            have the gateway's env and you trust the HTTP probes as the
+            authoritative signal.
+        apps_dir: Path to the apps directory.
+        apps_dirs: Comma-separated container directories.
+        app_dirs: Comma-separated individual app directories.
+    """
+    if envfile:
+        _load_envfile(envfile)
+
+    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    app_filter: Optional[list[str]] = None
+    if apps:
+        app_filter = [a.strip() for a in apps.split(",") if a.strip()]
+
+    report = run_doctor(
+        config,
+        base_url=base_url or None,
+        timeout=timeout,
+        app_filter=app_filter,
+        include_env_checks=not skip_env_checks,
+    )
+
+    if json:
+        print(json_module.dumps(report.as_dict(), indent=2, default=str))
+    else:
+        print(report.format_text())
+
+    if not report.ok:
+        sys.exit(1)
+
+
 def _check_auth_env(config: PlatformConfig) -> list[str]:
     """Return a list of errors for missing auth-related env vars."""
     errors: list[str] = []
@@ -412,6 +505,7 @@ def main():
             check,
             list_apps,
             diagnose,
+            doctor,
             auth_init,
             auth_generate_signing_key,
             auth_hash_password,
