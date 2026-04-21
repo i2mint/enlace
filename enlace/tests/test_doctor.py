@@ -55,7 +55,8 @@ def test_static_good_signing_key_passes(clean_env, single_app_dir):
 
 def test_static_skip_when_auth_disabled(clean_env, single_app_dir):
     cfg = PlatformConfig(
-        apps_dir=single_app_dir, auth=AuthConfig(enabled=False, signing_key_env=_KEY_ENV)
+        apps_dir=single_app_dir,
+        auth=AuthConfig(enabled=False, signing_key_env=_KEY_ENV),
     )
     cfg = discover_apps(cfg)
     report = doctor_mod.run_doctor(cfg, base_url=None)
@@ -112,9 +113,19 @@ def test_csrf_probe_catches_spa_fallthrough(clean_env, single_app_dir, monkeypat
         "_http_get",
         _fake_http(
             {
-                "http://x/auth/csrf": (200, {"content-type": "text/html"}, spa_html, None),
+                "http://x/auth/csrf": (
+                    200,
+                    {"content-type": "text/html"},
+                    spa_html,
+                    None,
+                ),
                 "http://x/foo/": (200, {"content-type": "text/html"}, b"<html/>", None),
-                "http://x/api/foo/": (200, {"content-type": "application/json"}, b"{}", None),
+                "http://x/api/foo/": (
+                    200,
+                    {"content-type": "application/json"},
+                    b"{}",
+                    None,
+                ),
             }
         ),
     )
@@ -140,7 +151,12 @@ def test_csrf_probe_accepts_valid_json(clean_env, single_app_dir, monkeypatch):
                     b'{"csrf": "abc123"}',
                     None,
                 ),
-                "http://x/api/foo/": (200, {"content-type": "application/json"}, b"{}", None),
+                "http://x/api/foo/": (
+                    200,
+                    {"content-type": "application/json"},
+                    b"{}",
+                    None,
+                ),
             }
         ),
     )

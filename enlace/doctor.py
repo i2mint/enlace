@@ -385,9 +385,7 @@ def run_doctor(
                 app.mode == "static"
             )
             if has_frontend:
-                report.checks.append(
-                    _check_frontend_mount(base_url, app.name, timeout)
-                )
+                report.checks.append(_check_frontend_mount(base_url, app.name, timeout))
             if app.app_type != "frontend_only" and app.mode != "static":
                 report.checks.append(
                     _check_api_mount(base_url, app.name, app.route_prefix, timeout)
