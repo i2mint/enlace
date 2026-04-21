@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import asdict, dataclass, field
-from typing import Any, Iterable, Optional
+from typing import Iterable, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -264,12 +264,15 @@ def _check_csrf(base_url: str, timeout: float) -> Check:
             f"body is not valid JSON: {e}",
         )
     if not isinstance(data, dict) or "csrf" not in data:
+        keys = list(data) if isinstance(data, dict) else type(data).__name__
         return Check(
             "http:/auth/csrf",
             FAIL,
-            f"JSON response missing 'csrf' key: keys={list(data) if isinstance(data, dict) else type(data).__name__}",
+            f"JSON response missing 'csrf' key: keys={keys}",
         )
-    return Check("http:/auth/csrf", PASS, f"JSON with csrf token ({len(data['csrf'])} chars)")
+    return Check(
+        "http:/auth/csrf", PASS, f"JSON with csrf token ({len(data['csrf'])} chars)"
+    )
 
 
 def _check_frontend_mount(base_url: str, app_name: str, timeout: float) -> Check:

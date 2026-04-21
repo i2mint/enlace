@@ -8,9 +8,6 @@ and monkeypatch `doctor._http_get` for the offline cases.
 
 from __future__ import annotations
 
-import os
-from typing import Optional
-
 import pytest
 
 from enlace import doctor as doctor_mod

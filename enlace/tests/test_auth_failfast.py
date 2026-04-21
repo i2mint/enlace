@@ -7,8 +7,6 @@ now refuses to start unless the operator sets ENLACE_ALLOW_UNSIGNED=1.
 
 from __future__ import annotations
 
-import os
-
 import pytest
 
 from enlace import EnlaceConfigError, build_backend
