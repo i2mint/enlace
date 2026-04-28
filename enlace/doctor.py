@@ -3,8 +3,9 @@
 Complements ``enlace check`` (static config validation) by probing a live
 gateway over HTTP. Catches silent-degradation failures that static analysis
 can't — the incident that motivated this (i2mint/enlace#11) was a gateway
-booting cleanly with ``/auth/*`` un-mounted because ``ENLACE_SIGNING_KEY``
-was missing at startup.
+booting cleanly with auth un-mounted because the signing key was missing at
+startup; auth-specific checks for that scenario live in
+``enlace_auth.diagnostics``.
 
 Design:
 - Pure stdlib ``urllib`` for HTTP. No new deps; this must work in minimal
@@ -13,14 +14,15 @@ Design:
   of them and returns a ``Report`` so callers can emit pretty text OR JSON.
 - ``detail`` is a short human-readable string. Structured payloads go in
   ``extra`` (dict) so ``--json`` consumers don't re-parse prose.
+- Plugins can supply extra static or HTTP probes via ``extra_static_checks``
+  and ``extra_http_checks`` on ``run_doctor``.
 """
 
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import asdict, dataclass, field
-from typing import Iterable, Optional
+from typing import Callable, Iterable, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -99,83 +101,6 @@ class Report:
 # ---------------------------------------------------------------------------
 
 
-def _check_signing_key(config: PlatformConfig) -> Check:
-    auth = config.auth
-    if not auth.enabled:
-        return Check("signing_key", SKIP, "auth.enabled=false")
-    raw = os.environ.get(auth.signing_key_env) or ""
-    stripped = raw.strip()
-    if not stripped:
-        return Check(
-            "signing_key",
-            FAIL,
-            f"env var {auth.signing_key_env} is unset or empty",
-        )
-    if len(stripped) < 32:
-        return Check(
-            "signing_key",
-            FAIL,
-            f"env var {auth.signing_key_env} too short ({len(stripped)} chars)",
-        )
-    return Check(
-        "signing_key",
-        PASS,
-        f"{auth.signing_key_env} set ({len(stripped)} chars)",
-    )
-
-
-def _check_shared_passwords(config: PlatformConfig) -> list[Check]:
-    if not config.auth.enabled:
-        return []
-    out: list[Check] = []
-    for app in config.apps:
-        if app.access != "protected:shared":
-            continue
-        if not app.shared_password_env:
-            out.append(
-                Check(
-                    f"shared_pw:{app.name}",
-                    FAIL,
-                    "access=protected:shared but no shared_password_env set",
-                )
-            )
-            continue
-        if not os.environ.get(app.shared_password_env):
-            out.append(
-                Check(
-                    f"shared_pw:{app.name}",
-                    FAIL,
-                    f"env var {app.shared_password_env} is unset",
-                )
-            )
-        else:
-            out.append(
-                Check(
-                    f"shared_pw:{app.name}",
-                    PASS,
-                    f"{app.shared_password_env} set",
-                )
-            )
-    return out
-
-
-def _check_oauth_importable(config: PlatformConfig) -> Optional[Check]:
-    """If OAuth providers are configured, authlib must be importable."""
-    if not config.auth.enabled or not config.auth.oauth:
-        return None
-    providers = ", ".join(sorted(config.auth.oauth))
-    try:
-        import authlib  # noqa: F401
-    except ImportError:
-        return Check(
-            "oauth_import",
-            FAIL,
-            f"oauth providers ({providers}) configured but authlib not "
-            "installed. Install with `pip install enlace[oauth]`.",
-        )
-    return Check("oauth_import", PASS, f"authlib importable; providers: {providers}")
-
-
 def _check_frontend_dirs(config: PlatformConfig) -> list[Check]:
     """Apps declaring frontend_dir should actually have a directory there."""
     out: list[Check] = []
@@ -224,55 +149,6 @@ def _http_get(
         return None, {}, None, f"connection failed: {e.reason}"
     except Exception as e:  # pragma: no cover - defensive
         return None, {}, None, f"unexpected error: {e}"
-
-
-def _check_csrf(base_url: str, timeout: float) -> Check:
-    """GET /auth/csrf must return JSON with a 'csrf' key.
-
-    This is THE check that would have caught the i2mint/enlace#11 regression:
-    when auth is silently disabled, the SPA catch-all returns
-    ``<!doctype html>`` instead of JSON.
-    """
-    url = f"{base_url.rstrip('/')}/auth/csrf"
-    status, headers, body, err = _http_get(url, timeout=timeout)
-    if err:
-        return Check("http:/auth/csrf", FAIL, err)
-    ct = headers.get("content-type", "")
-    if status != 200:
-        snippet = (body or b"").decode("utf-8", errors="replace")[:120]
-        return Check(
-            "http:/auth/csrf",
-            FAIL,
-            f"status={status} content-type={ct!r} body[:120]={snippet!r}",
-            extra={"status": status, "content_type": ct},
-        )
-    if "application/json" not in ct.lower():
-        snippet = (body or b"").decode("utf-8", errors="replace")[:120]
-        return Check(
-            "http:/auth/csrf",
-            FAIL,
-            f"expected JSON, got content-type={ct!r}; "
-            f"body[:120]={snippet!r} (auth silently disabled?)",
-            extra={"status": status, "content_type": ct},
-        )
-    try:
-        data = json.loads(body.decode("utf-8"))
-    except Exception as e:
-        return Check(
-            "http:/auth/csrf",
-            FAIL,
-            f"body is not valid JSON: {e}",
-        )
-    if not isinstance(data, dict) or "csrf" not in data:
-        keys = list(data) if isinstance(data, dict) else type(data).__name__
-        return Check(
-            "http:/auth/csrf",
-            FAIL,
-            f"JSON response missing 'csrf' key: keys={keys}",
-        )
-    return Check(
-        "http:/auth/csrf", PASS, f"JSON with csrf token ({len(data['csrf'])} chars)"
-    )
 
 
 def _check_frontend_mount(base_url: str, app_name: str, timeout: float) -> Check:
@@ -333,6 +209,10 @@ def _check_api_mount(
 # ---------------------------------------------------------------------------
 
 
+StaticCheckFn = Callable[[PlatformConfig], "Iterable[Check]"]
+HttpCheckFn = Callable[[PlatformConfig, str, float], "Iterable[Check]"]
+
+
 def run_doctor(
     config: PlatformConfig,
     *,
@@ -340,6 +220,8 @@ def run_doctor(
     timeout: float = _DEFAULT_TIMEOUT,
     app_filter: Optional[Iterable[str]] = None,
     include_env_checks: bool = True,
+    extra_static_checks: Iterable[StaticCheckFn] = (),
+    extra_http_checks: Iterable[HttpCheckFn] = (),
 ) -> Report:
     """Run all checks and return a ``Report``.
 
@@ -350,30 +232,27 @@ def run_doctor(
         timeout: Per-request timeout for HTTP probes.
         app_filter: If given, only probe these app names (static checks
             still run across all apps).
-        include_env_checks: When False, env-var checks (signing key,
-            shared-password hashes) are skipped. Useful when probing from
-            a shell that doesn't have the gateway's env loaded — the HTTP
-            probes then serve as the source of truth. Callers that have
-            loaded the env (e.g. ``--envfile``) should leave this True.
+        include_env_checks: Forwarded to ``extra_static_checks`` callbacks
+            via ``config`` (those that read env vars should respect their
+            caller's intent — see ``enlace_auth.diagnostics`` for the
+            convention). enlace itself has no env-var checks of its own.
+        extra_static_checks: Plugin-provided static checks. Each is a
+            callable that receives ``config`` and returns ``Iterable[Check]``.
+        extra_http_checks: Plugin-provided HTTP checks. Each is a callable
+            that receives ``(config, base_url, timeout)`` and returns
+            ``Iterable[Check]``. Only invoked when ``base_url`` is set.
     """
+    _ = include_env_checks  # signal to plugin authors via convention
     report = Report(base_url=base_url)
 
-    # Static checks that depend on the local environment.
-    if include_env_checks:
-        report.checks.append(_check_signing_key(config))
-        report.checks.extend(_check_shared_passwords(config))
-    # Static checks that only depend on the repo / config — always run.
-    oauth_check = _check_oauth_importable(config)
-    if oauth_check is not None:
-        report.checks.append(oauth_check)
     report.checks.extend(_check_frontend_dirs(config))
+    for fn in extra_static_checks:
+        report.checks.extend(fn(config))
 
     # HTTP probes — only when a base URL is provided.
     if base_url:
-        if config.auth.enabled:
-            report.checks.append(_check_csrf(base_url, timeout))
-        else:
-            report.checks.append(Check("http:/auth/csrf", SKIP, "auth.enabled=false"))
+        for fn in extra_http_checks:
+            report.checks.extend(fn(config, base_url, timeout))
 
         apps = list(config.apps)
         if app_filter is not None:

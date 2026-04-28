@@ -1,47 +1,29 @@
-"""Core data structures for enlace platform configuration."""
+"""Core data structures for enlace platform configuration.
+
+enlace does not enforce access — that's ``enlace_auth``'s job. But enlace
+*does* read ``AppConfig.access`` and ``AppConfig.allowed_users`` for one
+narrow purpose: filtering the ``/_apps`` listing so authenticated users
+don't see entries they couldn't open anyway. That makes the access string
+vocabulary part of enlace's contract — the values
+``"public" | "local" | "protected:shared" | "protected:user"`` are the
+ones ``compose._can_access`` understands; anything else is treated as
+deny-by-default.
+
+The fields are otherwise opaque to enlace: enforcement, session lookup,
+allowlist matching at request time, and CSRF all live in the
+``enlace_auth`` plugin (passed in via ``build_backend(..., plugins=[...])``).
+
+Likewise, ``[auth.*]`` and ``[stores.*]`` tables in ``platform.toml`` are
+preserved as untyped dicts on ``PlatformConfig`` so plugins can deserialize
+them with their own models.
+"""
 
 import os
 import sys
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
-
-# Access levels for apps. "local" is kept as a legacy alias for "public" so
-# pre-auth configs keep parsing; middleware treats it as public.
-AccessLevel = Literal["public", "protected:shared", "protected:user", "local"]
-
-
-class StoreBackendConfig(BaseModel):
-    """Backend configuration for a MutableMapping-backed store."""
-
-    backend: str = "file"
-    path: str = "~/.enlace/platform_store"
-
-
-class OAuthProviderConfig(BaseModel):
-    """Configuration for a single OAuth2/OIDC provider."""
-
-    client_id_env: str
-    client_secret_env: str
-    scopes: list[str] = Field(default_factory=list)
-    authorize_url: Optional[str] = None
-    token_url: Optional[str] = None
-    userinfo_url: Optional[str] = None
-    server_metadata_url: Optional[str] = None
-
-
-class AuthConfig(BaseModel):
-    """Platform-wide authentication configuration."""
-
-    enabled: bool = False
-    session_cookie_name: str = "enlace_session"
-    session_max_age_seconds: int = 86400
-    signing_key_env: str = "ENLACE_SIGNING_KEY"
-    secure_cookies: bool = True
-    stores: StoreBackendConfig = Field(default_factory=StoreBackendConfig)
-    oauth: dict[str, OAuthProviderConfig] = Field(default_factory=dict)
-
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -79,7 +61,10 @@ class AppConfig(BaseModel):
     app_attr: str = "app"
     frontend_dir: Optional[Path] = None
     source_dir: Optional[Path] = None
-    access: AccessLevel = "local"
+    # Auth policy field. Consumed by enlace_auth (if installed) — enlace
+    # itself does not interpret this. Free-form string to avoid coupling
+    # enlace's data model to auth's vocabulary; enlace_auth normalizes it.
+    access: str = "local"
     shared_password_env: Optional[str] = None
     allowed_users: list[str] = Field(
         default_factory=list,
@@ -182,8 +167,11 @@ class PlatformConfig(BaseModel):
     socket_dir: Path = Field(default=Path("/tmp/enlace"))
     conventions: ConventionsConfig = Field(default_factory=ConventionsConfig)
     apps: list[AppConfig] = Field(default_factory=list)
-    auth: AuthConfig = Field(default_factory=AuthConfig)
-    stores: dict[str, StoreBackendConfig] = Field(default_factory=dict)
+    # Auth + stores configuration is preserved as untyped dicts so plugins
+    # (e.g. enlace_auth) can deserialize them with their own pydantic models
+    # without enlace having to know the schema.
+    auth: dict[str, Any] = Field(default_factory=dict)
+    stores: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _normalize_dirs(self):
@@ -226,16 +214,11 @@ class PlatformConfig(BaseModel):
         if conventions_data:
             platform_data["conventions"] = conventions_data
 
+        # Auth and stores tables are forwarded verbatim as dicts; plugins
+        # such as enlace_auth deserialize them with their own models.
         auth_data = data.get("auth")
         if auth_data is not None:
-            auth_stores = auth_data.pop("stores", None)
-            auth_oauth = auth_data.pop("oauth", None)
-            if auth_stores is not None:
-                auth_data["stores"] = auth_stores
-            if auth_oauth is not None:
-                auth_data["oauth"] = auth_oauth
             platform_data["auth"] = auth_data
-
         stores_data = data.get("stores")
         if stores_data is not None:
             platform_data["stores"] = stores_data

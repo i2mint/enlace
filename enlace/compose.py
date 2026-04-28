@@ -3,6 +3,13 @@
 Builds a single FastAPI application by mounting discovered sub-apps and applying
 cross-cutting middleware. Handles lifespan cascading to mounted sub-apps
 (Starlette does not do this natively).
+
+Plugins:
+    ``build_backend`` accepts a ``plugins`` argument — a sequence of callables
+    ``(parent: FastAPI, config: PlatformConfig) -> None`` invoked once after
+    sub-apps are mounted. ``enlace_auth.plugin`` is the canonical example:
+    when installed, it adds auth, sessions, the admin dashboard, and per-user
+    stores. enlace itself is auth-agnostic.
 """
 
 import contextlib
@@ -13,7 +20,7 @@ import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional, Sequence
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -27,11 +34,7 @@ from enlace.frontend import SPAStaticFiles
 
 _logger = logging.getLogger("enlace")
 
-# Minimum accepted signing-key length. `secrets.token_urlsafe(32)` yields 43
-# chars; anything much shorter is a stub or placeholder and should be rejected.
-_MIN_SIGNING_KEY_LEN = 32
-
-_UNSAFE_OPT_OUT_ENV = "ENLACE_ALLOW_UNSIGNED"
+Plugin = Callable[[FastAPI, PlatformConfig], None]
 
 
 class EnlaceConfigError(RuntimeError):
@@ -42,7 +45,9 @@ class EnlaceConfigError(RuntimeError):
     """
 
 
-def build_backend(config: PlatformConfig) -> FastAPI:
+def build_backend(
+    config: PlatformConfig, *, plugins: Sequence[Plugin] = ()
+) -> FastAPI:
     """Compose all app backends into a single ASGI application.
 
     For each discovered app:
@@ -113,8 +118,11 @@ def build_backend(config: PlatformConfig) -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Auth + store wiring (pure ASGI middleware only — no BaseHTTPMiddleware).
-    _wire_auth_and_stores(parent, config)
+    # Compose-time plugins (pure ASGI middleware only — no BaseHTTPMiddleware
+    # in plugins either, please). enlace_auth is the canonical plugin: it
+    # mounts /auth/*, /_admin/*, store routes, and the auth+csrf middleware.
+    for plug in plugins:
+        plug(parent, config)
 
     # JSON listing is always on (cheap, useful for frontends even when the
     # HTML index_page is disabled).
@@ -314,194 +322,6 @@ class _AppIdInjector:
         await self.app(scope, receive, send)
 
 
-def _require_signing_key(env_var: str) -> Optional[str]:
-    """Resolve the auth signing key, enforcing fail-fast by default.
-
-    Returns the key when usable. Returns ``None`` when the key is missing or
-    malformed AND ``ENLACE_ALLOW_UNSIGNED=1`` is set — the caller should then
-    skip auth wiring (logging a loud warning is already done here). Raises
-    ``EnlaceConfigError`` when the key is missing/malformed and the opt-out is
-    NOT set.
-
-    A deployment that silently runs without a signing key when auth is enabled
-    is strictly broken: ``/auth/*`` routes aren't mounted, so the SPA catch-all
-    returns HTML for ``fetch('/auth/csrf')`` and every protected mount becomes
-    unreachable. See i2mint/enlace#11.
-    """
-    raw = os.environ.get(env_var) or ""
-    stripped = raw.strip()
-    problem: Optional[str] = None
-    if not stripped:
-        problem = f"env var {env_var} is unset or empty"
-    elif len(stripped) < _MIN_SIGNING_KEY_LEN:
-        problem = (
-            f"env var {env_var} is too short "
-            f"({len(stripped)} chars; need >= {_MIN_SIGNING_KEY_LEN})"
-        )
-
-    if problem is None:
-        return stripped
-
-    if os.environ.get(_UNSAFE_OPT_OUT_ENV) == "1":
-        _logger.error(
-            "enlace auth is ENABLED but %s — booting with /auth/* DISABLED "
-            "because %s=1. This gateway cannot authenticate users. Unset the "
-            "opt-out and set %s to restore auth.",
-            problem,
-            _UNSAFE_OPT_OUT_ENV,
-            env_var,
-        )
-        return None
-
-    raise EnlaceConfigError(
-        f"enlace auth is enabled but {problem}. Generate one with "
-        f"`enlace auth-generate-signing-key` and export it as {env_var}. "
-        f"To boot without auth (diagnostics only), set "
-        f"{_UNSAFE_OPT_OUT_ENV}=1. See `enlace check` / `enlace doctor` "
-        f"for details."
-    )
-
-
-def _wire_auth_and_stores(parent: FastAPI, config: PlatformConfig) -> None:
-    """Wire auth + store middleware and mount /auth/* and /api/{app}/store routes.
-
-    No-op when ``config.auth.enabled`` is False, so pre-auth deployments
-    behave exactly as before.
-    """
-    auth_cfg = config.auth
-    if not auth_cfg.enabled:
-        return
-
-    signing_key = _require_signing_key(auth_cfg.signing_key_env)
-    if signing_key is None:
-        # Opt-out path: ENLACE_ALLOW_UNSIGNED=1 kept us from raising, but the
-        # gateway must still boot without auth so operators can diagnose.
-        return
-
-    from enlace.auth import (
-        CSRFMiddleware,
-        PlatformAuthMiddleware,
-        SessionStore,
-        make_auth_router,
-    )
-    from enlace.auth.middleware import AccessRule
-    from enlace.stores import StoreInjectionMiddleware, make_file_store_factory
-    from enlace.stores.middleware import make_store_router
-
-    platform_factory = make_file_store_factory(auth_cfg.stores.path)
-    session_backend = platform_factory("sessions")
-    user_backend = platform_factory("users")
-    session_store = SessionStore(session_backend)
-
-    user_data_cfg = config.stores.get("user_data")
-    user_data_backend: Optional[object] = None
-    if user_data_cfg is not None:
-        user_data_factory = make_file_store_factory(user_data_cfg.path)
-        user_data_backend = user_data_factory("user_data")
-
-    # Build access rules and shared-password lookup.
-    # Two rules per app: the API prefix (/api/{name}) AND the frontend prefix
-    # (/{name}) — otherwise browser requests to the frontend fall through to
-    # the middleware's deny-by-default clause (issue #7).
-    shared_hashes: dict[str, str] = {}
-    access_rules: list[AccessRule] = []
-    protected_user_apps: set[str] = set()
-    for app in config.apps:
-        h: Optional[str] = None
-        if app.access == "protected:shared" and app.shared_password_env:
-            h = os.environ.get(app.shared_password_env)
-            if h:
-                shared_hashes[app.name] = h
-        if app.access == "protected:user":
-            protected_user_apps.add(app.name)
-        allowed = tuple(app.allowed_users)
-        access_rules.append(
-            AccessRule(
-                prefix=app.route_prefix,
-                level=app.access,
-                app_id=app.name,
-                shared_password_hash=h,
-                allowed_users=allowed,
-            )
-        )
-        frontend_prefix = f"/{app.name}"
-        if frontend_prefix != app.route_prefix:
-            access_rules.append(
-                AccessRule(
-                    prefix=frontend_prefix,
-                    level=app.access,
-                    app_id=app.name,
-                    shared_password_hash=h,
-                    allowed_users=allowed,
-                )
-            )
-    # Root (/) and shared static assets (/shared.css etc) — public. The platform
-    # landing page must be reachable to anyone; per-app gating already covers
-    # everything beneath a more specific prefix via longest-prefix match.
-    access_rules.append(AccessRule(prefix="/", level="public", app_id="_root"))
-
-    auth_router = make_auth_router(
-        session_store=session_store,
-        user_store=user_backend,
-        signing_key=signing_key,
-        cookie_name=auth_cfg.session_cookie_name,
-        session_max_age=auth_cfg.session_max_age_seconds,
-        secure_cookies=auth_cfg.secure_cookies,
-        shared_password_for=shared_hashes.get,
-    )
-    parent.include_router(auth_router)
-
-    # Optional OAuth router (lazy import of Authlib).
-    if auth_cfg.oauth:
-        try:
-            from enlace.auth.oauth import make_oauth_router
-
-            oauth_router = make_oauth_router(
-                providers=auth_cfg.oauth,
-                session_store=session_store,
-                user_store=user_backend,
-                signing_key=signing_key,
-                cookie_name=auth_cfg.session_cookie_name,
-                session_max_age=auth_cfg.session_max_age_seconds,
-                secure_cookies=auth_cfg.secure_cookies,
-            )
-            if oauth_router is not None:
-                parent.include_router(oauth_router)
-        except ImportError:
-            # authlib not installed but [auth.oauth.*] was configured. This
-            # silently breaks /auth/login/{provider}. Keep the platform
-            # functional (base auth still works) but make the degradation
-            # loud so ops don't chase a 404 in the dark.
-            providers = ", ".join(sorted(auth_cfg.oauth)) or "(none)"
-            _logger.error(
-                "enlace: [auth.oauth.*] is configured (%s) but authlib is "
-                "not installed. OAuth endpoints will be MISSING. "
-                "Install with `pip install enlace[oauth]` to fix.",
-                providers,
-            )
-
-    # Per-user store API.
-    store_router = make_store_router(
-        base_store_getter=lambda: user_data_backend,
-        protected_apps=protected_user_apps,
-    )
-    parent.include_router(store_router)
-
-    # Register middleware in the order requests traverse them:
-    # outermost = first added last. FastAPI/Starlette runs middleware in
-    # reverse insertion order, so the last `add_middleware` call is the
-    # outermost wrapper. We want: auth (outermost) -> store -> csrf -> app.
-    parent.add_middleware(CSRFMiddleware, signing_key=signing_key)
-    parent.add_middleware(StoreInjectionMiddleware, base_store=user_data_backend)
-    parent.add_middleware(
-        PlatformAuthMiddleware,
-        access_rules=access_rules,
-        session_store=session_store,
-        signing_key=signing_key,
-        cookie_name=auth_cfg.session_cookie_name,
-        max_age=auth_cfg.session_max_age_seconds,
-    )
-
 
 def _make_proxy_for(app_config: AppConfig) -> Optional[object]:
     """Create a reverse proxy ASGI app for a process or external backend.
@@ -594,10 +414,53 @@ def create_app() -> FastAPI:
 
     Loads platform config, discovers apps, checks conflicts,
     and builds the composed backend.
+
+    Plugins are loaded from the ``ENLACE_PLUGINS`` env var: a comma-separated
+    list of ``module:attribute`` pairs, e.g.::
+
+        ENLACE_PLUGINS=enlace_auth:plugin
+
+    Each resolved object must be a callable
+    ``(parent: FastAPI, config: PlatformConfig) -> None``.
     """
     config = discover_apps()
     config = _apply_port_env(config)
-    return build_backend(config)
+    plugins = _load_plugins_from_env()
+    return build_backend(config, plugins=plugins)
+
+
+def _load_plugins_from_env() -> list[Plugin]:
+    """Parse ENLACE_PLUGINS=mod:attr,mod2:attr2 and resolve to callables."""
+    raw = os.environ.get("ENLACE_PLUGINS", "").strip()
+    if not raw:
+        return []
+    out: list[Plugin] = []
+    for spec in (s.strip() for s in raw.split(",")):
+        if not spec:
+            continue
+        if ":" not in spec:
+            raise EnlaceConfigError(
+                f"ENLACE_PLUGINS entry {spec!r} is not in 'module:attribute' form"
+            )
+        mod_name, attr = spec.split(":", 1)
+        try:
+            mod = importlib.import_module(mod_name)
+        except ImportError as e:
+            raise EnlaceConfigError(
+                f"ENLACE_PLUGINS: cannot import {mod_name!r}: {e}"
+            ) from e
+        try:
+            obj = getattr(mod, attr)
+        except AttributeError as e:
+            raise EnlaceConfigError(
+                f"ENLACE_PLUGINS: {mod_name!r} has no attribute {attr!r}"
+            ) from e
+        if not callable(obj):
+            raise EnlaceConfigError(
+                f"ENLACE_PLUGINS: {spec!r} resolved to non-callable {obj!r}"
+            )
+        out.append(obj)
+    return out
 
 
 def _apply_port_env(config: PlatformConfig) -> PlatformConfig:
