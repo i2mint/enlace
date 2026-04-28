@@ -4,32 +4,32 @@ Drop a Python module or a React app into a directory, and enlace discovers it,
 mounts it, serves it, and optionally gates it behind auth -- with zero boilerplate.
 """
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
 from pathlib import Path
 
 from enlace.base import (
     AppConfig,
-    AuthConfig,
     ConventionsConfig,
-    OAuthProviderConfig,
     PlatformConfig,
-    StoreBackendConfig,
 )
-from enlace.compose import EnlaceConfigError, build_backend, create_app
+from enlace.compose import EnlaceConfigError, Plugin, build_backend, create_app
 from enlace.diagnose import DiagnosticReport, Issue, diagnose_app
 from enlace.discover import ConventionDiscoverer, discover_apps
 from enlace.serve import serve
 
-__version__ = "0.0.1"
+try:
+    __version__ = _version("enlace")
+except PackageNotFoundError:  # editable install with no metadata, etc.
+    __version__ = "0.0.0+local"
 
 __all__ = [
     "AppConfig",
-    "AuthConfig",
     "ConventionsConfig",
     "DiagnosticReport",
     "Issue",
-    "OAuthProviderConfig",
     "PlatformConfig",
-    "StoreBackendConfig",
+    "Plugin",
     "ConventionDiscoverer",
     "EnlaceConfigError",
     "build_backend",
