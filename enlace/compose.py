@@ -45,9 +45,7 @@ class EnlaceConfigError(RuntimeError):
     """
 
 
-def build_backend(
-    config: PlatformConfig, *, plugins: Sequence[Plugin] = ()
-) -> FastAPI:
+def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> FastAPI:
     """Compose all app backends into a single ASGI application.
 
     For each discovered app:
@@ -320,7 +318,6 @@ class _AppIdInjector:
             state = scope.setdefault("state", {})
             state["app_id"] = self.app_id
         await self.app(scope, receive, send)
-
 
 
 def _make_proxy_for(app_config: AppConfig) -> Optional[object]:
