@@ -1,4 +1,0 @@
-enlace.auth.middleware
-======================
-.. automodule:: enlace.auth.middleware
-   :members:

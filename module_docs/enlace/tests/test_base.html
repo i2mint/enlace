@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.tests.test_base &mdash; enlace 0.0.11 documentation</title>
+  <title>enlace.tests.test_base &mdash; enlace 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=0c446633"></script>
+      <script src="../../../_static/documentation_options.js?v=01f34227"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -24,8 +24,8 @@
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="enlace.tests.test_base_auth_config" href="test_base_auth_config.html" />
-    <link rel="prev" title="enlace.tests.test_auth_middleware" href="test_auth_middleware.html" /> 
+    <link rel="next" title="enlace.tests.test_compose" href="test_compose.html" />
+    <link rel="prev" title="enlace.tests.conftest" href="conftest.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -51,13 +51,6 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../__main__.html">enlace.__main__</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auth.html">enlace.auth</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auth/cookies.html">enlace.auth.cookies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auth/middleware.html">enlace.auth.middleware</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auth/oauth.html">enlace.auth.oauth</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auth/passwords.html">enlace.auth.passwords</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auth/routes.html">enlace.auth.routes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auth/sessions.html">enlace.auth.sessions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../diagnose.html">enlace.diagnose</a></li>
@@ -66,27 +59,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../serve.html">enlace.serve</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../stores.html">enlace.stores</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../stores/backends.html">enlace.stores.backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../stores/middleware.html">enlace.stores.middleware</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../stores/prefixed.html">enlace.stores.prefixed</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../stores/validation.html">enlace.stores.validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="conftest.html">enlace.tests.conftest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_auth_failfast.html">enlace.tests.test_auth_failfast</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.tests.test_base</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_compose.html">enlace.tests.test_compose</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_csrf.html">enlace.tests.test_csrf</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_discover.html">enlace.tests.test_discover</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_doctor.html">enlace.tests.test_doctor</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_oauth.html">enlace.tests.test_oauth</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_passwords.html">enlace.tests.test_passwords</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_sessions.html">enlace.tests.test_sessions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="test_store_middleware.html">enlace.tests.test_store_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../util.html">enlace.util</a></li>
 </ul>
@@ -123,8 +101,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="test_auth_middleware.html" class="btn btn-neutral float-left" title="enlace.tests.test_auth_middleware" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="test_base_auth_config.html" class="btn btn-neutral float-right" title="enlace.tests.test_base_auth_config" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="conftest.html" class="btn btn-neutral float-left" title="enlace.tests.conftest" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="test_compose.html" class="btn btn-neutral float-right" title="enlace.tests.test_compose" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

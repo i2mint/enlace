@@ -1,4 +1,0 @@
-enlace.stores.prefixed
-======================
-.. automodule:: enlace.stores.prefixed
-   :members:

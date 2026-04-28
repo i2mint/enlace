@@ -1,4 +1,0 @@
-enlace.auth
-===========
-.. automodule:: enlace.auth
-   :members:

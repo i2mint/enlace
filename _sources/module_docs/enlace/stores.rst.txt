@@ -1,4 +1,0 @@
-enlace.stores
-=============
-.. automodule:: enlace.stores
-   :members:

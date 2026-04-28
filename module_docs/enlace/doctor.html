@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.doctor &mdash; enlace 0.0.11 documentation</title>
+  <title>enlace.doctor &mdash; enlace 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=0c446633"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -51,13 +51,6 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth.html">enlace.auth</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth/cookies.html">enlace.auth.cookies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth/middleware.html">enlace.auth.middleware</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth/oauth.html">enlace.auth.oauth</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth/passwords.html">enlace.auth.passwords</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth/routes.html">enlace.auth.routes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auth/sessions.html">enlace.auth.sessions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
@@ -75,27 +68,12 @@
 <li class="toctree-l1"><a class="reference internal" href="frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="serve.html">enlace.serve</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stores.html">enlace.stores</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stores/backends.html">enlace.stores.backends</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stores/middleware.html">enlace.stores.middleware</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stores/prefixed.html">enlace.stores.prefixed</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stores/validation.html">enlace.stores.validation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_auth_failfast.html">enlace.tests.test_auth_failfast</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_auth_middleware.html">enlace.tests.test_auth_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_base_auth_config.html">enlace.tests.test_base_auth_config</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_csrf.html">enlace.tests.test_csrf</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_doctor.html">enlace.tests.test_doctor</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_oauth.html">enlace.tests.test_oauth</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_passwords.html">enlace.tests.test_passwords</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_prefixed_store.html">enlace.tests.test_prefixed_store</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_sessions.html">enlace.tests.test_sessions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tests/test_store_middleware.html">enlace.tests.test_store_middleware</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">enlace.util</a></li>
 </ul>
@@ -130,8 +108,9 @@
 <p>Complements <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">check</span></code> (static config validation) by probing a live
 gateway over HTTP. Catches silent-degradation failures that static analysis
 can’t — the incident that motivated this (i2mint/enlace#11) was a gateway
-booting cleanly with <code class="docutils literal notranslate"><span class="pre">/auth/*</span></code> un-mounted because <code class="docutils literal notranslate"><span class="pre">ENLACE_SIGNING_KEY</span></code>
-was missing at startup.</p>
+booting cleanly with auth un-mounted because the signing key was missing at
+startup; auth-specific checks for that scenario live in
+<code class="docutils literal notranslate"><span class="pre">enlace_auth.diagnostics</span></code>.</p>
 <p>Design:
 - Pure stdlib <code class="docutils literal notranslate"><span class="pre">urllib</span></code> for HTTP. No new deps; this must work in minimal</p>
 <blockquote>
@@ -142,6 +121,8 @@ was missing at startup.</p>
 of them and returns a <code class="docutils literal notranslate"><span class="pre">Report</span></code> so callers can emit pretty text OR JSON.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">detail</span></code> is a short human-readable string. Structured payloads go in
 <code class="docutils literal notranslate"><span class="pre">extra</span></code> (dict) so <code class="docutils literal notranslate"><span class="pre">--json</span></code> consumers don’t re-parse prose.</p></li>
+<li><p>Plugins can supply extra static or HTTP probes via <code class="docutils literal notranslate"><span class="pre">extra_static_checks</span></code>
+and <code class="docutils literal notranslate"><span class="pre">extra_http_checks</span></code> on <code class="docutils literal notranslate"><span class="pre">run_doctor</span></code>.</p></li>
 </ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.doctor.Check">
@@ -169,7 +150,7 @@ of them and returns a <code class="docutils literal notranslate"><span class="pr
 
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.doctor.run_doctor">
-<span class="sig-prename descclassname"><span class="pre">enlace.doctor.</span></span><span class="sig-name descname"><span class="pre">run_doctor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_env_checks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.doctor.Report" title="enlace.doctor.Report"><span class="pre">Report</span></a></span></span><a class="reference internal" href="../../_modules/enlace/doctor.html#run_doctor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.doctor.run_doctor" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">enlace.doctor.</span></span><span class="sig-name descname"><span class="pre">run_doctor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_env_checks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_static_checks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#enlace.doctor.Check" title="enlace.doctor.Check"><span class="pre">Check</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_http_checks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#enlace.doctor.Check" title="enlace.doctor.Check"><span class="pre">Check</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.doctor.Report" title="enlace.doctor.Report"><span class="pre">Report</span></a></span></span><a class="reference internal" href="../../_modules/enlace/doctor.html#run_doctor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.doctor.run_doctor" title="Link to this definition"></a></dt>
 <dd><p>Run all checks and return a <code class="docutils literal notranslate"><span class="pre">Report</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -180,11 +161,15 @@ unset, only static checks run.</p></li>
 <li><p><strong>timeout</strong> – Per-request timeout for HTTP probes.</p></li>
 <li><p><strong>app_filter</strong> – If given, only probe these app names (static checks
 still run across all apps).</p></li>
-<li><p><strong>include_env_checks</strong> – When False, env-var checks (signing key,
-shared-password hashes) are skipped. Useful when probing from
-a shell that doesn’t have the gateway’s env loaded — the HTTP
-probes then serve as the source of truth. Callers that have
-loaded the env (e.g. <code class="docutils literal notranslate"><span class="pre">--envfile</span></code>) should leave this True.</p></li>
+<li><p><strong>include_env_checks</strong> – Forwarded to <code class="docutils literal notranslate"><span class="pre">extra_static_checks</span></code> callbacks
+via <code class="docutils literal notranslate"><span class="pre">config</span></code> (those that read env vars should respect their
+caller’s intent — see <code class="docutils literal notranslate"><span class="pre">enlace_auth.diagnostics</span></code> for the
+convention). enlace itself has no env-var checks of its own.</p></li>
+<li><p><strong>extra_static_checks</strong> – Plugin-provided static checks. Each is a
+callable that receives <code class="docutils literal notranslate"><span class="pre">config</span></code> and returns <code class="docutils literal notranslate"><span class="pre">Iterable[Check]</span></code>.</p></li>
+<li><p><strong>extra_http_checks</strong> – Plugin-provided HTTP checks. Each is a callable
+that receives <code class="docutils literal notranslate"><span class="pre">(config,</span> <span class="pre">base_url,</span> <span class="pre">timeout)</span></code> and returns
+<code class="docutils literal notranslate"><span class="pre">Iterable[Check]</span></code>. Only invoked when <code class="docutils literal notranslate"><span class="pre">base_url</span></code> is set.</p></li>
 </ul>
 </dd>
 </dl>

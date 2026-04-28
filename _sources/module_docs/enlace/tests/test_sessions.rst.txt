@@ -1,4 +1,0 @@
-enlace.tests.test_sessions
-==========================
-.. automodule:: enlace.tests.test_sessions
-   :members:

@@ -1,4 +1,0 @@
-enlace.tests.test_doctor
-========================
-.. automodule:: enlace.tests.test_doctor
-   :members:

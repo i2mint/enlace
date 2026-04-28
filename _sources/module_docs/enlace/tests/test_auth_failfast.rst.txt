@@ -1,4 +1,0 @@
-enlace.tests.test_auth_failfast
-===============================
-.. automodule:: enlace.tests.test_auth_failfast
-   :members:

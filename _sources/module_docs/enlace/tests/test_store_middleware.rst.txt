@@ -1,4 +1,0 @@
-enlace.tests.test_store_middleware
-==================================
-.. automodule:: enlace.tests.test_store_middleware
-   :members:

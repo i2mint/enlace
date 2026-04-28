@@ -4,13 +4,6 @@
 
    module_docs/enlace
    module_docs/enlace/__main__
-   module_docs/enlace/auth
-   module_docs/enlace/auth/cookies
-   module_docs/enlace/auth/middleware
-   module_docs/enlace/auth/oauth
-   module_docs/enlace/auth/passwords
-   module_docs/enlace/auth/routes
-   module_docs/enlace/auth/sessions
    module_docs/enlace/base
    module_docs/enlace/compose
    module_docs/enlace/diagnose
@@ -19,26 +12,11 @@
    module_docs/enlace/frontend
    module_docs/enlace/proxy
    module_docs/enlace/serve
-   module_docs/enlace/stores
-   module_docs/enlace/stores/backends
-   module_docs/enlace/stores/middleware
-   module_docs/enlace/stores/prefixed
-   module_docs/enlace/stores/validation
    module_docs/enlace/supervise
    module_docs/enlace/tests/conftest
-   module_docs/enlace/tests/test_auth_failfast
-   module_docs/enlace/tests/test_auth_middleware
    module_docs/enlace/tests/test_base
-   module_docs/enlace/tests/test_base_auth_config
    module_docs/enlace/tests/test_compose
-   module_docs/enlace/tests/test_csrf
    module_docs/enlace/tests/test_diagnose_auth
    module_docs/enlace/tests/test_discover
-   module_docs/enlace/tests/test_doctor
-   module_docs/enlace/tests/test_oauth
-   module_docs/enlace/tests/test_passwords
-   module_docs/enlace/tests/test_prefixed_store
-   module_docs/enlace/tests/test_sessions
-   module_docs/enlace/tests/test_store_middleware
    module_docs/enlace/tests/test_supervise
    module_docs/enlace/util
