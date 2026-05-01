@@ -63,9 +63,12 @@ class _HttpxProxy:
             path = path[len(self.strip_prefix) :] or "/"
 
         query = scope.get("query_string", b"")
-        url = path
+        # httpx.Request(url=...) does not apply AsyncClient.base_url (only the
+        # convenience methods like client.get/post do). Construct the absolute
+        # URL ourselves so requests reach the upstream regardless of scheme.
+        url = f"{self.upstream}{path}"
         if query:
-            url = f"{path}?{query.decode('latin-1')}"
+            url = f"{url}?{query.decode('latin-1')}"
 
         # Read request body
         body = b""
