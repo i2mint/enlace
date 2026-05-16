@@ -88,7 +88,12 @@ class ConventionDiscoverer:
 
         # -- Standard asgi-mode discovery (current behavior) --
         entry_path = self._find_entry_point(app_dir)
-        frontend_dir = self._find_frontend_dir(app_dir)
+        # app.toml's `frontend_dir` (if set) overrides the convention.
+        # Without this, an app whose build outputs to e.g. ./dist would be
+        # silently skipped — discovery would conclude "no frontend" and the
+        # later _apply_overrides step never runs.
+        frontend_override = toml_data.get("frontend_dir") if toml_data else None
+        frontend_dir = self._find_frontend_dir(app_dir, override=frontend_override)
 
         if entry_path is None and frontend_dir is None:
             return None  # Not an app directory
@@ -182,9 +187,17 @@ class ConventionDiscoverer:
                 return candidate
         return None
 
-    def _find_frontend_dir(self, app_dir: Path) -> Optional[Path]:
-        """Check if the app has a frontend assets directory."""
-        frontend = app_dir / self.conventions.frontend_dir
+    def _find_frontend_dir(
+        self, app_dir: Path, *, override: Optional[str] = None
+    ) -> Optional[Path]:
+        """Check if the app has a frontend assets directory.
+
+        ``override`` is the ``frontend_dir`` value from app.toml (if any) and
+        takes precedence over the convention. The directory must exist and
+        contain an ``index.html``.
+        """
+        candidate_name = override if override else self.conventions.frontend_dir
+        frontend = app_dir / candidate_name
         if frontend.is_dir() and (frontend / "index.html").exists():
             return frontend
         return None
