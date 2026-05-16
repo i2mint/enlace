@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.discover &mdash; enlace 0.1.2 documentation</title>
+  <title>enlace.discover &mdash; enlace 0.1.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=92734c54"></script>
+      <script src="../../_static/documentation_options.js?v=360bc84d"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -190,7 +190,12 @@
 
         <span class="c1"># -- Standard asgi-mode discovery (current behavior) --</span>
         <span class="n">entry_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_entry_point</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
-        <span class="n">frontend_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_frontend_dir</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
+        <span class="c1"># app.toml&#39;s `frontend_dir` (if set) overrides the convention.</span>
+        <span class="c1"># Without this, an app whose build outputs to e.g. ./dist would be</span>
+        <span class="c1"># silently skipped — discovery would conclude &quot;no frontend&quot; and the</span>
+        <span class="c1"># later _apply_overrides step never runs.</span>
+        <span class="n">frontend_override</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;frontend_dir&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">toml_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">frontend_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_frontend_dir</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">override</span><span class="o">=</span><span class="n">frontend_override</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">entry_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">frontend_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Not an app directory</span>
@@ -284,9 +289,17 @@
                 <span class="k">return</span> <span class="n">candidate</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_find_frontend_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the app has a frontend assets directory.&quot;&quot;&quot;</span>
-        <span class="n">frontend</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">frontend_dir</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_frontend_dir</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">override</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the app has a frontend assets directory.</span>
+
+<span class="sd">        ``override`` is the ``frontend_dir`` value from app.toml (if any) and</span>
+<span class="sd">        takes precedence over the convention. The directory must exist and</span>
+<span class="sd">        contain an ``index.html``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">candidate_name</span> <span class="o">=</span> <span class="n">override</span> <span class="k">if</span> <span class="n">override</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">frontend_dir</span>
+        <span class="n">frontend</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">candidate_name</span>
         <span class="k">if</span> <span class="n">frontend</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">frontend</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">frontend</span>
         <span class="k">return</span> <span class="kc">None</span>
