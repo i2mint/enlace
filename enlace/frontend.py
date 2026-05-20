@@ -11,10 +11,12 @@ from ``generateStaticParams``.  This module resolves
 is served and the client JS can read the real param from the URL.
 """
 
+from pathlib import Path
+
 import anyio
 from starlette.responses import Response
 from starlette.staticfiles import StaticFiles
-from starlette.types import Scope
+from starlette.types import Receive, Scope, Send
 
 
 class SPAStaticFiles(StaticFiles):
@@ -115,3 +117,118 @@ class SPAStaticFiles(StaticFiles):
                 return html_path
 
         return "/".join(resolved)
+
+
+_NOT_FOUND_PAGE = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>App not found</title>
+<style>
+ body{font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;
+      background:#0f1115;color:#e6e8eb;margin:0;min-height:100vh;
+      display:grid;place-items:center;padding:20px}
+ .card{max-width:480px;background:#171a21;border:1px solid #2a2e38;
+      border-radius:12px;padding:28px 32px;text-align:center}
+ h1{margin:0 0 10px;font-size:22px;font-weight:600}
+ p{margin:0 0 18px;color:#c4c8d0}
+ a.btn{display:inline-block;background:#7cc4ff;color:#0a1420;
+      text-decoration:none;font-weight:600;padding:9px 18px;border-radius:8px}
+ a.btn:hover{background:#9aa6ff}
+ code{background:#0f1115;padding:1px 6px;border-radius:4px;
+      border:1px solid #2a2e38;color:#e6e8eb;word-break:break-all}
+</style></head><body>
+<div class="card">
+<h1>App not found</h1>
+<p>No app is registered at <code>{path}</code>.</p>
+<a class="btn" href="/">See available apps</a>
+</div></body></html>"""
+
+
+class LandingWithUnknownApp404:
+    """ASGI app that serves the landing frontend at ``/`` and 404s elsewhere.
+
+    Wraps ``StaticFiles`` for the landing app so that:
+
+    - ``/``, ``/index.html``, and any real file in the landing dir (e.g.
+      ``/assets/index-abc.js``) are served as usual.
+    - Any other path returns a friendly 404 HTML page with a link back to
+      ``/``, instead of silently falling back to the landing's ``index.html``.
+
+    Per-app SPA mounts (``/{name}/...``) live on more-specific Starlette
+    mounts that are registered earlier and take precedence over this one,
+    so SPA client-side routing for known apps still works. This wrapper
+    only handles paths that fall through to ``/``.
+    """
+
+    def __init__(self, *, landing_dir):
+        self._dir = Path(landing_dir).resolve()
+        self._files = StaticFiles(directory=str(landing_dir), html=True)
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self._files(scope, receive, send)
+            return
+
+        # Starlette mounts strip the mount prefix from path before delegating;
+        # for the "/" mount, the path that arrives here is the original path
+        # without leading "/". e.g. request "/foo" -> path "foo".
+        rel = scope.get("path", "").lstrip("/")
+        if not rel or rel == "index.html" or self._is_real_file(rel):
+            await self._files(scope, receive, send)
+            return
+
+        method = scope.get("method", "GET").upper()
+        original = "/" + rel  # what the user actually typed
+        if method not in ("GET", "HEAD"):
+            await _send_plain_404(send, method)
+            return
+        body = _NOT_FOUND_PAGE.replace("{path}", _escape(original))
+        data = body.encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": 404,
+                "headers": [
+                    (b"content-type", b"text/html; charset=utf-8"),
+                    (b"content-length", str(len(data)).encode("ascii")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": b"" if method == "HEAD" else data})
+
+    def _is_real_file(self, rel: str) -> bool:
+        if ".." in rel.split("/"):
+            return False
+        try:
+            candidate = (self._dir / rel).resolve()
+        except OSError:
+            return False
+        try:
+            candidate.relative_to(self._dir)
+        except ValueError:
+            return False
+        return candidate.is_file()
+
+
+def _escape(s: str) -> str:
+    return (
+        s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+async def _send_plain_404(send, method: str) -> None:
+    body = b"" if method == "HEAD" else b"Not Found"
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 404,
+            "headers": [
+                (b"content-type", b"text/plain; charset=utf-8"),
+                (b"content-length", str(len(body)).encode("ascii")),
+            ],
+        }
+    )
+    await send({"type": "http.response.body", "body": body})

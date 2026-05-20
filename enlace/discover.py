@@ -287,6 +287,7 @@ _TOML_FIELD_MAP = {
     "app_attr": "app_attr",
     "access": "access",
     "shared_password_env": "shared_password_env",
+    "allowed_users": "allowed_users",
     "display_name": "display_name",
     "frontend_dir": "frontend_dir",
     # New fields for process/external/static modes
