@@ -194,7 +194,9 @@ class LandingWithUnknownApp404:
                 ],
             }
         )
-        await send({"type": "http.response.body", "body": b"" if method == "HEAD" else data})
+        await send(
+            {"type": "http.response.body", "body": b"" if method == "HEAD" else data}
+        )
 
     def _is_real_file(self, rel: str) -> bool:
         if ".." in rel.split("/"):
