@@ -30,7 +30,7 @@ from starlette.staticfiles import StaticFiles
 
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps
-from enlace.frontend import SPAStaticFiles
+from enlace.frontend import LandingWithUnknownApp404, SPAStaticFiles
 
 _logger = logging.getLogger("enlace")
 
@@ -184,11 +184,15 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
 
     # landing_app: mount the chosen app's frontend at / as well, so the
     # platform's root URL serves it instead of the default Python index.
-    # Mounted BEFORE shared_assets_dir so the landing's index.html wins at /.
+    # Unknown top-level paths (e.g. typo'd app names) get a 404 page with a
+    # link back to / instead of falling back to the landing index.html, which
+    # would silently disguise broken links.
     if landing_app_config is not None:
         parent.mount(
             "/",
-            SPAStaticFiles(directory=str(landing_app_config.frontend_dir), html=True),
+            LandingWithUnknownApp404(
+                landing_dir=landing_app_config.frontend_dir,
+            ),
         )
 
     # Serve platform-level shared assets (e.g. shared.css) at the root.
