@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.frontend &mdash; enlace 0.1.3 documentation</title>
+  <title>enlace.frontend &mdash; enlace 0.1.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=360bc84d"></script>
+      <script src="../../_static/documentation_options.js?v=fd825880"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,10 +105,12 @@
 <span class="sd">is served and the client JS can read the real param from the URL.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">anyio</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scope</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">Send</span>
 
 
 <div class="viewcode-block" id="SPAStaticFiles">
@@ -215,6 +217,124 @@
 
         <span class="k">return</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span><span class="p">)</span></div>
 
+
+
+<span class="n">_NOT_FOUND_PAGE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&lt;!doctype html&gt;</span>
+<span class="s2">&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;</span>
+<span class="s2">&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;</span>
+<span class="s2">&lt;title&gt;App not found&lt;/title&gt;</span>
+<span class="s2">&lt;style&gt;</span>
+<span class="s2"> body{font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;</span>
+<span class="s2">      background:#0f1115;color:#e6e8eb;margin:0;min-height:100vh;</span>
+<span class="s2">      display:grid;place-items:center;padding:20px}</span>
+<span class="s2"> .card{max-width:480px;background:#171a21;border:1px solid #2a2e38;</span>
+<span class="s2">      border-radius:12px;padding:28px 32px;text-align:center}</span>
+<span class="s2"> h1{margin:0 0 10px;font-size:22px;font-weight:600}</span>
+<span class="s2"> p{margin:0 0 18px;color:#c4c8d0}</span>
+<span class="s2"> a.btn{display:inline-block;background:#7cc4ff;color:#0a1420;</span>
+<span class="s2">      text-decoration:none;font-weight:600;padding:9px 18px;border-radius:8px}</span>
+<span class="s2"> a.btn:hover{background:#9aa6ff}</span>
+<span class="s2"> code{background:#0f1115;padding:1px 6px;border-radius:4px;</span>
+<span class="s2">      border:1px solid #2a2e38;color:#e6e8eb;word-break:break-all}</span>
+<span class="s2">&lt;/style&gt;&lt;/head&gt;&lt;body&gt;</span>
+<span class="s2">&lt;div class=&quot;card&quot;&gt;</span>
+<span class="s2">&lt;h1&gt;App not found&lt;/h1&gt;</span>
+<span class="s2">&lt;p&gt;No app is registered at &lt;code&gt;</span><span class="si">{path}</span><span class="s2">&lt;/code&gt;.&lt;/p&gt;</span>
+<span class="s2">&lt;a class=&quot;btn&quot; href=&quot;/&quot;&gt;See available apps&lt;/a&gt;</span>
+<span class="s2">&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="LandingWithUnknownApp404">
+<a class="viewcode-back" href="../../module_docs/enlace/frontend.html#enlace.frontend.LandingWithUnknownApp404">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LandingWithUnknownApp404</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;ASGI app that serves the landing frontend at ``/`` and 404s elsewhere.</span>
+
+<span class="sd">    Wraps ``StaticFiles`` for the landing app so that:</span>
+
+<span class="sd">    - ``/``, ``/index.html``, and any real file in the landing dir (e.g.</span>
+<span class="sd">      ``/assets/index-abc.js``) are served as usual.</span>
+<span class="sd">    - Any other path returns a friendly 404 HTML page with a link back to</span>
+<span class="sd">      ``/``, instead of silently falling back to the landing&#39;s ``index.html``.</span>
+
+<span class="sd">    Per-app SPA mounts (``/{name}/...``) live on more-specific Starlette</span>
+<span class="sd">    mounts that are registered earlier and take precedence over this one,</span>
+<span class="sd">    so SPA client-side routing for known apps still works. This wrapper</span>
+<span class="sd">    only handles paths that fall through to ``/``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">landing_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">landing_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_files</span> <span class="o">=</span> <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">landing_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">:</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">send</span><span class="p">:</span> <span class="n">Send</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;http&quot;</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Starlette mounts strip the mount prefix from path before delegating;</span>
+        <span class="c1"># for the &quot;/&quot; mount, the path that arrives here is the original path</span>
+        <span class="c1"># without leading &quot;/&quot;. e.g. request &quot;/foo&quot; -&gt; path &quot;foo&quot;.</span>
+        <span class="n">rel</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rel</span> <span class="ow">or</span> <span class="n">rel</span> <span class="o">==</span> <span class="s2">&quot;index.html&quot;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_real_file</span><span class="p">(</span><span class="n">rel</span><span class="p">):</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">method</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;method&quot;</span><span class="p">,</span> <span class="s2">&quot;GET&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">rel</span>  <span class="c1"># what the user actually typed</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">):</span>
+            <span class="k">await</span> <span class="n">_send_plain_404</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">_NOT_FOUND_PAGE</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{path}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_escape</span><span class="p">(</span><span class="n">original</span><span class="p">))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="mi">404</span><span class="p">,</span>
+                <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-type&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;text/html; charset=utf-8&quot;</span><span class="p">),</span>
+                    <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-length&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)),</span>
+                <span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">await</span> <span class="n">send</span><span class="p">({</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span> <span class="k">else</span> <span class="n">data</span><span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_real_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;..&quot;</span> <span class="ow">in</span> <span class="n">rel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dir</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">candidate</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dir</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_escape</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&amp;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;amp;&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;lt;&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;gt;&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&amp;quot;&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send_plain_404</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span> <span class="k">else</span> <span class="sa">b</span><span class="s2">&quot;Not Found&quot;</span>
+    <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="mi">404</span><span class="p">,</span>
+            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-type&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;text/plain; charset=utf-8&quot;</span><span class="p">),</span>
+                <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-length&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)),</span>
+            <span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">await</span> <span class="n">send</span><span class="p">({</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">body</span><span class="p">})</span>
 </pre></div>
 
            </div>
