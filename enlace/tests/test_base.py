@@ -197,3 +197,80 @@ def test_platform_config_port_conflict_ignores_asgi_apps():
     config = PlatformConfig(apps=apps)
     errors = config.check_conflicts()
     assert not errors
+
+
+# -- from_toml: host-portable relative path resolution ------------------------
+
+
+def _write_toml(path: Path, body: str) -> Path:
+    """Write a platform.toml (body goes under the [platform] table)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("[platform]\n" + body)
+    return path
+
+
+def test_from_toml_resolves_relative_apps_dirs_against_toml_dir(tmp_path, monkeypatch):
+    """Relative apps_dirs resolve against the toml's directory, not the CWD."""
+    # Layout: <root>/cfg/platform.toml points at <root>/papp via "../papp".
+    (tmp_path / "papp").mkdir()
+    toml = _write_toml(
+        tmp_path / "cfg" / "platform.toml",
+        'apps_dirs = ["../papp"]\n',
+    )
+    # Run from an unrelated CWD to prove resolution is toml-relative.
+    monkeypatch.chdir(tmp_path / "papp")
+
+    config = PlatformConfig.from_toml(toml)
+
+    assert config.apps_dirs == [(tmp_path / "papp").resolve()]
+
+
+def test_from_toml_resolves_relative_app_dirs_and_shared_assets(tmp_path, monkeypatch):
+    """app_dirs and shared_assets_dir also resolve against the toml dir."""
+    (tmp_path / "reelee-web").mkdir()
+    (tmp_path / "cfg" / "static").mkdir(parents=True)
+    toml = _write_toml(
+        tmp_path / "cfg" / "platform.toml",
+        'app_dirs = ["../reelee-web"]\nshared_assets_dir = "static"\n',
+    )
+    monkeypatch.chdir(tmp_path)
+
+    config = PlatformConfig.from_toml(toml)
+
+    assert config.app_dirs == [(tmp_path / "reelee-web").resolve()]
+    assert config.shared_assets_dir == (tmp_path / "cfg" / "static").resolve()
+
+
+def test_from_toml_leaves_absolute_paths_untouched(tmp_path):
+    """Absolute paths are passed through unchanged."""
+    abs_apps = tmp_path / "elsewhere" / "apps"
+    abs_apps.mkdir(parents=True)
+    toml = _write_toml(
+        tmp_path / "cfg" / "platform.toml",
+        f'apps_dirs = ["{abs_apps}"]\n',
+    )
+
+    config = PlatformConfig.from_toml(toml)
+
+    assert config.apps_dirs == [abs_apps]
+
+
+def test_from_toml_env_override_is_verbatim(tmp_path, monkeypatch):
+    """ENLACE_APPS_DIRS overrides toml values and is taken verbatim."""
+    toml = _write_toml(
+        tmp_path / "cfg" / "platform.toml",
+        'apps_dirs = ["../papp"]\n',
+    )
+    monkeypatch.setenv("ENLACE_APPS_DIRS", "/opt/tw_platform/apps")
+
+    config = PlatformConfig.from_toml(toml)
+
+    assert config.apps_dirs == [Path("/opt/tw_platform/apps")]
+
+
+def test_from_toml_missing_file_returns_defaults(tmp_path):
+    """A non-existent toml path yields defaults without crashing."""
+    config = PlatformConfig.from_toml(tmp_path / "does-not-exist.toml")
+
+    assert config.apps_dirs == [Path("apps")]
+    assert config.app_dirs == []
