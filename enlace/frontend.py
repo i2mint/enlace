@@ -122,7 +122,7 @@ class SPAStaticFiles(StaticFiles):
 _NOT_FOUND_PAGE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>App not found</title>
+<title>Page not found</title>
 <style>
  body{font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;
       background:#0f1115;color:#e6e8eb;margin:0;min-height:100vh;
@@ -134,13 +134,21 @@ _NOT_FOUND_PAGE = """<!doctype html>
  a.btn{display:inline-block;background:#7cc4ff;color:#0a1420;
       text-decoration:none;font-weight:600;padding:9px 18px;border-radius:8px}
  a.btn:hover{background:#9aa6ff}
+ .nav{margin-top:16px;font-size:13px}
+ .nav a{color:#7cc4ff;margin:0 8px;text-decoration:none}
+ .nav a:hover{text-decoration:underline}
  code{background:#0f1115;padding:1px 6px;border-radius:4px;
       border:1px solid #2a2e38;color:#e6e8eb;word-break:break-all}
 </style></head><body>
 <div class="card">
-<h1>App not found</h1>
-<p>No app is registered at <code>{path}</code>.</p>
+<h1>Page not found</h1>
+<p>There's nothing at <code>{path}</code>. The app may have been renamed or
+moved &mdash; or it might need you to sign in first.</p>
 <a class="btn" href="/">See available apps</a>
+<div class="nav">
+  <a href="/">Home</a>
+  <a href="/auth/login">Sign in</a>
+</div>
 </div></body></html>"""
 
 
