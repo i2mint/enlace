@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.base &mdash; enlace 0.1.5 documentation</title>
+  <title>enlace.base &mdash; enlace 0.1.6 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=59fadc99"></script>
+      <script src="../../_static/documentation_options.js?v=6e0256f3"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -174,7 +174,15 @@ them all at once.</p>
 <dt class="sig sig-object py" id="enlace.base.PlatformConfig.from_toml">
 <span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_toml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">PosixPath('platform.toml')</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></span><a class="reference internal" href="../../_modules/enlace/base.html#PlatformConfig.from_toml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.base.PlatformConfig.from_toml" title="Link to this definition"></a></dt>
 <dd><p>Load configuration from a TOML file, falling back to defaults.</p>
-<p>Reads environment variables as overrides:
+<p>Relative <code class="docutils literal notranslate"><span class="pre">apps_dirs</span></code> / <code class="docutils literal notranslate"><span class="pre">app_dirs</span></code> / <code class="docutils literal notranslate"><span class="pre">shared_assets_dir</span></code> entries
+in the TOML are resolved against the <strong>TOML file’s own directory</strong>,
+not the process working directory. This makes a platform config
+host-portable: the same file works wherever the repo is checked out,
+as long as sibling app repos keep their relative layout. Absolute
+(and <code class="docutils literal notranslate"><span class="pre">~</span></code>-prefixed) paths are left untouched.</p>
+<p>Reads environment variables as overrides (applied <em>after</em> relative
+resolution, so env values are taken verbatim — host-specific by
+design):
 - ENLACE_APPS_DIRS (pathsep-delimited): container directories
 - ENLACE_APP_DIRS (pathsep-delimited): individual app directories
 - ENLACE_APPS_DIR (legacy): single container directory</p>
