@@ -191,7 +191,16 @@ class PlatformConfig(BaseModel):
     def from_toml(cls, path: Path = Path("platform.toml")) -> "PlatformConfig":
         """Load configuration from a TOML file, falling back to defaults.
 
-        Reads environment variables as overrides:
+        Relative ``apps_dirs`` / ``app_dirs`` / ``shared_assets_dir`` entries
+        in the TOML are resolved against the **TOML file's own directory**,
+        not the process working directory. This makes a platform config
+        host-portable: the same file works wherever the repo is checked out,
+        as long as sibling app repos keep their relative layout. Absolute
+        (and ``~``-prefixed) paths are left untouched.
+
+        Reads environment variables as overrides (applied *after* relative
+        resolution, so env values are taken verbatim — host-specific by
+        design):
         - ENLACE_APPS_DIRS (pathsep-delimited): container directories
         - ENLACE_APP_DIRS (pathsep-delimited): individual app directories
         - ENLACE_APPS_DIR (legacy): single container directory
@@ -222,6 +231,22 @@ class PlatformConfig(BaseModel):
         stores_data = data.get("stores")
         if stores_data is not None:
             platform_data["stores"] = stores_data
+
+        # Resolve relative path-like fields against the TOML file's own
+        # directory (not the CWD), so the config is host-portable. Done
+        # before env overrides — env values are intentionally verbatim.
+        base_dir = path.resolve().parent
+
+        def _resolve(value: Any) -> Path:
+            p = Path(value).expanduser()
+            return p if p.is_absolute() else (base_dir / p).resolve()
+
+        for key in ("apps_dirs", "app_dirs"):
+            if key in platform_data:
+                platform_data[key] = [_resolve(d) for d in platform_data[key]]
+        for key in ("shared_assets_dir", "apps_dir"):
+            if key in platform_data:
+                platform_data[key] = _resolve(platform_data[key])
 
         # Environment variable overrides
         env_apps_dirs = os.environ.get("ENLACE_APPS_DIRS", "")
