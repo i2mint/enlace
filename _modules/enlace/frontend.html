@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.frontend &mdash; enlace 0.1.4 documentation</title>
+  <title>enlace.frontend &mdash; enlace 0.1.5 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=fd825880"></script>
+      <script src="../../_static/documentation_options.js?v=59fadc99"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -62,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
 </ul>
@@ -222,7 +223,7 @@
 <span class="n">_NOT_FOUND_PAGE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&lt;!doctype html&gt;</span>
 <span class="s2">&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;</span>
 <span class="s2">&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;</span>
-<span class="s2">&lt;title&gt;App not found&lt;/title&gt;</span>
+<span class="s2">&lt;title&gt;Page not found&lt;/title&gt;</span>
 <span class="s2">&lt;style&gt;</span>
 <span class="s2"> body{font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;</span>
 <span class="s2">      background:#0f1115;color:#e6e8eb;margin:0;min-height:100vh;</span>
@@ -234,13 +235,21 @@
 <span class="s2"> a.btn{display:inline-block;background:#7cc4ff;color:#0a1420;</span>
 <span class="s2">      text-decoration:none;font-weight:600;padding:9px 18px;border-radius:8px}</span>
 <span class="s2"> a.btn:hover{background:#9aa6ff}</span>
+<span class="s2"> .nav{margin-top:16px;font-size:13px}</span>
+<span class="s2"> .nav a{color:#7cc4ff;margin:0 8px;text-decoration:none}</span>
+<span class="s2"> .nav a:hover{text-decoration:underline}</span>
 <span class="s2"> code{background:#0f1115;padding:1px 6px;border-radius:4px;</span>
 <span class="s2">      border:1px solid #2a2e38;color:#e6e8eb;word-break:break-all}</span>
 <span class="s2">&lt;/style&gt;&lt;/head&gt;&lt;body&gt;</span>
 <span class="s2">&lt;div class=&quot;card&quot;&gt;</span>
-<span class="s2">&lt;h1&gt;App not found&lt;/h1&gt;</span>
-<span class="s2">&lt;p&gt;No app is registered at &lt;code&gt;</span><span class="si">{path}</span><span class="s2">&lt;/code&gt;.&lt;/p&gt;</span>
+<span class="s2">&lt;h1&gt;Page not found&lt;/h1&gt;</span>
+<span class="s2">&lt;p&gt;There&#39;s nothing at &lt;code&gt;</span><span class="si">{path}</span><span class="s2">&lt;/code&gt;. The app may have been renamed or</span>
+<span class="s2">moved &amp;mdash; or it might need you to sign in first.&lt;/p&gt;</span>
 <span class="s2">&lt;a class=&quot;btn&quot; href=&quot;/&quot;&gt;See available apps&lt;/a&gt;</span>
+<span class="s2">&lt;div class=&quot;nav&quot;&gt;</span>
+<span class="s2">  &lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt;</span>
+<span class="s2">  &lt;a href=&quot;/auth/login&quot;&gt;Sign in&lt;/a&gt;</span>
+<span class="s2">&lt;/div&gt;</span>
 <span class="s2">&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;</span>
 
 
@@ -296,7 +305,9 @@
                 <span class="p">],</span>
             <span class="p">}</span>
         <span class="p">)</span>
-        <span class="k">await</span> <span class="n">send</span><span class="p">({</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span> <span class="k">else</span> <span class="n">data</span><span class="p">})</span>
+        <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span> <span class="k">else</span> <span class="n">data</span><span class="p">}</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_real_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">if</span> <span class="s2">&quot;..&quot;</span> <span class="ow">in</span> <span class="n">rel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>

@@ -18,5 +18,6 @@
    module_docs/enlace/tests/test_compose
    module_docs/enlace/tests/test_diagnose_auth
    module_docs/enlace/tests/test_discover
+   module_docs/enlace/tests/test_frontend_404
    module_docs/enlace/tests/test_supervise
    module_docs/enlace/util
