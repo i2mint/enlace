@@ -141,6 +141,7 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         _add_index_route(parent, config)
 
     for prefix, app_id, sub_app in sub_apps:
+        _add_trailing_slash_redirect(parent, prefix)
         parent.mount(prefix, _AppIdInjector(sub_app, app_id))
 
     # Serve static-mode apps at their route prefix.
@@ -148,6 +149,7 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         if app_config.mode == "static":
             static_dir = app_config.public_dir or app_config.frontend_dir
             if static_dir and static_dir.is_dir():
+                _add_trailing_slash_redirect(parent, app_config.route_prefix)
                 parent.mount(
                     app_config.route_prefix,
                     StaticFiles(directory=str(static_dir), html=True),
@@ -171,12 +173,7 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
                 # name; some deployments may link to both.
             frontend_prefix = f"/{app_config.name}"
 
-            # Starlette mounts only match paths with trailing slash.
-            # Add a redirect so /{app_name} → /{app_name}/ works.
-            @parent.get(frontend_prefix, include_in_schema=False)
-            async def _redirect(prefix=frontend_prefix):
-                return RedirectResponse(f"{prefix}/")
-
+            _add_trailing_slash_redirect(parent, frontend_prefix)
             parent.mount(
                 frontend_prefix,
                 SPAStaticFiles(directory=str(app_config.frontend_dir), html=True),
@@ -204,6 +201,26 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         )
 
     return parent
+
+
+def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
+    """Redirect GET /{prefix} → /{prefix}/ so mounted apps work either way.
+
+    Starlette ``mount()`` only matches paths starting with ``prefix + "/"``,
+    so a bare ``/{prefix}`` returns 404. This adds a sibling GET route that
+    307-redirects to the trailing-slash form, matching how browsers commonly
+    expect URLs to behave. POST/PUT/DELETE intentionally aren't redirected —
+    API clients should hit the canonical trailing-slash path directly.
+
+    No-op when ``prefix`` is empty or ``/`` (the root mount handles those).
+    """
+    if not prefix or prefix == "/":
+        return
+
+    async def _redirect() -> RedirectResponse:
+        return RedirectResponse(f"{prefix}/")
+
+    parent.get(prefix, include_in_schema=False)(_redirect)
 
 
 def _can_access(

@@ -95,3 +95,40 @@ def test_show_config_json(tmp_path):
     # Verify it round-trips through JSON
     json_str = json.dumps(data)
     assert json.loads(json_str) == data
+
+
+def test_trailing_slash_redirect_for_mounted_app(tmp_path):
+    """Bare /api/{name} 307-redirects to /api/{name}/ for mounted sub-apps.
+
+    Starlette mounts only match the trailing-slash form; without the redirect
+    a bare /api/foo returns 404. Regression test for the typola/external-proxy
+    bug where /typola (no slash) gave a hard 404 while /typola/ worked.
+    """
+    apps_dir = tmp_path / "apps"
+    apps_dir.mkdir()
+    foo_dir = apps_dir / "foo"
+    foo_dir.mkdir()
+    (foo_dir / "server.py").write_text(
+        textwrap.dedent("""\
+            from fastapi import FastAPI
+            app = FastAPI()
+
+            @app.get("/hello")
+            def hello():
+                return {"ok": True}
+        """)
+    )
+
+    config = PlatformConfig(apps_dir=apps_dir)
+    config = discover_apps(config)
+    app = build_backend(config)
+    client = TestClient(app)
+
+    # Without the fix, /api/foo would 404; with it, redirect to /api/foo/.
+    resp = client.get("/api/foo", follow_redirects=False)
+    assert resp.status_code == 307
+    assert resp.headers["location"] == "/api/foo/"
+
+    # And the actual mounted route still works on the trailing-slash form.
+    resp = client.get("/api/foo/hello")
+    assert resp.status_code == 200
