@@ -204,13 +204,15 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
 
 
 def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
-    """Redirect GET /{prefix} → /{prefix}/ so mounted apps work either way.
+    """Redirect GET/HEAD /{prefix} → /{prefix}/ so mounted apps work either way.
 
     Starlette ``mount()`` only matches paths starting with ``prefix + "/"``,
-    so a bare ``/{prefix}`` returns 404. This adds a sibling GET route that
+    so a bare ``/{prefix}`` returns 404. This adds a sibling route that
     307-redirects to the trailing-slash form, matching how browsers commonly
-    expect URLs to behave. POST/PUT/DELETE intentionally aren't redirected —
-    API clients should hit the canonical trailing-slash path directly.
+    expect URLs to behave. HEAD is included so health checks and crawlers
+    that probe with HEAD see the same routing as GET. State-changing methods
+    (POST/PUT/DELETE) intentionally aren't redirected — API clients should
+    hit the canonical trailing-slash path directly.
 
     No-op when ``prefix`` is empty or ``/`` (the root mount handles those).
     """
@@ -220,7 +222,12 @@ def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
     async def _redirect() -> RedirectResponse:
         return RedirectResponse(f"{prefix}/")
 
-    parent.get(prefix, include_in_schema=False)(_redirect)
+    parent.add_api_route(
+        prefix,
+        _redirect,
+        methods=["GET", "HEAD"],
+        include_in_schema=False,
+    )
 
 
 def _can_access(

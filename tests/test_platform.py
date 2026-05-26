@@ -129,6 +129,11 @@ def test_trailing_slash_redirect_for_mounted_app(tmp_path):
     assert resp.status_code == 307
     assert resp.headers["location"] == "/api/foo/"
 
+    # HEAD should redirect too — health checks and curl -I rely on it.
+    resp = client.head("/api/foo", follow_redirects=False)
+    assert resp.status_code == 307
+    assert resp.headers["location"] == "/api/foo/"
+
     # And the actual mounted route still works on the trailing-slash form.
     resp = client.get("/api/foo/hello")
     assert resp.status_code == 200
