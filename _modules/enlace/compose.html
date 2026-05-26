@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.8 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.9 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=22607128"></script>
+      <script src="../../_static/documentation_options.js?v=8618f531"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -241,6 +241,7 @@
         <span class="n">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">app_id</span><span class="p">,</span> <span class="n">sub_app</span> <span class="ow">in</span> <span class="n">sub_apps</span><span class="p">:</span>
+        <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
         <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">_AppIdInjector</span><span class="p">(</span><span class="n">sub_app</span><span class="p">,</span> <span class="n">app_id</span><span class="p">))</span>
 
     <span class="c1"># Serve static-mode apps at their route prefix.</span>
@@ -248,6 +249,7 @@
         <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;static&quot;</span><span class="p">:</span>
             <span class="n">static_dir</span> <span class="o">=</span> <span class="n">app_config</span><span class="o">.</span><span class="n">public_dir</span> <span class="ow">or</span> <span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span>
             <span class="k">if</span> <span class="n">static_dir</span> <span class="ow">and</span> <span class="n">static_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">)</span>
                 <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
                     <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
                     <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">static_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
@@ -271,12 +273,7 @@
                 <span class="c1"># name; some deployments may link to both.</span>
             <span class="n">frontend_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
 
-            <span class="c1"># Starlette mounts only match paths with trailing slash.</span>
-            <span class="c1"># Add a redirect so /{app_name} → /{app_name}/ works.</span>
-            <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">frontend_prefix</span><span class="p">,</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_redirect</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="n">frontend_prefix</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
-
+            <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">frontend_prefix</span><span class="p">)</span>
             <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
                 <span class="n">frontend_prefix</span><span class="p">,</span>
                 <span class="n">SPAStaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
@@ -305,6 +302,26 @@
 
     <span class="k">return</span> <span class="n">parent</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Redirect GET /{prefix} → /{prefix}/ so mounted apps work either way.</span>
+
+<span class="sd">    Starlette ``mount()`` only matches paths starting with ``prefix + &quot;/&quot;``,</span>
+<span class="sd">    so a bare ``/{prefix}`` returns 404. This adds a sibling GET route that</span>
+<span class="sd">    307-redirects to the trailing-slash form, matching how browsers commonly</span>
+<span class="sd">    expect URLs to behave. POST/PUT/DELETE intentionally aren&#39;t redirected —</span>
+<span class="sd">    API clients should hit the canonical trailing-slash path directly.</span>
+
+<span class="sd">    No-op when ``prefix`` is empty or ``/`` (the root mount handles those).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">prefix</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_redirect</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RedirectResponse</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+
+    <span class="n">parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)(</span><span class="n">_redirect</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_can_access</span><span class="p">(</span>
