@@ -66,17 +66,21 @@ class ConventionDiscoverer:
 
     def _discover_app(self, app_dir: Path, apps_dir: Path) -> Optional[AppConfig]:
         """Discover a single app from its directory."""
+        from enlace.strategies import get_strategy
+
         name = app_dir.name
         route_prefix = derive_route_prefix(name)
 
-        # Check app.toml first — if it declares a non-asgi mode, skip Python
-        # introspection entirely (the app may not even be Python).
+        # Check app.toml first. The declared mode's strategy decides whether
+        # to skip Python introspection (built-in: asgi inspects, all others
+        # don't; plugins like enlace_docker also opt out).
         override_file = app_dir / "app.toml"
         toml_data = _load_toml(override_file) if override_file.exists() else {}
 
         declared_mode = toml_data.get("mode", "asgi")
+        strategy = get_strategy(declared_mode)
 
-        if declared_mode != "asgi":
+        if strategy.skip_python_introspection:
             return self._build_non_asgi_config(
                 name,
                 route_prefix,
@@ -280,34 +284,37 @@ def _load_toml(path: Path) -> dict:
         raise ValueError(f"Failed to parse {path}: {e}") from e
 
 
-# Mapping from TOML key → AppConfig field name.
-_TOML_FIELD_MAP = {
+# Cross-cutting TOML keys that all strategies share. Mode-specific keys
+# (``command``, ``port``, ``upstream_url``, ``public_dir``, ...) are
+# contributed by each ``BackendStrategy`` and merged in by
+# ``_resolved_field_map`` below.
+_CORE_TOML_FIELD_MAP = {
     "route": "route_prefix",
-    "entry_point": "entry_module_path",
-    "app_attr": "app_attr",
     "access": "access",
     "shared_password_env": "shared_password_env",
     "allowed_users": "allowed_users",
     "display_name": "display_name",
     "frontend_dir": "frontend_dir",
-    # New fields for process/external/static modes
     "mode": "mode",
-    "command": "command",
-    "port": "port",
-    "socket": "socket",
-    "env": "env",
-    "build": "build",
-    "health_check_path": "health_check_path",
-    "ready_timeout": "ready_timeout",
-    "restart_policy": "restart_policy",
-    "max_retries": "max_retries",
-    "restart_delay_ms": "restart_delay_ms",
-    "upstream_url": "upstream_url",
-    "public_dir": "public_dir",
 }
 
-# Keys whose TOML values are paths relative to the app directory.
-_PATH_KEYS = {"entry_point", "frontend_dir", "public_dir"}
+# Core path keys (resolved relative to the app directory). Strategy-specific
+# path keys are contributed via ``BackendStrategy.path_keys``.
+_CORE_PATH_KEYS = {"frontend_dir"}
+
+
+def _resolved_field_map() -> tuple[dict[str, str], set[str]]:
+    """Build the effective TOML field map by merging core + strategy maps.
+
+    Recomputed per call so newly-registered plugin strategies are picked up
+    without restarting the process. Cheap — the registry is small.
+    """
+    from enlace.strategies import collect_strategy_field_maps
+
+    strategy_map, strategy_paths = collect_strategy_field_maps()
+    field_map = {**_CORE_TOML_FIELD_MAP, **strategy_map}
+    path_keys = _CORE_PATH_KEYS | strategy_paths
+    return field_map, path_keys
 
 
 def _overlay_toml_fields(
@@ -320,12 +327,13 @@ def _overlay_toml_fields(
 
     Returns the updated (fields, provenance) pair.
     """
-    for toml_key, field_name in _TOML_FIELD_MAP.items():
+    field_map, path_keys = _resolved_field_map()
+    for toml_key, field_name in field_map.items():
         if toml_key not in toml_data:
             continue
         value = toml_data[toml_key]
         # Resolve relative paths
-        if toml_key in _PATH_KEYS:
+        if toml_key in path_keys:
             value = app_dir / value
         # command: accept string (split via shlex) or array
         if toml_key == "command" and isinstance(value, str):

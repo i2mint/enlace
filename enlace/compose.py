@@ -67,22 +67,17 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
 
     sub_apps: list[tuple[str, str, object]] = []  # (route_prefix, app_id, asgi_app)
 
+    # Dispatch every app through its registered BackendStrategy. Built-in
+    # strategies cover asgi/process/external/static; plugins (e.g.
+    # enlace_docker) contribute additional modes via entry points. Each
+    # strategy's ``make_asgi`` returns either an ASGI sub-app to mount or
+    # ``None`` (e.g. frontend-only apps, or apps whose port hasn't been
+    # allocated yet).
+    from enlace.strategies import get_strategy
+
     for app_config in config.apps:
-        # Process and external modes are proxied, not imported
-        if app_config.mode in ("process", "external"):
-            proxy_app = _make_proxy_for(app_config)
-            if proxy_app is not None:
-                sub_apps.append((app_config.route_prefix, app_config.name, proxy_app))
-            continue
-
-        # Static mode is handled separately below (with frontend files)
-        if app_config.mode == "static":
-            continue
-
-        # asgi mode — original behavior
-        if app_config.app_type == "frontend_only":
-            continue
-        sub_app = _load_sub_app(app_config)
+        strategy = get_strategy(app_config.mode)
+        sub_app = strategy.make_asgi(app_config, config)
         if sub_app is not None:
             sub_apps.append((app_config.route_prefix, app_config.name, sub_app))
 
@@ -143,17 +138,6 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
     for prefix, app_id, sub_app in sub_apps:
         _add_trailing_slash_redirect(parent, prefix)
         parent.mount(prefix, _AppIdInjector(sub_app, app_id))
-
-    # Serve static-mode apps at their route prefix.
-    for app_config in config.apps:
-        if app_config.mode == "static":
-            static_dir = app_config.public_dir or app_config.frontend_dir
-            if static_dir and static_dir.is_dir():
-                _add_trailing_slash_redirect(parent, app_config.route_prefix)
-                parent.mount(
-                    app_config.route_prefix,
-                    StaticFiles(directory=str(static_dir), html=True),
-                )
 
     # Serve frontend static files for apps that have a frontend/ directory.
     # Mounted at /{app_name}/ so the frontend is accessible alongside the API.
@@ -346,27 +330,6 @@ class _AppIdInjector:
             state = scope.setdefault("state", {})
             state["app_id"] = self.app_id
         await self.app(scope, receive, send)
-
-
-def _make_proxy_for(app_config: AppConfig) -> Optional[object]:
-    """Create a reverse proxy ASGI app for a process or external backend.
-
-    Returns None if the upstream cannot be determined (no port/upstream_url).
-    """
-    from enlace.proxy import make_proxy_app
-
-    if app_config.mode == "external" and app_config.upstream_url:
-        return make_proxy_app(
-            upstream=app_config.upstream_url,
-            strip_prefix=app_config.route_prefix,
-        )
-    elif app_config.mode == "process" and app_config.port is not None:
-        upstream = f"http://127.0.0.1:{app_config.port}"
-        return make_proxy_app(
-            upstream=upstream,
-            strip_prefix=app_config.route_prefix,
-        )
-    return None
 
 
 def _load_sub_app(app_config: AppConfig) -> Optional[object]:

@@ -170,29 +170,48 @@ def serve(
     # Legacy env var
     os.environ["ENLACE_APPS_DIR"] = all_apps_dirs[0] if all_apps_dirs else ""
 
-    # Run discovery to determine what modes we're dealing with
+    # Run discovery so we can see which apps need supervised lifecycles.
     discovered = discover_apps(platform)
+
+    # Phase 1: only mode=process needs port pre-allocation. When enlace_docker
+    # (or another plugin) adds its own supervisable modes that need ports,
+    # generalize this — see issue #3, Phase 2 risks.
     process_apps = [a for a in discovered.apps if a.mode == "process"]
 
     reload_dirs = all_apps_dirs + all_app_dirs
 
-    if not process_apps:
-        # Pure-asgi path — exactly the current behavior
+    # Decide pure-asgi vs. mixed by asking each strategy whether the app
+    # needs a supervised lifecycle (cheap class-level flag; cannot call
+    # make_lifecycle yet because process-mode ports aren't allocated).
+    from enlace.strategies import get_strategy
+
+    supervised_apps: list[AppConfig] = [
+        app for app in discovered.apps if get_strategy(app.mode).is_supervisable
+    ]
+
+    if not supervised_apps:
+        # Pure-asgi path — exactly the current behavior.
         _serve_asgi_only(effective_host, effective_port, mode, reload_dirs)
     else:
-        # Mixed-mode path — run async supervisor
-        process_apps = _auto_allocate_ports(
-            process_apps,
-            platform.process_port_start,
-        )
-        # Update the env so compose.py sees the allocated ports
-        _set_port_env(process_apps)
+        # Allocate ports for process-mode apps (current behavior).
+        if process_apps:
+            process_apps = _auto_allocate_ports(
+                process_apps, platform.process_port_start
+            )
+            _set_port_env(process_apps)
+            # Re-attach allocated ports to the supervised_apps list so each
+            # strategy's make_lifecycle sees the assigned port.
+            ports_by_name = {a.name: a for a in process_apps}
+            supervised_apps = [
+                ports_by_name.get(a.name, a) for a in supervised_apps
+            ]
         _serve_mixed(
             effective_host,
             effective_port,
             mode,
             reload_dirs,
-            process_apps,
+            platform,
+            supervised_apps,
         )
 
 
@@ -226,10 +245,18 @@ def _serve_mixed(
     port: int,
     mode: str,
     reload_dirs: list[str],
-    process_apps: list[AppConfig],
+    platform: PlatformConfig,
+    supervised_apps: list[AppConfig],
 ) -> None:
-    """Mixed-mode serve: asyncio supervisor + gateway Uvicorn."""
+    """Mixed-mode serve: asyncio supervisor + gateway Uvicorn.
+
+    Each supervised app's lifecycle is built via its registered
+    ``BackendStrategy.make_lifecycle`` — the supervisor does not know
+    whether it's driving a subprocess (``ProcessStrategy``) or, e.g., a
+    docker container (an ``enlace_docker`` plugin strategy).
+    """
     _check_port_available(host, port)
+    from enlace.strategies import get_strategy
     from enlace.supervise import ManagedProcess, supervise_all
 
     async def _run():
@@ -238,36 +265,22 @@ def _serve_mixed(
         print("  enlace — multi-process mode")
         print(f"{'=' * 60}")
         print(f"  Gateway:  http://{host}:{port}")
-        for app in process_apps:
+        for app in supervised_apps:
             addr = f"http://127.0.0.1:{app.port}" if app.port else app.socket
-            print(f"  {app.name:>12}:  {addr}  (mode=process)")
+            print(f"  {app.name:>12}:  {addr}  (mode={app.mode})")
         print(f"{'=' * 60}\n")
 
-        # Build managed processes for process-mode apps
-        managed: list[ManagedProcess] = []
-        for app in process_apps:
-            cwd = (
-                app.entry_module_path.parent
-                if app.entry_module_path
-                else (app.source_dir / app.name if app.source_dir else Path("."))
-            )
-            managed.append(
-                ManagedProcess(
-                    name=app.name,
-                    command=app.command,
-                    cwd=cwd,
-                    port=app.port,
-                    socket_path=app.socket,
-                    env=app.env,
-                    health_check_path=app.health_check_path,
-                    ready_timeout=app.ready_timeout,
-                    restart_policy=app.restart_policy,
-                    max_retries=app.max_retries,
-                    restart_delay_ms=app.restart_delay_ms,
-                )
-            )
+        # Each strategy turns its AppConfig into a Lifecycle.
+        managed = []
+        for app in supervised_apps:
+            strategy = get_strategy(app.mode)
+            lifecycle = strategy.make_lifecycle(app, platform)
+            if lifecycle is not None:
+                managed.append(lifecycle)
 
-        # Also manage the gateway Uvicorn as a supervised process
+        # Also manage the gateway Uvicorn as a supervised process. The
+        # gateway is enlace's own concern (not strategy-driven) — it's the
+        # uvicorn child that hosts all the mounted/proxied sub-apps.
         uvicorn_cmd = _build_uvicorn_cmd(host, port, mode, reload_dirs)
         gateway = ManagedProcess(
             name="gateway",
