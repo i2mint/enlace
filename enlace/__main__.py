@@ -274,19 +274,41 @@ def diagnose(
         sys.exit(1)
 
 
-def _load_envfile(path: str) -> None:
+def _load_envfile(path: str) -> bool:
     """Parse a simple KEY=VALUE envfile into ``os.environ``.
 
     Only handles the systemd/shell common case: blank lines, ``#`` comments,
     and ``KEY=VALUE`` (value may be wrapped in single or double quotes). This
     is intentionally not a full shell parser — deploy envfiles are expected
     to avoid exotic syntax.
+
+    Returns ``True`` if the file was loaded, ``False`` if it was skipped due
+    to a recoverable read error (e.g. a permission issue when ``doctor`` is
+    invoked by an unprivileged user against a ``root:root 0600`` envfile —
+    intentional in some deploy topologies). The caller (``doctor``) auto-
+    skips env-based checks when this returns ``False`` so the rest of the
+    smoke still runs.
+
+    A genuinely missing path still hard-fails with ``sys.exit(2)``, because
+    that almost always means a typo or wrong path rather than a deliberate
+    permission topology.
     """
     p = Path(path).expanduser()
     if not p.is_file():
         print(f"envfile not found: {p}", file=sys.stderr)
         sys.exit(2)
-    for lineno, raw in enumerate(p.read_text().splitlines(), 1):
+    try:
+        text = p.read_text()
+    except OSError as exc:
+        # Most often PermissionError: envfile is intentionally root-only
+        # and we're a non-root caller. Warn + degrade.
+        print(
+            f"envfile not readable ({exc.strerror or exc}: {p}); "
+            f"continuing without env-based checks.",
+            file=sys.stderr,
+        )
+        return False
+    for lineno, raw in enumerate(text.splitlines(), 1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
@@ -298,6 +320,7 @@ def _load_envfile(path: str) -> None:
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
             value = value[1:-1]
         os.environ[key] = value
+    return True
 
 
 def doctor(
@@ -341,7 +364,11 @@ def doctor(
         app_dirs: Comma-separated individual app directories.
     """
     if envfile:
-        _load_envfile(envfile)
+        # If the envfile is unreadable (e.g. root:root 0600 and we are the
+        # deploy user) ``_load_envfile`` warns and returns False; auto-skip
+        # env checks so the HTTP / config checks still run.
+        if not _load_envfile(envfile):
+            skip_env_checks = True
 
     config = _build_config(apps_dir, apps_dirs, app_dirs)
     app_filter: Optional[list[str]] = None
