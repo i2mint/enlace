@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; enlace 0.1.12 documentation</title>
+  <title>Index &mdash; enlace 0.1.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=297ad043"></script>
+      <script src="_static/documentation_options.js?v=8d02545a"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,6 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
@@ -63,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/util.html">enlace.util</a></li>
 </ul>
@@ -102,6 +104,7 @@
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#O"><strong>O</strong></a>
@@ -109,6 +112,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
@@ -121,15 +125,17 @@
         <li><a href="module_docs/enlace.html#enlace.PlatformConfig.all_source_dirs">(enlace.PlatformConfig property)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.AppConfig">AppConfig (class in enlace)</a>
 
       <ul>
         <li><a href="module_docs/enlace/base.html#enlace.base.AppConfig">(class in enlace.base)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/discover.html#enlace.discover.AppDiscoverer">AppDiscoverer (class in enlace.discover)</a>
+</li>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.AsgiStrategy">AsgiStrategy (class in enlace.strategies)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -137,6 +143,8 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy">BackendStrategy (class in enlace.strategies)</a>
+</li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.backoff_delay">backoff_delay() (enlace.supervise.ManagedProcess method)</a>
 </li>
   </ul></td>
@@ -165,6 +173,8 @@
         <li><a href="module_docs/enlace.html#enlace.PlatformConfig.check_conflicts">(enlace.PlatformConfig method)</a>
 </li>
       </ul></li>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.collect_strategy_field_maps">collect_strategy_field_maps() (in module enlace.strategies)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.ConventionDiscoverer">ConventionDiscoverer (class in enlace)</a>
@@ -286,8 +296,6 @@
         <li><a href="module_docs/enlace/doctor.html#module-enlace.doctor">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     enlace.frontend
 
@@ -295,6 +303,8 @@
         <li><a href="module_docs/enlace/frontend.html#module-enlace.frontend">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     enlace.proxy
 
@@ -307,6 +317,13 @@
 
       <ul>
         <li><a href="module_docs/enlace/serve.html#module-enlace.serve">module</a>
+</li>
+      </ul></li>
+      <li>
+    enlace.strategies
+
+      <ul>
+        <li><a href="module_docs/enlace/strategies.html#module-enlace.strategies">module</a>
 </li>
       </ul></li>
       <li>
@@ -339,6 +356,8 @@
       </ul></li>
       <li><a href="module_docs/enlace.html#enlace.EnlaceConfigError">EnlaceConfigError</a>, <a href="module_docs/enlace/compose.html#enlace.compose.EnlaceConfigError">[1]</a>
 </li>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy">ExternalStrategy (class in enlace.strategies)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -370,6 +389,10 @@
       <li><a href="module_docs/enlace/frontend.html#enlace.frontend.SPAStaticFiles.get_response">get_response() (enlace.frontend.SPAStaticFiles method)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.get_strategy">get_strategy() (in module enlace.strategies)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="I">I</h2>
@@ -381,16 +404,26 @@
         <li><a href="module_docs/enlace.html#enlace.DiagnosticReport.is_enlaceable">(enlace.DiagnosticReport property)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/util.html#enlace.util.is_skippable">is_skippable() (in module enlace.util)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.Issue">Issue (class in enlace)</a>
 
       <ul>
         <li><a href="module_docs/enlace/diagnose.html#enlace.diagnose.Issue">(class in enlace.diagnose)</a>
 </li>
       </ul></li>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.iter_strategies">iter_strategies() (in module enlace.strategies)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="K">K</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.known_modes">known_modes() (in module enlace.strategies)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -401,6 +434,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.Lifecycle">Lifecycle (class in enlace.strategies)</a>
+</li>
       <li><a href="module_docs/enlace/__main__.html#enlace.__main__.list_apps">list_apps() (in module enlace.__main__)</a>
 </li>
   </ul></td>
@@ -409,6 +444,24 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.AsgiStrategy.make_asgi">make_asgi() (enlace.strategies.AsgiStrategy method)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy.make_asgi">(enlace.strategies.BackendStrategy method)</a>
+</li>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy.make_asgi">(enlace.strategies.ExternalStrategy method)</a>
+</li>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy.make_asgi">(enlace.strategies.ProcessStrategy method)</a>
+</li>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy.make_asgi">(enlace.strategies.StaticStrategy method)</a>
+</li>
+      </ul></li>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy.make_lifecycle">make_lifecycle() (enlace.strategies.BackendStrategy method)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy.make_lifecycle">(enlace.strategies.ProcessStrategy method)</a>
+</li>
+      </ul></li>
       <li><a href="module_docs/enlace/proxy.html#enlace.proxy.make_proxy_app">make_proxy_app() (in module enlace.proxy)</a>
 </li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess">ManagedProcess (class in enlace.supervise)</a>
@@ -429,6 +482,8 @@
         <li><a href="module_docs/enlace.html#enlace.PlatformConfig.model_config">(enlace.PlatformConfig attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
@@ -452,6 +507,8 @@
         <li><a href="module_docs/enlace/proxy.html#module-enlace.proxy">enlace.proxy</a>
 </li>
         <li><a href="module_docs/enlace/serve.html#module-enlace.serve">enlace.serve</a>
+</li>
+        <li><a href="module_docs/enlace/strategies.html#module-enlace.strategies">enlace.strategies</a>
 </li>
         <li><a href="module_docs/enlace/supervise.html#module-enlace.supervise">enlace.supervise</a>
 </li>
@@ -483,15 +540,21 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy">ProcessStrategy (class in enlace.strategies)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.register_strategy">register_strategy() (in module enlace.strategies)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
+</li>
       <li><a href="module_docs/enlace/doctor.html#enlace.doctor.run_doctor">run_doctor() (in module enlace.doctor)</a>
 </li>
   </ul></td>
@@ -512,13 +575,15 @@
 </li>
       <li><a href="module_docs/enlace/__main__.html#enlace.__main__.show_config">show_config() (in module enlace.__main__)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.skills_dir">skills_dir() (in module enlace)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/frontend.html#enlace.frontend.SPAStaticFiles">SPAStaticFiles (class in enlace.frontend)</a>
 </li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.start">start() (enlace.supervise.ManagedProcess method)</a>
+</li>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy">StaticStrategy (class in enlace.strategies)</a>
 </li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.stop">stop() (enlace.supervise.ManagedProcess method)</a>
 </li>
@@ -566,6 +631,22 @@
 </li>
       <li><a href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_stop_already_exited">test_stop_already_exited() (in module enlace.tests.test_supervise)</a>
 </li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy.validate">validate() (enlace.strategies.BackendStrategy method)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy.validate">(enlace.strategies.ExternalStrategy method)</a>
+</li>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy.validate">(enlace.strategies.ProcessStrategy method)</a>
+</li>
+        <li><a href="module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy.validate">(enlace.strategies.StaticStrategy method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 

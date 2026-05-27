@@ -1,0 +1,378 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.strategies &mdash; enlace 0.1.13 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d02545a"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="enlace.supervise" href="supervise.html" />
+    <link rel="prev" title="enlace.serve" href="serve.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serve.html">enlace.serve</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.strategies</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.AsgiStrategy"><code class="docutils literal notranslate"><span class="pre">AsgiStrategy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.AsgiStrategy.make_asgi"><code class="docutils literal notranslate"><span class="pre">AsgiStrategy.make_asgi()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.BackendStrategy"><code class="docutils literal notranslate"><span class="pre">BackendStrategy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.BackendStrategy.make_asgi"><code class="docutils literal notranslate"><span class="pre">BackendStrategy.make_asgi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.BackendStrategy.make_lifecycle"><code class="docutils literal notranslate"><span class="pre">BackendStrategy.make_lifecycle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.BackendStrategy.validate"><code class="docutils literal notranslate"><span class="pre">BackendStrategy.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.ExternalStrategy"><code class="docutils literal notranslate"><span class="pre">ExternalStrategy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.ExternalStrategy.make_asgi"><code class="docutils literal notranslate"><span class="pre">ExternalStrategy.make_asgi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.ExternalStrategy.validate"><code class="docutils literal notranslate"><span class="pre">ExternalStrategy.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.Lifecycle"><code class="docutils literal notranslate"><span class="pre">Lifecycle</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.ProcessStrategy"><code class="docutils literal notranslate"><span class="pre">ProcessStrategy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.ProcessStrategy.make_asgi"><code class="docutils literal notranslate"><span class="pre">ProcessStrategy.make_asgi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.ProcessStrategy.make_lifecycle"><code class="docutils literal notranslate"><span class="pre">ProcessStrategy.make_lifecycle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.ProcessStrategy.validate"><code class="docutils literal notranslate"><span class="pre">ProcessStrategy.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.StaticStrategy"><code class="docutils literal notranslate"><span class="pre">StaticStrategy</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.StaticStrategy.make_asgi"><code class="docutils literal notranslate"><span class="pre">StaticStrategy.make_asgi()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.strategies.StaticStrategy.validate"><code class="docutils literal notranslate"><span class="pre">StaticStrategy.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.collect_strategy_field_maps"><code class="docutils literal notranslate"><span class="pre">collect_strategy_field_maps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.get_strategy"><code class="docutils literal notranslate"><span class="pre">get_strategy()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.iter_strategies"><code class="docutils literal notranslate"><span class="pre">iter_strategies()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.known_modes"><code class="docutils literal notranslate"><span class="pre">known_modes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.strategies.register_strategy"><code class="docutils literal notranslate"><span class="pre">register_strategy()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">enlace.strategies</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/enlace/strategies.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-enlace.strategies">
+<span id="enlace-strategies"></span><h1>enlace.strategies<a class="headerlink" href="#module-enlace.strategies" title="Link to this heading"></a></h1>
+<p>Backend-strategy registry and built-in strategies for enlace.</p>
+<p>A <code class="docutils literal notranslate"><span class="pre">BackendStrategy</span></code> owns everything mode-specific about an app:</p>
+<ul class="simple">
+<li><p>which <code class="docutils literal notranslate"><span class="pre">app.toml</span></code> keys it understands (<code class="docutils literal notranslate"><span class="pre">toml_field_map</span></code> / <code class="docutils literal notranslate"><span class="pre">path_keys</span></code>);</p></li>
+<li><p>whether discovery should skip Python introspection
+(<code class="docutils literal notranslate"><span class="pre">skip_python_introspection</span></code>);</p></li>
+<li><p>mode-specific config validation (<code class="docutils literal notranslate"><span class="pre">validate</span></code>);</p></li>
+<li><p>how to expose the app over HTTP (<code class="docutils literal notranslate"><span class="pre">make_asgi</span></code> — returns an ASGI sub-app
+to mount, <code class="docutils literal notranslate"><span class="pre">None</span></code> for no HTTP);</p></li>
+<li><p>how to run the app as a managed process (<code class="docutils literal notranslate"><span class="pre">make_lifecycle</span></code> — returns a
+<code class="docutils literal notranslate"><span class="pre">Lifecycle</span></code> to supervise, <code class="docutils literal notranslate"><span class="pre">None</span></code> for no process).</p></li>
+</ul>
+<p>This module is the <strong>open/closed extension point</strong> for new backend modes.
+The four built-in strategies (<code class="docutils literal notranslate"><span class="pre">asgi</span></code>, <code class="docutils literal notranslate"><span class="pre">process</span></code>, <code class="docutils literal notranslate"><span class="pre">external</span></code>,
+<code class="docutils literal notranslate"><span class="pre">static</span></code>) capture today’s behavior verbatim. External plugins like
+<code class="docutils literal notranslate"><span class="pre">enlace_docker</span></code> register additional strategies via the
+<code class="docutils literal notranslate"><span class="pre">enlace.backend_strategies</span></code> entry-point group; installing the plugin
+package is enough — no user code change required.</p>
+<p>Registry semantics:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">register_strategy</span></code> is idempotent on <code class="docutils literal notranslate"><span class="pre">name</span></code> collisions: the latest
+registration wins (so plugins can override built-ins if they really must).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_strategy</span></code> performs a <em>lazy</em> entry-point scan on cache miss, so
+tests and direct callers don’t need to import plugin packages manually.</p></li>
+<li><p>The four built-ins are registered eagerly at module import.</p></li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.strategies.AsgiStrategy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">AsgiStrategy</span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#AsgiStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.AsgiStrategy" title="Link to this definition"></a></dt>
+<dd><p>Default mode: import the app’s Python module and mount its ASGI callable.</p>
+<p>Also covers the <code class="docutils literal notranslate"><span class="pre">functions</span></code> app_type (auto-generated FastAPI routes
+wrapping the module’s typed public functions) and <code class="docutils literal notranslate"><span class="pre">frontend_only</span></code>
+(no backend to mount — returns <code class="docutils literal notranslate"><span class="pre">None</span></code> from <code class="docutils literal notranslate"><span class="pre">make_asgi</span></code>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.AsgiStrategy.make_asgi">
+<span class="sig-name descname"><span class="pre">make_asgi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#AsgiStrategy.make_asgi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.AsgiStrategy.make_asgi" title="Link to this definition"></a></dt>
+<dd><p>Build the ASGI sub-app to mount at <code class="docutils literal notranslate"><span class="pre">app.route_prefix</span></code>.</p>
+<p>Return <code class="docutils literal notranslate"><span class="pre">None</span></code> if this strategy contributes no HTTP routing (e.g.
+an asgi-mode <code class="docutils literal notranslate"><span class="pre">frontend_only</span></code> app).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.strategies.BackendStrategy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">BackendStrategy</span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#BackendStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.BackendStrategy" title="Link to this definition"></a></dt>
+<dd><p>Base class for backend strategies.</p>
+<p>Subclasses set <code class="docutils literal notranslate"><span class="pre">name</span></code> and override the methods relevant to their mode.
+Concrete subclasses for the built-in modes live below; external plugins
+subclass this and register their instance via <code class="docutils literal notranslate"><span class="pre">register_strategy</span></code> or
+the <code class="docutils literal notranslate"><span class="pre">enlace.backend_strategies</span></code> entry-point group.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.BackendStrategy.make_asgi">
+<span class="sig-name descname"><span class="pre">make_asgi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../enlace.html#enlace.AppConfig" title="enlace.AppConfig"><span class="pre">AppConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../enlace.html#enlace.PlatformConfig" title="enlace.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ASGIApp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#BackendStrategy.make_asgi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.BackendStrategy.make_asgi" title="Link to this definition"></a></dt>
+<dd><p>Build the ASGI sub-app to mount at <code class="docutils literal notranslate"><span class="pre">app.route_prefix</span></code>.</p>
+<p>Return <code class="docutils literal notranslate"><span class="pre">None</span></code> if this strategy contributes no HTTP routing (e.g.
+an asgi-mode <code class="docutils literal notranslate"><span class="pre">frontend_only</span></code> app).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.BackendStrategy.make_lifecycle">
+<span class="sig-name descname"><span class="pre">make_lifecycle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../enlace.html#enlace.AppConfig" title="enlace.AppConfig"><span class="pre">AppConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../enlace.html#enlace.PlatformConfig" title="enlace.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.strategies.Lifecycle" title="enlace.strategies.Lifecycle"><span class="pre">Lifecycle</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#BackendStrategy.make_lifecycle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.BackendStrategy.make_lifecycle" title="Link to this definition"></a></dt>
+<dd><p>Build the supervised lifecycle for this app, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>Returning <code class="docutils literal notranslate"><span class="pre">None</span></code> means enlace does not manage a process for this
+app (e.g. <code class="docutils literal notranslate"><span class="pre">asgi</span></code>, <code class="docutils literal notranslate"><span class="pre">external</span></code>, <code class="docutils literal notranslate"><span class="pre">static</span></code>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.BackendStrategy.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../enlace.html#enlace.AppConfig" title="enlace.AppConfig"><span class="pre">AppConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#BackendStrategy.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.BackendStrategy.validate" title="Link to this definition"></a></dt>
+<dd><p>Validate mode-specific fields. Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if invalid.</p>
+<p>Called from <code class="docutils literal notranslate"><span class="pre">AppConfig</span></code> Pydantic validators, so raising
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> will be wrapped in a <code class="docutils literal notranslate"><span class="pre">ValidationError</span></code> automatically.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.strategies.ExternalStrategy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">ExternalStrategy</span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#ExternalStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.ExternalStrategy" title="Link to this definition"></a></dt>
+<dd><p>Route to a pre-existing service at a known URL; no lifecycle.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.ExternalStrategy.make_asgi">
+<span class="sig-name descname"><span class="pre">make_asgi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#ExternalStrategy.make_asgi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.ExternalStrategy.make_asgi" title="Link to this definition"></a></dt>
+<dd><p>Build the ASGI sub-app to mount at <code class="docutils literal notranslate"><span class="pre">app.route_prefix</span></code>.</p>
+<p>Return <code class="docutils literal notranslate"><span class="pre">None</span></code> if this strategy contributes no HTTP routing (e.g.
+an asgi-mode <code class="docutils literal notranslate"><span class="pre">frontend_only</span></code> app).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.ExternalStrategy.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#ExternalStrategy.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.ExternalStrategy.validate" title="Link to this definition"></a></dt>
+<dd><p>Validate mode-specific fields. Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if invalid.</p>
+<p>Called from <code class="docutils literal notranslate"><span class="pre">AppConfig</span></code> Pydantic validators, so raising
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> will be wrapped in a <code class="docutils literal notranslate"><span class="pre">ValidationError</span></code> automatically.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.strategies.Lifecycle">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">Lifecycle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#Lifecycle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.Lifecycle" title="Link to this definition"></a></dt>
+<dd><p>Protocol for an enlace-supervised backend.</p>
+<p>The dev-mode supervisor (<code class="docutils literal notranslate"><span class="pre">enlace.supervise.supervise_all</span></code>) drives any
+object satisfying this protocol. <code class="docutils literal notranslate"><span class="pre">ManagedProcess</span></code> in <code class="docutils literal notranslate"><span class="pre">supervise.py</span></code>
+is the canonical implementation for subprocess-backed apps; plugins
+(e.g. <code class="docutils literal notranslate"><span class="pre">enlace_docker</span></code>) may provide other implementations (e.g. a
+container-backed lifecycle that shells out to <code class="docutils literal notranslate"><span class="pre">docker</span></code>).</p>
+<p>The supervisor calls (in order, per attempt):
+<code class="docutils literal notranslate"><span class="pre">start()</span></code> → <code class="docutils literal notranslate"><span class="pre">stream_logs()</span></code> (concurrently with) <code class="docutils literal notranslate"><span class="pre">wait_healthy()</span></code>
+→ <code class="docutils literal notranslate"><span class="pre">wait_exit()</span></code> → <code class="docutils literal notranslate"><span class="pre">should_restart()</span></code> → <code class="docutils literal notranslate"><span class="pre">backoff_delay()</span></code>.</p>
+<p>Restart accounting (<code class="docutils literal notranslate"><span class="pre">record_failure</span></code>, <code class="docutils literal notranslate"><span class="pre">maybe_reset_backoff</span></code>) is
+handled by the lifecycle so each implementation can choose its own
+policy semantics.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.strategies.ProcessStrategy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">ProcessStrategy</span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#ProcessStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.ProcessStrategy" title="Link to this definition"></a></dt>
+<dd><p>Spawn the app as a child process, health-check, restart, proxy.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.ProcessStrategy.make_asgi">
+<span class="sig-name descname"><span class="pre">make_asgi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#ProcessStrategy.make_asgi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.ProcessStrategy.make_asgi" title="Link to this definition"></a></dt>
+<dd><p>Build the ASGI sub-app to mount at <code class="docutils literal notranslate"><span class="pre">app.route_prefix</span></code>.</p>
+<p>Return <code class="docutils literal notranslate"><span class="pre">None</span></code> if this strategy contributes no HTTP routing (e.g.
+an asgi-mode <code class="docutils literal notranslate"><span class="pre">frontend_only</span></code> app).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.ProcessStrategy.make_lifecycle">
+<span class="sig-name descname"><span class="pre">make_lifecycle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#ProcessStrategy.make_lifecycle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.ProcessStrategy.make_lifecycle" title="Link to this definition"></a></dt>
+<dd><p>Build the supervised lifecycle for this app, or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>Returning <code class="docutils literal notranslate"><span class="pre">None</span></code> means enlace does not manage a process for this
+app (e.g. <code class="docutils literal notranslate"><span class="pre">asgi</span></code>, <code class="docutils literal notranslate"><span class="pre">external</span></code>, <code class="docutils literal notranslate"><span class="pre">static</span></code>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.ProcessStrategy.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#ProcessStrategy.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.ProcessStrategy.validate" title="Link to this definition"></a></dt>
+<dd><p>Validate mode-specific fields. Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if invalid.</p>
+<p>Called from <code class="docutils literal notranslate"><span class="pre">AppConfig</span></code> Pydantic validators, so raising
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> will be wrapped in a <code class="docutils literal notranslate"><span class="pre">ValidationError</span></code> automatically.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.strategies.StaticStrategy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">StaticStrategy</span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#StaticStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.StaticStrategy" title="Link to this definition"></a></dt>
+<dd><p>Serve a directory of static files (no Python, no proxy).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.StaticStrategy.make_asgi">
+<span class="sig-name descname"><span class="pre">make_asgi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#StaticStrategy.make_asgi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.StaticStrategy.make_asgi" title="Link to this definition"></a></dt>
+<dd><p>Build the ASGI sub-app to mount at <code class="docutils literal notranslate"><span class="pre">app.route_prefix</span></code>.</p>
+<p>Return <code class="docutils literal notranslate"><span class="pre">None</span></code> if this strategy contributes no HTTP routing (e.g.
+an asgi-mode <code class="docutils literal notranslate"><span class="pre">frontend_only</span></code> app).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.strategies.StaticStrategy.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/strategies.html#StaticStrategy.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.StaticStrategy.validate" title="Link to this definition"></a></dt>
+<dd><p>Validate mode-specific fields. Raise <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if invalid.</p>
+<p>Called from <code class="docutils literal notranslate"><span class="pre">AppConfig</span></code> Pydantic validators, so raising
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> will be wrapped in a <code class="docutils literal notranslate"><span class="pre">ValidationError</span></code> automatically.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.strategies.collect_strategy_field_maps">
+<span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">collect_strategy_field_maps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">set</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#collect_strategy_field_maps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.collect_strategy_field_maps" title="Link to this definition"></a></dt>
+<dd><p>Aggregate <code class="docutils literal notranslate"><span class="pre">toml_field_map</span></code> and <code class="docutils literal notranslate"><span class="pre">path_keys</span></code> across all strategies.</p>
+<p>Used by <code class="docutils literal notranslate"><span class="pre">discover._overlay_toml_fields</span></code> to know which TOML keys can
+map to which AppConfig fields. The core TOML keys (<code class="docutils literal notranslate"><span class="pre">route</span></code>,
+<code class="docutils literal notranslate"><span class="pre">access</span></code>, <code class="docutils literal notranslate"><span class="pre">display_name</span></code>, <code class="docutils literal notranslate"><span class="pre">frontend_dir</span></code>, <code class="docutils literal notranslate"><span class="pre">mode</span></code>, etc.) live in
+discover.py’s own map; this only contributes mode-specific keys.</p>
+<p>Collisions between strategies on the same TOML key are resolved
+last-write-wins (in registration order). In practice the built-ins
+don’t collide, and plugins are expected to use distinct keys.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.strategies.get_strategy">
+<span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">get_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.strategies.BackendStrategy" title="enlace.strategies.BackendStrategy"><span class="pre">BackendStrategy</span></a></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#get_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.get_strategy" title="Link to this definition"></a></dt>
+<dd><p>Return the strategy registered for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p>On cache miss, performs a lazy scan of the <code class="docutils literal notranslate"><span class="pre">enlace.backend_strategies</span></code>
+entry-point group so plugins are discovered without an explicit import.
+Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> with an actionable message if the mode is unknown
+after the scan.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.strategies.iter_strategies">
+<span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">iter_strategies</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#enlace.strategies.BackendStrategy" title="enlace.strategies.BackendStrategy"><span class="pre">BackendStrategy</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#iter_strategies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.iter_strategies" title="Link to this definition"></a></dt>
+<dd><p>Return all registered strategies (after entry-point scan), sorted by name.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.strategies.known_modes">
+<span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">known_modes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#known_modes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.known_modes" title="Link to this definition"></a></dt>
+<dd><p>Return a sorted list of registered mode names (after entry-point scan).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.strategies.register_strategy">
+<span class="sig-prename descclassname"><span class="pre">enlace.strategies.</span></span><span class="sig-name descname"><span class="pre">register_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.strategies.BackendStrategy" title="enlace.strategies.BackendStrategy"><span class="pre">BackendStrategy</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/strategies.html#register_strategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.strategies.register_strategy" title="Link to this definition"></a></dt>
+<dd><p>Register a backend strategy under its <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p>Idempotent on collisions: a later registration replaces an earlier one.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="serve.html" class="btn btn-neutral float-left" title="enlace.serve" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="supervise.html" class="btn btn-neutral float-right" title="enlace.supervise" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

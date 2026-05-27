@@ -1,0 +1,4 @@
+enlace.tests.test_strategies
+============================
+.. automodule:: enlace.tests.test_strategies
+   :members:

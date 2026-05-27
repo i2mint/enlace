@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.serve &mdash; enlace 0.1.12 documentation</title>
+  <title>enlace.serve &mdash; enlace 0.1.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=297ad043"></script>
+      <script src="../../_static/documentation_options.js?v=8d02545a"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,6 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
@@ -63,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
 </ul>
@@ -267,29 +269,48 @@
     <span class="c1"># Legacy env var</span>
     <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ENLACE_APPS_DIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">all_apps_dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">all_apps_dirs</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
-    <span class="c1"># Run discovery to determine what modes we&#39;re dealing with</span>
+    <span class="c1"># Run discovery so we can see which apps need supervised lifecycles.</span>
     <span class="n">discovered</span> <span class="o">=</span> <span class="n">discover_apps</span><span class="p">(</span><span class="n">platform</span><span class="p">)</span>
+
+    <span class="c1"># Phase 1: only mode=process needs port pre-allocation. When enlace_docker</span>
+    <span class="c1"># (or another plugin) adds its own supervisable modes that need ports,</span>
+    <span class="c1"># generalize this — see issue #3, Phase 2 risks.</span>
     <span class="n">process_apps</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">discovered</span><span class="o">.</span><span class="n">apps</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span><span class="p">]</span>
 
     <span class="n">reload_dirs</span> <span class="o">=</span> <span class="n">all_apps_dirs</span> <span class="o">+</span> <span class="n">all_app_dirs</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">process_apps</span><span class="p">:</span>
-        <span class="c1"># Pure-asgi path — exactly the current behavior</span>
+    <span class="c1"># Decide pure-asgi vs. mixed by asking each strategy whether the app</span>
+    <span class="c1"># needs a supervised lifecycle (cheap class-level flag; cannot call</span>
+    <span class="c1"># make_lifecycle yet because process-mode ports aren&#39;t allocated).</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
+
+    <span class="n">supervised_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">app</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">discovered</span><span class="o">.</span><span class="n">apps</span> <span class="k">if</span> <span class="n">get_strategy</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span><span class="o">.</span><span class="n">is_supervisable</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">supervised_apps</span><span class="p">:</span>
+        <span class="c1"># Pure-asgi path — exactly the current behavior.</span>
         <span class="n">_serve_asgi_only</span><span class="p">(</span><span class="n">effective_host</span><span class="p">,</span> <span class="n">effective_port</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">reload_dirs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># Mixed-mode path — run async supervisor</span>
-        <span class="n">process_apps</span> <span class="o">=</span> <span class="n">_auto_allocate_ports</span><span class="p">(</span>
-            <span class="n">process_apps</span><span class="p">,</span>
-            <span class="n">platform</span><span class="o">.</span><span class="n">process_port_start</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="c1"># Update the env so compose.py sees the allocated ports</span>
-        <span class="n">_set_port_env</span><span class="p">(</span><span class="n">process_apps</span><span class="p">)</span>
+        <span class="c1"># Allocate ports for process-mode apps (current behavior).</span>
+        <span class="k">if</span> <span class="n">process_apps</span><span class="p">:</span>
+            <span class="n">process_apps</span> <span class="o">=</span> <span class="n">_auto_allocate_ports</span><span class="p">(</span>
+                <span class="n">process_apps</span><span class="p">,</span> <span class="n">platform</span><span class="o">.</span><span class="n">process_port_start</span>
+            <span class="p">)</span>
+            <span class="n">_set_port_env</span><span class="p">(</span><span class="n">process_apps</span><span class="p">)</span>
+            <span class="c1"># Re-attach allocated ports to the supervised_apps list so each</span>
+            <span class="c1"># strategy&#39;s make_lifecycle sees the assigned port.</span>
+            <span class="n">ports_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">process_apps</span><span class="p">}</span>
+            <span class="n">supervised_apps</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">ports_by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">supervised_apps</span>
+            <span class="p">]</span>
         <span class="n">_serve_mixed</span><span class="p">(</span>
             <span class="n">effective_host</span><span class="p">,</span>
             <span class="n">effective_port</span><span class="p">,</span>
             <span class="n">mode</span><span class="p">,</span>
             <span class="n">reload_dirs</span><span class="p">,</span>
-            <span class="n">process_apps</span><span class="p">,</span>
+            <span class="n">platform</span><span class="p">,</span>
+            <span class="n">supervised_apps</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -324,10 +345,18 @@
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">reload_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">process_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">],</span>
+    <span class="n">platform</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span>
+    <span class="n">supervised_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixed-mode serve: asyncio supervisor + gateway Uvicorn.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixed-mode serve: asyncio supervisor + gateway Uvicorn.</span>
+
+<span class="sd">    Each supervised app&#39;s lifecycle is built via its registered</span>
+<span class="sd">    ``BackendStrategy.make_lifecycle`` — the supervisor does not know</span>
+<span class="sd">    whether it&#39;s driving a subprocess (``ProcessStrategy``) or, e.g., a</span>
+<span class="sd">    docker container (an ``enlace_docker`` plugin strategy).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_check_port_available</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.supervise</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManagedProcess</span><span class="p">,</span> <span class="n">supervise_all</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">():</span>
@@ -336,36 +365,22 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  enlace — multi-process mode&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Gateway:  http://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">process_apps</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">supervised_apps</span><span class="p">:</span>
             <span class="n">addr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;http://127.0.0.1:</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="k">else</span> <span class="n">app</span><span class="o">.</span><span class="n">socket</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2">:  </span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">  (mode=process)&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&gt;12</span><span class="si">}</span><span class="s2">:  </span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">  (mode=</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">60</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Build managed processes for process-mode apps</span>
-        <span class="n">managed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ManagedProcess</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">process_apps</span><span class="p">:</span>
-            <span class="n">cwd</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">app</span><span class="o">.</span><span class="n">entry_module_path</span><span class="o">.</span><span class="n">parent</span>
-                <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">entry_module_path</span>
-                <span class="k">else</span> <span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">source_dir</span> <span class="o">/</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">source_dir</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
-            <span class="p">)</span>
-            <span class="n">managed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">ManagedProcess</span><span class="p">(</span>
-                    <span class="n">name</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">command</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">command</span><span class="p">,</span>
-                    <span class="n">cwd</span><span class="o">=</span><span class="n">cwd</span><span class="p">,</span>
-                    <span class="n">port</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
-                    <span class="n">socket_path</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">socket</span><span class="p">,</span>
-                    <span class="n">env</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">env</span><span class="p">,</span>
-                    <span class="n">health_check_path</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">health_check_path</span><span class="p">,</span>
-                    <span class="n">ready_timeout</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">ready_timeout</span><span class="p">,</span>
-                    <span class="n">restart_policy</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">restart_policy</span><span class="p">,</span>
-                    <span class="n">max_retries</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">max_retries</span><span class="p">,</span>
-                    <span class="n">restart_delay_ms</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">restart_delay_ms</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+        <span class="c1"># Each strategy turns its AppConfig into a Lifecycle.</span>
+        <span class="n">managed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">supervised_apps</span><span class="p">:</span>
+            <span class="n">strategy</span> <span class="o">=</span> <span class="n">get_strategy</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+            <span class="n">lifecycle</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">make_lifecycle</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">platform</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lifecycle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">managed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lifecycle</span><span class="p">)</span>
 
-        <span class="c1"># Also manage the gateway Uvicorn as a supervised process</span>
+        <span class="c1"># Also manage the gateway Uvicorn as a supervised process. The</span>
+        <span class="c1"># gateway is enlace&#39;s own concern (not strategy-driven) — it&#39;s the</span>
+        <span class="c1"># uvicorn child that hosts all the mounted/proxied sub-apps.</span>
         <span class="n">uvicorn_cmd</span> <span class="o">=</span> <span class="n">_build_uvicorn_cmd</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">reload_dirs</span><span class="p">)</span>
         <span class="n">gateway</span> <span class="o">=</span> <span class="n">ManagedProcess</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="s2">&quot;gateway&quot;</span><span class="p">,</span>

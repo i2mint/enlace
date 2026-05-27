@@ -1,0 +1,621 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.strategies &mdash; enlace 0.1.13 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d02545a"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../enlace.html">enlace</a></li>
+      <li class="breadcrumb-item active">enlace.strategies</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for enlace.strategies</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Backend-strategy registry and built-in strategies for enlace.</span>
+
+<span class="sd">A ``BackendStrategy`` owns everything mode-specific about an app:</span>
+
+<span class="sd">- which ``app.toml`` keys it understands (``toml_field_map`` / ``path_keys``);</span>
+<span class="sd">- whether discovery should skip Python introspection</span>
+<span class="sd">  (``skip_python_introspection``);</span>
+<span class="sd">- mode-specific config validation (``validate``);</span>
+<span class="sd">- how to expose the app over HTTP (``make_asgi`` — returns an ASGI sub-app</span>
+<span class="sd">  to mount, ``None`` for no HTTP);</span>
+<span class="sd">- how to run the app as a managed process (``make_lifecycle`` — returns a</span>
+<span class="sd">  ``Lifecycle`` to supervise, ``None`` for no process).</span>
+
+<span class="sd">This module is the **open/closed extension point** for new backend modes.</span>
+<span class="sd">The four built-in strategies (``asgi``, ``process``, ``external``,</span>
+<span class="sd">``static``) capture today&#39;s behavior verbatim. External plugins like</span>
+<span class="sd">``enlace_docker`` register additional strategies via the</span>
+<span class="sd">``enlace.backend_strategies`` entry-point group; installing the plugin</span>
+<span class="sd">package is enough — no user code change required.</span>
+
+<span class="sd">Registry semantics:</span>
+
+<span class="sd">- ``register_strategy`` is idempotent on ``name`` collisions: the latest</span>
+<span class="sd">  registration wins (so plugins can override built-ins if they really must).</span>
+<span class="sd">- ``get_strategy`` performs a *lazy* entry-point scan on cache miss, so</span>
+<span class="sd">  tests and direct callers don&#39;t need to import plugin packages manually.</span>
+<span class="sd">- The four built-ins are registered eagerly at module import.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">runtime_checkable</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">PlatformConfig</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;enlace.strategies&quot;</span><span class="p">)</span>
+
+<span class="c1"># ASGI is a callable conforming to the three-arg (scope, receive, send) shape;</span>
+<span class="c1"># we keep the alias loose since concrete sub-apps may be FastAPI, StaticFiles,</span>
+<span class="c1"># or any other ASGI-compatible object.</span>
+<span class="n">ASGIApp</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+
+<span class="c1"># -- Lifecycle protocol -------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="Lifecycle">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.Lifecycle">[docs]</a>
+<span class="nd">@runtime_checkable</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Lifecycle</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for an enlace-supervised backend.</span>
+
+<span class="sd">    The dev-mode supervisor (``enlace.supervise.supervise_all``) drives any</span>
+<span class="sd">    object satisfying this protocol. ``ManagedProcess`` in ``supervise.py``</span>
+<span class="sd">    is the canonical implementation for subprocess-backed apps; plugins</span>
+<span class="sd">    (e.g. ``enlace_docker``) may provide other implementations (e.g. a</span>
+<span class="sd">    container-backed lifecycle that shells out to ``docker``).</span>
+
+<span class="sd">    The supervisor calls (in order, per attempt):</span>
+<span class="sd">    ``start()`` → ``stream_logs()`` (concurrently with) ``wait_healthy()``</span>
+<span class="sd">    → ``wait_exit()`` → ``should_restart()`` → ``backoff_delay()``.</span>
+
+<span class="sd">    Restart accounting (``record_failure``, ``maybe_reset_backoff``) is</span>
+<span class="sd">    handled by the lifecycle so each implementation can choose its own</span>
+<span class="sd">    policy semantics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">color</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># writable; set by supervisor for log labeling</span>
+    <span class="n">state</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wait_healthy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wait_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span> <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">should_restart</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">maybe_reset_backoff</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">backoff_delay</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span></div>
+
+
+
+<span class="c1"># -- BackendStrategy ----------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="BackendStrategy">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BackendStrategy</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for backend strategies.</span>
+
+<span class="sd">    Subclasses set ``name`` and override the methods relevant to their mode.</span>
+<span class="sd">    Concrete subclasses for the built-in modes live below; external plugins</span>
+<span class="sd">    subclass this and register their instance via ``register_strategy`` or</span>
+<span class="sd">    the ``enlace.backend_strategies`` entry-point group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="c1"># TOML keys this strategy reads from app.toml, mapped to AppConfig field</span>
+    <span class="c1"># names. Used by ``enlace.discover`` to overlay user config onto the</span>
+    <span class="c1"># discovered AppConfig. Cross-cutting keys (e.g. ``route``, ``access``,</span>
+    <span class="c1"># ``display_name``) live in the core map in ``discover.py``.</span>
+    <span class="n">toml_field_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Subset of ``toml_field_map`` keys whose values should be resolved as</span>
+    <span class="c1"># filesystem paths relative to the app directory.</span>
+    <span class="n">path_keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="c1"># When True, the discoverer skips Python module introspection for apps</span>
+    <span class="c1"># in this mode (the app may not even be Python). The asgi strategy is</span>
+    <span class="c1"># the only built-in that needs introspection.</span>
+    <span class="n">skip_python_introspection</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># When True, ``enlace serve`` treats apps in this mode as needing a</span>
+    <span class="c1"># supervised lifecycle (gateway runs as one child alongside them). When</span>
+    <span class="c1"># False, the app is mounted or proxied but enlace does not manage any</span>
+    <span class="c1"># process for it (e.g. asgi, external, static).</span>
+    <span class="n">is_supervisable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="BackendStrategy.validate">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="s2">&quot;AppConfig&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate mode-specific fields. Raise ``ValueError`` if invalid.</span>
+
+<span class="sd">        Called from ``AppConfig`` Pydantic validators, so raising</span>
+<span class="sd">        ``ValueError`` will be wrapped in a ``ValidationError`` automatically.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BackendStrategy.make_asgi">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy.make_asgi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_asgi</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="s2">&quot;AppConfig&quot;</span><span class="p">,</span> <span class="n">platform</span><span class="p">:</span> <span class="s2">&quot;PlatformConfig&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ASGIApp</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the ASGI sub-app to mount at ``app.route_prefix``.</span>
+
+<span class="sd">        Return ``None`` if this strategy contributes no HTTP routing (e.g.</span>
+<span class="sd">        an asgi-mode ``frontend_only`` app).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BackendStrategy.make_lifecycle">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy.make_lifecycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_lifecycle</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="s2">&quot;AppConfig&quot;</span><span class="p">,</span> <span class="n">platform</span><span class="p">:</span> <span class="s2">&quot;PlatformConfig&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Lifecycle</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build the supervised lifecycle for this app, or ``None``.</span>
+
+<span class="sd">        Returning ``None`` means enlace does not manage a process for this</span>
+<span class="sd">        app (e.g. ``asgi``, ``external``, ``static``).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<span class="c1"># -- Registry -----------------------------------------------------------------</span>
+
+
+<span class="n">_STRATEGIES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">BackendStrategy</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">_ENTRY_POINTS_LOADED</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">_ENTRY_POINT_GROUP</span> <span class="o">=</span> <span class="s2">&quot;enlace.backend_strategies&quot;</span>
+
+
+<div class="viewcode-block" id="register_strategy">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.register_strategy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_strategy</span><span class="p">(</span><span class="n">strategy</span><span class="p">:</span> <span class="n">BackendStrategy</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a backend strategy under its ``name``.</span>
+
+<span class="sd">    Idempotent on collisions: a later registration replaces an earlier one.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">strategy</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;BackendStrategy </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">!r}</span><span class="s2"> has empty &#39;name&#39; &quot;</span>
+            <span class="s2">&quot;— strategies must declare a unique mode identifier.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">_STRATEGIES</span><span class="p">[</span><span class="n">strategy</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">strategy</span></div>
+
+
+
+<div class="viewcode-block" id="get_strategy">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.get_strategy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_strategy</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BackendStrategy</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the strategy registered for ``name``.</span>
+
+<span class="sd">    On cache miss, performs a lazy scan of the ``enlace.backend_strategies``</span>
+<span class="sd">    entry-point group so plugins are discovered without an explicit import.</span>
+<span class="sd">    Raises ``ValueError`` with an actionable message if the mode is unknown</span>
+<span class="sd">    after the scan.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_STRATEGIES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_STRATEGIES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">_load_entry_points</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_STRATEGIES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_STRATEGIES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="n">known</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_STRATEGIES</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;(none)&quot;</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Unknown app mode </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">. Known modes: </span><span class="si">{</span><span class="n">known</span><span class="si">}</span><span class="s2">. &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;If you expected a plugin to provide this mode, ensure it is &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;installed (e.g. `pip install enlace_docker` for docker modes).&quot;</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="known_modes">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.known_modes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">known_modes</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a sorted list of registered mode names (after entry-point scan).&quot;&quot;&quot;</span>
+    <span class="n">_load_entry_points</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_STRATEGIES</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="iter_strategies">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.iter_strategies">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">iter_strategies</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BackendStrategy</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return all registered strategies (after entry-point scan), sorted by name.&quot;&quot;&quot;</span>
+    <span class="n">_load_entry_points</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_STRATEGIES</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">_STRATEGIES</span><span class="p">)]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_entry_points</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lazily discover and register strategies advertised via entry points.</span>
+
+<span class="sd">    Each entry point in the ``enlace.backend_strategies`` group must resolve</span>
+<span class="sd">    to a ``BackendStrategy`` subclass (not an instance) — we instantiate it</span>
+<span class="sd">    here. Broken entry points are logged and skipped rather than crashing</span>
+<span class="sd">    the platform.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_ENTRY_POINTS_LOADED</span>
+    <span class="k">if</span> <span class="n">_ENTRY_POINTS_LOADED</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_ENTRY_POINTS_LOADED</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">entry_points</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover — Python &lt;3.10 not supported anyway</span>
+        <span class="k">return</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Python 3.10+: entry_points(group=...) returns the right type.</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">entry_points</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">_ENTRY_POINT_GROUP</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover — defensive</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">entry_points</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_ENTRY_POINT_GROUP</span><span class="p">,</span> <span class="p">[])</span>  <span class="c1"># type: ignore[attr-defined]</span>
+
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="n">ep</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover — plugin authors&#39; problem</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Failed to load enlace backend strategy </span><span class="si">%r</span><span class="s2"> from </span><span class="si">%r</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">ep</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">ep</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">e</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="bp">cls</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Failed to instantiate enlace backend strategy </span><span class="si">%r</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ep</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">e</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">BackendStrategy</span><span class="p">):</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Entry point </span><span class="si">%r</span><span class="s2"> resolved to </span><span class="si">%r</span><span class="s2"> which is not a BackendStrategy; &quot;</span>
+                <span class="s2">&quot;skipping.&quot;</span><span class="p">,</span>
+                <span class="n">ep</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">instance</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">register_strategy</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
+
+
+<span class="c1"># -- Built-in strategies ------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="AsgiStrategy">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.AsgiStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AsgiStrategy</span><span class="p">(</span><span class="n">BackendStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default mode: import the app&#39;s Python module and mount its ASGI callable.</span>
+
+<span class="sd">    Also covers the ``functions`` app_type (auto-generated FastAPI routes</span>
+<span class="sd">    wrapping the module&#39;s typed public functions) and ``frontend_only``</span>
+<span class="sd">    (no backend to mount — returns ``None`` from ``make_asgi``).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;asgi&quot;</span>
+    <span class="n">skip_python_introspection</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">toml_field_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;entry_point&quot;</span><span class="p">:</span> <span class="s2">&quot;entry_module_path&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;app_attr&quot;</span><span class="p">:</span> <span class="s2">&quot;app_attr&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">path_keys</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;entry_point&quot;</span><span class="p">}</span>
+
+<div class="viewcode-block" id="AsgiStrategy.make_asgi">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.AsgiStrategy.make_asgi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_asgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">platform</span><span class="p">):</span>
+        <span class="c1"># frontend_only apps have no backend</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">==</span> <span class="s2">&quot;frontend_only&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="c1"># Lazy import to avoid pulling FastAPI into modules that don&#39;t need it.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">_load_sub_app</span>
+
+        <span class="k">return</span> <span class="n">_load_sub_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProcessStrategy">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProcessStrategy</span><span class="p">(</span><span class="n">BackendStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Spawn the app as a child process, health-check, restart, proxy.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;process&quot;</span>
+    <span class="n">is_supervisable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">toml_field_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;command&quot;</span><span class="p">:</span> <span class="s2">&quot;command&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="s2">&quot;port&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;socket&quot;</span><span class="p">:</span> <span class="s2">&quot;socket&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;env&quot;</span><span class="p">:</span> <span class="s2">&quot;env&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;build&quot;</span><span class="p">:</span> <span class="s2">&quot;build&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;health_check_path&quot;</span><span class="p">:</span> <span class="s2">&quot;health_check_path&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;ready_timeout&quot;</span><span class="p">:</span> <span class="s2">&quot;ready_timeout&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;restart_policy&quot;</span><span class="p">:</span> <span class="s2">&quot;restart_policy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;max_retries&quot;</span><span class="p">:</span> <span class="s2">&quot;max_retries&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;restart_delay_ms&quot;</span><span class="p">:</span> <span class="s2">&quot;restart_delay_ms&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="ProcessStrategy.validate">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">app</span><span class="o">.</span><span class="n">command</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;App &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: mode=&#39;process&#39; requires &#39;command&#39;&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">socket</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;App &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: set &#39;port&#39; or &#39;socket&#39;, not both&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">socket</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;App &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: mode=&#39;process&#39; requires &#39;port&#39; or &#39;socket&#39;&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProcessStrategy.make_asgi">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy.make_asgi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_asgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">platform</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_proxy_app</span>
+
+        <span class="n">upstream</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;http://127.0.0.1:</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">make_proxy_app</span><span class="p">(</span><span class="n">upstream</span><span class="o">=</span><span class="n">upstream</span><span class="p">,</span> <span class="n">strip_prefix</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProcessStrategy.make_lifecycle">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy.make_lifecycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_lifecycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">platform</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.supervise</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManagedProcess</span>
+
+        <span class="n">cwd</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">entry_module_path</span><span class="o">.</span><span class="n">parent</span>
+            <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">entry_module_path</span>
+            <span class="k">else</span> <span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">source_dir</span> <span class="o">/</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">source_dir</span> <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ManagedProcess</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">command</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">command</span> <span class="ow">or</span> <span class="p">[],</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="n">cwd</span><span class="p">,</span>
+            <span class="n">port</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+            <span class="n">socket_path</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">socket</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">env</span><span class="p">,</span>
+            <span class="n">health_check_path</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">health_check_path</span><span class="p">,</span>
+            <span class="n">ready_timeout</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">ready_timeout</span><span class="p">,</span>
+            <span class="n">restart_policy</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">restart_policy</span><span class="p">,</span>
+            <span class="n">max_retries</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">max_retries</span><span class="p">,</span>
+            <span class="n">restart_delay_ms</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">restart_delay_ms</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ExternalStrategy">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExternalStrategy</span><span class="p">(</span><span class="n">BackendStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Route to a pre-existing service at a known URL; no lifecycle.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;external&quot;</span>
+    <span class="n">toml_field_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;upstream_url&quot;</span><span class="p">:</span> <span class="s2">&quot;upstream_url&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+<div class="viewcode-block" id="ExternalStrategy.validate">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;App &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: mode=&#39;external&#39; requires &#39;upstream_url&#39;&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExternalStrategy.make_asgi">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy.make_asgi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_asgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">platform</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_proxy_app</span>
+
+        <span class="k">return</span> <span class="n">make_proxy_app</span><span class="p">(</span>
+            <span class="n">upstream</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">,</span> <span class="n">strip_prefix</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StaticStrategy">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StaticStrategy</span><span class="p">(</span><span class="n">BackendStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serve a directory of static files (no Python, no proxy).&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;static&quot;</span>
+    <span class="n">toml_field_map</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;public_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;public_dir&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">path_keys</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;public_dir&quot;</span><span class="p">}</span>
+
+<div class="viewcode-block" id="StaticStrategy.validate">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy.validate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">public_dir</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;App &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: mode=&#39;static&#39; requires &quot;</span>
+                <span class="s2">&quot;&#39;public_dir&#39; or &#39;frontend_dir&#39;&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StaticStrategy.make_asgi">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy.make_asgi">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_asgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">platform</span><span class="p">):</span>
+        <span class="c1"># Prefer public_dir; fall back to frontend_dir. Skip if neither</span>
+        <span class="c1"># exists on disk — same conservatism as the legacy static loop.</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
+
+        <span class="n">static_dir</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">public_dir</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">static_dir</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">static_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">static_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># Register the built-ins at import time so AppConfig validation works</span>
+<span class="c1"># regardless of whether entry points have been scanned yet.</span>
+<span class="k">for</span> <span class="n">_strategy</span> <span class="ow">in</span> <span class="p">(</span>
+    <span class="n">AsgiStrategy</span><span class="p">(),</span>
+    <span class="n">ProcessStrategy</span><span class="p">(),</span>
+    <span class="n">ExternalStrategy</span><span class="p">(),</span>
+    <span class="n">StaticStrategy</span><span class="p">(),</span>
+<span class="p">):</span>
+    <span class="n">register_strategy</span><span class="p">(</span><span class="n">_strategy</span><span class="p">)</span>
+
+
+<span class="c1"># -- Helpers for discover.py --------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="collect_strategy_field_maps">
+<a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.collect_strategy_field_maps">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_strategy_field_maps</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate ``toml_field_map`` and ``path_keys`` across all strategies.</span>
+
+<span class="sd">    Used by ``discover._overlay_toml_fields`` to know which TOML keys can</span>
+<span class="sd">    map to which AppConfig fields. The core TOML keys (``route``,</span>
+<span class="sd">    ``access``, ``display_name``, ``frontend_dir``, ``mode``, etc.) live in</span>
+<span class="sd">    discover.py&#39;s own map; this only contributes mode-specific keys.</span>
+
+<span class="sd">    Collisions between strategies on the same TOML key are resolved</span>
+<span class="sd">    last-write-wins (in registration order). In practice the built-ins</span>
+<span class="sd">    don&#39;t collide, and plugins are expected to use distinct keys.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">field_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">path_keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">strategy</span> <span class="ow">in</span> <span class="n">iter_strategies</span><span class="p">():</span>
+        <span class="n">field_map</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">strategy</span><span class="o">.</span><span class="n">toml_field_map</span><span class="p">)</span>
+        <span class="n">path_keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">strategy</span><span class="o">.</span><span class="n">path_keys</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">field_map</span><span class="p">,</span> <span class="n">path_keys</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

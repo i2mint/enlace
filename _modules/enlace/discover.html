@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.discover &mdash; enlace 0.1.12 documentation</title>
+  <title>enlace.discover &mdash; enlace 0.1.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=297ad043"></script>
+      <script src="../../_static/documentation_options.js?v=8d02545a"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,6 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
@@ -63,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
 </ul>
@@ -169,17 +171,21 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_discover_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Discover a single app from its directory.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
+
         <span class="n">name</span> <span class="o">=</span> <span class="n">app_dir</span><span class="o">.</span><span class="n">name</span>
         <span class="n">route_prefix</span> <span class="o">=</span> <span class="n">derive_route_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
-        <span class="c1"># Check app.toml first — if it declares a non-asgi mode, skip Python</span>
-        <span class="c1"># introspection entirely (the app may not even be Python).</span>
+        <span class="c1"># Check app.toml first. The declared mode&#39;s strategy decides whether</span>
+        <span class="c1"># to skip Python introspection (built-in: asgi inspects, all others</span>
+        <span class="c1"># don&#39;t; plugins like enlace_docker also opt out).</span>
         <span class="n">override_file</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;app.toml&quot;</span>
         <span class="n">toml_data</span> <span class="o">=</span> <span class="n">_load_toml</span><span class="p">(</span><span class="n">override_file</span><span class="p">)</span> <span class="k">if</span> <span class="n">override_file</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="p">{}</span>
 
         <span class="n">declared_mode</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="s2">&quot;asgi&quot;</span><span class="p">)</span>
+        <span class="n">strategy</span> <span class="o">=</span> <span class="n">get_strategy</span><span class="p">(</span><span class="n">declared_mode</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">declared_mode</span> <span class="o">!=</span> <span class="s2">&quot;asgi&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">strategy</span><span class="o">.</span><span class="n">skip_python_introspection</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_non_asgi_config</span><span class="p">(</span>
                 <span class="n">name</span><span class="p">,</span>
                 <span class="n">route_prefix</span><span class="p">,</span>
@@ -387,34 +393,37 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to parse </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
 
-<span class="c1"># Mapping from TOML key → AppConfig field name.</span>
-<span class="n">_TOML_FIELD_MAP</span> <span class="o">=</span> <span class="p">{</span>
+<span class="c1"># Cross-cutting TOML keys that all strategies share. Mode-specific keys</span>
+<span class="c1"># (``command``, ``port``, ``upstream_url``, ``public_dir``, ...) are</span>
+<span class="c1"># contributed by each ``BackendStrategy`` and merged in by</span>
+<span class="c1"># ``_resolved_field_map`` below.</span>
+<span class="n">_CORE_TOML_FIELD_MAP</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;route_prefix&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;entry_point&quot;</span><span class="p">:</span> <span class="s2">&quot;entry_module_path&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;app_attr&quot;</span><span class="p">:</span> <span class="s2">&quot;app_attr&quot;</span><span class="p">,</span>
     <span class="s2">&quot;access&quot;</span><span class="p">:</span> <span class="s2">&quot;access&quot;</span><span class="p">,</span>
     <span class="s2">&quot;shared_password_env&quot;</span><span class="p">:</span> <span class="s2">&quot;shared_password_env&quot;</span><span class="p">,</span>
     <span class="s2">&quot;allowed_users&quot;</span><span class="p">:</span> <span class="s2">&quot;allowed_users&quot;</span><span class="p">,</span>
     <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="s2">&quot;display_name&quot;</span><span class="p">,</span>
     <span class="s2">&quot;frontend_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;frontend_dir&quot;</span><span class="p">,</span>
-    <span class="c1"># New fields for process/external/static modes</span>
     <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;mode&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;command&quot;</span><span class="p">:</span> <span class="s2">&quot;command&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="s2">&quot;port&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;socket&quot;</span><span class="p">:</span> <span class="s2">&quot;socket&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;env&quot;</span><span class="p">:</span> <span class="s2">&quot;env&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;build&quot;</span><span class="p">:</span> <span class="s2">&quot;build&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;health_check_path&quot;</span><span class="p">:</span> <span class="s2">&quot;health_check_path&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ready_timeout&quot;</span><span class="p">:</span> <span class="s2">&quot;ready_timeout&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;restart_policy&quot;</span><span class="p">:</span> <span class="s2">&quot;restart_policy&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;max_retries&quot;</span><span class="p">:</span> <span class="s2">&quot;max_retries&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;restart_delay_ms&quot;</span><span class="p">:</span> <span class="s2">&quot;restart_delay_ms&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;upstream_url&quot;</span><span class="p">:</span> <span class="s2">&quot;upstream_url&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;public_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;public_dir&quot;</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="c1"># Keys whose TOML values are paths relative to the app directory.</span>
-<span class="n">_PATH_KEYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;entry_point&quot;</span><span class="p">,</span> <span class="s2">&quot;frontend_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;public_dir&quot;</span><span class="p">}</span>
+<span class="c1"># Core path keys (resolved relative to the app directory). Strategy-specific</span>
+<span class="c1"># path keys are contributed via ``BackendStrategy.path_keys``.</span>
+<span class="n">_CORE_PATH_KEYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;frontend_dir&quot;</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolved_field_map</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the effective TOML field map by merging core + strategy maps.</span>
+
+<span class="sd">    Recomputed per call so newly-registered plugin strategies are picked up</span>
+<span class="sd">    without restarting the process. Cheap — the registry is small.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_strategy_field_maps</span>
+
+    <span class="n">strategy_map</span><span class="p">,</span> <span class="n">strategy_paths</span> <span class="o">=</span> <span class="n">collect_strategy_field_maps</span><span class="p">()</span>
+    <span class="n">field_map</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">_CORE_TOML_FIELD_MAP</span><span class="p">,</span> <span class="o">**</span><span class="n">strategy_map</span><span class="p">}</span>
+    <span class="n">path_keys</span> <span class="o">=</span> <span class="n">_CORE_PATH_KEYS</span> <span class="o">|</span> <span class="n">strategy_paths</span>
+    <span class="k">return</span> <span class="n">field_map</span><span class="p">,</span> <span class="n">path_keys</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_overlay_toml_fields</span><span class="p">(</span>
@@ -427,12 +436,13 @@
 
 <span class="sd">    Returns the updated (fields, provenance) pair.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">toml_key</span><span class="p">,</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">_TOML_FIELD_MAP</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">field_map</span><span class="p">,</span> <span class="n">path_keys</span> <span class="o">=</span> <span class="n">_resolved_field_map</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">toml_key</span><span class="p">,</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">field_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">toml_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">toml_data</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">toml_data</span><span class="p">[</span><span class="n">toml_key</span><span class="p">]</span>
         <span class="c1"># Resolve relative paths</span>
-        <span class="k">if</span> <span class="n">toml_key</span> <span class="ow">in</span> <span class="n">_PATH_KEYS</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">toml_key</span> <span class="ow">in</span> <span class="n">path_keys</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">value</span>
         <span class="c1"># command: accept string (split via shlex) or array</span>
         <span class="k">if</span> <span class="n">toml_key</span> <span class="o">==</span> <span class="s2">&quot;command&quot;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>

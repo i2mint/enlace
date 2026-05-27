@@ -12,6 +12,7 @@
    module_docs/enlace/frontend
    module_docs/enlace/proxy
    module_docs/enlace/serve
+   module_docs/enlace/strategies
    module_docs/enlace/supervise
    module_docs/enlace/tests/conftest
    module_docs/enlace/tests/test_base
@@ -19,5 +20,6 @@
    module_docs/enlace/tests/test_diagnose_auth
    module_docs/enlace/tests/test_discover
    module_docs/enlace/tests/test_frontend_404
+   module_docs/enlace/tests/test_strategies
    module_docs/enlace/tests/test_supervise
    module_docs/enlace/util

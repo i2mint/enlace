@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.12 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.13 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=297ad043"></script>
+      <script src="../../_static/documentation_options.js?v=8d02545a"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,6 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
@@ -63,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
 </ul>
@@ -167,22 +169,17 @@
 
     <span class="n">sub_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># (route_prefix, app_id, asgi_app)</span>
 
+    <span class="c1"># Dispatch every app through its registered BackendStrategy. Built-in</span>
+    <span class="c1"># strategies cover asgi/process/external/static; plugins (e.g.</span>
+    <span class="c1"># enlace_docker) contribute additional modes via entry points. Each</span>
+    <span class="c1"># strategy&#39;s ``make_asgi`` returns either an ASGI sub-app to mount or</span>
+    <span class="c1"># ``None`` (e.g. frontend-only apps, or apps whose port hasn&#39;t been</span>
+    <span class="c1"># allocated yet).</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
+
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="c1"># Process and external modes are proxied, not imported</span>
-        <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;process&quot;</span><span class="p">,</span> <span class="s2">&quot;external&quot;</span><span class="p">):</span>
-            <span class="n">proxy_app</span> <span class="o">=</span> <span class="n">_make_proxy_for</span><span class="p">(</span><span class="n">app_config</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">proxy_app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">sub_apps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">proxy_app</span><span class="p">))</span>
-            <span class="k">continue</span>
-
-        <span class="c1"># Static mode is handled separately below (with frontend files)</span>
-        <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;static&quot;</span><span class="p">:</span>
-            <span class="k">continue</span>
-
-        <span class="c1"># asgi mode — original behavior</span>
-        <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">app_type</span> <span class="o">==</span> <span class="s2">&quot;frontend_only&quot;</span><span class="p">:</span>
-            <span class="k">continue</span>
-        <span class="n">sub_app</span> <span class="o">=</span> <span class="n">_load_sub_app</span><span class="p">(</span><span class="n">app_config</span><span class="p">)</span>
+        <span class="n">strategy</span> <span class="o">=</span> <span class="n">get_strategy</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+        <span class="n">sub_app</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">make_asgi</span><span class="p">(</span><span class="n">app_config</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">sub_app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sub_apps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">sub_app</span><span class="p">))</span>
 
@@ -243,17 +240,6 @@
     <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">app_id</span><span class="p">,</span> <span class="n">sub_app</span> <span class="ow">in</span> <span class="n">sub_apps</span><span class="p">:</span>
         <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
         <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">_AppIdInjector</span><span class="p">(</span><span class="n">sub_app</span><span class="p">,</span> <span class="n">app_id</span><span class="p">))</span>
-
-    <span class="c1"># Serve static-mode apps at their route prefix.</span>
-    <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;static&quot;</span><span class="p">:</span>
-            <span class="n">static_dir</span> <span class="o">=</span> <span class="n">app_config</span><span class="o">.</span><span class="n">public_dir</span> <span class="ow">or</span> <span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span>
-            <span class="k">if</span> <span class="n">static_dir</span> <span class="ow">and</span> <span class="n">static_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
-                <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">)</span>
-                <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
-                    <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
-                    <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">static_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-                <span class="p">)</span>
 
     <span class="c1"># Serve frontend static files for apps that have a frontend/ directory.</span>
     <span class="c1"># Mounted at /{app_name}/ so the frontend is accessible alongside the API.</span>
@@ -447,27 +433,6 @@
             <span class="n">state</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="p">{})</span>
             <span class="n">state</span><span class="p">[</span><span class="s2">&quot;app_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_make_proxy_for</span><span class="p">(</span><span class="n">app_config</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a reverse proxy ASGI app for a process or external backend.</span>
-
-<span class="sd">    Returns None if the upstream cannot be determined (no port/upstream_url).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_proxy_app</span>
-
-    <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;external&quot;</span> <span class="ow">and</span> <span class="n">app_config</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">make_proxy_app</span><span class="p">(</span>
-            <span class="n">upstream</span><span class="o">=</span><span class="n">app_config</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">,</span>
-            <span class="n">strip_prefix</span><span class="o">=</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span> <span class="ow">and</span> <span class="n">app_config</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">upstream</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;http://127.0.0.1:</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">return</span> <span class="n">make_proxy_app</span><span class="p">(</span>
-            <span class="n">upstream</span><span class="o">=</span><span class="n">upstream</span><span class="p">,</span>
-            <span class="n">strip_prefix</span><span class="o">=</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_sub_app</span><span class="p">(</span><span class="n">app_config</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]:</span>
