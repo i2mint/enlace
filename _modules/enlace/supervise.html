@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.supervise &mdash; enlace 0.1.14 documentation</title>
+  <title>enlace.supervise &mdash; enlace 0.1.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=468bc497"></script>
+      <script src="../../_static/documentation_options.js?v=e2f3408e"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -313,17 +313,48 @@
 
     <span class="c1"># ---- helpers ------------------------------------------------------------</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="ManagedProcess.log">
+<a class="viewcode-back" href="../../module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.log">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print a labeled status line. Public — part of the Lifecycle protocol.&quot;&quot;&quot;</span>
         <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&gt;15</span><span class="si">}{</span><span class="n">_RESET</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> | [enlace] </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+    <span class="c1"># Back-compat: internal call sites still use ``_log``.</span>
+    <span class="n">_log</span> <span class="o">=</span> <span class="n">log</span>
+
+    <span class="c1"># ---- Lifecycle protocol surface (for non-subprocess implementations) ----</span>
+
+<div class="viewcode-block" id="ManagedProcess.is_alive">
+<a class="viewcode-back" href="../../module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.is_alive">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_alive</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether the underlying process is still running.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="ow">is</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ManagedProcess.wait_exit">
+<a class="viewcode-back" href="../../module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.wait_exit">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">wait_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Block until the process exits; return its exit code.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span></div>
+</div>
 
 
 
 <span class="c1"># -- Supervisor ---------------------------------------------------------------</span>
 
 
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_supervise_one</span><span class="p">(</span><span class="n">proc</span><span class="p">:</span> <span class="n">ManagedProcess</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lifecycle loop for a single managed process: start, stream, restart.&quot;&quot;&quot;</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_supervise_one</span><span class="p">(</span><span class="n">proc</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Lifecycle loop for a single managed backend: start, stream, restart.</span>
+
+<span class="sd">    ``proc`` is anything satisfying ``enlace.strategies.Lifecycle`` —</span>
+<span class="sd">    typically a ``ManagedProcess`` (subprocess) but plugins (e.g.</span>
+<span class="sd">    ``enlace_docker``) can supply container-backed lifecycles too.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="k">await</span> <span class="n">proc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
@@ -331,25 +362,23 @@
         <span class="n">log_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stream_logs</span><span class="p">())</span>
         <span class="n">healthy</span> <span class="o">=</span> <span class="k">await</span> <span class="n">proc</span><span class="o">.</span><span class="n">wait_healthy</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">healthy</span> <span class="ow">and</span> <span class="n">proc</span><span class="o">.</span><span class="n">process</span> <span class="ow">and</span> <span class="n">proc</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">healthy</span> <span class="ow">and</span> <span class="n">proc</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
             <span class="k">await</span> <span class="n">proc</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
             <span class="n">log_task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">proc</span><span class="o">.</span><span class="n">should_restart</span><span class="p">():</span>
                 <span class="k">return</span>
             <span class="n">proc</span><span class="o">.</span><span class="n">record_failure</span><span class="p">()</span>
             <span class="n">delay</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">backoff_delay</span><span class="p">()</span>
-            <span class="n">proc</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;restarting in </span><span class="si">{</span><span class="n">delay</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+            <span class="n">proc</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;restarting in </span><span class="si">{</span><span class="n">delay</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
             <span class="k">continue</span>
 
-        <span class="c1"># Wait for process to exit</span>
-        <span class="k">await</span> <span class="n">proc</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="c1"># Wait for the backend to exit</span>
+        <span class="n">rc</span> <span class="o">=</span> <span class="k">await</span> <span class="n">proc</span><span class="o">.</span><span class="n">wait_exit</span><span class="p">()</span>
         <span class="k">await</span> <span class="n">log_task</span>  <span class="c1"># drain remaining output</span>
 
         <span class="n">proc</span><span class="o">.</span><span class="n">maybe_reset_backoff</span><span class="p">()</span>
-
-        <span class="n">rc</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">process</span><span class="o">.</span><span class="n">returncode</span>
-        <span class="n">proc</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;exited with code </span><span class="si">{</span><span class="n">rc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">proc</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;exited with code </span><span class="si">{</span><span class="n">rc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">proc</span><span class="o">.</span><span class="n">should_restart</span><span class="p">():</span>
             <span class="n">proc</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="s2">&quot;exited&quot;</span> <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">&quot;fatal&quot;</span> <span class="k">else</span> <span class="s2">&quot;fatal&quot;</span>
@@ -357,14 +386,14 @@
 
         <span class="n">proc</span><span class="o">.</span><span class="n">record_failure</span><span class="p">()</span>
         <span class="n">delay</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">backoff_delay</span><span class="p">()</span>
-        <span class="n">proc</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;restarting in </span><span class="si">{</span><span class="n">delay</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+        <span class="n">proc</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;restarting in </span><span class="si">{</span><span class="n">delay</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="supervise_all">
 <a class="viewcode-back" href="../../module_docs/enlace/supervise.html#enlace.supervise.supervise_all">[docs]</a>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">supervise_all</span><span class="p">(</span>
-    <span class="n">processes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ManagedProcess</span><span class="p">],</span>
+    <span class="n">processes</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Spawn and supervise all managed processes until shutdown.</span>
 

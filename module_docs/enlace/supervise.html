@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.supervise &mdash; enlace 0.1.14 documentation</title>
+  <title>enlace.supervise &mdash; enlace 0.1.15 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=468bc497"></script>
+      <script src="../../_static/documentation_options.js?v=e2f3408e"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -63,11 +63,14 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.supervise</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.supervise.ManagedProcess"><code class="docutils literal notranslate"><span class="pre">ManagedProcess</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.backoff_delay"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.backoff_delay()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.is_alive"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.is_alive()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.log"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.log()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.maybe_reset_backoff"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.maybe_reset_backoff()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.should_restart"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.should_restart()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.start"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.start()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.stop"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.stop()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.stream_logs"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.stream_logs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.wait_exit"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.wait_exit()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.supervise.ManagedProcess.wait_healthy"><code class="docutils literal notranslate"><span class="pre">ManagedProcess.wait_healthy()</span></code></a></li>
 </ul>
 </li>
@@ -128,6 +131,18 @@ Production process management is delegated to systemd.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="enlace.supervise.ManagedProcess.is_alive">
+<span class="sig-name descname"><span class="pre">is_alive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/enlace/supervise.html#ManagedProcess.is_alive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.supervise.ManagedProcess.is_alive" title="Link to this definition"></a></dt>
+<dd><p>Whether the underlying process is still running.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.supervise.ManagedProcess.log">
+<span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/supervise.html#ManagedProcess.log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.supervise.ManagedProcess.log" title="Link to this definition"></a></dt>
+<dd><p>Print a labeled status line. Public — part of the Lifecycle protocol.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="enlace.supervise.ManagedProcess.maybe_reset_backoff">
 <span class="sig-name descname"><span class="pre">maybe_reset_backoff</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/supervise.html#ManagedProcess.maybe_reset_backoff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.supervise.ManagedProcess.maybe_reset_backoff" title="Link to this definition"></a></dt>
 <dd><p>Reset backoff if process has been stable for 30 seconds.</p>
@@ -158,6 +173,12 @@ Production process management is delegated to systemd.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="enlace.supervise.ManagedProcess.wait_exit">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">wait_exit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/supervise.html#ManagedProcess.wait_exit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.supervise.ManagedProcess.wait_exit" title="Link to this definition"></a></dt>
+<dd><p>Block until the process exits; return its exit code.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="enlace.supervise.ManagedProcess.wait_healthy">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">wait_healthy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/enlace/supervise.html#ManagedProcess.wait_healthy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.supervise.ManagedProcess.wait_healthy" title="Link to this definition"></a></dt>
 <dd><p>Poll until the process is accepting TCP connections or timeout.</p>
@@ -167,7 +188,7 @@ Production process management is delegated to systemd.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.supervise.supervise_all">
-<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.supervise.</span></span><span class="sig-name descname"><span class="pre">supervise_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">processes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#enlace.supervise.ManagedProcess" title="enlace.supervise.ManagedProcess"><span class="pre">ManagedProcess</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/supervise.html#supervise_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.supervise.supervise_all" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.supervise.</span></span><span class="sig-name descname"><span class="pre">supervise_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">processes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/supervise.html#supervise_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.supervise.supervise_all" title="Link to this definition"></a></dt>
 <dd><p>Spawn and supervise all managed processes until shutdown.</p>
 <p>Registers SIGTERM/SIGINT handlers for graceful shutdown.</p>
 </dd></dl>
