@@ -202,9 +202,7 @@ def serve(
             # Re-attach allocated ports to the supervised_apps list so each
             # strategy's make_lifecycle sees the assigned port.
             ports_by_name = {a.name: a for a in process_apps}
-            supervised_apps = [
-                ports_by_name.get(a.name, a) for a in supervised_apps
-            ]
+            supervised_apps = [ports_by_name.get(a.name, a) for a in supervised_apps]
         _serve_mixed(
             effective_host,
             effective_port,

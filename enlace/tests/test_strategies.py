@@ -176,9 +176,7 @@ class _FakeDockerStrategy(BackendStrategy):
 
     def validate(self, app):
         if not app.upstream_url:
-            raise ValueError(
-                f"App '{app.name}': mode='fake_docker' requires 'image'"
-            )
+            raise ValueError(f"App '{app.name}': mode='fake_docker' requires 'image'")
 
     def make_asgi(self, app, platform):
         # Sentinel object, not a real ASGI app — we just assert it round-trips.
@@ -264,7 +262,5 @@ def test_plugin_strategy_appears_in_serve_supervised_apps(
     platform = PlatformConfig(apps=[app])
 
     # Mirror the supervision predicate used in serve.serve()
-    supervised = [
-        a for a in platform.apps if get_strategy(a.mode).is_supervisable
-    ]
+    supervised = [a for a in platform.apps if get_strategy(a.mode).is_supervisable]
     assert [a.name for a in supervised] == ["img"]

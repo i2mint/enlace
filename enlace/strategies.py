@@ -362,9 +362,7 @@ class ExternalStrategy(BackendStrategy):
             return None
         from enlace.proxy import make_proxy_app
 
-        return make_proxy_app(
-            upstream=app.upstream_url, strip_prefix=app.route_prefix
-        )
+        return make_proxy_app(upstream=app.upstream_url, strip_prefix=app.route_prefix)
 
 
 class StaticStrategy(BackendStrategy):
