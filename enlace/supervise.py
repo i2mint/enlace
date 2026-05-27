@@ -193,16 +193,38 @@ class ManagedProcess:
 
     # ---- helpers ------------------------------------------------------------
 
-    def _log(self, msg: str) -> None:
+    def log(self, msg: str) -> None:
+        """Print a labeled status line. Public — part of the Lifecycle protocol."""
         label = f"{self.color}{self.name:>15}{_RESET}"
         print(f"{label} | [enlace] {msg}", flush=True)
+
+    # Back-compat: internal call sites still use ``_log``.
+    _log = log
+
+    # ---- Lifecycle protocol surface (for non-subprocess implementations) ----
+
+    def is_alive(self) -> bool:
+        """Whether the underlying process is still running."""
+        return self.process is not None and self.process.returncode is None
+
+    async def wait_exit(self) -> Optional[int]:
+        """Block until the process exits; return its exit code."""
+        if self.process is None:
+            return None
+        await self.process.wait()
+        return self.process.returncode
 
 
 # -- Supervisor ---------------------------------------------------------------
 
 
-async def _supervise_one(proc: ManagedProcess) -> None:
-    """Lifecycle loop for a single managed process: start, stream, restart."""
+async def _supervise_one(proc) -> None:
+    """Lifecycle loop for a single managed backend: start, stream, restart.
+
+    ``proc`` is anything satisfying ``enlace.strategies.Lifecycle`` —
+    typically a ``ManagedProcess`` (subprocess) but plugins (e.g.
+    ``enlace_docker``) can supply container-backed lifecycles too.
+    """
     while True:
         await proc.start()
 
@@ -210,25 +232,23 @@ async def _supervise_one(proc: ManagedProcess) -> None:
         log_task = asyncio.create_task(proc.stream_logs())
         healthy = await proc.wait_healthy()
 
-        if not healthy and proc.process and proc.process.returncode is None:
+        if not healthy and proc.is_alive():
             await proc.stop()
             log_task.cancel()
             if not proc.should_restart():
                 return
             proc.record_failure()
             delay = proc.backoff_delay()
-            proc._log(f"restarting in {delay:.1f}s")
+            proc.log(f"restarting in {delay:.1f}s")
             await asyncio.sleep(delay)
             continue
 
-        # Wait for process to exit
-        await proc.process.wait()
+        # Wait for the backend to exit
+        rc = await proc.wait_exit()
         await log_task  # drain remaining output
 
         proc.maybe_reset_backoff()
-
-        rc = proc.process.returncode
-        proc._log(f"exited with code {rc}")
+        proc.log(f"exited with code {rc}")
 
         if not proc.should_restart():
             proc.state = "exited" if proc.state != "fatal" else "fatal"
@@ -236,12 +256,12 @@ async def _supervise_one(proc: ManagedProcess) -> None:
 
         proc.record_failure()
         delay = proc.backoff_delay()
-        proc._log(f"restarting in {delay:.1f}s")
+        proc.log(f"restarting in {delay:.1f}s")
         await asyncio.sleep(delay)
 
 
 async def supervise_all(
-    processes: list[ManagedProcess],
+    processes: list,
 ) -> None:
     """Spawn and supervise all managed processes until shutdown.
 
