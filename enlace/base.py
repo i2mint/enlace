@@ -78,8 +78,10 @@ class AppConfig(BaseModel):
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
 
-    # Mode: how this app is served (orthogonal to app_type which is what was detected)
-    mode: Literal["asgi", "process", "external", "static"] = "asgi"
+    # Mode: how this app is served (orthogonal to app_type which is what was
+    # detected). Free-form string validated against the strategy registry —
+    # see ``enlace.strategies`` for the open/closed extension point.
+    mode: str = "asgi"
 
     # Process-mode fields
     command: Optional[list[str]] = None
@@ -107,29 +109,18 @@ class AppConfig(BaseModel):
 
     @model_validator(mode="after")
     def _validate_mode_fields(self):
-        """Enforce per-mode field requirements."""
-        if self.mode == "process":
-            if not self.command:
-                raise ValueError(
-                    f"App '{self.name}': mode='process' requires 'command'"
-                )
-            if self.port is not None and self.socket is not None:
-                raise ValueError(f"App '{self.name}': set 'port' or 'socket', not both")
-            if self.port is None and self.socket is None:
-                raise ValueError(
-                    f"App '{self.name}': mode='process' requires 'port' or 'socket'"
-                )
-        elif self.mode == "external":
-            if not self.upstream_url:
-                raise ValueError(
-                    f"App '{self.name}': mode='external' requires 'upstream_url'"
-                )
-        elif self.mode == "static":
-            if self.public_dir is None and self.frontend_dir is None:
-                raise ValueError(
-                    f"App '{self.name}': mode='static' requires "
-                    "'public_dir' or 'frontend_dir'"
-                )
+        """Delegate per-mode validation to the registered strategy.
+
+        The strategy decides what fields are required for its mode. Unknown
+        modes surface as a ``ValueError`` from the registry with an
+        actionable message (e.g. \"install enlace_docker for docker\").
+        """
+        # Lazy import: enlace.strategies must not be a hard dependency of
+        # enlace.base — strategies imports base via TYPE_CHECKING only.
+        from enlace.strategies import get_strategy
+
+        strategy = get_strategy(self.mode)
+        strategy.validate(self)
         return self
 
 
