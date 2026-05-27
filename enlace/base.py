@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -52,7 +52,16 @@ class ConventionsConfig(BaseModel):
 
 
 class AppConfig(BaseModel):
-    """Resolved configuration for a single discovered app."""
+    """Resolved configuration for a single discovered app.
+
+    ``extra="allow"`` lets plugin strategies (e.g. ``enlace_docker``) carry
+    their own typed fields — ``dockerfile``, ``image``, ``compose_file``,
+    ``service``, etc. — without enlace having to enumerate them. The
+    plugin's ``BackendStrategy`` reads them via attribute access
+    (``app.dockerfile``); enlace itself ignores them.
+    """
+
+    model_config = ConfigDict(extra="allow")
 
     name: str
     route_prefix: str

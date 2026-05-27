@@ -69,6 +69,15 @@ def test_default_mode_is_asgi():
     assert app.mode == "asgi"
 
 
+def test_extra_fields_preserved_for_plugin_strategies():
+    """AppConfig accepts and preserves unknown fields so plugin BackendStrategies
+    can carry their own typed fields (e.g. ``dockerfile``, ``image``) without
+    enlace having to know about them."""
+    app = _asgi_app(dockerfile="Dockerfile", build_args={"X": "y"})
+    assert app.dockerfile == "Dockerfile"
+    assert app.build_args == {"X": "y"}
+
+
 def test_existing_fields_unchanged():
     """Existing configs with no mode field work identically."""
     app = _asgi_app(entry_module_path=Path("server.py"), access="public")
