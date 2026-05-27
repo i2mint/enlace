@@ -16,6 +16,15 @@ from enlace.base import (
 from enlace.compose import EnlaceConfigError, Plugin, build_backend, create_app
 from enlace.diagnose import DiagnosticReport, Issue, diagnose_app
 from enlace.discover import ConventionDiscoverer, discover_apps
+from enlace.manifest import (
+    MANIFEST_SCHEMA_VERSION,
+    DeployHeadersMiddleware,
+    DeployManifest,
+    ExternalRef,
+    SourceRef,
+    load_manifest,
+    load_platform_manifest,
+)
 from enlace.serve import serve
 
 try:
@@ -26,16 +35,23 @@ except PackageNotFoundError:  # editable install with no metadata, etc.
 __all__ = [
     "AppConfig",
     "ConventionsConfig",
+    "DeployHeadersMiddleware",
+    "DeployManifest",
     "DiagnosticReport",
+    "ExternalRef",
     "Issue",
+    "MANIFEST_SCHEMA_VERSION",
     "PlatformConfig",
     "Plugin",
     "ConventionDiscoverer",
     "EnlaceConfigError",
+    "SourceRef",
     "build_backend",
     "create_app",
     "diagnose_app",
     "discover_apps",
+    "load_manifest",
+    "load_platform_manifest",
     "serve",
     "skills_dir",
 ]

@@ -68,6 +68,7 @@ enlace/
 ├── proxy.py       # Lightweight ASGI reverse proxy for process/external backends (httpx)
 ├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
+├── manifest.py    # DeployManifest schema + /_meta endpoint + X-Deploy-* headers
 ├── serve.py       # Orchestrates gateway Uvicorn + supervised process-mode children
 ├── __main__.py    # CLI via argh.dispatch_commands
 ├── __init__.py    # Public API facade

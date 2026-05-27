@@ -31,6 +31,13 @@ from starlette.staticfiles import StaticFiles
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps
 from enlace.frontend import LandingWithUnknownApp404, SPAStaticFiles
+from enlace.manifest import (
+    DeployHeadersMiddleware,
+    DeployManifest,
+    load_manifest,
+    load_platform_manifest,
+    resolve_manifest_dir,
+)
 
 _logger = logging.getLogger("enlace")
 
@@ -126,6 +133,22 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
     # HTML index_page is disabled).
     _add_apps_listing_route(parent, config)
 
+    # Deploy manifest endpoints + response headers. Built once at startup;
+    # cheap (one HTTP route per app + a small middleware). Endpoints are
+    # registered BEFORE sub-app mounts so they win the path match.
+    manifest_dir = resolve_manifest_dir(config.manifest_dir)
+    enlace_version = _detect_enlace_version()
+    platform_manifest = load_platform_manifest(
+        manifest_dir, enlace_version=enlace_version
+    )
+    per_app_manifests: dict[str, DeployManifest] = {
+        app.name: load_manifest(
+            app.name, manifest_dir, enlace_version=enlace_version
+        )
+        for app in config.apps
+    }
+    _add_meta_routes(parent, config, platform_manifest, per_app_manifests)
+
     # landing_app takes precedence over the default Python index. When set
     # to a discovered app's name, the later frontend-mount loop will mount
     # that app's frontend at / (see below). The built-in index is skipped.
@@ -200,7 +223,75 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
             StaticFiles(directory=str(config.shared_assets_dir)),
         )
 
+    # Deploy-identity response headers. Build the prefix → manifest map from
+    # both the API mount (route_prefix) and the frontend mount (/{name}/) so
+    # static asset responses also carry the headers.
+    headers_prefix_map: dict[str, DeployManifest] = {}
+    for app_config in config.apps:
+        manifest = per_app_manifests.get(app_config.name)
+        if manifest is None:
+            continue
+        headers_prefix_map[app_config.route_prefix] = manifest
+        headers_prefix_map[f"/{app_config.name}"] = manifest
+    parent.add_middleware(
+        DeployHeadersMiddleware,
+        manifests_by_prefix=headers_prefix_map,
+        platform_manifest=platform_manifest,
+    )
+
     return parent
+
+
+def _detect_enlace_version() -> Optional[str]:
+    """Return the installed enlace version, or ``None`` if unknown."""
+    try:
+        from importlib.metadata import PackageNotFoundError
+        from importlib.metadata import version as _v
+
+        return _v("enlace")
+    except PackageNotFoundError:
+        return None
+    except Exception:  # pragma: no cover — defensive
+        return None
+
+
+def _add_meta_routes(
+    parent: FastAPI,
+    config: PlatformConfig,
+    platform_manifest: DeployManifest,
+    per_app_manifests: dict[str, DeployManifest],
+) -> None:
+    """Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.
+
+    Two per-app paths are registered so the manifest is reachable both from
+    the API mount (``{route_prefix}/_meta``) and the frontend mount
+    (``/{name}/_meta``). Browser JS commonly fetches the latter with a
+    relative URL from the SPA root.
+    """
+
+    @parent.get("/_meta", include_in_schema=False)
+    async def _platform_meta() -> dict:
+        return platform_manifest.model_dump()
+
+    for app_config in config.apps:
+        manifest = per_app_manifests.get(app_config.name)
+        if manifest is None:
+            continue
+        _register_app_meta(parent, app_config.route_prefix + "/_meta", manifest)
+        # Same data under the frontend mount so SPA code can fetch it with a
+        # path relative to its own root.
+        frontend_meta = f"/{app_config.name}/_meta"
+        if frontend_meta != app_config.route_prefix + "/_meta":
+            _register_app_meta(parent, frontend_meta, manifest)
+
+
+def _register_app_meta(parent: FastAPI, path: str, manifest: DeployManifest) -> None:
+    payload = manifest.model_dump()
+
+    async def _meta() -> dict:
+        return payload
+
+    parent.add_api_route(path, _meta, methods=["GET"], include_in_schema=False)
 
 
 def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
