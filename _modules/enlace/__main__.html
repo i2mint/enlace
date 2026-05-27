@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.11 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.12 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=1e825a29"></script>
+      <script src="../../_static/documentation_options.js?v=297ad043"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -381,19 +381,41 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_load_envfile</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_envfile</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a simple KEY=VALUE envfile into ``os.environ``.</span>
 
 <span class="sd">    Only handles the systemd/shell common case: blank lines, ``#`` comments,</span>
 <span class="sd">    and ``KEY=VALUE`` (value may be wrapped in single or double quotes). This</span>
 <span class="sd">    is intentionally not a full shell parser — deploy envfiles are expected</span>
 <span class="sd">    to avoid exotic syntax.</span>
+
+<span class="sd">    Returns ``True`` if the file was loaded, ``False`` if it was skipped due</span>
+<span class="sd">    to a recoverable read error (e.g. a permission issue when ``doctor`` is</span>
+<span class="sd">    invoked by an unprivileged user against a ``root:root 0600`` envfile —</span>
+<span class="sd">    intentional in some deploy topologies). The caller (``doctor``) auto-</span>
+<span class="sd">    skips env-based checks when this returns ``False`` so the rest of the</span>
+<span class="sd">    smoke still runs.</span>
+
+<span class="sd">    A genuinely missing path still hard-fails with ``sys.exit(2)``, because</span>
+<span class="sd">    that almost always means a typo or wrong path rather than a deliberate</span>
+<span class="sd">    permission topology.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;envfile not found: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="c1"># Most often PermissionError: envfile is intentionally root-only</span>
+        <span class="c1"># and we&#39;re a non-root caller. Warn + degrade.</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;envfile not readable (</span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">strerror</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">exc</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">); &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;continuing without env-based checks.&quot;</span><span class="p">,</span>
+            <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
             <span class="k">continue</span>
@@ -405,6 +427,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="doctor">
@@ -450,7 +473,11 @@
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">envfile</span><span class="p">:</span>
-        <span class="n">_load_envfile</span><span class="p">(</span><span class="n">envfile</span><span class="p">)</span>
+        <span class="c1"># If the envfile is unreadable (e.g. root:root 0600 and we are the</span>
+        <span class="c1"># deploy user) ``_load_envfile`` warns and returns False; auto-skip</span>
+        <span class="c1"># env checks so the HTTP / config checks still run.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_load_envfile</span><span class="p">(</span><span class="n">envfile</span><span class="p">):</span>
+            <span class="n">skip_env_checks</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
     <span class="n">app_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
