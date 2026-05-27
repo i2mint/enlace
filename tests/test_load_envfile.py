@@ -28,10 +28,7 @@ def test_loads_valid_envfile(tmp_path, monkeypatch):
 
     envfile = tmp_path / ".env"
     envfile.write_text(
-        "# comment ignored\n"
-        "\n"
-        'ENLACE_TEST_KEY_A="hello"\n'
-        "ENLACE_TEST_KEY_B=world\n"
+        '# comment ignored\n\nENLACE_TEST_KEY_A="hello"\nENLACE_TEST_KEY_B=world\n'
     )
 
     assert _load_envfile(str(envfile)) is True
