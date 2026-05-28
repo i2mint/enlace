@@ -28,9 +28,11 @@ See https://github.com/i2mint/enlace/issues/18 for design rationale.
 
 from __future__ import annotations
 
+import html
 import json
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Any, Literal, Optional
 
@@ -142,14 +144,14 @@ def load_platform_manifest(
     )
 
 
-class DeployHeadersMiddleware:
-    """Pure-ASGI middleware that adds X-Deploy-* headers on every response.
+class _PrefixManifestMiddleware:
+    """Base for middlewares that pick a manifest by longest-matching prefix.
 
-    The header values come from the manifest matching the longest registered
-    prefix (route_prefix or frontend mount path) for the request path. If no
-    per-app prefix matches, the platform manifest fills in. Headers are only
-    added when the underlying value is present — a stub manifest produces a
-    short header set (just ``X-Deploy-App``), not bogus SHAs.
+    Both the header and meta-tag middlewares resolve which app a request
+    belongs to the same way: match the request path against registered
+    prefixes (API mount + frontend mount), longest first, falling back to
+    the platform manifest. This base holds that shared selection so the two
+    middlewares don't duplicate it.
     """
 
     def __init__(
@@ -169,6 +171,17 @@ class DeployHeadersMiddleware:
             if path == prefix or path.startswith(prefix + "/"):
                 return manifest
         return self._platform
+
+
+class DeployHeadersMiddleware(_PrefixManifestMiddleware):
+    """Pure-ASGI middleware that adds X-Deploy-* headers on every response.
+
+    The header values come from the manifest matching the longest registered
+    prefix (route_prefix or frontend mount path) for the request path. If no
+    per-app prefix matches, the platform manifest fills in. Headers are only
+    added when the underlying value is present — a stub manifest produces a
+    short header set (just ``X-Deploy-App``), not bogus SHAs.
+    """
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
@@ -200,3 +213,127 @@ class DeployHeadersMiddleware:
             await send(message)
 
         await self.app(scope, receive, send_with_headers)
+
+
+_HEAD_CLOSE_RE = re.compile(rb"</head\s*>", re.IGNORECASE)
+_HEAD_OPEN_RE = re.compile(rb"<head[^>]*>", re.IGNORECASE)
+
+
+def _meta_snippet(manifest: DeployManifest) -> Optional[bytes]:
+    """Build the ``<meta>`` tags for a manifest, or ``None`` if nothing to add.
+
+    Values are HTML-attribute-escaped defensively even though SHAs and ISO
+    timestamps are already safe — a manifest is external input (written by a
+    deploy tool) and we inject it straight into served HTML.
+    """
+    tags: list[str] = []
+    if manifest.app_source.sha:
+        tags.append(_meta_tag("x-deploy-sha", manifest.app_source.sha))
+    if manifest.deployed_at:
+        tags.append(_meta_tag("x-deploy-time", manifest.deployed_at))
+    if not tags:
+        return None
+    return "".join(tags).encode("utf-8")
+
+
+def _meta_tag(name: str, content: str) -> str:
+    return f'<meta name="{name}" content="{html.escape(content, quote=True)}">'
+
+
+def _inject_meta(body: bytes, snippet: bytes) -> bytes:
+    """Insert ``snippet`` into ``body`` just before ``</head>``.
+
+    Falls back to just after an opening ``<head ...>`` tag, then to
+    prepending — so even malformed HTML still carries the tags.
+    """
+    m = _HEAD_CLOSE_RE.search(body)
+    if m:
+        return body[: m.start()] + snippet + body[m.start() :]
+    m = _HEAD_OPEN_RE.search(body)
+    if m:
+        return body[: m.end()] + snippet + body[m.end() :]
+    return snippet + body
+
+
+class DeployMetaTagMiddleware(_PrefixManifestMiddleware):
+    """Pure-ASGI middleware that injects deploy ``<meta>`` tags into HTML.
+
+    For ``text/html`` responses on app-mounted paths, inserts
+    ``<meta name="x-deploy-sha" ...>`` and ``<meta name="x-deploy-time" ...>``
+    into ``<head>``. This is what unlocks the browser-cache diagnostic: a
+    page can compare its embedded SHA against ``/_meta`` to tell "deploy
+    didn't take" from "browser is serving a stale cache".
+
+    Only HTML is touched — JSON, JS, and other assets stream through
+    untouched (and carry the ``X-Deploy-*`` headers instead). Because it
+    rewrites the body it must run **inside** any compression middleware
+    (e.g. GZip), so it sees and edits uncompressed bytes.
+    """
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        manifest = self._select(scope.get("path", ""))
+        snippet = _meta_snippet(manifest) if manifest is not None else None
+        if snippet is None:
+            await self.app(scope, receive, send)
+            return
+
+        # State shared between the start and body handlers. We delay the
+        # response.start until the full body is buffered, because injecting
+        # changes Content-Length.
+        start_message: Optional[dict] = None
+        chunks: list[bytes] = []
+        intercepting = False
+
+        async def send_wrapper(message):
+            nonlocal start_message, intercepting
+            mtype = message["type"]
+
+            if mtype == "http.response.start":
+                content_type = _header_value(
+                    message.get("headers", []), b"content-type"
+                )
+                if content_type and content_type.lower().startswith(b"text/html"):
+                    intercepting = True
+                    start_message = message
+                    return  # held until body is complete
+                await send(message)
+                return
+
+            if mtype == "http.response.body" and intercepting:
+                chunks.append(message.get("body", b""))
+                if message.get("more_body", False):
+                    return  # keep buffering until the last chunk
+                new_body = _inject_meta(b"".join(chunks), snippet)
+                assert start_message is not None
+                headers = [
+                    (k, v)
+                    for (k, v) in start_message.get("headers", [])
+                    if k.lower() != b"content-length"
+                ]
+                headers.append((b"content-length", str(len(new_body)).encode()))
+                await send({**start_message, "headers": headers})
+                await send(
+                    {
+                        "type": "http.response.body",
+                        "body": new_body,
+                        "more_body": False,
+                    }
+                )
+                return
+
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+def _header_value(headers, name: bytes) -> Optional[bytes]:
+    """Return the first matching header value (case-insensitive), or None."""
+    lname = name.lower()
+    for k, v in headers:
+        if k.lower() == lname:
+            return v
+    return None
