@@ -34,6 +34,7 @@ from enlace.frontend import LandingWithUnknownApp404, SPAStaticFiles
 from enlace.manifest import (
     DeployHeadersMiddleware,
     DeployManifest,
+    DeployMetaTagMiddleware,
     load_manifest,
     load_platform_manifest,
     resolve_manifest_dir,
@@ -217,6 +218,16 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         headers_prefix_map[f"/{app_config.name}"] = manifest
     parent.add_middleware(
         DeployHeadersMiddleware,
+        manifests_by_prefix=headers_prefix_map,
+        platform_manifest=platform_manifest,
+    )
+
+    # Inject deploy <meta> tags into HTML responses so a browser can compare
+    # its embedded SHA against /_meta (the stale-cache diagnostic). It rewrites
+    # the body, so it must sit INSIDE any future compression middleware (GZip):
+    # any GZip add_middleware call must come AFTER this one to be outermost.
+    parent.add_middleware(
+        DeployMetaTagMiddleware,
         manifests_by_prefix=headers_prefix_map,
         platform_manifest=platform_manifest,
     )
