@@ -1,0 +1,213 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.build &mdash; enlace 0.1.18 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=9969ed3f"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="enlace.compose" href="compose.html" />
+    <link rel="prev" title="enlace.base" href="base.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.build</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.build.BuildResult"><code class="docutils literal notranslate"><span class="pre">BuildResult</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.build.app_dir_of"><code class="docutils literal notranslate"><span class="pre">app_dir_of()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.build.build_cwd"><code class="docutils literal notranslate"><span class="pre">build_cwd()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.build.has_build"><code class="docutils literal notranslate"><span class="pre">has_build()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.build.run_build"><code class="docutils literal notranslate"><span class="pre">run_build()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.build.validate_build"><code class="docutils literal notranslate"><span class="pre">validate_build()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="manifest.html">enlace.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="strategies.html">enlace.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_build.html">enlace.tests.test_build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_gzip.html">enlace.tests.test_gzip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_manifest.html">enlace.tests.test_manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">enlace.build</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/enlace/build.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-enlace.build">
+<span id="enlace-build"></span><h1>enlace.build<a class="headerlink" href="#module-enlace.build" title="Link to this heading"></a></h1>
+<p>Run and validate declarative app builds from <code class="docutils literal notranslate"><span class="pre">app.toml</span></code> <code class="docutils literal notranslate"><span class="pre">[build]</span></code>.</p>
+<p>enlace owns the <code class="docutils literal notranslate"><span class="pre">[build]</span></code> <em>contract</em> (the schema in
+<a class="reference internal" href="base.html#enlace.base.BuildConfig" title="enlace.base.BuildConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">enlace.base.BuildConfig</span></code></a>) so any deployer can rely on it, and
+provides an explicit <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">build</span></code> step that runs it. Builds never run at
+request time — production should pre-build before the gateway starts. This
+module is the small, dependency-free runner behind that step.</p>
+<p>The runner shells out to whatever <code class="docutils literal notranslate"><span class="pre">install</span></code> / <code class="docutils literal notranslate"><span class="pre">build</span></code> commands the app
+declares (npm, pnpm, vite, …). enlace does not assume a toolchain; it just
+runs the argv the app provides, in the resolved working directory, with the
+caller’s environment plus any injected overrides.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.build.BuildResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.build.</span></span><span class="sig-name descname"><span class="pre">BuildResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cwd</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ran</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returncode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/build.html#BuildResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build.BuildResult" title="Link to this definition"></a></dt>
+<dd><p>Outcome of building one app.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.build.app_dir_of">
+<span class="sig-prename descclassname"><span class="pre">enlace.build.</span></span><span class="sig-name descname"><span class="pre">app_dir_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../_modules/enlace/build.html#app_dir_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build.app_dir_of" title="Link to this definition"></a></dt>
+<dd><p>Best-effort resolution of an app’s own directory.</p>
+<p>Used as the default build working directory when <code class="docutils literal notranslate"><span class="pre">[build].cwd</span></code> is not
+set. Works for both container-discovered apps (<code class="docutils literal notranslate"><span class="pre">source_dir/name</span></code>) and
+directly-discovered ones, and falls back to the entry module’s parent.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.build.build_cwd">
+<span class="sig-prename descclassname"><span class="pre">enlace.build.</span></span><span class="sig-name descname"><span class="pre">build_cwd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../../_modules/enlace/build.html#build_cwd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build.build_cwd" title="Link to this definition"></a></dt>
+<dd><p>The directory build commands run from: <code class="docutils literal notranslate"><span class="pre">[build].cwd</span></code> or the app dir.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.build.has_build">
+<span class="sig-prename descclassname"><span class="pre">enlace.build.</span></span><span class="sig-name descname"><span class="pre">has_build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/enlace/build.html#has_build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build.has_build" title="Link to this definition"></a></dt>
+<dd><p>Whether the app declares a runnable build (a <code class="docutils literal notranslate"><span class="pre">build</span></code> command).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.build.run_build">
+<span class="sig-prename descclassname"><span class="pre">enlace.build.</span></span><span class="sig-name descname"><span class="pre">run_build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_env</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.build.BuildResult" title="enlace.build.BuildResult"><span class="pre">BuildResult</span></a></span></span><a class="reference internal" href="../../_modules/enlace/build.html#run_build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build.run_build" title="Link to this definition"></a></dt>
+<dd><p>Run an app’s <code class="docutils literal notranslate"><span class="pre">install</span></code> (if any) then <code class="docutils literal notranslate"><span class="pre">build</span></code> commands.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>app</strong> – The app whose <code class="docutils literal notranslate"><span class="pre">[build]</span></code> section to run.</p></li>
+<li><p><strong>extra_env</strong> – Values to overlay on the inherited environment (e.g. the
+deployer’s <code class="docutils literal notranslate"><span class="pre">VITE_API_BASE=/api/{name}</span></code>). enlace itself does not
+choose values; callers do.</p></li>
+<li><p><strong>dry_run</strong> – Resolve and record the commands without executing them.</p></li>
+<li><p><strong>check</strong> – Raise <code class="docutils literal notranslate"><span class="pre">subprocess.CalledProcessError</span></code> on nonzero exit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#enlace.build.BuildResult" title="enlace.build.BuildResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">BuildResult</span></code></a> describing what was (or would be) run.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.build.validate_build">
+<span class="sig-prename descclassname"><span class="pre">enlace.build.</span></span><span class="sig-name descname"><span class="pre">validate_build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/enlace/build.html#validate_build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build.validate_build" title="Link to this definition"></a></dt>
+<dd><p>Return human-readable problems with an app’s <code class="docutils literal notranslate"><span class="pre">[build]</span></code> config.</p>
+<p>Pure validation — never runs commands. Checks that the section, if
+present, has a <code class="docutils literal notranslate"><span class="pre">build</span></code> command and that its working directory exists.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="base.html" class="btn btn-neutral float-left" title="enlace.base" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="compose.html" class="btn btn-neutral float-right" title="enlace.compose" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

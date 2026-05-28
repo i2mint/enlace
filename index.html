@@ -51,6 +51,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/__main__.html">enlace.__main__</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/discover.html">enlace.discover</a></li>
@@ -63,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
@@ -105,6 +107,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace.html">enlace</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.AppConfig"><code class="docutils literal notranslate"><span class="pre">AppConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.BuildConfig"><code class="docutils literal notranslate"><span class="pre">BuildConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.BuildResult"><code class="docutils literal notranslate"><span class="pre">BuildResult</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.ConventionDiscoverer"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.ConventionsConfig"><code class="docutils literal notranslate"><span class="pre">ConventionsConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.DeployHeadersMiddleware"><code class="docutils literal notranslate"><span class="pre">DeployHeadersMiddleware</span></code></a></li>
@@ -122,11 +126,14 @@
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.discover_apps"><code class="docutils literal notranslate"><span class="pre">discover_apps()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.load_platform_manifest"><code class="docutils literal notranslate"><span class="pre">load_platform_manifest()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.run_build"><code class="docutils literal notranslate"><span class="pre">run_build()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.serve"><code class="docutils literal notranslate"><span class="pre">serve()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.skills_dir"><code class="docutils literal notranslate"><span class="pre">skills_dir()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.validate_build"><code class="docutils literal notranslate"><span class="pre">validate_build()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/__main__.html">enlace.__main__</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.diagnose"><code class="docutils literal notranslate"><span class="pre">diagnose()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.doctor"><code class="docutils literal notranslate"><span class="pre">doctor()</span></code></a></li>
@@ -136,8 +143,18 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/base.html">enlace.base</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.AppConfig"><code class="docutils literal notranslate"><span class="pre">AppConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.BuildConfig"><code class="docutils literal notranslate"><span class="pre">BuildConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.ConventionsConfig"><code class="docutils literal notranslate"><span class="pre">ConventionsConfig</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.PlatformConfig"><code class="docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/build.html">enlace.build</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.BuildResult"><code class="docutils literal notranslate"><span class="pre">BuildResult</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.app_dir_of"><code class="docutils literal notranslate"><span class="pre">app_dir_of()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.build_cwd"><code class="docutils literal notranslate"><span class="pre">build_cwd()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.has_build"><code class="docutils literal notranslate"><span class="pre">has_build()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.run_build"><code class="docutils literal notranslate"><span class="pre">run_build()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.validate_build"><code class="docutils literal notranslate"><span class="pre">validate_build()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/compose.html">enlace.compose</a><ul>
@@ -211,6 +228,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html#enlace.tests.test_diagnose_auth.test_clean_app_has_no_new_issues"><code class="docutils literal notranslate"><span class="pre">test_clean_app_has_no_new_issues()</span></code></a></li>

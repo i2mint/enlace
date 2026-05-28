@@ -49,6 +49,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/__main__.html">enlace.__main__</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/discover.html">enlace.discover</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
@@ -106,6 +108,7 @@
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#K"><strong>K</strong></a>
  | <a href="#L"><strong>L</strong></a>
@@ -128,14 +131,16 @@
         <li><a href="module_docs/enlace.html#enlace.PlatformConfig.all_source_dirs">(enlace.PlatformConfig property)</a>
 </li>
       </ul></li>
+      <li><a href="module_docs/enlace/build.html#enlace.build.app_dir_of">app_dir_of() (in module enlace.build)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.AppConfig">AppConfig (class in enlace)</a>
 
       <ul>
         <li><a href="module_docs/enlace/base.html#enlace.base.AppConfig">(class in enlace.base)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/discover.html#enlace.discover.AppDiscoverer">AppDiscoverer (class in enlace.discover)</a>
 </li>
       <li><a href="module_docs/enlace/strategies.html#enlace.strategies.AsgiStrategy">AsgiStrategy (class in enlace.strategies)</a>
@@ -150,12 +155,28 @@
 </li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.backoff_delay">backoff_delay() (enlace.supervise.ManagedProcess method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/__main__.html#enlace.__main__.build">build() (in module enlace.__main__)</a>
+</li>
       <li><a href="module_docs/enlace.html#enlace.build_backend">build_backend() (in module enlace)</a>
 
       <ul>
         <li><a href="module_docs/enlace/compose.html#enlace.compose.build_backend">(in module enlace.compose)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/build.html#enlace.build.build_cwd">build_cwd() (in module enlace.build)</a>
+</li>
+      <li><a href="module_docs/enlace.html#enlace.BuildConfig">BuildConfig (class in enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/base.html#enlace.base.BuildConfig">(class in enlace.base)</a>
+</li>
+      </ul></li>
+      <li><a href="module_docs/enlace.html#enlace.BuildResult">BuildResult (class in enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/build.html#enlace.build.BuildResult">(class in enlace.build)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -290,6 +311,13 @@
 </li>
       </ul></li>
       <li>
+    enlace.build
+
+      <ul>
+        <li><a href="module_docs/enlace/build.html#module-enlace.build">module</a>
+</li>
+      </ul></li>
+      <li>
     enlace.compose
 
       <ul>
@@ -362,6 +390,13 @@
 </li>
       </ul></li>
       <li>
+    enlace.tests.test_build
+
+      <ul>
+        <li><a href="module_docs/enlace/tests/test_build.html#module-enlace.tests.test_build">module</a>
+</li>
+      </ul></li>
+      <li>
     enlace.tests.test_diagnose_auth
 
       <ul>
@@ -425,6 +460,14 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/strategies.html#enlace.strategies.get_strategy">get_strategy() (in module enlace.strategies)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/build.html#enlace.build.has_build">has_build() (in module enlace.build)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -523,9 +566,13 @@
       <ul>
         <li><a href="module_docs/enlace/base.html#enlace.base.AppConfig.model_config">(enlace.base.AppConfig attribute)</a>
 </li>
+        <li><a href="module_docs/enlace/base.html#enlace.base.BuildConfig.model_config">(enlace.base.BuildConfig attribute)</a>
+</li>
         <li><a href="module_docs/enlace/base.html#enlace.base.ConventionsConfig.model_config">(enlace.base.ConventionsConfig attribute)</a>
 </li>
         <li><a href="module_docs/enlace/base.html#enlace.base.PlatformConfig.model_config">(enlace.base.PlatformConfig attribute)</a>
+</li>
+        <li><a href="module_docs/enlace.html#enlace.BuildConfig.model_config">(enlace.BuildConfig attribute)</a>
 </li>
         <li><a href="module_docs/enlace.html#enlace.ConventionsConfig.model_config">(enlace.ConventionsConfig attribute)</a>
 </li>
@@ -556,6 +603,8 @@
 </li>
         <li><a href="module_docs/enlace/base.html#module-enlace.base">enlace.base</a>
 </li>
+        <li><a href="module_docs/enlace/build.html#module-enlace.build">enlace.build</a>
+</li>
         <li><a href="module_docs/enlace/compose.html#module-enlace.compose">enlace.compose</a>
 </li>
         <li><a href="module_docs/enlace/diagnose.html#module-enlace.diagnose">enlace.diagnose</a>
@@ -575,6 +624,8 @@
         <li><a href="module_docs/enlace/strategies.html#module-enlace.strategies">enlace.strategies</a>
 </li>
         <li><a href="module_docs/enlace/supervise.html#module-enlace.supervise">enlace.supervise</a>
+</li>
+        <li><a href="module_docs/enlace/tests/test_build.html#module-enlace.tests.test_build">enlace.tests.test_build</a>
 </li>
         <li><a href="module_docs/enlace/tests/test_diagnose_auth.html#module-enlace.tests.test_diagnose_auth">enlace.tests.test_diagnose_auth</a>
 </li>
@@ -617,10 +668,16 @@
 </li>
       <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/manifest.html#enlace.manifest.resolve_manifest_dir">resolve_manifest_dir() (in module enlace.manifest)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace.html#enlace.run_build">run_build() (in module enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/build.html#enlace.build.run_build">(in module enlace.build)</a>
+</li>
+      </ul></li>
       <li><a href="module_docs/enlace/doctor.html#enlace.doctor.run_doctor">run_doctor() (in module enlace.doctor)</a>
 </li>
   </ul></td>
@@ -717,6 +774,14 @@
         <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy.validate">(enlace.strategies.ProcessStrategy method)</a>
 </li>
         <li><a href="module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy.validate">(enlace.strategies.StaticStrategy method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace.html#enlace.validate_build">validate_build() (in module enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/build.html#enlace.build.validate_build">(in module enlace.build)</a>
 </li>
       </ul></li>
   </ul></td>

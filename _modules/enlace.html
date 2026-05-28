@@ -49,6 +49,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/__main__.html">enlace.__main__</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/discover.html">enlace.discover</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
@@ -109,9 +111,11 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AppConfig</span><span class="p">,</span>
+    <span class="n">BuildConfig</span><span class="p">,</span>
     <span class="n">ConventionsConfig</span><span class="p">,</span>
     <span class="n">PlatformConfig</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.build</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildResult</span><span class="p">,</span> <span class="n">run_build</span><span class="p">,</span> <span class="n">validate_build</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.compose</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnlaceConfigError</span><span class="p">,</span> <span class="n">Plugin</span><span class="p">,</span> <span class="n">build_backend</span><span class="p">,</span> <span class="n">create_app</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.diagnose</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiagnosticReport</span><span class="p">,</span> <span class="n">Issue</span><span class="p">,</span> <span class="n">diagnose_app</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConventionDiscoverer</span><span class="p">,</span> <span class="n">discover_apps</span>
@@ -134,6 +138,8 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;AppConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BuildConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BuildResult&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ConventionsConfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DeployHeadersMiddleware&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DeployManifest&quot;</span><span class="p">,</span>
@@ -153,8 +159,10 @@
     <span class="s2">&quot;discover_apps&quot;</span><span class="p">,</span>
     <span class="s2">&quot;load_manifest&quot;</span><span class="p">,</span>
     <span class="s2">&quot;load_platform_manifest&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;run_build&quot;</span><span class="p">,</span>
     <span class="s2">&quot;serve&quot;</span><span class="p">,</span>
     <span class="s2">&quot;skills_dir&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;validate_build&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 

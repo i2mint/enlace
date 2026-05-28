@@ -51,6 +51,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.__main__</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.diagnose"><code class="docutils literal notranslate"><span class="pre">diagnose()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.doctor"><code class="docutils literal notranslate"><span class="pre">doctor()</span></code></a></li>
@@ -59,6 +60,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="discover.html">enlace.discover</a></li>
@@ -71,6 +73,7 @@
 <li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
@@ -116,6 +119,27 @@
 <span class="n">enlace</span> <span class="nb">list</span><span class="o">-</span><span class="n">apps</span>          <span class="c1"># List discovered apps</span>
 </pre></div>
 </div>
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.__main__.build">
+<span class="sig-prename descclassname"><span class="pre">enlace.__main__.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/__main__.html#build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.__main__.build" title="Link to this definition"></a></dt>
+<dd><p>Run declarative frontend builds for apps with a <code class="docutils literal notranslate"><span class="pre">[build]</span></code> section.</p>
+<p>Builds the named app, or every app that declares <code class="docutils literal notranslate"><span class="pre">[build]</span></code> when no name
+is given. This is the explicit pre-deploy step — enlace never builds at
+request time. Deployers may inject env values (e.g. VITE_API_BASE) into
+the environment before calling this; enlace passes the environment through.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>app_name</strong> – Build only this app. Omit to build all apps with a build.</p></li>
+<li><p><strong>dry_run</strong> – Print the commands that would run, without executing them.</p></li>
+<li><p><strong>apps_dir</strong> – Path to the apps directory.</p></li>
+<li><p><strong>apps_dirs</strong> – Comma-separated container directories.</p></li>
+<li><p><strong>app_dirs</strong> – Comma-separated individual app directories.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.__main__.check">
 <span class="sig-prename descclassname"><span class="pre">enlace.__main__.</span></span><span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/__main__.html#check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.__main__.check" title="Link to this definition"></a></dt>
