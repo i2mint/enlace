@@ -1,0 +1,4 @@
+enlace.manifest
+===============
+.. automodule:: enlace.manifest
+   :members:

@@ -10,6 +10,7 @@
    module_docs/enlace/discover
    module_docs/enlace/doctor
    module_docs/enlace/frontend
+   module_docs/enlace/manifest
    module_docs/enlace/proxy
    module_docs/enlace/serve
    module_docs/enlace/strategies
@@ -20,6 +21,7 @@
    module_docs/enlace/tests/test_diagnose_auth
    module_docs/enlace/tests/test_discover
    module_docs/enlace/tests/test_frontend_404
+   module_docs/enlace/tests/test_manifest
    module_docs/enlace/tests/test_strategies
    module_docs/enlace/tests/test_supervise
    module_docs/enlace/util

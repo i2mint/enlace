@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; enlace 0.1.15 documentation</title>
+  <title>Index &mdash; enlace 0.1.16 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=e2f3408e"></script>
+      <script src="_static/documentation_options.js?v=d50bcae4"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/discover.html">enlace.discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/doctor.html">enlace.doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/manifest.html">enlace.manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/serve.html">enlace.serve</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/strategies.html">enlace.strategies</a></li>
@@ -64,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/util.html">enlace.util</a></li>
@@ -201,6 +203,18 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace.html#enlace.DeployHeadersMiddleware">DeployHeadersMiddleware (class in enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.DeployHeadersMiddleware">(class in enlace.manifest)</a>
+</li>
+      </ul></li>
+      <li><a href="module_docs/enlace.html#enlace.DeployManifest">DeployManifest (class in enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.DeployManifest">(class in enlace.manifest)</a>
+</li>
+      </ul></li>
       <li><a href="module_docs/enlace/util.html#enlace.util.derive_display_name">derive_display_name() (in module enlace.util)</a>
 </li>
       <li><a href="module_docs/enlace/util.html#enlace.util.derive_route_prefix">derive_route_prefix() (in module enlace.util)</a>
@@ -213,14 +227,14 @@
         <li><a href="module_docs/enlace/diagnose.html#enlace.diagnose.diagnose_app">(in module enlace.diagnose)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.DiagnosticReport">DiagnosticReport (class in enlace)</a>
 
       <ul>
         <li><a href="module_docs/enlace/diagnose.html#enlace.diagnose.DiagnosticReport">(class in enlace.diagnose)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.ConventionDiscoverer.discover">discover() (enlace.ConventionDiscoverer method)</a>
 
       <ul>
@@ -303,6 +317,13 @@
         <li><a href="module_docs/enlace/frontend.html#module-enlace.frontend">module</a>
 </li>
       </ul></li>
+      <li>
+    enlace.manifest
+
+      <ul>
+        <li><a href="module_docs/enlace/manifest.html#module-enlace.manifest">module</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
@@ -356,6 +377,12 @@
       </ul></li>
       <li><a href="module_docs/enlace.html#enlace.EnlaceConfigError">EnlaceConfigError</a>, <a href="module_docs/enlace/compose.html#enlace.compose.EnlaceConfigError">[1]</a>
 </li>
+      <li><a href="module_docs/enlace.html#enlace.ExternalRef">ExternalRef (class in enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.ExternalRef">(class in enlace.manifest)</a>
+</li>
+      </ul></li>
       <li><a href="module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy">ExternalStrategy (class in enlace.strategies)</a>
 </li>
   </ul></td>
@@ -436,10 +463,22 @@
 </li>
       <li><a href="module_docs/enlace/strategies.html#enlace.strategies.Lifecycle">Lifecycle (class in enlace.strategies)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/__main__.html#enlace.__main__.list_apps">list_apps() (in module enlace.__main__)</a>
 </li>
+      <li><a href="module_docs/enlace.html#enlace.load_manifest">load_manifest() (in module enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.load_manifest">(in module enlace.manifest)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace.html#enlace.load_platform_manifest">load_platform_manifest() (in module enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.load_platform_manifest">(in module enlace.manifest)</a>
+</li>
+      </ul></li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.log">log() (enlace.supervise.ManagedProcess method)</a>
 </li>
   </ul></td>
@@ -483,7 +522,19 @@
 </li>
         <li><a href="module_docs/enlace.html#enlace.ConventionsConfig.model_config">(enlace.ConventionsConfig attribute)</a>
 </li>
+        <li><a href="module_docs/enlace.html#enlace.DeployManifest.model_config">(enlace.DeployManifest attribute)</a>
+</li>
+        <li><a href="module_docs/enlace.html#enlace.ExternalRef.model_config">(enlace.ExternalRef attribute)</a>
+</li>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.DeployManifest.model_config">(enlace.manifest.DeployManifest attribute)</a>
+</li>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.ExternalRef.model_config">(enlace.manifest.ExternalRef attribute)</a>
+</li>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.SourceRef.model_config">(enlace.manifest.SourceRef attribute)</a>
+</li>
         <li><a href="module_docs/enlace.html#enlace.PlatformConfig.model_config">(enlace.PlatformConfig attribute)</a>
+</li>
+        <li><a href="module_docs/enlace.html#enlace.SourceRef.model_config">(enlace.SourceRef attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -507,6 +558,8 @@
         <li><a href="module_docs/enlace/doctor.html#module-enlace.doctor">enlace.doctor</a>
 </li>
         <li><a href="module_docs/enlace/frontend.html#module-enlace.frontend">enlace.frontend</a>
+</li>
+        <li><a href="module_docs/enlace/manifest.html#module-enlace.manifest">enlace.manifest</a>
 </li>
         <li><a href="module_docs/enlace/proxy.html#module-enlace.proxy">enlace.proxy</a>
 </li>
@@ -555,9 +608,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/strategies.html#enlace.strategies.register_strategy">register_strategy() (in module enlace.strategies)</a>
 </li>
+      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="module_docs/enlace/doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
+      <li><a href="module_docs/enlace/manifest.html#enlace.manifest.resolve_manifest_dir">resolve_manifest_dir() (in module enlace.manifest)</a>
 </li>
       <li><a href="module_docs/enlace/doctor.html#enlace.doctor.run_doctor">run_doctor() (in module enlace.doctor)</a>
 </li>
@@ -581,6 +636,12 @@
 </li>
       <li><a href="module_docs/enlace.html#enlace.skills_dir">skills_dir() (in module enlace)</a>
 </li>
+      <li><a href="module_docs/enlace.html#enlace.SourceRef">SourceRef (class in enlace)</a>
+
+      <ul>
+        <li><a href="module_docs/enlace/manifest.html#enlace.manifest.SourceRef">(class in enlace.manifest)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/frontend.html#enlace.frontend.SPAStaticFiles">SPAStaticFiles (class in enlace.frontend)</a>

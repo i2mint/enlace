@@ -1,0 +1,251 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.manifest &mdash; enlace 0.1.16 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d50bcae4"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="enlace.proxy" href="proxy.html" />
+    <link rel="prev" title="enlace.frontend" href="frontend.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.manifest</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.manifest.DeployHeadersMiddleware"><code class="docutils literal notranslate"><span class="pre">DeployHeadersMiddleware</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.manifest.DeployManifest"><code class="docutils literal notranslate"><span class="pre">DeployManifest</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.manifest.DeployManifest.model_config"><code class="docutils literal notranslate"><span class="pre">DeployManifest.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.manifest.ExternalRef"><code class="docutils literal notranslate"><span class="pre">ExternalRef</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.manifest.ExternalRef.model_config"><code class="docutils literal notranslate"><span class="pre">ExternalRef.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.manifest.SourceRef"><code class="docutils literal notranslate"><span class="pre">SourceRef</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.manifest.SourceRef.model_config"><code class="docutils literal notranslate"><span class="pre">SourceRef.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.manifest.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.manifest.load_platform_manifest"><code class="docutils literal notranslate"><span class="pre">load_platform_manifest()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.manifest.resolve_manifest_dir"><code class="docutils literal notranslate"><span class="pre">resolve_manifest_dir()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="strategies.html">enlace.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_manifest.html">enlace.tests.test_manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">enlace.manifest</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/enlace/manifest.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-enlace.manifest">
+<span id="enlace-manifest"></span><h1>enlace.manifest<a class="headerlink" href="#module-enlace.manifest" title="Link to this heading"></a></h1>
+<p>Deploy manifest: build-identity for diagnosing “what is actually deployed”.</p>
+<p>A deploy manifest answers two diagnostic questions that are otherwise hard to
+answer about a running deployment:</p>
+<ol class="arabic simple">
+<li><p>Is the server really serving the SHA I think it is, or has the checkout
+drifted? (Including externals — editable installs of sibling packages.)</p></li>
+<li><p>Is the page my browser rendered the <strong>current</strong> build, or is the browser
+serving a stale cache?</p></li>
+</ol>
+<p>enlace owns the <strong>schema</strong> and the <strong>read paths</strong> (an HTTP endpoint per app,
+a platform-level endpoint, response headers). The <strong>write path</strong> is the
+deploy tool’s responsibility: snapshot identity at deploy time and drop a
+<code class="docutils literal notranslate"><span class="pre">{manifest_dir}/{app}.json</span></code> file enlace can read. Snapshotting at deploy
+time is load-bearing — it captures <em>what was actually deployed</em>, not whatever
+the working tree on the server happens to say at startup.</p>
+<p>The schema is versioned (<code class="docutils literal notranslate"><span class="pre">schema_version</span></code>) so future tooling that consumes
+manifests across many apps can evolve without ambiguity.</p>
+<p>The endpoint and header layer are always-on and cheap (a few hundred bytes
+per app, one route per app, one short header tuple per response). They’re
+hidden from end users by default — apps can opt to surface the data visibly
+(footer chip, About modal, devtools log) on top of the primitive.</p>
+<p>See <a class="reference external" href="https://github.com/i2mint/enlace/issues/18">https://github.com/i2mint/enlace/issues/18</a> for design rationale.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.manifest.DeployHeadersMiddleware">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">DeployHeadersMiddleware</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifests_by_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><span class="pre">DeployManifest</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform_manifest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><span class="pre">DeployManifest</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/manifest.html#DeployHeadersMiddleware"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.DeployHeadersMiddleware" title="Link to this definition"></a></dt>
+<dd><p>Pure-ASGI middleware that adds X-Deploy-* headers on every response.</p>
+<p>The header values come from the manifest matching the longest registered
+prefix (route_prefix or frontend mount path) for the request path. If no
+per-app prefix matches, the platform manifest fills in. Headers are only
+added when the underlying value is present — a stub manifest produces a
+short header set (just <code class="docutils literal notranslate"><span class="pre">X-Deploy-App</span></code>), not bogus SHAs.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.manifest.DeployManifest">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">DeployManifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schema_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployed_at</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deployer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal['local'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">'ci']</span> <span class="pre">|</span> <span class="pre">None</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.manifest.SourceRef" title="enlace.manifest.SourceRef"><span class="pre">SourceRef</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform_source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.manifest.SourceRef" title="enlace.manifest.SourceRef"><span class="pre">SourceRef</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">externals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~enlace.manifest.ExternalRef]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enlace_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~typing.Any]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/manifest.html#DeployManifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.DeployManifest" title="Link to this definition"></a></dt>
+<dd><p>What was deployed for one app (or the platform itself).</p>
+<p><code class="docutils literal notranslate"><span class="pre">app_source</span></code> and <code class="docutils literal notranslate"><span class="pre">platform_source</span></code> use the same shape so consumers can
+treat them uniformly. <code class="docutils literal notranslate"><span class="pre">externals</span></code> is a free-form map keyed by package
+name — the manifest format is intentionally permissive about which keys
+appear, since which externals matter varies by app.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.manifest.DeployManifest.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#enlace.manifest.DeployManifest.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.manifest.ExternalRef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">ExternalRef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/manifest.html#ExternalRef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.ExternalRef" title="Link to this definition"></a></dt>
+<dd><p>Identity for an externally-installed dependency (e.g. an editable sibling).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.manifest.ExternalRef.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#enlace.manifest.ExternalRef.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.manifest.SourceRef">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">SourceRef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">sha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dirty</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/manifest.html#SourceRef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.SourceRef" title="Link to this definition"></a></dt>
+<dd><p>Git identity for a single source tree (app or platform).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.manifest.SourceRef.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#enlace.manifest.SourceRef.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.manifest.load_manifest">
+<span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">load_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifest_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">enlace_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><span class="pre">DeployManifest</span></a></span></span><a class="reference internal" href="../../_modules/enlace/manifest.html#load_manifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.load_manifest" title="Link to this definition"></a></dt>
+<dd><p>Load the deploy manifest for one app, or return a minimal stub.</p>
+<p>The stub has just <code class="docutils literal notranslate"><span class="pre">app</span></code> (the name we were asked about) and
+<code class="docutils literal notranslate"><span class="pre">enlace_version</span></code> filled in. That keeps the diagnostic plumbing working
+even before any deploy tool starts writing manifests.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.manifest.load_platform_manifest">
+<span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">load_platform_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manifest_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">enlace_version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><span class="pre">DeployManifest</span></a></span></span><a class="reference internal" href="../../_modules/enlace/manifest.html#load_platform_manifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.load_platform_manifest" title="Link to this definition"></a></dt>
+<dd><p>Load the platform-level deploy manifest (or a minimal stub).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.manifest.resolve_manifest_dir">
+<span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">resolve_manifest_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_manifest_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/manifest.html#resolve_manifest_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.resolve_manifest_dir" title="Link to this definition"></a></dt>
+<dd><p>Resolve the manifest directory from env var or config.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ENLACE_MANIFEST_DIR</span></code> takes precedence over the config value. Returns
+<code class="docutils literal notranslate"><span class="pre">None</span></code> when neither is set — callers treat that as “no on-disk manifests
+available; serve minimal stubs”.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="frontend.html" class="btn btn-neutral float-left" title="enlace.frontend" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="proxy.html" class="btn btn-neutral float-right" title="enlace.proxy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

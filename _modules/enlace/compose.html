@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.15 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.16 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=e2f3408e"></script>
+      <script src="../../_static/documentation_options.js?v=d50bcae4"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -54,6 +54,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/doctor.html">enlace.doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/manifest.html">enlace.manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
@@ -64,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
@@ -128,6 +130,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">PlatformConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_apps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.frontend</span><span class="w"> </span><span class="kn">import</span> <span class="n">LandingWithUnknownApp404</span><span class="p">,</span> <span class="n">SPAStaticFiles</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
+    <span class="n">DeployManifest</span><span class="p">,</span>
+    <span class="n">load_manifest</span><span class="p">,</span>
+    <span class="n">load_platform_manifest</span><span class="p">,</span>
+    <span class="n">resolve_manifest_dir</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;enlace&quot;</span><span class="p">)</span>
 
@@ -223,6 +232,20 @@
     <span class="c1"># HTML index_page is disabled).</span>
     <span class="n">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
+    <span class="c1"># Deploy manifest endpoints + response headers. Built once at startup;</span>
+    <span class="c1"># cheap (one HTTP route per app + a small middleware). Endpoints are</span>
+    <span class="c1"># registered BEFORE sub-app mounts so they win the path match.</span>
+    <span class="n">manifest_dir</span> <span class="o">=</span> <span class="n">resolve_manifest_dir</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">manifest_dir</span><span class="p">)</span>
+    <span class="n">enlace_version</span> <span class="o">=</span> <span class="n">_detect_enlace_version</span><span class="p">()</span>
+    <span class="n">platform_manifest</span> <span class="o">=</span> <span class="n">load_platform_manifest</span><span class="p">(</span>
+        <span class="n">manifest_dir</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span>
+    <span class="p">)</span>
+    <span class="n">per_app_manifests</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">manifest_dir</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
+    <span class="p">}</span>
+    <span class="n">_add_meta_routes</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">platform_manifest</span><span class="p">,</span> <span class="n">per_app_manifests</span><span class="p">)</span>
+
     <span class="c1"># landing_app takes precedence over the default Python index. When set</span>
     <span class="c1"># to a discovered app&#39;s name, the later frontend-mount loop will mount</span>
     <span class="c1"># that app&#39;s frontend at / (see below). The built-in index is skipped.</span>
@@ -286,8 +309,76 @@
             <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">shared_assets_dir</span><span class="p">)),</span>
         <span class="p">)</span>
 
+    <span class="c1"># Deploy-identity response headers. Build the prefix → manifest map from</span>
+    <span class="c1"># both the API mount (route_prefix) and the frontend mount (/{name}/) so</span>
+    <span class="c1"># static asset responses also carry the headers.</span>
+    <span class="n">headers_prefix_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
+        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
+        <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
+        <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
+        <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_manifest</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">parent</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_detect_enlace_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the installed enlace version, or ``None`` if unknown.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">PackageNotFoundError</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">_v</span>
+
+        <span class="k">return</span> <span class="n">_v</span><span class="p">(</span><span class="s2">&quot;enlace&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">PackageNotFoundError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover — defensive</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_meta_routes</span><span class="p">(</span>
+    <span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span>
+    <span class="n">platform_manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">,</span>
+    <span class="n">per_app_manifests</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.</span>
+
+<span class="sd">    Two per-app paths are registered so the manifest is reachable both from</span>
+<span class="sd">    the API mount (``{route_prefix}/_meta``) and the frontend mount</span>
+<span class="sd">    (``/{name}/_meta``). Browser JS commonly fetches the latter with a</span>
+<span class="sd">    relative URL from the SPA root.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_meta&quot;</span><span class="p">,</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_platform_meta</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">platform_manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">_register_app_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span> <span class="o">+</span> <span class="s2">&quot;/_meta&quot;</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
+        <span class="c1"># Same data under the frontend mount so SPA code can fetch it with a</span>
+        <span class="c1"># path relative to its own root.</span>
+        <span class="n">frontend_meta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/_meta&quot;</span>
+        <span class="k">if</span> <span class="n">frontend_meta</span> <span class="o">!=</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span> <span class="o">+</span> <span class="s2">&quot;/_meta&quot;</span><span class="p">:</span>
+            <span class="n">_register_app_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">frontend_meta</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_register_app_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_meta</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">payload</span>
+
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_meta</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">],</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

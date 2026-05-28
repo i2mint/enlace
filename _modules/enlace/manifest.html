@@ -1,0 +1,352 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.manifest &mdash; enlace 0.1.16 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d50bcae4"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/manifest.html">enlace.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../enlace.html">enlace</a></li>
+      <li class="breadcrumb-item active">enlace.manifest</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for enlace.manifest</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Deploy manifest: build-identity for diagnosing &quot;what is actually deployed&quot;.</span>
+
+<span class="sd">A deploy manifest answers two diagnostic questions that are otherwise hard to</span>
+<span class="sd">answer about a running deployment:</span>
+
+<span class="sd">1. Is the server really serving the SHA I think it is, or has the checkout</span>
+<span class="sd">   drifted? (Including externals — editable installs of sibling packages.)</span>
+<span class="sd">2. Is the page my browser rendered the **current** build, or is the browser</span>
+<span class="sd">   serving a stale cache?</span>
+
+<span class="sd">enlace owns the **schema** and the **read paths** (an HTTP endpoint per app,</span>
+<span class="sd">a platform-level endpoint, response headers). The **write path** is the</span>
+<span class="sd">deploy tool&#39;s responsibility: snapshot identity at deploy time and drop a</span>
+<span class="sd">``{manifest_dir}/{app}.json`` file enlace can read. Snapshotting at deploy</span>
+<span class="sd">time is load-bearing — it captures *what was actually deployed*, not whatever</span>
+<span class="sd">the working tree on the server happens to say at startup.</span>
+
+<span class="sd">The schema is versioned (``schema_version``) so future tooling that consumes</span>
+<span class="sd">manifests across many apps can evolve without ambiguity.</span>
+
+<span class="sd">The endpoint and header layer are always-on and cheap (a few hundred bytes</span>
+<span class="sd">per app, one route per app, one short header tuple per response). They&#39;re</span>
+<span class="sd">hidden from end users by default — apps can opt to surface the data visibly</span>
+<span class="sd">(footer chip, About modal, devtools log) on top of the primitive.</span>
+
+<span class="sd">See https://github.com/i2mint/enlace/issues/18 for design rationale.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;enlace.manifest&quot;</span><span class="p">)</span>
+
+<span class="n">MANIFEST_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">PLATFORM_MANIFEST_NAME</span> <span class="o">=</span> <span class="s2">&quot;_platform&quot;</span>
+
+
+<div class="viewcode-block" id="SourceRef">
+<a class="viewcode-back" href="../../module_docs/enlace/manifest.html#enlace.SourceRef">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceRef</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Git identity for a single source tree (app or platform).&quot;&quot;&quot;</span>
+
+    <span class="n">sha</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">dirty</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">local_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ExternalRef">
+<a class="viewcode-back" href="../../module_docs/enlace/manifest.html#enlace.ExternalRef">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExternalRef</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Identity for an externally-installed dependency (e.g. an editable sibling).&quot;&quot;&quot;</span>
+
+    <span class="n">sha</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="DeployManifest">
+<a class="viewcode-back" href="../../module_docs/enlace/manifest.html#enlace.DeployManifest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeployManifest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;What was deployed for one app (or the platform itself).</span>
+
+<span class="sd">    ``app_source`` and ``platform_source`` use the same shape so consumers can</span>
+<span class="sd">    treat them uniformly. ``externals`` is a free-form map keyed by package</span>
+<span class="sd">    name — the manifest format is intentionally permissive about which keys</span>
+<span class="sd">    appear, since which externals matter varies by app.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">schema_version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">MANIFEST_SCHEMA_VERSION</span>
+    <span class="n">app</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">deployed_at</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">deployer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;ci&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">platform</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">app_source</span><span class="p">:</span> <span class="n">SourceRef</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">SourceRef</span><span class="p">)</span>
+    <span class="n">platform_source</span><span class="p">:</span> <span class="n">SourceRef</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">SourceRef</span><span class="p">)</span>
+    <span class="n">externals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ExternalRef</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">enlace_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">extra</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_manifest_dir">
+<a class="viewcode-back" href="../../module_docs/enlace/manifest.html#enlace.resolve_manifest_dir">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_manifest_dir</span><span class="p">(</span>
+    <span class="n">config_manifest_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the manifest directory from env var or config.</span>
+
+<span class="sd">    ``ENLACE_MANIFEST_DIR`` takes precedence over the config value. Returns</span>
+<span class="sd">    ``None`` when neither is set — callers treat that as &quot;no on-disk manifests</span>
+<span class="sd">    available; serve minimal stubs&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ENLACE_MANIFEST_DIR&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">env</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">env</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">config_manifest_dir</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_manifest_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Don&#39;t let a corrupt manifest crash the server — log and degrade.</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Failed to read manifest </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="load_manifest">
+<a class="viewcode-back" href="../../module_docs/enlace/manifest.html#enlace.load_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_manifest</span><span class="p">(</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">manifest_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">enlace_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeployManifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the deploy manifest for one app, or return a minimal stub.</span>
+
+<span class="sd">    The stub has just ``app`` (the name we were asked about) and</span>
+<span class="sd">    ``enlace_version`` filled in. That keeps the diagnostic plumbing working</span>
+<span class="sd">    even before any deploy tool starts writing manifests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">manifest_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">manifest_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">.json&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">_read_manifest_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">app_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">enlace_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;enlace_version&quot;</span><span class="p">):</span>
+                <span class="n">data</span><span class="p">[</span><span class="s2">&quot;enlace_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">enlace_version</span>
+            <span class="k">return</span> <span class="n">DeployManifest</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">DeployManifest</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_platform_manifest">
+<a class="viewcode-back" href="../../module_docs/enlace/manifest.html#enlace.load_platform_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_platform_manifest</span><span class="p">(</span>
+    <span class="n">manifest_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">enlace_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeployManifest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the platform-level deploy manifest (or a minimal stub).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">load_manifest</span><span class="p">(</span>
+        <span class="n">PLATFORM_MANIFEST_NAME</span><span class="p">,</span>
+        <span class="n">manifest_dir</span><span class="p">,</span>
+        <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DeployHeadersMiddleware">
+<a class="viewcode-back" href="../../module_docs/enlace/manifest.html#enlace.DeployHeadersMiddleware">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeployHeadersMiddleware</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pure-ASGI middleware that adds X-Deploy-* headers on every response.</span>
+
+<span class="sd">    The header values come from the manifest matching the longest registered</span>
+<span class="sd">    prefix (route_prefix or frontend mount path) for the request path. If no</span>
+<span class="sd">    per-app prefix matches, the platform manifest fills in. Headers are only</span>
+<span class="sd">    added when the underlying value is present — a stub manifest produces a</span>
+<span class="sd">    short header set (just ``X-Deploy-App``), not bogus SHAs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">app</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">manifests_by_prefix</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">],</span>
+        <span class="n">platform_manifest</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DeployManifest</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
+        <span class="c1"># Sort longest-first so /api/foo wins over /api when both registered.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefixes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifests_by_prefix</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">kv</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_platform</span> <span class="o">=</span> <span class="n">platform_manifest</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DeployManifest</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefixes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">manifest</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_platform</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;http&quot;</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_select</span><span class="p">(</span><span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">extra</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app</span><span class="p">:</span>
+            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">&quot;x-deploy-app&quot;</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">sha</span><span class="p">:</span>
+            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">&quot;x-deploy-sha&quot;</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">sha</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span><span class="p">:</span>
+            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">&quot;x-deploy-time&quot;</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">extra</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">send_with_headers</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">:</span>
+                <span class="n">headers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;headers&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+                <span class="n">headers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extra</span><span class="p">)</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">message</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="n">headers</span><span class="p">}</span>
+            <span class="k">await</span> <span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send_with_headers</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright NO COPYRIGHT.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
