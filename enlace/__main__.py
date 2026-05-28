@@ -141,6 +141,16 @@ def show_config(
             if app.frontend_dir:
                 print(f"    frontend: {app.frontend_dir}")
 
+            if app.build and app.build.build:
+                print(f"    build:    {' '.join(app.build.build)}")
+                if app.build.cwd:
+                    print(f"    build-cwd: {app.build.cwd}")
+                if verbose:
+                    if app.build.install:
+                        print(f"    build-install: {' '.join(app.build.install)}")
+                    if app.build.env_vars:
+                        print(f"    build-env: {', '.join(app.build.env_vars)}")
+
             if verbose and app.source_dir:
                 print(f"    source:   {app.source_dir}")
 
@@ -173,10 +183,14 @@ def check(
         apps_dirs: Comma-separated container directories.
         app_dirs: Comma-separated individual app directories.
     """
+    from enlace.build import validate_build
+
     config = _build_config(apps_dir, apps_dirs, app_dirs)
 
     errors = config.check_conflicts()
     warnings: list[str] = []
+    for app in config.apps:
+        warnings.extend(validate_build(app))
 
     if json:
         print(json_module.dumps({"errors": errors, "warnings": warnings}, indent=2))
@@ -245,6 +259,56 @@ def list_apps(
                 f"{app.name:<{name_w}}  {app.route_prefix:<{route_w}}  "
                 f"{app.app_type:<{type_w}}  {app.access}"
             )
+
+
+def build(
+    app_name: str = "",
+    *,
+    dry_run: bool = False,
+    apps_dir: str = "",
+    apps_dirs: str = "",
+    app_dirs: str = "",
+):
+    """Run declarative frontend builds for apps with a ``[build]`` section.
+
+    Builds the named app, or every app that declares ``[build]`` when no name
+    is given. This is the explicit pre-deploy step — enlace never builds at
+    request time. Deployers may inject env values (e.g. VITE_API_BASE) into
+    the environment before calling this; enlace passes the environment through.
+
+    Args:
+        app_name: Build only this app. Omit to build all apps with a build.
+        dry_run: Print the commands that would run, without executing them.
+        apps_dir: Path to the apps directory.
+        apps_dirs: Comma-separated container directories.
+        app_dirs: Comma-separated individual app directories.
+    """
+    from enlace.build import build_cwd, has_build, run_build
+
+    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    targets = [a for a in config.apps if has_build(a)]
+    if app_name:
+        targets = [a for a in targets if a.name == app_name]
+        if not targets:
+            print(
+                f"No app named {app_name!r} with a [build] section.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+    if not targets:
+        print("No apps declare a [build] section. Nothing to build.")
+        return
+
+    for app in targets:
+        cwd = build_cwd(app)
+        result = run_build(app, dry_run=dry_run)
+        verb = "Would build" if dry_run else "Building"
+        print(f"{verb} {app.name} (cwd: {cwd})")
+        for command in result.commands:
+            print(f"  $ {' '.join(command)}")
+        if not dry_run and result.returncode != 0:
+            print(f"Build failed for {app.name} (exit {result.returncode})")
+            sys.exit(1)
 
 
 def diagnose(
@@ -399,6 +463,7 @@ def main():
             show_config,
             check,
             list_apps,
+            build,
             diagnose,
             doctor,
         ]

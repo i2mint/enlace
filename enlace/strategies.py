@@ -292,7 +292,6 @@ class ProcessStrategy(BackendStrategy):
         "port": "port",
         "socket": "socket",
         "env": "env",
-        "build": "build",
         "health_check_path": "health_check_path",
         "ready_timeout": "ready_timeout",
         "restart_policy": "restart_policy",

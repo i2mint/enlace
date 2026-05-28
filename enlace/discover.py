@@ -340,7 +340,30 @@ def _overlay_toml_fields(
             value = shlex.split(value)
         fields[field_name] = value
         provenance[field_name] = "override: app.toml"
+
+    # The [build] table is structured (not a flat scalar), so it's parsed
+    # separately into a BuildConfig rather than going through field_map.
+    build_table = toml_data.get("build")
+    if isinstance(build_table, dict):
+        fields["build"] = _parse_build_config(build_table, app_dir)
+        provenance["build"] = "override: app.toml [build]"
+
     return fields, provenance
+
+
+def _parse_build_config(raw: dict, app_dir: Path):
+    """Build a ``BuildConfig`` from an app.toml ``[build]`` table.
+
+    ``cwd`` is resolved relative to the app directory here (it needs the app
+    dir as context); command-string splitting is handled by the model.
+    """
+    from enlace.base import BuildConfig
+
+    data = dict(raw)
+    cwd = data.get("cwd")
+    if cwd is not None:
+        data["cwd"] = app_dir / cwd
+    return BuildConfig(**data)
 
 
 def _import_module_from_path(entry_path: Path, apps_dir: Path) -> object:

@@ -19,11 +19,12 @@ them with their own models.
 """
 
 import os
+import shlex
 import sys
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -51,6 +52,38 @@ class ConventionsConfig(BaseModel):
     )
 
 
+class BuildConfig(BaseModel):
+    """Declarative build instructions for an app's compiled frontend.
+
+    Mirrors the ``[build]`` table in ``app.toml``. It describes the app, not
+    its deployment — a Vite/Next/esbuild app has a ``build`` command whether
+    or not enlace serves it — so it keeps the "apps don't know about enlace"
+    principle intact. enlace (or any deployer) runs these as an explicit step
+    via ``enlace build``; enlace never builds at request time.
+
+    ``install`` / ``build`` accept either a single string (split with
+    ``shlex``) or a list of argv tokens. ``cwd`` is resolved relative to the
+    app directory at discovery time; ``None`` means "the app directory".
+    ``env_vars`` is a *hint* of which env vars the build honours (e.g.
+    ``VITE_API_BASE``) so deployers know what they may inject — enlace does
+    not choose values. ``outputs`` is an optional hint of produced paths.
+    """
+
+    cwd: Optional[Path] = None
+    install: Optional[list[str]] = None
+    build: Optional[list[str]] = None
+    env_vars: list[str] = Field(default_factory=list)
+    outputs: list[str] = Field(default_factory=list)
+
+    @field_validator("install", "build", mode="before")
+    @classmethod
+    def _split_commands(cls, v):
+        """Accept a shell string or an argv list for command fields."""
+        if isinstance(v, str):
+            return shlex.split(v)
+        return v
+
+
 class AppConfig(BaseModel):
     """Resolved configuration for a single discovered app.
 
@@ -70,6 +103,10 @@ class AppConfig(BaseModel):
     app_attr: str = "app"
     frontend_dir: Optional[Path] = None
     source_dir: Optional[Path] = None
+    # Declarative frontend build (from app.toml's [build] table). Mode-agnostic
+    # — any app with a compiled frontend can declare it. Run via `enlace build`
+    # as an explicit pre-deploy step; never at request time. See BuildConfig.
+    build: Optional[BuildConfig] = None
     # Auth policy field. Consumed by enlace_auth (if installed) — enlace
     # itself does not interpret this. Free-form string to avoid coupling
     # enlace's data model to auth's vocabulary; enlace_auth normalizes it.
@@ -97,7 +134,6 @@ class AppConfig(BaseModel):
     port: Optional[int] = None
     socket: Optional[str] = None
     env: dict[str, str] = Field(default_factory=dict)
-    build: Optional[str] = None
     health_check_path: str = "/health"
     ready_timeout: float = 30.0
     restart_policy: Literal["always", "on-failure", "never"] = "on-failure"
