@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.17 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.18 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=71734efd"></script>
+      <script src="../../_static/documentation_options.js?v=9969ed3f"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -65,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
@@ -124,6 +125,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.cors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSMiddleware</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.gzip</span><span class="w"> </span><span class="kn">import</span> <span class="n">GZipMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mount</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
 
@@ -328,13 +330,21 @@
 
     <span class="c1"># Inject deploy &lt;meta&gt; tags into HTML responses so a browser can compare</span>
     <span class="c1"># its embedded SHA against /_meta (the stale-cache diagnostic). It rewrites</span>
-    <span class="c1"># the body, so it must sit INSIDE any future compression middleware (GZip):</span>
-    <span class="c1"># any GZip add_middleware call must come AFTER this one to be outermost.</span>
+    <span class="c1"># the body, so it must sit INSIDE the compression middleware (GZip): the</span>
+    <span class="c1"># GZip add_middleware call below comes AFTER this one, making GZip outermost</span>
+    <span class="c1"># so it compresses the already-injected HTML.</span>
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
         <span class="n">DeployMetaTagMiddleware</span><span class="p">,</span>
         <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
         <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_manifest</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="c1"># Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST</span>
+    <span class="c1"># middleware — it must wrap everything downstream (meta injection, sub-app</span>
+    <span class="c1"># responses, static files) and see final bytes. GZipMiddleware only acts</span>
+    <span class="c1"># when the client sends Accept-Encoding: gzip, skips responses under</span>
+    <span class="c1"># minimum_size, respects pre-encoded responses, and sets Vary correctly.</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">GZipMiddleware</span><span class="p">,</span> <span class="n">minimum_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">parent</span></div>
 

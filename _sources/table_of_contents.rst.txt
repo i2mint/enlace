@@ -21,6 +21,7 @@
    module_docs/enlace/tests/test_diagnose_auth
    module_docs/enlace/tests/test_discover
    module_docs/enlace/tests/test_frontend_404
+   module_docs/enlace/tests/test_gzip
    module_docs/enlace/tests/test_manifest
    module_docs/enlace/tests/test_strategies
    module_docs/enlace/tests/test_supervise
