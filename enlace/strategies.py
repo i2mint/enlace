@@ -117,6 +117,15 @@ class BackendStrategy:
     # process for it (e.g. asgi, external, static).
     is_supervisable: bool = False
 
+    # When True, ``enlace serve`` auto-allocates a free port (from
+    # ``platform.process_port_start``) for apps in this mode that don't
+    # declare one, and passes it to the app via the ``PORT`` env var and to
+    # the gateway (for proxy routing) via ``ENLACE_PROCESS_PORTS``. This is
+    # for "process-like" backends where the app binds to whatever port it's
+    # told. Container strategies that publish a *fixed* in-container port
+    # leave this False and declare their port explicitly.
+    needs_port: bool = False
+
     def validate(self, app: "AppConfig") -> None:
         """Validate mode-specific fields. Raise ``ValueError`` if invalid.
 
@@ -287,6 +296,7 @@ class ProcessStrategy(BackendStrategy):
 
     name = "process"
     is_supervisable = True
+    needs_port = True
     toml_field_map = {
         "command": "command",
         "port": "port",

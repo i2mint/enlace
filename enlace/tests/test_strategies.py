@@ -68,6 +68,51 @@ def test_only_process_is_supervisable_by_default():
     assert StaticStrategy.is_supervisable is False
 
 
+# -- needs_port flag ----------------------------------------------------------
+
+
+def test_only_process_needs_port_by_default():
+    """Port auto-allocation is opt-in via the flag, not hardcoded to a mode."""
+    assert ProcessStrategy.needs_port is True
+    assert AsgiStrategy.needs_port is False
+    assert ExternalStrategy.needs_port is False
+    assert StaticStrategy.needs_port is False
+
+
+def test_auto_allocate_ports_fills_unset_ports():
+    """serve._auto_allocate_ports fills a free port for apps without one.
+
+    Process apps always declare port-or-socket (validate enforces it), so
+    auto-allocation matters for plugin strategies that set needs_port=True
+    and allow omitting the port — we model that with a portless AppConfig.
+    """
+    from enlace.base import AppConfig
+    from enlace.serve import _auto_allocate_ports
+
+    # An asgi-mode app has no port/socket and passes validation — a stand-in
+    # for a needs_port plugin app whose port enlace should allocate.
+    a = AppConfig(name="a", route_prefix="/api/a", app_type="asgi_app")
+    b = AppConfig(name="b", route_prefix="/api/b", app_type="asgi_app")
+    out = _auto_allocate_ports([a, b], start_port=9100)
+    assert [app.port for app in out] == [9100, 9101]
+
+
+def test_auto_allocate_ports_skips_apps_with_socket():
+    from enlace.base import AppConfig
+    from enlace.serve import _auto_allocate_ports
+
+    app = AppConfig(
+        name="a",
+        route_prefix="/api/a",
+        app_type="asgi_app",
+        mode="process",
+        command=["x"],
+        socket="/tmp/enlace/a.sock",
+    )
+    (out,) = _auto_allocate_ports([app], start_port=9100)
+    assert out.port is None  # socket apps are not given a port
+
+
 # -- skip_python_introspection ------------------------------------------------
 
 

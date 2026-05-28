@@ -105,13 +105,13 @@ def _build_uvicorn_cmd(
 
 
 def _auto_allocate_ports(
-    process_apps: list[AppConfig],
+    port_apps: list[AppConfig],
     start_port: int,
 ) -> list[AppConfig]:
-    """Assign ports to process-mode apps that don't have one."""
+    """Assign ports to ``needs_port`` apps that don't declare one."""
     result = []
     next_port = start_port
-    for app in process_apps:
+    for app in port_apps:
         if app.port is None and app.socket is None:
             app = app.model_copy(update={"port": next_port})
             next_port += 1
@@ -173,18 +173,15 @@ def serve(
     # Run discovery so we can see which apps need supervised lifecycles.
     discovered = discover_apps(platform)
 
-    # Phase 1: only mode=process needs port pre-allocation. When enlace_docker
-    # (or another plugin) adds its own supervisable modes that need ports,
-    # generalize this — see issue #3, Phase 2 risks.
-    process_apps = [a for a in discovered.apps if a.mode == "process"]
-
     reload_dirs = all_apps_dirs + all_app_dirs
 
-    # Decide pure-asgi vs. mixed by asking each strategy whether the app
-    # needs a supervised lifecycle (cheap class-level flag; cannot call
-    # make_lifecycle yet because process-mode ports aren't allocated).
+    # Ask each strategy (not a hardcoded mode string) two things:
+    #   needs_port      → enlace should auto-allocate a free port if unset
+    #   is_supervisable → enlace runs a supervised lifecycle for it
+    # Plugins (e.g. enlace_docker) opt in via these flags — no core change.
     from enlace.strategies import get_strategy
 
+    port_apps = [a for a in discovered.apps if get_strategy(a.mode).needs_port]
     supervised_apps: list[AppConfig] = [
         app for app in discovered.apps if get_strategy(app.mode).is_supervisable
     ]
@@ -193,15 +190,13 @@ def serve(
         # Pure-asgi path — exactly the current behavior.
         _serve_asgi_only(effective_host, effective_port, mode, reload_dirs)
     else:
-        # Allocate ports for process-mode apps (current behavior).
-        if process_apps:
-            process_apps = _auto_allocate_ports(
-                process_apps, platform.process_port_start
-            )
-            _set_port_env(process_apps)
+        # Allocate ports for needs_port apps that didn't declare one.
+        if port_apps:
+            port_apps = _auto_allocate_ports(port_apps, platform.process_port_start)
+            _set_port_env(port_apps)
             # Re-attach allocated ports to the supervised_apps list so each
             # strategy's make_lifecycle sees the assigned port.
-            ports_by_name = {a.name: a for a in process_apps}
+            ports_by_name = {a.name: a for a in port_apps}
             supervised_apps = [ports_by_name.get(a.name, a) for a in supervised_apps]
         _serve_mixed(
             effective_host,
@@ -295,15 +290,15 @@ def _serve_mixed(
     asyncio.run(_run())
 
 
-def _set_port_env(process_apps: list[AppConfig]) -> None:
+def _set_port_env(port_apps: list[AppConfig]) -> None:
     """Set env vars so compose.py can read auto-allocated ports.
 
-    For each process-mode app, we store the port so that build_backend()
+    For each ``needs_port`` app, we store the port so that build_backend()
     can create the correct proxy routes. This is done via env vars because
     the gateway runs in a subprocess.
     """
     port_map = {}
-    for app in process_apps:
+    for app in port_apps:
         if app.port is not None:
             port_map[app.name] = str(app.port)
     if port_map:
