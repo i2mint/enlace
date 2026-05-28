@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.strategies &mdash; enlace 0.1.18 documentation</title>
+  <title>enlace.strategies &mdash; enlace 0.1.20 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9969ed3f"></script>
+      <script src="../../_static/documentation_options.js?v=17aaaefc"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -65,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
@@ -223,6 +224,15 @@
     <span class="c1"># False, the app is mounted or proxied but enlace does not manage any</span>
     <span class="c1"># process for it (e.g. asgi, external, static).</span>
     <span class="n">is_supervisable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># When True, ``enlace serve`` auto-allocates a free port (from</span>
+    <span class="c1"># ``platform.process_port_start``) for apps in this mode that don&#39;t</span>
+    <span class="c1"># declare one, and passes it to the app via the ``PORT`` env var and to</span>
+    <span class="c1"># the gateway (for proxy routing) via ``ENLACE_PROCESS_PORTS``. This is</span>
+    <span class="c1"># for &quot;process-like&quot; backends where the app binds to whatever port it&#39;s</span>
+    <span class="c1"># told. Container strategies that publish a *fixed* in-container port</span>
+    <span class="c1"># leave this False and declare their port explicitly.</span>
+    <span class="n">needs_port</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
 <div class="viewcode-block" id="BackendStrategy.validate">
 <a class="viewcode-back" href="../../module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy.validate">[docs]</a>
@@ -424,6 +434,7 @@
 
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;process&quot;</span>
     <span class="n">is_supervisable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">needs_port</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">toml_field_map</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;command&quot;</span><span class="p">:</span> <span class="s2">&quot;command&quot;</span><span class="p">,</span>
         <span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="s2">&quot;port&quot;</span><span class="p">,</span>

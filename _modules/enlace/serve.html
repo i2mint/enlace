@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.serve &mdash; enlace 0.1.18 documentation</title>
+  <title>enlace.serve &mdash; enlace 0.1.20 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9969ed3f"></script>
+      <script src="../../_static/documentation_options.js?v=17aaaefc"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -65,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
@@ -207,13 +208,13 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_auto_allocate_ports</span><span class="p">(</span>
-    <span class="n">process_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">],</span>
+    <span class="n">port_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">],</span>
     <span class="n">start_port</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assign ports to process-mode apps that don&#39;t have one.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Assign ports to ``needs_port`` apps that don&#39;t declare one.&quot;&quot;&quot;</span>
     <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">next_port</span> <span class="o">=</span> <span class="n">start_port</span>
-    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">process_apps</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">port_apps</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">socket</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="n">next_port</span><span class="p">})</span>
             <span class="n">next_port</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -277,18 +278,15 @@
     <span class="c1"># Run discovery so we can see which apps need supervised lifecycles.</span>
     <span class="n">discovered</span> <span class="o">=</span> <span class="n">discover_apps</span><span class="p">(</span><span class="n">platform</span><span class="p">)</span>
 
-    <span class="c1"># Phase 1: only mode=process needs port pre-allocation. When enlace_docker</span>
-    <span class="c1"># (or another plugin) adds its own supervisable modes that need ports,</span>
-    <span class="c1"># generalize this — see issue #3, Phase 2 risks.</span>
-    <span class="n">process_apps</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">discovered</span><span class="o">.</span><span class="n">apps</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span><span class="p">]</span>
-
     <span class="n">reload_dirs</span> <span class="o">=</span> <span class="n">all_apps_dirs</span> <span class="o">+</span> <span class="n">all_app_dirs</span>
 
-    <span class="c1"># Decide pure-asgi vs. mixed by asking each strategy whether the app</span>
-    <span class="c1"># needs a supervised lifecycle (cheap class-level flag; cannot call</span>
-    <span class="c1"># make_lifecycle yet because process-mode ports aren&#39;t allocated).</span>
+    <span class="c1"># Ask each strategy (not a hardcoded mode string) two things:</span>
+    <span class="c1">#   needs_port      → enlace should auto-allocate a free port if unset</span>
+    <span class="c1">#   is_supervisable → enlace runs a supervised lifecycle for it</span>
+    <span class="c1"># Plugins (e.g. enlace_docker) opt in via these flags — no core change.</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
 
+    <span class="n">port_apps</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">discovered</span><span class="o">.</span><span class="n">apps</span> <span class="k">if</span> <span class="n">get_strategy</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span><span class="o">.</span><span class="n">needs_port</span><span class="p">]</span>
     <span class="n">supervised_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">app</span> <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">discovered</span><span class="o">.</span><span class="n">apps</span> <span class="k">if</span> <span class="n">get_strategy</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span><span class="o">.</span><span class="n">is_supervisable</span>
     <span class="p">]</span>
@@ -297,15 +295,13 @@
         <span class="c1"># Pure-asgi path — exactly the current behavior.</span>
         <span class="n">_serve_asgi_only</span><span class="p">(</span><span class="n">effective_host</span><span class="p">,</span> <span class="n">effective_port</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">reload_dirs</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># Allocate ports for process-mode apps (current behavior).</span>
-        <span class="k">if</span> <span class="n">process_apps</span><span class="p">:</span>
-            <span class="n">process_apps</span> <span class="o">=</span> <span class="n">_auto_allocate_ports</span><span class="p">(</span>
-                <span class="n">process_apps</span><span class="p">,</span> <span class="n">platform</span><span class="o">.</span><span class="n">process_port_start</span>
-            <span class="p">)</span>
-            <span class="n">_set_port_env</span><span class="p">(</span><span class="n">process_apps</span><span class="p">)</span>
+        <span class="c1"># Allocate ports for needs_port apps that didn&#39;t declare one.</span>
+        <span class="k">if</span> <span class="n">port_apps</span><span class="p">:</span>
+            <span class="n">port_apps</span> <span class="o">=</span> <span class="n">_auto_allocate_ports</span><span class="p">(</span><span class="n">port_apps</span><span class="p">,</span> <span class="n">platform</span><span class="o">.</span><span class="n">process_port_start</span><span class="p">)</span>
+            <span class="n">_set_port_env</span><span class="p">(</span><span class="n">port_apps</span><span class="p">)</span>
             <span class="c1"># Re-attach allocated ports to the supervised_apps list so each</span>
             <span class="c1"># strategy&#39;s make_lifecycle sees the assigned port.</span>
-            <span class="n">ports_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">process_apps</span><span class="p">}</span>
+            <span class="n">ports_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">port_apps</span><span class="p">}</span>
             <span class="n">supervised_apps</span> <span class="o">=</span> <span class="p">[</span><span class="n">ports_by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">supervised_apps</span><span class="p">]</span>
         <span class="n">_serve_mixed</span><span class="p">(</span>
             <span class="n">effective_host</span><span class="p">,</span>
@@ -400,15 +396,15 @@
     <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">_run</span><span class="p">())</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_set_port_env</span><span class="p">(</span><span class="n">process_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_port_env</span><span class="p">(</span><span class="n">port_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set env vars so compose.py can read auto-allocated ports.</span>
 
-<span class="sd">    For each process-mode app, we store the port so that build_backend()</span>
+<span class="sd">    For each ``needs_port`` app, we store the port so that build_backend()</span>
 <span class="sd">    can create the correct proxy routes. This is done via env vars because</span>
 <span class="sd">    the gateway runs in a subprocess.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">port_map</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">process_apps</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">port_apps</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">port_map</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">port_map</span><span class="p">:</span>

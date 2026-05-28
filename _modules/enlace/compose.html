@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.18 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.20 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9969ed3f"></script>
+      <script src="../../_static/documentation_options.js?v=17aaaefc"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -65,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
@@ -674,9 +675,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_apply_port_env</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlatformConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply auto-allocated ports from the ENLACE_PROCESS_PORTS env var.</span>
 
-<span class="sd">    When serve.py runs in mixed mode, it auto-allocates ports for process</span>
-<span class="sd">    apps and stores them in an env var so the gateway subprocess can read</span>
-<span class="sd">    them and set up correct proxy routes.</span>
+<span class="sd">    When serve.py runs in mixed mode, it auto-allocates ports for</span>
+<span class="sd">    ``needs_port`` apps and stores them in an env var so the gateway</span>
+<span class="sd">    subprocess can read them and set up correct proxy routes. The map only</span>
+<span class="sd">    ever contains needs_port apps, so we apply by name without re-checking</span>
+<span class="sd">    the mode here (which keeps this open to plugin strategies).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -691,7 +694,7 @@
 
     <span class="n">updated_apps</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">port_map</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">port_map</span><span class="p">:</span>
             <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">port_map</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
             <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="n">port</span><span class="p">})</span>
         <span class="n">updated_apps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>

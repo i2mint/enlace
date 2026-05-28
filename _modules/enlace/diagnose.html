@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.diagnose &mdash; enlace 0.1.18 documentation</title>
+  <title>enlace.diagnose &mdash; enlace 0.1.20 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9969ed3f"></script>
+      <script src="../../_static/documentation_options.js?v=17aaaefc"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -65,6 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
@@ -121,11 +122,14 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">json_module</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;enlace.diagnose&quot;</span><span class="p">)</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Data structures</span>
@@ -173,14 +177,24 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_category_value</span><span class="p">(</span><span class="n">category</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a category (built-in ``Category`` enum or a plugin str).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">category</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">category</span><span class="p">,</span> <span class="n">Category</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="Issue">
 <a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.Issue">[docs]</a>
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">Issue</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single compatibility issue found during diagnosis.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single compatibility issue found during diagnosis.</span>
+
+<span class="sd">    ``category`` is a ``Category`` for built-in checks, but plugin diagnosers</span>
+<span class="sd">    (registered via the ``enlace.diagnosers`` entry-point group) may pass a</span>
+<span class="sd">    plain string category — the report renders both.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">severity</span><span class="p">:</span> <span class="n">Severity</span>
-    <span class="n">category</span><span class="p">:</span> <span class="n">Category</span>
+    <span class="n">category</span><span class="p">:</span> <span class="s2">&quot;Category | str&quot;</span>
     <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">file_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">line_number</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -194,7 +208,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="n">_category_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="p">),</span>
             <span class="s2">&quot;summary&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">summary</span><span class="p">,</span>
             <span class="s2">&quot;detail&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail</span><span class="p">,</span>
             <span class="s2">&quot;suggestion&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">suggestion</span><span class="p">,</span>
@@ -306,7 +320,9 @@
                     <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">line_number</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="n">loc</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">line_number</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="n">loc</span> <span class="o">+=</span> <span class="s2">&quot;]&quot;</span>
-                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">category</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">summary</span><span class="si">}{</span><span class="n">loc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">_category_value</span><span class="p">(</span><span class="n">issue</span><span class="o">.</span><span class="n">category</span><span class="p">)</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">issue</span><span class="o">.</span><span class="n">summary</span><span class="si">}{</span><span class="n">loc</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
                 <span class="k">if</span> <span class="n">issue</span><span class="o">.</span><span class="n">detail</span><span class="p">:</span>
                     <span class="k">for</span> <span class="n">detail_line</span> <span class="ow">in</span> <span class="n">issue</span><span class="o">.</span><span class="n">detail</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
                         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">detail_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1369,6 +1385,74 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Diagnoser extension point</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1"># A diagnoser inspects an app directory and appends Issues to the report —</span>
+<span class="c1"># the same shape as the built-in ``_check_*`` functions. Plugins (e.g.</span>
+<span class="c1"># enlace_docker) register diagnosers so docker-specific checks run as part</span>
+<span class="c1"># of ``enlace diagnose`` without enlace knowing about docker.</span>
+<span class="n">Diagnoser</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span><span class="p">,</span> <span class="s2">&quot;DiagnosticReport&quot;</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+
+<span class="n">_DIAGNOSERS</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnoser</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_DIAGNOSER_EPS_LOADED</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">_DIAGNOSER_GROUP</span> <span class="o">=</span> <span class="s2">&quot;enlace.diagnosers&quot;</span>
+
+
+<div class="viewcode-block" id="register_diagnoser">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.register_diagnoser">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_diagnoser</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Diagnoser</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Register a plugin diagnoser ``(app_dir, report) -&gt; None``.</span>
+
+<span class="sd">    Idempotent: registering the same callable twice is a no-op.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_DIAGNOSERS</span><span class="p">:</span>
+        <span class="n">_DIAGNOSERS</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="iter_diagnosers">
+<a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.iter_diagnosers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">iter_diagnosers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Diagnoser</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;All registered plugin diagnosers (after a lazy entry-point scan).&quot;&quot;&quot;</span>
+    <span class="n">_load_diagnoser_entry_points</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">_DIAGNOSERS</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_diagnoser_entry_points</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discover diagnosers advertised via the ``enlace.diagnosers`` group.</span>
+
+<span class="sd">    Each entry point must resolve to a callable ``(app_dir, report) -&gt; None``.</span>
+<span class="sd">    Broken entry points are logged and skipped rather than crashing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_DIAGNOSER_EPS_LOADED</span>
+    <span class="k">if</span> <span class="n">_DIAGNOSER_EPS_LOADED</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_DIAGNOSER_EPS_LOADED</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">entry_points</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">entry_points</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">_DIAGNOSER_GROUP</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>  <span class="c1"># pragma: no cover — older API</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="n">entry_points</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_DIAGNOSER_GROUP</span><span class="p">,</span> <span class="p">[])</span>  <span class="c1"># type: ignore[attr-defined]</span>
+
+    <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">eps</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fn</span> <span class="o">=</span> <span class="n">ep</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover — plugin authors&#39; problem</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Failed to load diagnoser </span><span class="si">%r</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ep</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Diagnoser </span><span class="si">%r</span><span class="s2"> is not callable; skipping.&quot;</span><span class="p">,</span> <span class="n">ep</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">register_diagnoser</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="diagnose_app">
 <a class="viewcode-back" href="../../module_docs/enlace/diagnose.html#enlace.diagnose_app">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DiagnosticReport</span><span class="p">:</span>
@@ -1376,7 +1460,8 @@
 
 <span class="sd">    Scans for hardcoded URLs, CORS middleware, SSR requirements, missing</span>
 <span class="sd">    entry points, and other patterns that prevent or complicate mounting</span>
-<span class="sd">    under the enlace platform.</span>
+<span class="sd">    under the enlace platform. Plugin diagnosers registered via the</span>
+<span class="sd">    ``enlace.diagnosers`` entry-point group run after the built-in checks.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        app_dir: Path to the app directory to diagnose.</span>
@@ -1391,7 +1476,7 @@
 
     <span class="n">report</span> <span class="o">=</span> <span class="n">DiagnosticReport</span><span class="p">(</span><span class="n">app_dir</span><span class="o">=</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">)</span>
 
-    <span class="c1"># Run all checks</span>
+    <span class="c1"># Run all built-in checks</span>
     <span class="n">_check_frontend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
     <span class="n">_check_entry_points</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
     <span class="n">_check_python_backend</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
@@ -1401,6 +1486,14 @@
     <span class="n">_check_ssr_framework</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
     <span class="n">_check_env_files</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
     <span class="n">_check_data_paths</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+
+    <span class="c1"># Run plugin diagnosers (docker, etc.). A misbehaving plugin diagnoser</span>
+    <span class="c1"># must not sink the whole report, so each is isolated.</span>
+    <span class="k">for</span> <span class="n">diagnoser</span> <span class="ow">in</span> <span class="n">iter_diagnosers</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">diagnoser</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover — defensive</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Diagnoser </span><span class="si">%r</span><span class="s2"> raised: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">diagnoser</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
 
     <span class="c1"># Sort issues by severity</span>
     <span class="n">severity_order</span> <span class="o">=</span> <span class="p">{</span>

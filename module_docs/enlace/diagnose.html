@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.diagnose &mdash; enlace 0.1.18 documentation</title>
+  <title>enlace.diagnose &mdash; enlace 0.1.20 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=9969ed3f"></script>
+      <script src="../../_static/documentation_options.js?v=17aaaefc"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -64,6 +64,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#enlace.diagnose.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.diagnose.Severity"><code class="docutils literal notranslate"><span class="pre">Severity</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.diagnose.diagnose_app"><code class="docutils literal notranslate"><span class="pre">diagnose_app()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.diagnose.iter_diagnosers"><code class="docutils literal notranslate"><span class="pre">iter_diagnosers()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.diagnose.register_diagnoser"><code class="docutils literal notranslate"><span class="pre">register_diagnoser()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="discover.html">enlace.discover</a></li>
@@ -79,6 +81,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_gzip.html">enlace.tests.test_gzip</a></li>
@@ -156,8 +159,11 @@ suggested fixes.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.diagnose.Issue">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.diagnose.</span></span><span class="sig-name descname"><span class="pre">Issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.diagnose.Severity" title="enlace.diagnose.Severity"><span class="pre">Severity</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.diagnose.Category" title="enlace.diagnose.Category"><span class="pre">Category</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">summary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">breaks_standalone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/diagnose.html#Issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.diagnose.Issue" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.diagnose.</span></span><span class="sig-name descname"><span class="pre">Issue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">severity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.diagnose.Severity" title="enlace.diagnose.Severity"><span class="pre">Severity</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#enlace.diagnose.Category" title="enlace.diagnose.Category"><span class="pre">Category</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">summary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">breaks_standalone</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/diagnose.html#Issue"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.diagnose.Issue" title="Link to this definition"></a></dt>
 <dd><p>A single compatibility issue found during diagnosis.</p>
+<p><code class="docutils literal notranslate"><span class="pre">category</span></code> is a <code class="docutils literal notranslate"><span class="pre">Category</span></code> for built-in checks, but plugin diagnosers
+(registered via the <code class="docutils literal notranslate"><span class="pre">enlace.diagnosers</span></code> entry-point group) may pass a
+plain string category — the report renders both.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -172,7 +178,8 @@ suggested fixes.</p>
 <dd><p>Diagnose an app directory for enlace compatibility.</p>
 <p>Scans for hardcoded URLs, CORS middleware, SSR requirements, missing
 entry points, and other patterns that prevent or complicate mounting
-under the enlace platform.</p>
+under the enlace platform. Plugin diagnosers registered via the
+<code class="docutils literal notranslate"><span class="pre">enlace.diagnosers</span></code> entry-point group run after the built-in checks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -184,6 +191,19 @@ under the enlace platform.</p>
 <dd class="field-even"><p>DiagnosticReport with all findings.</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.diagnose.iter_diagnosers">
+<span class="sig-prename descclassname"><span class="pre">enlace.diagnose.</span></span><span class="sig-name descname"><span class="pre">iter_diagnosers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#enlace.diagnose.DiagnosticReport" title="enlace.diagnose.DiagnosticReport"><span class="pre">DiagnosticReport</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/enlace/diagnose.html#iter_diagnosers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.diagnose.iter_diagnosers" title="Link to this definition"></a></dt>
+<dd><p>All registered plugin diagnosers (after a lazy entry-point scan).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.diagnose.register_diagnoser">
+<span class="sig-prename descclassname"><span class="pre">enlace.diagnose.</span></span><span class="sig-name descname"><span class="pre">register_diagnoser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#enlace.diagnose.DiagnosticReport" title="enlace.diagnose.DiagnosticReport"><span class="pre">DiagnosticReport</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/diagnose.html#register_diagnoser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.diagnose.register_diagnoser" title="Link to this definition"></a></dt>
+<dd><p>Register a plugin diagnoser <code class="docutils literal notranslate"><span class="pre">(app_dir,</span> <span class="pre">report)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>.</p>
+<p>Idempotent: registering the same callable twice is a no-op.</p>
 </dd></dl>
 
 </section>
