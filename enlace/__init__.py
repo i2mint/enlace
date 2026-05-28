@@ -10,9 +10,11 @@ from pathlib import Path
 
 from enlace.base import (
     AppConfig,
+    BuildConfig,
     ConventionsConfig,
     PlatformConfig,
 )
+from enlace.build import BuildResult, run_build, validate_build
 from enlace.compose import EnlaceConfigError, Plugin, build_backend, create_app
 from enlace.diagnose import DiagnosticReport, Issue, diagnose_app
 from enlace.discover import ConventionDiscoverer, discover_apps
@@ -35,6 +37,8 @@ except PackageNotFoundError:  # editable install with no metadata, etc.
 
 __all__ = [
     "AppConfig",
+    "BuildConfig",
+    "BuildResult",
     "ConventionsConfig",
     "DeployHeadersMiddleware",
     "DeployManifest",
@@ -54,8 +58,10 @@ __all__ = [
     "discover_apps",
     "load_manifest",
     "load_platform_manifest",
+    "run_build",
     "serve",
     "skills_dir",
+    "validate_build",
 ]
 
 
