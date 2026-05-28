@@ -148,6 +148,12 @@ class PlatformConfig(BaseModel):
     # Directory containing shared static assets (e.g. shared.css) served at /.
     shared_assets_dir: Optional[Path] = None
 
+    # Directory where the deploy tool drops {app}.json build-identity files.
+    # When unset, enlace's /_meta endpoints serve minimal stubs (app name +
+    # enlace_version) so the diagnostic plumbing exists from day one. See
+    # enlace.manifest for the manifest schema.
+    manifest_dir: Optional[Path] = None
+
     index_page: bool = Field(
         default=True,
         description="Serve an auto-generated index page at / listing all apps",
@@ -244,7 +250,7 @@ class PlatformConfig(BaseModel):
         for key in ("apps_dirs", "app_dirs"):
             if key in platform_data:
                 platform_data[key] = [_resolve(d) for d in platform_data[key]]
-        for key in ("shared_assets_dir", "apps_dir"):
+        for key in ("shared_assets_dir", "apps_dir", "manifest_dir"):
             if key in platform_data:
                 platform_data[key] = _resolve(platform_data[key])
 
