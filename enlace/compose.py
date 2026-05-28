@@ -25,6 +25,7 @@ from typing import Callable, Optional, Sequence
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
 
@@ -224,13 +225,21 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
 
     # Inject deploy <meta> tags into HTML responses so a browser can compare
     # its embedded SHA against /_meta (the stale-cache diagnostic). It rewrites
-    # the body, so it must sit INSIDE any future compression middleware (GZip):
-    # any GZip add_middleware call must come AFTER this one to be outermost.
+    # the body, so it must sit INSIDE the compression middleware (GZip): the
+    # GZip add_middleware call below comes AFTER this one, making GZip outermost
+    # so it compresses the already-injected HTML.
     parent.add_middleware(
         DeployMetaTagMiddleware,
         manifests_by_prefix=headers_prefix_map,
         platform_manifest=platform_manifest,
     )
+
+    # Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST
+    # middleware — it must wrap everything downstream (meta injection, sub-app
+    # responses, static files) and see final bytes. GZipMiddleware only acts
+    # when the client sends Accept-Encoding: gzip, skips responses under
+    # minimum_size, respects pre-encoded responses, and sets Vary correctly.
+    parent.add_middleware(GZipMiddleware, minimum_size=1024)
 
     return parent
 
