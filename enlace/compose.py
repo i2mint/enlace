@@ -142,9 +142,7 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         manifest_dir, enlace_version=enlace_version
     )
     per_app_manifests: dict[str, DeployManifest] = {
-        app.name: load_manifest(
-            app.name, manifest_dir, enlace_version=enlace_version
-        )
+        app.name: load_manifest(app.name, manifest_dir, enlace_version=enlace_version)
         for app in config.apps
     }
     _add_meta_routes(parent, config, platform_manifest, per_app_manifests)

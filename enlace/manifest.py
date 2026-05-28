@@ -161,9 +161,7 @@ class DeployHeadersMiddleware:
     ):
         self.app = app
         # Sort longest-first so /api/foo wins over /api when both registered.
-        self._prefixes = sorted(
-            manifests_by_prefix.items(), key=lambda kv: -len(kv[0])
-        )
+        self._prefixes = sorted(manifests_by_prefix.items(), key=lambda kv: -len(kv[0]))
         self._platform = platform_manifest
 
     def _select(self, path: str) -> Optional[DeployManifest]:

@@ -19,7 +19,6 @@ from enlace.manifest import (
     resolve_manifest_dir,
 )
 
-
 # --- schema -----------------------------------------------------------------
 
 
@@ -186,9 +185,7 @@ def test_platform_meta_endpoint(single_app_dir, manifest_dir):
     assert resp.json()["platform"] == "thorwhalen"
 
 
-def test_meta_endpoint_returns_stub_without_manifest_file(
-    single_app_dir, manifest_dir
-):
+def test_meta_endpoint_returns_stub_without_manifest_file(single_app_dir, manifest_dir):
     # manifest_dir exists but no foo.json — stub is served.
     config = PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
     config = discover_apps(config)
