@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace &mdash; enlace 0.1.16 documentation</title>
+  <title>enlace &mdash; enlace 0.1.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=d50bcae4"></script>
+      <script src="../_static/documentation_options.js?v=71734efd"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -68,6 +68,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#enlace.DeployManifest.model_config"><code class="docutils literal notranslate"><span class="pre">DeployManifest.model_config</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.DeployMetaTagMiddleware"><code class="docutils literal notranslate"><span class="pre">DeployMetaTagMiddleware</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.DiagnosticReport"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.DiagnosticReport.format_text"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport.format_text()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#enlace.DiagnosticReport.is_enlaceable"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport.is_enlaceable</span></code></a></li>
@@ -250,6 +251,21 @@ appear, since which externals matter varies by app.</p>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.DeployMetaTagMiddleware">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">DeployMetaTagMiddleware</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifests_by_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="enlace/manifest.html#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><span class="pre">DeployManifest</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform_manifest</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="enlace/manifest.html#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><span class="pre">DeployManifest</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/manifest.html#DeployMetaTagMiddleware"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.DeployMetaTagMiddleware" title="Link to this definition"></a></dt>
+<dd><p>Pure-ASGI middleware that injects deploy <code class="docutils literal notranslate"><span class="pre">&lt;meta&gt;</span></code> tags into HTML.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">text/html</span></code> responses on app-mounted paths, inserts
+<code class="docutils literal notranslate"><span class="pre">&lt;meta</span> <span class="pre">name=&quot;x-deploy-sha&quot;</span> <span class="pre">...&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;meta</span> <span class="pre">name=&quot;x-deploy-time&quot;</span> <span class="pre">...&gt;</span></code>
+into <code class="docutils literal notranslate"><span class="pre">&lt;head&gt;</span></code>. This is what unlocks the browser-cache diagnostic: a
+page can compare its embedded SHA against <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> to tell “deploy
+didn’t take” from “browser is serving a stale cache”.</p>
+<p>Only HTML is touched — JSON, JS, and other assets stream through
+untouched (and carry the <code class="docutils literal notranslate"><span class="pre">X-Deploy-*</span></code> headers instead). Because it
+rewrites the body it must run <strong>inside</strong> any compression middleware
+(e.g. GZip), so it sees and edits uncompressed bytes.</p>
 </dd></dl>
 
 <dl class="py class">

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.16 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.17 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=d50bcae4"></script>
+      <script src="../../_static/documentation_options.js?v=71734efd"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -133,6 +133,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
     <span class="n">DeployManifest</span><span class="p">,</span>
+    <span class="n">DeployMetaTagMiddleware</span><span class="p">,</span>
     <span class="n">load_manifest</span><span class="p">,</span>
     <span class="n">load_platform_manifest</span><span class="p">,</span>
     <span class="n">resolve_manifest_dir</span><span class="p">,</span>
@@ -321,6 +322,16 @@
         <span class="n">headers_prefix_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
         <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
+        <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
+        <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_manifest</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Inject deploy &lt;meta&gt; tags into HTML responses so a browser can compare</span>
+    <span class="c1"># its embedded SHA against /_meta (the stale-cache diagnostic). It rewrites</span>
+    <span class="c1"># the body, so it must sit INSIDE any future compression middleware (GZip):</span>
+    <span class="c1"># any GZip add_middleware call must come AFTER this one to be outermost.</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
+        <span class="n">DeployMetaTagMiddleware</span><span class="p">,</span>
         <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
         <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_manifest</span><span class="p">,</span>
     <span class="p">)</span>
