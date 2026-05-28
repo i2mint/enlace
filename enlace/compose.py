@@ -563,9 +563,11 @@ def _load_plugins_from_env() -> list[Plugin]:
 def _apply_port_env(config: PlatformConfig) -> PlatformConfig:
     """Apply auto-allocated ports from the ENLACE_PROCESS_PORTS env var.
 
-    When serve.py runs in mixed mode, it auto-allocates ports for process
-    apps and stores them in an env var so the gateway subprocess can read
-    them and set up correct proxy routes.
+    When serve.py runs in mixed mode, it auto-allocates ports for
+    ``needs_port`` apps and stores them in an env var so the gateway
+    subprocess can read them and set up correct proxy routes. The map only
+    ever contains needs_port apps, so we apply by name without re-checking
+    the mode here (which keeps this open to plugin strategies).
     """
     import json
     import os
@@ -580,7 +582,7 @@ def _apply_port_env(config: PlatformConfig) -> PlatformConfig:
 
     updated_apps = []
     for app in config.apps:
-        if app.mode == "process" and app.name in port_map:
+        if app.name in port_map:
             port = int(port_map[app.name])
             app = app.model_copy(update={"port": port})
         updated_apps.append(app)

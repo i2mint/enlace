@@ -19,11 +19,14 @@ Or from the CLI::
 
 import ast
 import json as json_module
+import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
+
+_logger = logging.getLogger("enlace.diagnose")
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -65,12 +68,22 @@ class Category(str, Enum):
     MISSING_SIGNING_KEY = "missing_signing_key"
 
 
+def _category_value(category) -> str:
+    """Normalize a category (built-in ``Category`` enum or a plugin str)."""
+    return category.value if isinstance(category, Category) else str(category)
+
+
 @dataclass
 class Issue:
-    """A single compatibility issue found during diagnosis."""
+    """A single compatibility issue found during diagnosis.
+
+    ``category`` is a ``Category`` for built-in checks, but plugin diagnosers
+    (registered via the ``enlace.diagnosers`` entry-point group) may pass a
+    plain string category — the report renders both.
+    """
 
     severity: Severity
-    category: Category
+    category: "Category | str"
     summary: str
     file_path: Optional[str] = None
     line_number: Optional[int] = None
@@ -84,7 +97,7 @@ class Issue:
     def to_dict(self) -> dict:
         d = {
             "severity": self.severity.value,
-            "category": self.category.value,
+            "category": _category_value(self.category),
             "summary": self.summary,
             "detail": self.detail,
             "suggestion": self.suggestion,
@@ -191,7 +204,9 @@ class DiagnosticReport:
                     if issue.line_number is not None:
                         loc += f":{issue.line_number}"
                     loc += "]"
-                lines.append(f"  [{issue.category.value}] {issue.summary}{loc}")
+                lines.append(
+                    f"  [{_category_value(issue.category)}] {issue.summary}{loc}"
+                )
                 if issue.detail:
                     for detail_line in issue.detail.splitlines():
                         lines.append(f"    {detail_line}")
@@ -1252,12 +1267,75 @@ def _relative(file_path: Path, base: Path) -> str:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Diagnoser extension point
+# ---------------------------------------------------------------------------
+
+# A diagnoser inspects an app directory and appends Issues to the report —
+# the same shape as the built-in ``_check_*`` functions. Plugins (e.g.
+# enlace_docker) register diagnosers so docker-specific checks run as part
+# of ``enlace diagnose`` without enlace knowing about docker.
+Diagnoser = Callable[[Path, "DiagnosticReport"], None]
+
+_DIAGNOSERS: list[Diagnoser] = []
+_DIAGNOSER_EPS_LOADED = False
+_DIAGNOSER_GROUP = "enlace.diagnosers"
+
+
+def register_diagnoser(fn: Diagnoser) -> None:
+    """Register a plugin diagnoser ``(app_dir, report) -> None``.
+
+    Idempotent: registering the same callable twice is a no-op.
+    """
+    if fn not in _DIAGNOSERS:
+        _DIAGNOSERS.append(fn)
+
+
+def iter_diagnosers() -> list[Diagnoser]:
+    """All registered plugin diagnosers (after a lazy entry-point scan)."""
+    _load_diagnoser_entry_points()
+    return list(_DIAGNOSERS)
+
+
+def _load_diagnoser_entry_points() -> None:
+    """Discover diagnosers advertised via the ``enlace.diagnosers`` group.
+
+    Each entry point must resolve to a callable ``(app_dir, report) -> None``.
+    Broken entry points are logged and skipped rather than crashing.
+    """
+    global _DIAGNOSER_EPS_LOADED
+    if _DIAGNOSER_EPS_LOADED:
+        return
+    _DIAGNOSER_EPS_LOADED = True
+
+    try:
+        from importlib.metadata import entry_points
+    except ImportError:  # pragma: no cover
+        return
+    try:
+        eps = entry_points(group=_DIAGNOSER_GROUP)
+    except TypeError:  # pragma: no cover — older API
+        eps = entry_points().get(_DIAGNOSER_GROUP, [])  # type: ignore[attr-defined]
+
+    for ep in eps:
+        try:
+            fn = ep.load()
+        except Exception as e:  # pragma: no cover — plugin authors' problem
+            _logger.warning("Failed to load diagnoser %r: %s", ep.name, e)
+            continue
+        if not callable(fn):
+            _logger.warning("Diagnoser %r is not callable; skipping.", ep.name)
+            continue
+        register_diagnoser(fn)
+
+
 def diagnose_app(app_dir, *, app_name: str = "") -> DiagnosticReport:
     """Diagnose an app directory for enlace compatibility.
 
     Scans for hardcoded URLs, CORS middleware, SSR requirements, missing
     entry points, and other patterns that prevent or complicate mounting
-    under the enlace platform.
+    under the enlace platform. Plugin diagnosers registered via the
+    ``enlace.diagnosers`` entry-point group run after the built-in checks.
 
     Args:
         app_dir: Path to the app directory to diagnose.
@@ -1272,7 +1350,7 @@ def diagnose_app(app_dir, *, app_name: str = "") -> DiagnosticReport:
 
     report = DiagnosticReport(app_dir=app_dir, app_name=app_name)
 
-    # Run all checks
+    # Run all built-in checks
     _check_frontend(app_dir, report)
     _check_entry_points(app_dir, report)
     _check_python_backend(app_dir, report)
@@ -1282,6 +1360,14 @@ def diagnose_app(app_dir, *, app_name: str = "") -> DiagnosticReport:
     _check_ssr_framework(app_dir, report)
     _check_env_files(app_dir, report)
     _check_data_paths(app_dir, report)
+
+    # Run plugin diagnosers (docker, etc.). A misbehaving plugin diagnoser
+    # must not sink the whole report, so each is isolated.
+    for diagnoser in iter_diagnosers():
+        try:
+            diagnoser(app_dir, report)
+        except Exception as e:  # pragma: no cover — defensive
+            _logger.warning("Diagnoser %r raised: %s", diagnoser, e)
 
     # Sort issues by severity
     severity_order = {
