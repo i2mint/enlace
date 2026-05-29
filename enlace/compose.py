@@ -26,7 +26,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
-from starlette.routing import Mount
+from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from enlace.base import AppConfig, PlatformConfig
@@ -186,6 +186,13 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
                 SPAStaticFiles(directory=str(app_config.frontend_dir), html=True),
             )
 
+    # Trailing-slash redirects for router roots contributed by plugins (e.g.
+    # enlace_auth's /_admin/). App and frontend prefixes already got theirs at
+    # mount time; this covers prefix-mounted routers, which would otherwise
+    # 404 at the bare /prefix once the catch-all "/" mount shadows Starlette's
+    # built-in redirect. Run after all routers are registered.
+    _add_router_root_redirects(parent)
+
     # landing_app: mount the chosen app's frontend at / as well, so the
     # platform's root URL serves it instead of the default Python index.
     # Unknown top-level paths (e.g. typo'd app names) get a 404 page with a
@@ -321,6 +328,27 @@ def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
         methods=["GET", "HEAD"],
         include_in_schema=False,
     )
+
+
+def _add_router_root_redirects(parent: FastAPI) -> None:
+    """Add trailing-slash redirects for router roots like ``/_admin/``.
+
+    Plugins include routers at directory-style prefixes (e.g. enlace_auth's
+    ``/_admin/``). Starlette serves only the trailing-slash form, and the
+    catch-all ``/`` 404 mount shadows its built-in redirect — so a bare
+    ``/_admin`` would 404. App and frontend prefixes are already handled at
+    mount time via :func:`_add_trailing_slash_redirect`; this generalizes the
+    same treatment to any remaining router root that lacks a no-slash sibling.
+    """
+    existing = {r.path for r in parent.routes if isinstance(r, Route)}
+    for route in list(parent.routes):
+        if not isinstance(route, Route) or route.path == "/":
+            continue
+        if route.path.endswith("/"):
+            bare = route.path.rstrip("/")
+            if bare and bare not in existing:
+                _add_trailing_slash_redirect(parent, bare)
+                existing.add(bare)
 
 
 def _can_access(

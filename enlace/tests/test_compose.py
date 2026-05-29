@@ -7,6 +7,34 @@ from enlace.compose import build_backend
 from enlace.discover import discover_apps
 
 
+def test_plugin_router_root_redirects_bare_prefix(single_app_dir):
+    """A plugin router at ``/_admin/`` gets a bare ``/_admin`` → ``/_admin/`` redirect.
+
+    Reproduces the production papercut: enlace_auth mounts the admin dashboard
+    at ``/_admin/``; without this, a bare ``/_admin`` 404'd. A tiny plugin
+    stands in for enlace_auth so this stays a pure-enlace test.
+    """
+    from fastapi import APIRouter, FastAPI
+
+    def admin_plugin(parent: FastAPI, cfg) -> None:
+        router = APIRouter(prefix="/_admin")
+
+        @router.get("/")
+        def _idx():
+            return {"ok": True}
+
+        parent.include_router(router)
+
+    config = PlatformConfig(apps_dir=single_app_dir)
+    config = discover_apps(config)
+    client = TestClient(build_backend(config, plugins=[admin_plugin]))
+
+    r = client.get("/_admin", follow_redirects=False)
+    assert r.status_code == 307
+    assert r.headers["location"] == "/_admin/"
+    assert client.get("/_admin/").json() == {"ok": True}
+
+
 def test_build_backend_mounts_single_app(single_app_dir):
     """A single discovered app is mounted and responds at its prefix."""
     config = PlatformConfig(apps_dir=single_app_dir)
