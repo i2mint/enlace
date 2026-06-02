@@ -52,7 +52,11 @@ class _HttpxProxy:
     """Pure-ASGI reverse proxy backed by ``httpx.AsyncClient``."""
 
     def __init__(
-        self, *, upstream: str, strip_prefix: str = "", timeout: float = _DEFAULT_TIMEOUT_S
+        self,
+        *,
+        upstream: str,
+        strip_prefix: str = "",
+        timeout: float = _DEFAULT_TIMEOUT_S,
     ):
         self.upstream = upstream.rstrip("/")
         self.strip_prefix = strip_prefix
