@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.20 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.22 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=17aaaefc"></script>
+      <script src="../../_static/documentation_options.js?v=842aa08f"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -129,7 +129,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.cors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.gzip</span><span class="w"> </span><span class="kn">import</span> <span class="n">GZipMiddleware</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mount</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mount</span><span class="p">,</span> <span class="n">Route</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">PlatformConfig</span>
@@ -294,6 +294,13 @@
                 <span class="n">SPAStaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="p">)</span>
 
+    <span class="c1"># Trailing-slash redirects for router roots contributed by plugins (e.g.</span>
+    <span class="c1"># enlace_auth&#39;s /_admin/). App and frontend prefixes already got theirs at</span>
+    <span class="c1"># mount time; this covers prefix-mounted routers, which would otherwise</span>
+    <span class="c1"># 404 at the bare /prefix once the catch-all &quot;/&quot; mount shadows Starlette&#39;s</span>
+    <span class="c1"># built-in redirect. Run after all routers are registered.</span>
+    <span class="n">_add_router_root_redirects</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+
     <span class="c1"># landing_app: mount the chosen app&#39;s frontend at / as well, so the</span>
     <span class="c1"># platform&#39;s root URL serves it instead of the default Python index.</span>
     <span class="c1"># Unknown top-level paths (e.g. typo&#39;d app names) get a 404 page with a</span>
@@ -430,6 +437,27 @@
         <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">],</span>
         <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_router_root_redirects</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add trailing-slash redirects for router roots like ``/_admin/``.</span>
+
+<span class="sd">    Plugins include routers at directory-style prefixes (e.g. enlace_auth&#39;s</span>
+<span class="sd">    ``/_admin/``). Starlette serves only the trailing-slash form, and the</span>
+<span class="sd">    catch-all ``/`` 404 mount shadows its built-in redirect — so a bare</span>
+<span class="sd">    ``/_admin`` would 404. App and frontend prefixes are already handled at</span>
+<span class="sd">    mount time via :func:`_add_trailing_slash_redirect`; this generalizes the</span>
+<span class="sd">    same treatment to any remaining router root that lacks a no-slash sibling.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">existing</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">routes</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">Route</span><span class="p">)}</span>
+    <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">routes</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Route</span><span class="p">)</span> <span class="ow">or</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+            <span class="n">bare</span> <span class="o">=</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">bare</span> <span class="ow">and</span> <span class="n">bare</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">:</span>
+                <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">bare</span><span class="p">)</span>
+                <span class="n">existing</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">bare</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_can_access</span><span class="p">(</span>
