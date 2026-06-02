@@ -10,6 +10,29 @@ app is actually instantiated, so the dependency remains optional.
 
 from typing import Optional
 
+# Default per-request timeout (seconds) for proxied requests. Bounds a hung
+# upstream so a stuck app can't tie up the gateway indefinitely.
+_DEFAULT_TIMEOUT_S = 60.0
+
+
+def _request_timeout(accept: str, base: float) -> Optional[dict]:
+    """Per-request httpx timeout override (for ``request.extensions['timeout']``).
+
+    Long-lived streams must **not** be killed by the read timeout: a
+    live-but-idle Server-Sent-Events stream sends nothing for stretches, so a
+    finite read timeout would drop the connection after ``base`` seconds and
+    push the client into an endless reconnect loop. ``EventSource`` always
+    sends ``Accept: text/event-stream``; for those we disable only the read
+    timeout (connect / write / pool stay bounded). Non-streaming requests get
+    ``None`` here — they use the client's default bounded timeout.
+
+    Returns a timeout dict in httpx's ``request.extensions['timeout']`` shape,
+    or ``None`` to leave the client default in place.
+    """
+    if accept.lower().startswith("text/event-stream"):
+        return {"connect": base, "read": None, "write": base, "pool": base}
+    return None
+
 
 def make_proxy_app(*, upstream: str, strip_prefix: str = ""):
     """Create an ASGI app that proxies requests to *upstream*.
@@ -28,9 +51,12 @@ def make_proxy_app(*, upstream: str, strip_prefix: str = ""):
 class _HttpxProxy:
     """Pure-ASGI reverse proxy backed by ``httpx.AsyncClient``."""
 
-    def __init__(self, *, upstream: str, strip_prefix: str = ""):
+    def __init__(
+        self, *, upstream: str, strip_prefix: str = "", timeout: float = _DEFAULT_TIMEOUT_S
+    ):
         self.upstream = upstream.rstrip("/")
         self.strip_prefix = strip_prefix
+        self.timeout = timeout
         self._client: Optional[object] = None  # lazy httpx.AsyncClient
 
     async def _get_client(self):
@@ -44,7 +70,7 @@ class _HttpxProxy:
                 ) from None
             self._client = httpx.AsyncClient(
                 base_url=self.upstream,
-                timeout=60.0,
+                timeout=self.timeout,
                 follow_redirects=False,
             )
         return self._client
@@ -94,6 +120,13 @@ class _HttpxProxy:
             headers=headers,
             content=body,
         )
+
+        # SSE / streaming upstreams must not be cut off by the read timeout —
+        # see _request_timeout. Override per-request so an idle event stream
+        # stays open instead of dropping every `self.timeout` seconds.
+        timeout_override = _request_timeout(headers.get("accept", ""), self.timeout)
+        if timeout_override is not None:
+            request.extensions["timeout"] = timeout_override
 
         try:
             response = await client.send(request, stream=True)
