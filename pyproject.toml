@@ -55,6 +55,14 @@ enlace = "enlace:skills_dir"
 [tool.wads.ci]
 installer = "uv"
 
+# Install the ``dev`` extra in CI — it carries ``httpx``, which
+# ``starlette.testclient`` (imported by most tests) hard-requires. Without
+# it, CI collected the suite with 12 ModuleNotFoundError: httpx errors and
+# exited 2 (the repo-wide red CI predating this change). The reusable
+# uv-ci.yml feeds this to install-deps via read-ci-config's install-extras.
+[tool.wads.ci.install]
+extras = "dev"
+
 [tool.wads.ci.testing]
 python_versions = ["3.10", "3.12"]
 coverage_enabled = false
