@@ -10,13 +10,13 @@ Non-Python apps (Node.js, Go, etc.) get spawned as supervised
 child processes and routed via reverse proxy. External services
 and static sites work too. Your apps stay independent — no code
 changes, no shared dependencies. 
-For more details, see the [Philosopy](#philosophy) section. 
+For more details, see the [Philosophy](#philosophy) section. 
 
 ## Quick start
 
 The quickest way to start is to use enlace via AI. 
 That's what we'll demo here. 
-For those want to work in CLI or python, see the late [Under the hood](#under-the-hood) sectiob. 
+For those who want to work in the CLI or Python directly, see the later [Under the hood](#under-the-hood) section. 
 
 ### Install
 
@@ -150,6 +150,9 @@ enlace serve              # Start backend (dev mode, hot reload)
 enlace show-config        # Resolved config with provenance
 enlace check              # Validate config, check route conflicts
 enlace list-apps          # Table: name, route, type, access
+enlace build [app_name]   # Run declarative frontend builds (apps with a
+                          # [build] section); explicit pre-deploy step,
+                          # never builds at request time. --dry-run to preview.
 enlace diagnose <dir>     # Analyze an app for enlace compatibility
 enlace doctor --base-url http://127.0.0.1:8000
                           # Post-deploy smoke: probe /auth/csrf and every
@@ -244,6 +247,22 @@ mode = "external"
 upstream_url = "http://192.168.1.50:3000"
 ```
 
+```toml
+# Declarative frontend build (any app with a compiled frontend)
+[build]
+install = "npm ci"                  # string or argv list
+build = "npm run build"
+env_vars = ["VITE_API_BASE"]        # vars the build honours; deployers inject values
+outputs = ["dist"]                  # optional hint of produced paths
+```
+
+`enlace build` runs these as an explicit pre-deploy step (`enlace build my_app`,
+or all apps with a `[build]` section). enlace never builds at request time and
+does not assume a toolchain — it just runs the argv the app declares, in the
+app directory, with the caller's environment plus any injected overrides
+(e.g. `VITE_API_BASE`). The app keeps a normal build whether or not enlace
+serves it, so the "apps don't know about enlace" principle holds.
+
 For process/external modes: `pip install enlace[process]`
 
 **Override precedence** (lowest → highest):
@@ -268,3 +287,33 @@ Within `asgi` mode, apps are further classified:
 | `asgi_app` | Module has callable `app` attribute | `parent.mount(prefix, sub_app)` |
 | `functions` | No `app` attr, has typed public functions | Auto-wrapped as API routes |
 | `frontend_only` | No backend entry, has `frontend/index.html` | Static file serving only |
+
+### Auth, sessions & plugins
+
+enlace itself is auth-agnostic. Cross-cutting concerns like authentication,
+sessions, and per-user storage are added by **plugins** — callables
+`(parent: FastAPI, config: PlatformConfig) -> None` invoked once after sub-apps
+are mounted:
+
+```python
+from enlace import build_backend, discover_apps
+app = build_backend(discover_apps(), plugins=[my_plugin])
+```
+
+Plugins can also be loaded by name from the `ENLACE_PLUGINS` env var
+(comma-separated). The canonical example is `enlace_auth.plugin`, which adds
+auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps
+without coupling: services are injected into the ASGI scope, so apps read
+`request.state.store` rather than importing anything from enlace. Apps can also
+condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but
+never have to.
+
+### Deploy manifest (`/_meta`)
+
+enlace answers "what is actually deployed?" via an always-on, cheap manifest
+layer. Every mounted app gets a `/_meta` endpoint (plus a platform-level
+`/_meta`), and every response carries `X-Deploy-*` headers. A deploy tool
+snapshots build identity (git SHA, deploy time, externals) at deploy time into
+`{manifest_dir}/{app}.json`; enlace owns the read paths and schema. This lets
+you tell whether the server is serving the SHA you think it is and whether the
+browser rendered the current build or a stale cache.
