@@ -81,7 +81,7 @@ class ConventionDiscoverer:
         strategy = get_strategy(declared_mode)
 
         if strategy.skip_python_introspection:
-            return self._build_non_asgi_config(
+            config = self._build_non_asgi_config(
                 name,
                 route_prefix,
                 apps_dir,
@@ -89,6 +89,7 @@ class ConventionDiscoverer:
                 toml_data,
                 declared_mode,
             )
+            return self._finalize_metadata(config, app_dir)
 
         # -- Standard asgi-mode discovery (current behavior) --
         entry_path = self._find_entry_point(app_dir)
@@ -135,6 +136,22 @@ class ConventionDiscoverer:
         if toml_data:
             config = self._apply_overrides(config, app_dir, toml_data)
 
+        return self._finalize_metadata(config, app_dir)
+
+    def _finalize_metadata(self, config: AppConfig, app_dir: Path) -> AppConfig:
+        """Bake app-declared launcher metadata onto a freshly discovered config.
+
+        Runs for *every* app on *both* discovery paths (asgi and non-asgi), so
+        external/process apps without a frontend on disk are covered too. The
+        harvest reads the manifest / ``index.html`` head / ``package.json`` /
+        ``pyproject`` / fs icon conventions; each source is a no-op when absent,
+        so this never raises on an app that only has an ``app.toml`` (or nothing).
+        """
+        from enlace.appmeta import harvest_app_metadata
+
+        updates = harvest_app_metadata(config, app_dir, config.frontend_dir)
+        if updates:
+            config = config.model_copy(update=updates)
         return config
 
     def _build_non_asgi_config(
@@ -294,8 +311,19 @@ _CORE_TOML_FIELD_MAP = {
     "shared_password_env": "shared_password_env",
     "allowed_users": "allowed_users",
     "display_name": "display_name",
+    # `title` is an alias for `display_name`. If an app.toml sets BOTH, the
+    # later key in this map wins (dict-insertion order in _overlay_toml_fields)
+    # — declaring both is an authoring mistake; no app does.
+    "title": "display_name",
     "frontend_dir": "frontend_dir",
     "mode": "mode",
+    # App-launcher metadata (see enlace.appmeta). These are the app-declared
+    # (Tier C.1) values; harvested sources fill the gaps at the tail of
+    # _discover_app.
+    "description": "description",
+    "keywords": "keywords",
+    "icon": "icon",
+    "launchable": "launchable",
 }
 
 # Core path keys (resolved relative to the app directory). Strategy-specific

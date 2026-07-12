@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.routing import Mount, Route
@@ -378,20 +378,140 @@ def _can_access(
     return False
 
 
-def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
-    """Add GET /_apps returning a JSON list filtered by the caller's access.
+def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
+    """Whether an app opens a human UI, and the URL to open.
 
-    Used by frontend landing pages (e.g. ``apps/landing/``) to render the
-    app grid. The response is deliberately minimal — just what the UI needs.
-    The landing app itself is hidden — it's the shell, not a listable app.
+    ``has_frontend`` is metadata, not the launch signal: an ``external`` proxy
+    (typola) has no local frontend but serves a working UI at its route prefix,
+    and a ``process`` connector (an MCP endpoint) has a route but no human page.
+    An explicit ``app.toml`` ``launchable`` overrides the mode-derived default.
+    """
+    has_frontend = bool(app.frontend_dir and app.frontend_dir.is_dir())
+    if app.launchable is not None:
+        launchable = app.launchable
+    elif app.mode == "external":
+        launchable = True
+    elif app.mode == "process":
+        launchable = False
+    else:
+        launchable = has_frontend
+    if not launchable:
+        return False, None
+    if has_frontend:
+        return True, f"/{app.name}/"  # the SPA mount, not the API route_prefix
+    return True, app.route_prefix.rstrip("/") + "/"  # external proxy UI
+
+
+def _overlay_entry(request: Request, name: str) -> dict:
+    """Read one app's runtime overlay record (Tier A), or ``{}`` if none.
+
+    ``app_meta_overlay`` is injected by the ``enlace_auth`` plugin; absent it
+    defaults to an empty dict, so core degrades to Tiers B/C/D with no overlay.
+    """
+    overlay = getattr(request.app.state, "app_meta_overlay", None)
+    if overlay is None:
+        return {}
+    try:
+        rec = overlay.get(name, {})
+    except Exception:  # a flaky store must never break the listing
+        return {}
+    return rec if isinstance(rec, dict) else {}
+
+
+def _resolved_app_meta(app: AppConfig, config: PlatformConfig, overlay: dict) -> dict:
+    """Resolve an app's launcher fields across Tier A (overlay) / B / C / D.
+
+    Returns the display_name, description, keywords (+ per-tier sources), and
+    icon_url for one ``/_apps`` item.
+    """
+    from enlace import appmeta
+
+    tier_b = config.app_meta.apps.get(app.name)
+    b_name = tier_b.display_name if tier_b else None
+    b_desc = tier_b.description if tier_b else None
+    b_icon = tier_b.icon if tier_b else None
+    b_keywords = tier_b.keywords if tier_b else []
+
+    display_name = overlay.get("display_name") or b_name or app.display_name
+    description = overlay.get("description") or b_desc or app.description or ""
+
+    keywords, sources = appmeta.resolve_keywords(
+        app_keywords=app.keywords,
+        platform_keywords=b_keywords,
+        overlay_keywords=overlay.get("keywords", []),
+    )
+
+    icon_spec = (
+        overlay.get("icon") or b_icon or app.icon or config.app_meta.default_icon or ""
+    )
+    # token_only: the listing needs only the ?v= cache token, not the icon bytes,
+    # so a file-backed icon is stat'd, not read (27 apps × every /_apps hit).
+    icon = appmeta.resolve_icon(
+        icon_spec,
+        app_name=app.name,
+        display_name=display_name,
+        app_dir=appmeta.app_dir_of(app),
+        token_only=True,
+    )
+    return {
+        "display_name": display_name,
+        "description": description,
+        "keywords": keywords,
+        "keyword_sources": sources,
+        "icon_url": f"/_apps/{app.name}/icon?v={icon.token}",
+    }
+
+
+def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -> dict:
+    """Build one ``/_apps`` item: resolved metadata + launchability, for an app.
+
+    Public (unlike the ``_``-helpers) so the ``enlace_auth`` plugin's
+    metadata-edit endpoints can return the *identical* item shape after a
+    mutation — single source of truth for the item contract. ``overlay`` is the
+    app's Tier-A record (``{}`` if none).
+    """
+    launchable, launch_url = _app_launch(app)
+    resolved = _resolved_app_meta(app, config, overlay)
+    return {
+        "name": app.name,
+        "display_name": resolved["display_name"],
+        "description": resolved["description"],
+        "keywords": resolved["keywords"],
+        "keyword_sources": resolved["keyword_sources"],
+        "icon_url": resolved["icon_url"],
+        "route": f"/{app.name}/",  # back-compat; new landing ignores
+        "api_route": app.route_prefix,
+        "access": app.access,
+        "has_frontend": bool(app.frontend_dir and app.frontend_dir.is_dir()),
+        "has_api": app.app_type != "frontend_only",
+        "launchable": launchable,
+        "launch_url": launch_url,
+    }
+
+
+def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
+    """Add GET /_apps (+ per-app icon route) for the launcher UI.
+
+    ``/_apps`` returns the resolved launcher metadata for every app the caller
+    can see; the landing app itself is hidden (it's the shell, not a listable
+    app). ``/_apps/{name}/icon`` serves each app's icon through the platform so
+    that even an auth-gated app's icon renders for an anonymous viewer who is
+    allowed to *see* the app in the list. New fields are purely additive, so an
+    older landing UI keeps working.
     """
     apps = config.apps
     landing_name = config.landing_app
+    apps_by_name = {a.name: a for a in apps}
 
     @parent.get("/_apps")
     async def apps_listing(request: Request) -> dict:
         user_id = getattr(request.state, "user_id", None)
         user_email = getattr(request.state, "user_email", None)
+        can_edit_fn = getattr(request.app.state, "app_meta_can_edit", None)
+        can_edit_meta = (
+            bool(can_edit_fn(user_email)) if callable(can_edit_fn) else False
+        )
+
         items = []
         for app in apps:
             if app.name == landing_name:
@@ -399,22 +519,74 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
             if not _can_access(app.access, user_id, user_email, app.allowed_users):
                 continue
             items.append(
-                {
-                    "name": app.name,
-                    "display_name": app.display_name,
-                    "route": f"/{app.name}/",
-                    "api_route": app.route_prefix,
-                    "access": app.access,
-                    "has_frontend": bool(
-                        app.frontend_dir and app.frontend_dir.is_dir()
-                    ),
-                    "has_api": app.app_type != "frontend_only",
-                }
+                build_launcher_item(app, config, _overlay_entry(request, app.name))
             )
         return {
             "apps": items,
             "user": {"id": user_id, "email": user_email} if user_id else None,
+            "can_edit_meta": can_edit_meta,
         }
+
+    @parent.get("/_apps/{name}/icon")
+    async def app_icon(name: str, request: Request) -> Response:
+        from enlace import appmeta
+
+        user_id = getattr(request.state, "user_id", None)
+        user_email = getattr(request.state, "user_email", None)
+        app = apps_by_name.get(name)
+        # Access check FIRST, and a uniform 404 for unknown-or-forbidden — the
+        # icon endpoint must not be an oracle for apps the caller can't see.
+        if (
+            app is None
+            or app.name == landing_name
+            or not _can_access(app.access, user_id, user_email, app.allowed_users)
+        ):
+            return Response(status_code=404)
+
+        overlay = _overlay_entry(request, name)
+        tier_b = config.app_meta.apps.get(name)
+        icon_spec = (
+            overlay.get("icon")
+            or (tier_b.icon if tier_b else None)
+            or app.icon
+            or config.app_meta.default_icon
+            or ""
+        )
+        display_name = (
+            overlay.get("display_name")
+            or (tier_b.display_name if tier_b else None)
+            or app.display_name
+        )
+        icon = appmeta.resolve_icon(
+            icon_spec,
+            app_name=name,
+            display_name=display_name,
+            app_dir=appmeta.app_dir_of(app),
+        )
+        if icon.redirect_url:
+            # We don't control the remote bytes ⇒ never mark immutable.
+            return RedirectResponse(
+                icon.redirect_url,
+                status_code=307,
+                headers={"Cache-Control": "no-store"},
+            )
+        cache = "public, max-age=31536000, immutable" if icon.immutable else "no-store"
+        # An icon may be an SVG (generated monogram/glyph, or an editor-supplied
+        # file/data-URI). nosniff does NOT stop script in an SVG loaded as a
+        # *document*; this CSP neutralises any embedded script if someone
+        # navigates directly to the icon URL. Inert on the grid's <img> load,
+        # which never executes SVG script anyway.
+        icon_csp = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+        return Response(
+            content=icon.body,
+            media_type=icon.content_type,
+            headers={
+                "ETag": f'"{icon.token}"',
+                "X-Content-Type-Options": "nosniff",
+                "Content-Security-Policy": icon_csp,
+                "Cache-Control": cache,
+            },
+        )
 
 
 def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
