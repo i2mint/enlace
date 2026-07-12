@@ -31,7 +31,7 @@ def test_plugin_router_root_redirects_bare_prefix(single_app_dir):
 
     r = client.get("/_admin", follow_redirects=False)
     assert r.status_code == 307
-    assert r.headers["location"] == "/_admin/"
+    assert r.headers["location"].endswith("/_admin/")  # newer httpx returns absolute
     assert client.get("/_admin/").json() == {"ok": True}
 
 
