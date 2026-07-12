@@ -26,6 +26,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from enlace.appmeta import AppMetaConfig
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -124,6 +126,17 @@ class AppConfig(BaseModel):
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
 
+    # App-launcher metadata. Resolved at discovery from app.toml + harvested
+    # sources (manifest, index.html <head>, package.json, pyproject) — see
+    # enlace.appmeta. `keywords` is the union of every app-declared source;
+    # `icon` is an app-dir-relative path, an emoji/glyph, a data: URI, an
+    # absolute https URL, or "" (⇒ a generated monogram at serve time).
+    # `launchable=None` means "derive from mode" (see compose._app_launch).
+    description: str = ""
+    keywords: list[str] = Field(default_factory=list)
+    icon: str = ""
+    launchable: Optional[bool] = None
+
     # Mode: how this app is served (orthogonal to app_type which is what was
     # detected). Free-form string validated against the strategy registry —
     # see ``enlace.strategies`` for the open/closed extension point.
@@ -214,6 +227,11 @@ class PlatformConfig(BaseModel):
     # without enlace having to know the schema.
     auth: dict[str, Any] = Field(default_factory=dict)
     stores: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    # App-launcher metadata config (platform.toml [app_meta]). `default_icon`
+    # and `apps` (Tier B static overrides) are read by enlace core; `editors`
+    # and `store_path` are carried for the enlace_auth plugin (the editable
+    # overlay's authz + persistence), which enlace core never interprets.
+    app_meta: AppMetaConfig = Field(default_factory=AppMetaConfig)
 
     @model_validator(mode="after")
     def _normalize_dirs(self):
@@ -273,6 +291,10 @@ class PlatformConfig(BaseModel):
         stores_data = data.get("stores")
         if stores_data is not None:
             platform_data["stores"] = stores_data
+        # [app_meta] table — the app-launcher metadata config.
+        app_meta_data = data.get("app_meta")
+        if app_meta_data is not None:
+            platform_data["app_meta"] = app_meta_data
 
         # Resolve relative path-like fields against the TOML file's own
         # directory (not the CWD), so the config is host-portable. Done
@@ -289,6 +311,12 @@ class PlatformConfig(BaseModel):
         for key in ("shared_assets_dir", "apps_dir", "manifest_dir"):
             if key in platform_data:
                 platform_data[key] = _resolve(platform_data[key])
+        # [app_meta].store_path is path-like too; resolve it against the TOML
+        # dir for the same host-portability reason (a ~-prefixed/absolute value
+        # is left as-is by _resolve).
+        app_meta = platform_data.get("app_meta")
+        if isinstance(app_meta, dict) and app_meta.get("store_path"):
+            app_meta["store_path"] = _resolve(app_meta["store_path"])
 
         # Environment variable overrides
         env_apps_dirs = os.environ.get("ENLACE_APPS_DIRS", "")

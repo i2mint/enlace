@@ -456,6 +456,93 @@ def doctor(
         sys.exit(1)
 
 
+def app_meta(
+    *,
+    json: bool = False,
+    apps_dir: str = "",
+    apps_dirs: str = "",
+    app_dirs: str = "",
+):
+    """Show each app's resolved launcher metadata + provenance (title, keywords, icon).
+
+    A local migration/debug aid: it re-harvests from the filesystem, so it
+    reflects live edits without a server restart, and prints the provenance
+    (which source each value came from). This is a LOCAL CLI, not an HTTP
+    surface — it may show absolute filesystem paths, which the ``/_apps``
+    endpoint deliberately never exposes.
+
+    Args:
+        json: Output as JSON.
+        apps_dir: Path to the apps directory.
+        apps_dirs: Comma-separated container directories.
+        app_dirs: Comma-separated individual app directories.
+    """
+    from enlace import appmeta
+
+    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    default_icon = config.app_meta.default_icon
+
+    records = []
+    for app in config.apps:
+        tier_b = config.app_meta.apps.get(app.name)
+        b_keywords = tier_b.keywords if tier_b else []
+        merged, sources = appmeta.resolve_keywords(
+            app_keywords=app.keywords,
+            platform_keywords=b_keywords,
+            overlay_keywords=[],  # overlay lives in the plugin store, not here
+        )
+        icon_spec = (tier_b.icon if tier_b else None) or app.icon or default_icon or ""
+        icon = appmeta.resolve_icon(
+            icon_spec,
+            app_name=app.name,
+            display_name=app.display_name,
+            app_dir=appmeta.app_dir_of(app),
+        )
+        icon_kind = (
+            "redirect"
+            if icon.redirect_url
+            else ("monogram" if not icon_spec else icon_spec)
+        )
+        records.append(
+            {
+                "name": app.name,
+                "display_name": app.display_name,
+                "description": app.description,
+                "keywords": merged,
+                "keyword_sources": sources,
+                "icon": icon_spec or "(monogram)",
+                "icon_kind": icon_kind,
+                "icon_content_type": icon.content_type or "redirect",
+                "provenance": {
+                    k: app.provenance.get(k)
+                    for k in ("display_name", "description", "keywords", "icon")
+                    if app.provenance.get(k)
+                },
+            }
+        )
+
+    if json:
+        print(json_module.dumps(records, indent=2))
+        return
+
+    if not records:
+        print("No apps discovered.")
+        return
+    for r in records:
+        prov = r["provenance"]
+        src = r["keyword_sources"]
+        title_src = prov.get("display_name", "derived")
+        desc = r["description"] or "(none)"
+        icon_src = prov.get("icon", "derived")
+        print(f"{r['name']}")
+        print(f"    title:       {r['display_name']}  [{title_src}]")
+        print(f"    description: {desc}  [{prov.get('description', 'none')}]")
+        print(f"    keywords:    {', '.join(r['keywords']) or '(none)'}")
+        print(f"       app={src['app']} platform={src['platform']}")
+        print(f"    icon:        {r['icon']}  [{icon_src}] -> {r['icon_content_type']}")
+        print()
+
+
 def main():
     argh.dispatch_commands(
         [
@@ -463,6 +550,7 @@ def main():
             show_config,
             check,
             list_apps,
+            app_meta,
             build,
             diagnose,
             doctor,
