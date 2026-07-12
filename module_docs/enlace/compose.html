@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.23 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.24 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=20522496"></script>
+      <script src="../../_static/documentation_options.js?v=ebdbb45b"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -51,11 +51,13 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build.html">enlace.build</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.compose</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.compose.EnlaceConfigError"><code class="docutils literal notranslate"><span class="pre">EnlaceConfigError</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.compose.build_backend"><code class="docutils literal notranslate"><span class="pre">build_backend()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.compose.build_launcher_item"><code class="docutils literal notranslate"><span class="pre">build_launcher_item()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.compose.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
 </ul>
 </li>
@@ -69,6 +71,7 @@
 <li class="toctree-l1"><a class="reference internal" href="strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
@@ -150,6 +153,16 @@ target this specific class.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="enlace.compose.build_launcher_item">
+<span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">build_launcher_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.AppConfig" title="enlace.base.AppConfig"><span class="pre">AppConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/enlace/compose.html#build_launcher_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.build_launcher_item" title="Link to this definition"></a></dt>
+<dd><p>Build one <code class="docutils literal notranslate"><span class="pre">/_apps</span></code> item: resolved metadata + launchability, for an app.</p>
+<p>Public (unlike the <code class="docutils literal notranslate"><span class="pre">_</span></code>-helpers) so the <code class="docutils literal notranslate"><span class="pre">enlace_auth</span></code> plugin’s
+metadata-edit endpoints can return the <em>identical</em> item shape after a
+mutation — single source of truth for the item contract. <code class="docutils literal notranslate"><span class="pre">overlay</span></code> is the
+app’s Tier-A record (<code class="docutils literal notranslate"><span class="pre">{}</span></code> if none).</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="enlace.compose.create_app">
 <span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">create_app</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FastAPI</span></span></span><a class="reference internal" href="../../_modules/enlace/compose.html#create_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.create_app" title="Link to this definition"></a></dt>
 <dd><p>App factory for Uvicorn’s –factory flag.</p>
@@ -177,7 +190,7 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright NO COPYRIGHT.</p>
+    <p></p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

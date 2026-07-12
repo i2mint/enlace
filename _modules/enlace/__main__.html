@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.23 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.24 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=20522496"></script>
+      <script src="../../_static/documentation_options.js?v=ebdbb45b"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -48,6 +48,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
@@ -577,6 +579,96 @@
 
 
 
+<div class="viewcode-block" id="app_meta">
+<a class="viewcode-back" href="../../module_docs/enlace/__main__.html#enlace.__main__.app_meta">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">app_meta</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Show each app&#39;s resolved launcher metadata + provenance (title, keywords, icon).</span>
+
+<span class="sd">    A local migration/debug aid: it re-harvests from the filesystem, so it</span>
+<span class="sd">    reflects live edits without a server restart, and prints the provenance</span>
+<span class="sd">    (which source each value came from). This is a LOCAL CLI, not an HTTP</span>
+<span class="sd">    surface — it may show absolute filesystem paths, which the ``/_apps``</span>
+<span class="sd">    endpoint deliberately never exposes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        json: Output as JSON.</span>
+<span class="sd">        apps_dir: Path to the apps directory.</span>
+<span class="sd">        apps_dirs: Comma-separated container directories.</span>
+<span class="sd">        app_dirs: Comma-separated individual app directories.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">appmeta</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
+    <span class="n">default_icon</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">default_icon</span>
+
+    <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">tier_b</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">b_keywords</span> <span class="o">=</span> <span class="n">tier_b</span><span class="o">.</span><span class="n">keywords</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">merged</span><span class="p">,</span> <span class="n">sources</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_keywords</span><span class="p">(</span>
+            <span class="n">app_keywords</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">keywords</span><span class="p">,</span>
+            <span class="n">platform_keywords</span><span class="o">=</span><span class="n">b_keywords</span><span class="p">,</span>
+            <span class="n">overlay_keywords</span><span class="o">=</span><span class="p">[],</span>  <span class="c1"># overlay lives in the plugin store, not here</span>
+        <span class="p">)</span>
+        <span class="n">icon_spec</span> <span class="o">=</span> <span class="p">(</span><span class="n">tier_b</span><span class="o">.</span><span class="n">icon</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span> <span class="ow">or</span> <span class="n">default_icon</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">icon</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_icon</span><span class="p">(</span>
+            <span class="n">icon_spec</span><span class="p">,</span>
+            <span class="n">app_name</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">display_name</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
+            <span class="n">app_dir</span><span class="o">=</span><span class="n">appmeta</span><span class="o">.</span><span class="n">app_dir_of</span><span class="p">(</span><span class="n">app</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">icon_kind</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;redirect&quot;</span>
+            <span class="k">if</span> <span class="n">icon</span><span class="o">.</span><span class="n">redirect_url</span>
+            <span class="k">else</span> <span class="p">(</span><span class="s2">&quot;monogram&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">icon_spec</span> <span class="k">else</span> <span class="n">icon_spec</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="n">merged</span><span class="p">,</span>
+                <span class="s2">&quot;keyword_sources&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
+                <span class="s2">&quot;icon&quot;</span><span class="p">:</span> <span class="n">icon_spec</span> <span class="ow">or</span> <span class="s2">&quot;(monogram)&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;icon_kind&quot;</span><span class="p">:</span> <span class="n">icon_kind</span><span class="p">,</span>
+                <span class="s2">&quot;icon_content_type&quot;</span><span class="p">:</span> <span class="n">icon</span><span class="o">.</span><span class="n">content_type</span> <span class="ow">or</span> <span class="s2">&quot;redirect&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;provenance&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="n">k</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="s2">&quot;icon&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="p">},</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">json</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json_module</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">records</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No apps discovered.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
+        <span class="n">prov</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;provenance&quot;</span><span class="p">]</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;keyword_sources&quot;</span><span class="p">]</span>
+        <span class="n">title_src</span> <span class="o">=</span> <span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">,</span> <span class="s2">&quot;derived&quot;</span><span class="p">)</span>
+        <span class="n">desc</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;(none)&quot;</span>
+        <span class="n">icon_src</span> <span class="o">=</span> <span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">,</span> <span class="s2">&quot;derived&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    title:       </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;display_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">title_src</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    description: </span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;none&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    keywords:    </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;keywords&#39;</span><span class="p">])</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;(none)&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;       app=</span><span class="si">{</span><span class="n">src</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> platform=</span><span class="si">{</span><span class="n">src</span><span class="p">[</span><span class="s1">&#39;platform&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    icon:        </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;icon&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">icon_src</span><span class="si">}</span><span class="s2">] -&gt; </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;icon_content_type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">argh</span><span class="o">.</span><span class="n">dispatch_commands</span><span class="p">(</span>
         <span class="p">[</span>
@@ -584,6 +676,7 @@
             <span class="n">show_config</span><span class="p">,</span>
             <span class="n">check</span><span class="p">,</span>
             <span class="n">list_apps</span><span class="p">,</span>
+            <span class="n">app_meta</span><span class="p">,</span>
             <span class="n">build</span><span class="p">,</span>
             <span class="n">diagnose</span><span class="p">,</span>
             <span class="n">doctor</span><span class="p">,</span>
@@ -602,7 +695,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright NO COPYRIGHT.</p>
+    <p></p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

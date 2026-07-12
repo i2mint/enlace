@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.23 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.24 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=20522496"></script>
+      <script src="../../_static/documentation_options.js?v=ebdbb45b"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -48,6 +48,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
@@ -126,7 +128,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span><span class="p">,</span> <span class="n">Response</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.cors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.gzip</span><span class="w"> </span><span class="kn">import</span> <span class="n">GZipMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mount</span><span class="p">,</span> <span class="n">Route</span>
@@ -487,20 +489,143 @@
     <span class="k">return</span> <span class="kc">False</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add GET /_apps returning a JSON list filtered by the caller&#39;s access.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_app_launch</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether an app opens a human UI, and the URL to open.</span>
 
-<span class="sd">    Used by frontend landing pages (e.g. ``apps/landing/``) to render the</span>
-<span class="sd">    app grid. The response is deliberately minimal — just what the UI needs.</span>
-<span class="sd">    The landing app itself is hidden — it&#39;s the shell, not a listable app.</span>
+<span class="sd">    ``has_frontend`` is metadata, not the launch signal: an ``external`` proxy</span>
+<span class="sd">    (typola) has no local frontend but serves a working UI at its route prefix,</span>
+<span class="sd">    and a ``process`` connector (an MCP endpoint) has a route but no human page.</span>
+<span class="sd">    An explicit ``app.toml`` ``launchable`` overrides the mode-derived default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">has_frontend</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">launchable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">launchable</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">launchable</span>
+    <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;external&quot;</span><span class="p">:</span>
+        <span class="n">launchable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span><span class="p">:</span>
+        <span class="n">launchable</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">launchable</span> <span class="o">=</span> <span class="n">has_frontend</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">launchable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">has_frontend</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span>  <span class="c1"># the SPA mount, not the API route_prefix</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>  <span class="c1"># external proxy UI</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read one app&#39;s runtime overlay record (Tier A), or ``{}`` if none.</span>
+
+<span class="sd">    ``app_meta_overlay`` is injected by the ``enlace_auth`` plugin; absent it</span>
+<span class="sd">    defaults to an empty dict, so core degrades to Tiers B/C/D with no overlay.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">overlay</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;app_meta_overlay&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">overlay</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">rec</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># a flaky store must never break the listing</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">rec</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolved_app_meta</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span> <span class="n">overlay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve an app&#39;s launcher fields across Tier A (overlay) / B / C / D.</span>
+
+<span class="sd">    Returns the display_name, description, keywords (+ per-tier sources), and</span>
+<span class="sd">    icon_url for one ``/_apps`` item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">appmeta</span>
+
+    <span class="n">tier_b</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">b_name</span> <span class="o">=</span> <span class="n">tier_b</span><span class="o">.</span><span class="n">display_name</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">b_desc</span> <span class="o">=</span> <span class="n">tier_b</span><span class="o">.</span><span class="n">description</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">b_icon</span> <span class="o">=</span> <span class="n">tier_b</span><span class="o">.</span><span class="n">icon</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">b_keywords</span> <span class="o">=</span> <span class="n">tier_b</span><span class="o">.</span><span class="n">keywords</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="p">[]</span>
+
+    <span class="n">display_name</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_name</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_desc</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">keywords</span><span class="p">,</span> <span class="n">sources</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_keywords</span><span class="p">(</span>
+        <span class="n">app_keywords</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">keywords</span><span class="p">,</span>
+        <span class="n">platform_keywords</span><span class="o">=</span><span class="n">b_keywords</span><span class="p">,</span>
+        <span class="n">overlay_keywords</span><span class="o">=</span><span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="p">[]),</span>
+    <span class="p">)</span>
+
+    <span class="n">icon_spec</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_icon</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">default_icon</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span>
+    <span class="c1"># token_only: the listing needs only the ?v= cache token, not the icon bytes,</span>
+    <span class="c1"># so a file-backed icon is stat&#39;d, not read (27 apps × every /_apps hit).</span>
+    <span class="n">icon</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_icon</span><span class="p">(</span>
+        <span class="n">icon_spec</span><span class="p">,</span>
+        <span class="n">app_name</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">display_name</span><span class="o">=</span><span class="n">display_name</span><span class="p">,</span>
+        <span class="n">app_dir</span><span class="o">=</span><span class="n">appmeta</span><span class="o">.</span><span class="n">app_dir_of</span><span class="p">(</span><span class="n">app</span><span class="p">),</span>
+        <span class="n">token_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">display_name</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">description</span><span class="p">,</span>
+        <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="n">keywords</span><span class="p">,</span>
+        <span class="s2">&quot;keyword_sources&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
+        <span class="s2">&quot;icon_url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;/_apps/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/icon?v=</span><span class="si">{</span><span class="n">icon</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<div class="viewcode-block" id="build_launcher_item">
+<a class="viewcode-back" href="../../module_docs/enlace/compose.html#enlace.build_launcher_item">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_launcher_item</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span> <span class="n">overlay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build one ``/_apps`` item: resolved metadata + launchability, for an app.</span>
+
+<span class="sd">    Public (unlike the ``_``-helpers) so the ``enlace_auth`` plugin&#39;s</span>
+<span class="sd">    metadata-edit endpoints can return the *identical* item shape after a</span>
+<span class="sd">    mutation — single source of truth for the item contract. ``overlay`` is the</span>
+<span class="sd">    app&#39;s Tier-A record (``{}`` if none).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">launchable</span><span class="p">,</span> <span class="n">launch_url</span> <span class="o">=</span> <span class="n">_app_launch</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">_resolved_app_meta</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">overlay</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;display_name&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;keywords&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;keyword_sources&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;keyword_sources&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;icon_url&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;icon_url&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;route&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>  <span class="c1"># back-compat; new landing ignores</span>
+        <span class="s2">&quot;api_route&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
+        <span class="s2">&quot;access&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
+        <span class="s2">&quot;has_frontend&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()),</span>
+        <span class="s2">&quot;has_api&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">&quot;frontend_only&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;launchable&quot;</span><span class="p">:</span> <span class="n">launchable</span><span class="p">,</span>
+        <span class="s2">&quot;launch_url&quot;</span><span class="p">:</span> <span class="n">launch_url</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add GET /_apps (+ per-app icon route) for the launcher UI.</span>
+
+<span class="sd">    ``/_apps`` returns the resolved launcher metadata for every app the caller</span>
+<span class="sd">    can see; the landing app itself is hidden (it&#39;s the shell, not a listable</span>
+<span class="sd">    app). ``/_apps/{name}/icon`` serves each app&#39;s icon through the platform so</span>
+<span class="sd">    that even an auth-gated app&#39;s icon renders for an anonymous viewer who is</span>
+<span class="sd">    allowed to *see* the app in the list. New fields are purely additive, so an</span>
+<span class="sd">    older landing UI keeps working.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">apps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
     <span class="n">landing_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">landing_app</span>
+    <span class="n">apps_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">}</span>
 
     <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_apps&quot;</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apps_listing</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_email&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">can_edit_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;app_meta_can_edit&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">can_edit_meta</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">bool</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">(</span><span class="n">user_email</span><span class="p">))</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">)</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="p">)</span>
+
         <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_name</span><span class="p">:</span>
@@ -508,22 +633,74 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">user_email</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">allowed_users</span><span class="p">):</span>
                 <span class="k">continue</span>
             <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
-                    <span class="s2">&quot;route&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;api_route&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
-                    <span class="s2">&quot;access&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
-                    <span class="s2">&quot;has_frontend&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span>
-                        <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
-                    <span class="p">),</span>
-                    <span class="s2">&quot;has_api&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">&quot;frontend_only&quot;</span><span class="p">,</span>
-                <span class="p">}</span>
+                <span class="n">build_launcher_item</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="s2">&quot;apps&quot;</span><span class="p">:</span> <span class="n">items</span><span class="p">,</span>
             <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">user_email</span><span class="p">}</span> <span class="k">if</span> <span class="n">user_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;can_edit_meta&quot;</span><span class="p">:</span> <span class="n">can_edit_meta</span><span class="p">,</span>
         <span class="p">}</span>
+
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_apps/</span><span class="si">{name}</span><span class="s2">/icon&quot;</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">app_icon</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">appmeta</span>
+
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_email&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">apps_by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="c1"># Access check FIRST, and a uniform 404 for unknown-or-forbidden — the</span>
+        <span class="c1"># icon endpoint must not be an oracle for apps the caller can&#39;t see.</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">app</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_name</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">user_email</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">allowed_users</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">)</span>
+
+        <span class="n">overlay</span> <span class="o">=</span> <span class="n">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">tier_b</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">icon_spec</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">tier_b</span><span class="o">.</span><span class="n">icon</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span>
+            <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">default_icon</span>
+            <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="p">)</span>
+        <span class="n">display_name</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">tier_b</span><span class="o">.</span><span class="n">display_name</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span>
+        <span class="p">)</span>
+        <span class="n">icon</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_icon</span><span class="p">(</span>
+            <span class="n">icon_spec</span><span class="p">,</span>
+            <span class="n">app_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">display_name</span><span class="o">=</span><span class="n">display_name</span><span class="p">,</span>
+            <span class="n">app_dir</span><span class="o">=</span><span class="n">appmeta</span><span class="o">.</span><span class="n">app_dir_of</span><span class="p">(</span><span class="n">app</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">icon</span><span class="o">.</span><span class="n">redirect_url</span><span class="p">:</span>
+            <span class="c1"># We don&#39;t control the remote bytes ⇒ never mark immutable.</span>
+            <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span>
+                <span class="n">icon</span><span class="o">.</span><span class="n">redirect_url</span><span class="p">,</span>
+                <span class="n">status_code</span><span class="o">=</span><span class="mi">307</span><span class="p">,</span>
+                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Cache-Control&quot;</span><span class="p">:</span> <span class="s2">&quot;no-store&quot;</span><span class="p">},</span>
+            <span class="p">)</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="s2">&quot;public, max-age=31536000, immutable&quot;</span> <span class="k">if</span> <span class="n">icon</span><span class="o">.</span><span class="n">immutable</span> <span class="k">else</span> <span class="s2">&quot;no-store&quot;</span>
+        <span class="c1"># An icon may be an SVG (generated monogram/glyph, or an editor-supplied</span>
+        <span class="c1"># file/data-URI). nosniff does NOT stop script in an SVG loaded as a</span>
+        <span class="c1"># *document*; this CSP neutralises any embedded script if someone</span>
+        <span class="c1"># navigates directly to the icon URL. Inert on the grid&#39;s &lt;img&gt; load,</span>
+        <span class="c1"># which never executes SVG script anyway.</span>
+        <span class="n">icon_csp</span> <span class="o">=</span> <span class="s2">&quot;default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; sandbox&quot;</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">(</span>
+            <span class="n">content</span><span class="o">=</span><span class="n">icon</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
+            <span class="n">media_type</span><span class="o">=</span><span class="n">icon</span><span class="o">.</span><span class="n">content_type</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;ETag&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">icon</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
+                <span class="s2">&quot;X-Content-Type-Options&quot;</span><span class="p">:</span> <span class="s2">&quot;nosniff&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Content-Security-Policy&quot;</span><span class="p">:</span> <span class="n">icon_csp</span><span class="p">,</span>
+                <span class="s2">&quot;Cache-Control&quot;</span><span class="p">:</span> <span class="n">cache</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -737,7 +914,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright NO COPYRIGHT.</p>
+    <p></p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

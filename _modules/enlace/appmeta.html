@@ -1,0 +1,973 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.appmeta &mdash; enlace 0.1.24 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ebdbb45b"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/appmeta.html">enlace.appmeta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/build.html">enlace.build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/manifest.html">enlace.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../enlace.html">enlace</a></li>
+      <li class="breadcrumb-item active">enlace.appmeta</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for enlace.appmeta</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.</span>
+
+<span class="sd">This module gives every discovered app a *title*, a *description*, a set of</span>
+<span class="sd">*keywords*, and an *icon* — assembled from the standard places an app already</span>
+<span class="sd">declares that information, so that a launcher UI can present a searchable grid</span>
+<span class="sd">of apps without each app having to be hand-registered.</span>
+
+<span class="sd">Two things live here:</span>
+
+<span class="sd">1. **Harvest + resolve** (`harvest_app_metadata`) — at *discovery* time, read the</span>
+<span class="sd">   app-declared metadata from, in precedence order, ``app.toml`` → a Web App</span>
+<span class="sd">   Manifest → the ``index.html`` ``&lt;head&gt;`` → ``package.json`` → ``pyproject.toml``</span>
+<span class="sd">   → filesystem icon conventions, and bake the resolved values onto the</span>
+<span class="sd">   ``AppConfig``. Scalars are first-non-empty-wins; keywords are *unioned* across</span>
+<span class="sd">   every source (so app-declared keywords accumulate rather than overwrite).</span>
+
+<span class="sd">2. **Icon rendering** (`resolve_icon`) — at *request* time, turn an app&#39;s icon</span>
+<span class="sd">   spec (an emoji, a relative image path, a ``data:`` URI, an absolute URL, or</span>
+<span class="sd">   nothing) into bytes to serve (or a redirect). An unset icon falls back to a</span>
+<span class="sd">   deterministic, font-guaranteed letter *monogram* on a name-hashed gradient, so</span>
+<span class="sd">   a grid of many apps reads as one coherent system rather than a wall of</span>
+<span class="sd">   placeholders.</span>
+
+<span class="sd">Layering note: this module is pure read-model. The *editable* overlay (a</span>
+<span class="sd">runtime store of owner-added keywords / icon overrides) and its HTTP write</span>
+<span class="sd">surface live in the ``enlace_auth`` plugin, not here — enlace core never mutates</span>
+<span class="sd">metadata. Core only *reads* an injected overlay mapping via ``request.app.state``</span>
+<span class="sd">(see ``enlace.compose``).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">binascii</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">html.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLParser</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="k">try</span><span class="p">:</span>  <span class="c1"># Python 3.11+ has tomllib; fall back to tomli for the pyproject harvester.</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">tomllib</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover - exercised only on &lt;3.11</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">tomli</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tomllib</span>  <span class="c1"># type: ignore[no-redef]</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+        <span class="n">tomllib</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Config models (Tier B: platform.toml [app_meta])</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="AppMetaEntry">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.AppMetaEntry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AppMetaEntry</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-app static override from ``platform.toml`` (``[app_meta.apps.&lt;name&gt;]``).</span>
+
+<span class="sd">    The platform owner&#39;s static layer, applied on top of app-declared metadata.</span>
+<span class="sd">    ``keywords`` here are *added* to the app&#39;s own (union), not replaced; the</span>
+<span class="sd">    scalar fields override first-non-empty-wins if set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">display_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">description</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">keywords</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">icon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="AppMetaConfig">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.AppMetaConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AppMetaConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The ``[app_meta]`` table of ``platform.toml``.</span>
+
+<span class="sd">    ``default_icon`` and ``apps`` are consumed by enlace core (read model).</span>
+<span class="sd">    ``editors`` and ``store_path`` are *held but not acted on* by core — the</span>
+<span class="sd">    ``enlace_auth`` plugin reads them to gate and persist the runtime overlay,</span>
+<span class="sd">    mirroring how ``PlatformConfig.auth`` / ``.stores`` are carried for the</span>
+<span class="sd">    plugin without core interpreting them.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">apps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AppMetaEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">editors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">store_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Harvesting (Tier C — app-declared, resolved at discovery)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1"># Read-size cap for any harvested source file: enough for a real &lt;head&gt; or</span>
+<span class="c1"># manifest, small enough that a pathological file can&#39;t stall discovery.</span>
+<span class="n">_MAX_HARVEST_BYTES</span> <span class="o">=</span> <span class="mi">256</span> <span class="o">*</span> <span class="mi">1024</span>
+
+<span class="c1"># Web App Manifest filenames, in the order we probe for them.</span>
+<span class="n">_MANIFEST_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;manifest.webmanifest&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest.json&quot;</span><span class="p">,</span> <span class="s2">&quot;site.webmanifest&quot;</span><span class="p">)</span>
+
+<span class="c1"># Filesystem icon conventions (relative to an app / frontend dir), best first.</span>
+<span class="n">_ICON_CONVENTIONS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;icon.svg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;icon.png&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;favicon.svg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;assets/favicon-96.png&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;assets/favicon-32.png&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;apple-touch-icon.png&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;assets/apple-touch-icon.png&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;favicon.ico&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_Harvest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accumulator for one source&#39;s contribution to an app&#39;s metadata.</span>
+
+<span class="sd">    ``keywords`` union across sources; the scalars are filled first-non-empty.</span>
+<span class="sd">    ``icon`` is stored as a path/spec relative to the *app dir* so the icon</span>
+<span class="sd">    endpoint can resolve it uniformly, regardless of which source found it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">keywords</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_norm_keywords</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize a keyword iterable: strip, drop blanks, dedupe casefold-wise.</span>
+
+<span class="sd">    Keeps the first-seen surface form and a stable order — so a UI shows</span>
+<span class="sd">    &quot;Cheap Flights&quot; (as authored) but ``cheap flights`` won&#39;t appear twice.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span> <span class="ow">or</span> <span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_read_text_capped</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a text file up to the harvest cap; ``None`` on any error/oversize path.</span>
+
+<span class="sd">    Never raises — a malformed or unreadable source must degrade to &quot;absent&quot;,</span>
+<span class="sd">    never break discovery (which would take down every route).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">_MAX_HARVEST_BYTES</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_MAX_HARVEST_BYTES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rel_to_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return ``target`` as a POSIX path relative to ``app_dir``, or &quot;&quot; if outside.</span>
+
+<span class="sd">    Icon specs are always stored app-dir-relative so a single icon endpoint can</span>
+<span class="sd">    resolve them; an icon that resolves outside the app dir is discarded here.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">app_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_from_app_dir_manifest</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_Harvest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Harvest from a Web App Manifest (the W3C standard for exactly this data).&quot;&quot;&quot;</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">_Harvest</span><span class="p">(</span><span class="n">keywords</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">search_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">frontend_dir</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">search_dirs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_MANIFEST_NAMES</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">_read_text_capped</span><span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">display_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;short_name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">cats</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cats</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">h</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">_norm_keywords</span><span class="p">(</span><span class="n">cats</span><span class="p">)</span>
+            <span class="n">icon_rel</span> <span class="o">=</span> <span class="n">_best_manifest_icon</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icons&quot;</span><span class="p">),</span> <span class="n">d</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">icon_rel</span><span class="p">:</span>
+                <span class="n">h</span><span class="o">.</span><span class="n">icon</span> <span class="o">=</span> <span class="n">icon_rel</span>
+            <span class="k">return</span> <span class="n">h</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_best_manifest_icon</span><span class="p">(</span><span class="n">icons</span><span class="p">,</span> <span class="n">manifest_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the largest declared manifest icon, as an app-dir-relative path.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">icons</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">best_src</span><span class="p">,</span> <span class="n">best_area</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">icons</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;src&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">src</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">sizes</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sizes&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="c1"># A scalable icon (sizes=&quot;any&quot; or a .svg src) is preferred over any</span>
+        <span class="c1"># fixed raster — treat it as maximal area. Strict `&gt;` keeps the first</span>
+        <span class="c1"># (declaration-order) winner on ties rather than the last.</span>
+        <span class="k">if</span> <span class="s2">&quot;any&quot;</span> <span class="ow">in</span> <span class="n">sizes</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="n">src</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.svg&quot;</span><span class="p">):</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">62</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\d+)x(\d+)&quot;</span><span class="p">,</span> <span class="n">sizes</span><span class="p">)</span>
+            <span class="n">area</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">area</span> <span class="o">&gt;</span> <span class="n">best_area</span><span class="p">:</span>
+            <span class="n">best_area</span><span class="p">,</span> <span class="n">best_src</span> <span class="o">=</span> <span class="n">area</span><span class="p">,</span> <span class="n">src</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">best_src</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_rel_to_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">manifest_dir</span> <span class="o">/</span> <span class="n">best_src</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_HeadParser</span><span class="p">(</span><span class="n">HTMLParser</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract title/description/keywords/icon signals from an HTML ``&lt;head&gt;``.</span>
+
+<span class="sd">    Stops collecting once ``&lt;/head&gt;`` (or ``&lt;body&gt;``) is seen — we never need</span>
+<span class="sd">    the body, and bailing early bounds the work on a large document.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_in_title</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">application_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apple_title</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">og_title</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">og_description</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">icon_href</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apple_icon_href</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_starttag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="p">(</span><span class="n">v</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_in_title</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;meta&quot;</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">prop</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;property&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">content</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;application-name&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">application_name</span> <span class="o">=</span> <span class="n">content</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;apple-mobile-web-app-title&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">apple_title</span> <span class="o">=</span> <span class="n">content</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">content</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;keywords&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">content</span>
+            <span class="k">elif</span> <span class="n">prop</span> <span class="o">==</span> <span class="s2">&quot;og:title&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">og_title</span> <span class="o">=</span> <span class="n">content</span>
+            <span class="k">elif</span> <span class="n">prop</span> <span class="o">==</span> <span class="s2">&quot;og:description&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">og_description</span> <span class="o">=</span> <span class="n">content</span>
+        <span class="k">elif</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;link&quot;</span><span class="p">:</span>
+            <span class="n">rel</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rel&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">href</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;href&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">href</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="s2">&quot;apple-touch-icon&quot;</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">apple_icon_href</span> <span class="o">=</span> <span class="n">href</span>
+            <span class="k">elif</span> <span class="s2">&quot;icon&quot;</span> <span class="ow">in</span> <span class="n">rel</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">icon_href</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">icon_href</span> <span class="o">=</span> <span class="n">href</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_endtag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;title&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_in_title</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;head&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">done</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_in_title</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">+=</span> <span class="n">data</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_from_html_head</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_Harvest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Harvest from the served ``index.html`` ``&lt;head&gt;`` (browser/SEO metadata).</span>
+
+<span class="sd">    Prefers clean title sources (``application-name`` / ``apple-mobile-web-app-title``)</span>
+<span class="sd">    over ``&lt;title&gt;`` because the latter often carries suffixes (&quot;— Papp&quot;).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">_Harvest</span><span class="p">(</span><span class="n">keywords</span><span class="o">=</span><span class="p">[])</span>
+    <span class="k">if</span> <span class="n">frontend_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">h</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">_read_text_capped</span><span class="p">(</span><span class="n">frontend_dir</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">h</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">_HeadParser</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">feed</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># a malformed doc must never break discovery</span>
+        <span class="k">return</span> <span class="n">h</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">display_name</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">application_name</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">apple_title</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">og_title</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">og_description</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">_norm_keywords</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[,\n]&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">keywords</span><span class="p">))</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">keywords</span> <span class="k">else</span> <span class="p">[]</span>
+    <span class="n">href</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">icon_href</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">apple_icon_href</span>
+    <span class="k">if</span> <span class="n">href</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_looks_remote</span><span class="p">(</span><span class="n">href</span><span class="p">):</span>
+        <span class="c1"># hrefs are relative to the html file&#39;s directory (the frontend dir).</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">icon</span> <span class="o">=</span> <span class="n">_rel_to_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">frontend_dir</span> <span class="o">/</span> <span class="n">href</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;./&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_from_package_json</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_Harvest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Harvest name/description/keywords from a ``package.json`` (dev metadata).&quot;&quot;&quot;</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">_Harvest</span><span class="p">(</span><span class="n">keywords</span><span class="o">=</span><span class="p">[])</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">_read_text_capped</span><span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="s2">&quot;package.json&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="c1"># A scoped/prefixed package name (&quot;tw-platform-landing&quot;) is a poor title;</span>
+        <span class="c1"># take it only as a last resort and humanize it.</span>
+        <span class="n">raw_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">raw_name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">raw_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">):</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">display_name</span> <span class="o">=</span> <span class="n">raw_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keywords&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">_norm_keywords</span><span class="p">(</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">h</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_from_pyproject</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_Harvest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Harvest description/keywords from ``pyproject.toml`` ``[project]``.&quot;&quot;&quot;</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">_Harvest</span><span class="p">(</span><span class="n">keywords</span><span class="o">=</span><span class="p">[])</span>
+    <span class="k">if</span> <span class="n">tomllib</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">h</span>
+    <span class="n">text_path</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;pyproject.toml&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="n">text_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&gt;</span> <span class="n">_MAX_HARVEST_BYTES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">h</span>
+        <span class="k">with</span> <span class="n">text_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">tomllib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">h</span>
+    <span class="n">project</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;project&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">h</span>
+    <span class="n">h</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">kw</span> <span class="o">=</span> <span class="n">project</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keywords&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">_norm_keywords</span><span class="p">(</span><span class="n">kw</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_from_fs_conventions</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_Harvest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Harvest an icon by filesystem convention only (no title/keywords).&quot;&quot;&quot;</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">_Harvest</span><span class="p">(</span><span class="n">keywords</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">search_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">(</span><span class="n">frontend_dir</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">search_dirs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">_ICON_CONVENTIONS</span><span class="p">:</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="n">d</span> <span class="o">/</span> <span class="n">rel</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                    <span class="n">resolved</span> <span class="o">=</span> <span class="n">_rel_to_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">resolved</span><span class="p">:</span>
+                        <span class="n">h</span><span class="o">.</span><span class="n">icon</span> <span class="o">=</span> <span class="n">resolved</span>
+                        <span class="k">return</span> <span class="n">h</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">continue</span>
+    <span class="k">return</span> <span class="n">h</span>
+
+
+<span class="c1"># Harvesters in Tier-C precedence order (C.2 .. C.6). C.1 (app.toml) is applied</span>
+<span class="c1"># upstream in discover.py via _CORE_TOML_FIELD_MAP, so the AppConfig already</span>
+<span class="c1"># carries app.toml values with provenance before we run.</span>
+<span class="n">_HARVESTERS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">_from_app_dir_manifest</span><span class="p">,</span>  <span class="c1"># C.2</span>
+    <span class="n">_from_html_head</span><span class="p">,</span>  <span class="c1"># C.3</span>
+    <span class="n">_from_package_json</span><span class="p">,</span>  <span class="c1"># C.4</span>
+    <span class="n">_from_pyproject</span><span class="p">,</span>  <span class="c1"># C.5</span>
+    <span class="n">_from_fs_conventions</span><span class="p">,</span>  <span class="c1"># C.6 (icon only)</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="harvest_app_metadata">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.harvest_app_metadata">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">harvest_app_metadata</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve app-declared metadata for one app; return an ``AppConfig`` update dict.</span>
+
+<span class="sd">    Called at the tail of discovery for *both* the asgi and non-asgi paths, so</span>
+<span class="sd">    external/process apps (which have no frontend on disk) are covered too. Every</span>
+<span class="sd">    harvester is a no-op when its source file is missing, so an app with only an</span>
+<span class="sd">    ``app.toml`` — or nothing — resolves cleanly without raising.</span>
+
+<span class="sd">    Precedence (first non-empty wins for scalars; keywords union across all):</span>
+<span class="sd">      Tier C.1 app.toml (already on ``config``, gated by provenance for the title)</span>
+<span class="sd">      Tier C.2 manifest → C.3 &lt;head&gt; → C.4 package.json → C.5 pyproject → C.6 fs</span>
+<span class="sd">      Tier D   derived (title = auto-derived name; icon = &quot;&quot; ⇒ monogram at render)</span>
+
+<span class="sd">    Returns only the fields that changed, suitable for ``model_copy(update=...)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">harvests</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">_HARVESTERS</span><span class="p">]</span>
+
+    <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">provenance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;provenance&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
+
+    <span class="c1"># --- title (display_name) ------------------------------------------------</span>
+    <span class="c1"># The model pre-fills display_name from the app name unconditionally, so we</span>
+    <span class="c1"># can&#39;t read the field to know whether app.toml declared a title. Use</span>
+    <span class="c1"># provenance as the gate: only &quot;override: app.toml&quot; counts as C.1. Otherwise</span>
+    <span class="c1"># fall through the harvest chain, and if nothing is found keep the</span>
+    <span class="c1"># auto-derived default (reclassified as Tier D).</span>
+    <span class="n">title_from_toml</span> <span class="o">=</span> <span class="n">provenance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;override: app.toml&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">title_from_toml</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">src</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">harvests</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="s2">&quot;html-head&quot;</span><span class="p">,</span> <span class="s2">&quot;package.json&quot;</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">display_name</span><span class="p">:</span>
+                <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;display_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">display_name</span>
+                <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;display_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;harvest: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">break</span>
+
+    <span class="c1"># --- description (first non-empty; app.toml already on config) -----------</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">src</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">harvests</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="s2">&quot;html-head&quot;</span><span class="p">,</span> <span class="s2">&quot;package.json&quot;</span><span class="p">,</span> <span class="s2">&quot;pyproject&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+                <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">description</span>
+                <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;harvest: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">break</span>
+
+    <span class="c1"># --- keywords (union: app.toml + every harvested source) -----------------</span>
+    <span class="n">merged_keywords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[])</span>
+    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">harvests</span><span class="p">:</span>
+        <span class="n">merged_keywords</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+    <span class="n">merged_keywords</span> <span class="o">=</span> <span class="n">_norm_keywords</span><span class="p">(</span><span class="n">merged_keywords</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">merged_keywords</span> <span class="o">!=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="ow">or</span> <span class="p">[]):</span>
+        <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;keywords&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">merged_keywords</span>
+        <span class="k">if</span> <span class="n">merged_keywords</span><span class="p">:</span>
+            <span class="n">provenance</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="s2">&quot;harvest: union&quot;</span><span class="p">)</span>
+
+    <span class="c1"># --- icon (first non-empty; app.toml already on config) ------------------</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;icon&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">h</span><span class="p">,</span> <span class="n">src</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">harvests</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="s2">&quot;html-head&quot;</span><span class="p">,</span> <span class="s2">&quot;package.json&quot;</span><span class="p">,</span> <span class="s2">&quot;pyproject&quot;</span><span class="p">,</span> <span class="s2">&quot;fs&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">icon</span><span class="p">:</span>
+                <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;icon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">icon</span>
+                <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;icon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;harvest: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">break</span>
+
+    <span class="k">if</span> <span class="n">updates</span><span class="p">:</span>
+        <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;provenance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">provenance</span>
+    <span class="k">return</span> <span class="n">updates</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Icon rendering (request-time)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1"># Content types we will serve or redirect to. Anything else ⇒ treat the icon as</span>
+<span class="c1"># unset and fall through to the monogram (never serve an arbitrary file type).</span>
+<span class="n">_ICON_CONTENT_TYPES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;.svg&quot;</span><span class="p">:</span> <span class="s2">&quot;image/svg+xml&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.png&quot;</span><span class="p">:</span> <span class="s2">&quot;image/png&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.jpg&quot;</span><span class="p">:</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.jpeg&quot;</span><span class="p">:</span> <span class="s2">&quot;image/jpeg&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.webp&quot;</span><span class="p">:</span> <span class="s2">&quot;image/webp&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.gif&quot;</span><span class="p">:</span> <span class="s2">&quot;image/gif&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.ico&quot;</span><span class="p">:</span> <span class="s2">&quot;image/x-icon&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">_ALLOWED_MEDIATYPES</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_ICON_CONTENT_TYPES</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+<span class="c1"># Cap on a served icon file / decoded data URI (icons are small; a &quot;logo&quot; that</span>
+<span class="c1"># is megabytes is misconfiguration, not an icon).</span>
+<span class="n">_MAX_ICON_BYTES</span> <span class="o">=</span> <span class="mi">512</span> <span class="o">*</span> <span class="mi">1024</span>
+
+<span class="c1"># Anything longer than this with no path separator is treated as a path attempt,</span>
+<span class="c1"># not a glyph. A couple of codepoints (emoji + skin tone + ZWJ, or &quot;λ&quot;) fit well</span>
+<span class="c1"># under this; &quot;assets/x.png&quot; has a &quot;/&quot; and is excluded regardless.</span>
+<span class="n">_MAX_GLYPH_LEN</span> <span class="o">=</span> <span class="mi">12</span>
+
+
+<div class="viewcode-block" id="IconResult">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.IconResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IconResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The outcome of resolving an icon spec.</span>
+
+<span class="sd">    Exactly one of (``body``, ``redirect_url``) is set. ``token`` is a short</span>
+<span class="sd">    content hash used as the ``?v=`` cache-buster and the ``ETag``. ``immutable``</span>
+<span class="sd">    is False only for the redirect form (whose target we don&#39;t control).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">body</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">redirect_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">immutable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_looks_remote</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">spec</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;http://&quot;</span><span class="p">,</span> <span class="s2">&quot;https://&quot;</span><span class="p">,</span> <span class="s2">&quot;//&quot;</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_short_hash</span><span class="p">(</span><span class="o">*</span><span class="n">parts</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+        <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;</span><span class="se">\0</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hasher</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">16</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="app_dir_of">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.app_dir_of">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">app_dir_of</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reconstruct an app&#39;s own directory from its ``AppConfig``.</span>
+
+<span class="sd">    ``source_dir`` is the *container* dir and ``name`` the subdir, for both the</span>
+<span class="sd">    walked-container and individual-app-dir discovery paths — so ``source_dir /</span>
+<span class="sd">    name`` is the app dir in both cases.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;source_dir&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">src</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">src</span><span class="p">)</span> <span class="o">/</span> <span class="n">name</span></div>
+
+
+
+<div class="viewcode-block" id="effective_icon_spec">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.effective_icon_spec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">effective_icon_spec</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">overlay_icon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">default_icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The icon spec to render, applying Tier A (overlay) over C/D, then default.</span>
+
+<span class="sd">    Empty string means &quot;no explicit icon&quot; — the renderer produces a monogram.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">overlay_icon</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">overlay_icon</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;icon&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">icon</span>
+    <span class="k">return</span> <span class="n">default_icon</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_icon">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.resolve_icon">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_icon</span><span class="p">(</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">app_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">token_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IconResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Turn an icon spec into servable bytes (or a redirect) plus a cache token.</span>
+
+<span class="sd">    Dispatch order: explicit ``emoji:`` → ``data:`` URI → absolute https URL</span>
+<span class="sd">    (redirect) → contained image file → bare glyph → monogram fallback. Any spec</span>
+<span class="sd">    that fails its form&#39;s validation falls through to the monogram, so the</span>
+<span class="sd">    endpoint never errors and never serves an unexpected file type.</span>
+
+<span class="sd">    ``token_only=True`` skips reading file bytes (the ``?v=`` token for a file is</span>
+<span class="sd">    stat-derived, so it matches the full resolve either way). ``/_apps`` uses it</span>
+<span class="sd">    to avoid reading every app&#39;s icon file on every listing; the icon endpoint</span>
+<span class="sd">    uses the full form to get the bytes to serve.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="p">(</span><span class="n">spec</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;emoji:&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_render_glyph</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;emoji:&quot;</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;data:&quot;</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_render_data_uri</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="n">_render_monogram</span><span class="p">(</span><span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">display_name</span><span class="o">=</span><span class="n">display_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">_looks_remote</span><span class="p">(</span><span class="n">spec</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">IconResult</span><span class="p">(</span>
+                <span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">token</span><span class="o">=</span><span class="n">_short_hash</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;redirect&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)),</span>
+                <span class="n">redirect_url</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
+                <span class="n">immutable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_render_monogram</span><span class="p">(</span><span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">display_name</span><span class="o">=</span><span class="n">display_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">spec</span> <span class="ow">and</span> <span class="s2">&quot;/&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span> <span class="ow">and</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+        <span class="c1"># Ambiguous: a bare token could be a file (&quot;logo.png&quot;) or a glyph (&quot;λ&quot;).</span>
+        <span class="c1"># Prefer a real contained file (needs app_dir); else, if it&#39;s a short</span>
+        <span class="c1"># non-extension token, treat it as a glyph — glyphs need no filesystem.</span>
+        <span class="k">if</span> <span class="n">app_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">served</span> <span class="o">=</span> <span class="n">_render_file</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">app_dir</span><span class="o">=</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">token_only</span><span class="o">=</span><span class="n">token_only</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">served</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">served</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">_MAX_GLYPH_LEN</span> <span class="ow">and</span> <span class="s2">&quot;.&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_render_glyph</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">spec</span> <span class="ow">and</span> <span class="n">app_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Has a path separator ⇒ only a file path makes sense here.</span>
+        <span class="n">served</span> <span class="o">=</span> <span class="n">_render_file</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">app_dir</span><span class="o">=</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">token_only</span><span class="o">=</span><span class="n">token_only</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">served</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">served</span>
+
+    <span class="k">return</span> <span class="n">_render_monogram</span><span class="p">(</span><span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">display_name</span><span class="o">=</span><span class="n">display_name</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_file</span><span class="p">(</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">token_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IconResult</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serve a contained image file, or ``None`` if it&#39;s not a safe image path.</span>
+
+<span class="sd">    Containment mirrors ``frontend.SPAStaticFiles._is_real_file``: reject ``..``</span>
+<span class="sd">    segments, ``resolve()`` (which also collapses symlinks), then require the</span>
+<span class="sd">    result to stay under the app dir and be a real file with an allowed</span>
+<span class="sd">    extension.</span>
+
+<span class="sd">    The cache token is derived from the file&#39;s ``(content_type, mtime, size)``,</span>
+<span class="sd">    not its bytes — so ``/_apps`` can compute every app&#39;s ``?v=`` from a cheap</span>
+<span class="sd">    ``stat`` (``token_only=True``) instead of reading 27 files on every hit,</span>
+<span class="sd">    while still busting the cache when a file is edited or replaced in place.</span>
+<span class="sd">    ``ValueError`` is caught alongside ``OSError`` because a NUL byte in the spec</span>
+<span class="sd">    raises it — that must fall through to the monogram, never 500.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;..&quot;</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="n">spec</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="n">candidate</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">app_dir</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">content_type</span> <span class="o">=</span> <span class="n">_ICON_CONTENT_TYPES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">content_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">candidate</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&gt;</span> <span class="n">_MAX_ICON_BYTES</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="n">_short_hash</span><span class="p">(</span>
+            <span class="sa">b</span><span class="s2">&quot;file&quot;</span><span class="p">,</span>
+            <span class="n">content_type</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mtime_ns</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_size</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
+        <span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">token_only</span> <span class="k">else</span> <span class="n">candidate</span><span class="o">.</span><span class="n">read_bytes</span><span class="p">()</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">IconResult</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_data_uri</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IconResult</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decode a ``data:image/...;base64,...`` URI to bytes, or ``None`` if invalid.&quot;&quot;&quot;</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^data:([-\w.+/]+)(;base64)?,(.*)$&quot;</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">DOTALL</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">mediatype</span><span class="p">,</span> <span class="n">is_b64</span><span class="p">,</span> <span class="n">payload</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="nb">bool</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mediatype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_ALLOWED_MEDIATYPES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_b64</span> <span class="k">else</span> <span class="n">payload</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">binascii</span><span class="o">.</span><span class="n">Error</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">body</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_MAX_ICON_BYTES</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">_short_hash</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">mediatype</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IconResult</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="n">mediatype</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_hue_for</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deterministic hue (0..359) from a name — stable across processes.</span>
+
+<span class="sd">    Uses sha256, not the salted builtin ``hash``, so the same app gets the same</span>
+<span class="sd">    color on every restart and every machine.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">digest</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">digest</span><span class="p">[:</span><span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_svg_escape</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&amp;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;amp;&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;lt;&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;gt;&quot;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&amp;quot;&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gradient_svg</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">grad_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap ``inner`` SVG markup in a full-bleed name-hashed two-stop gradient.</span>
+
+<span class="sd">    Saturation/lightness are fixed constants so hues stay harmonious across a</span>
+<span class="sd">    grid; only the hue varies per app. Corner rounding is left to the tile CSS.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hue</span> <span class="o">=</span> <span class="n">_hue_for</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;hsl(</span><span class="si">{</span><span class="n">hue</span><span class="si">}</span><span class="s2">, 62%, 52%)&quot;</span>
+    <span class="n">c2</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;hsl(</span><span class="si">{</span><span class="n">hue</span><span class="si">}</span><span class="s2">, 62%, 42%)&quot;</span>
+    <span class="n">svg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 100 100&quot; &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;width=&quot;100&quot; height=&quot;100&quot; role=&quot;img&quot;&gt;&#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;&lt;defs&gt;&lt;linearGradient id=&quot;</span><span class="si">{</span><span class="n">grad_id</span><span class="si">}</span><span class="s1">&quot; x1=&quot;0&quot; y1=&quot;0&quot; x2=&quot;1&quot; y2=&quot;1&quot;&gt;&#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;&lt;stop offset=&quot;0&quot; stop-color=&quot;</span><span class="si">{</span><span class="n">c1</span><span class="si">}</span><span class="s1">&quot;/&gt;&#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;&lt;stop offset=&quot;1&quot; stop-color=&quot;</span><span class="si">{</span><span class="n">c2</span><span class="si">}</span><span class="s1">&quot;/&gt;&lt;/linearGradient&gt;&lt;/defs&gt;&#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;&lt;rect width=&quot;100&quot; height=&quot;100&quot; fill=&quot;url(#</span><span class="si">{</span><span class="n">grad_id</span><span class="si">}</span><span class="s1">)&quot;/&gt;&#39;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">&lt;/svg&gt;&quot;</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">svg</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_initials</span><span class="p">(</span><span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;1–2 uppercase initials for a monogram, robust to odd names.&quot;&quot;&quot;</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">display_name</span> <span class="ow">or</span> <span class="n">app_name</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[\s_\-]+&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span> <span class="k">if</span> <span class="n">w</span><span class="p">]</span>
+    <span class="n">letters</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">letters</span> <span class="o">=</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">words</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">words</span><span class="p">:</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[^A-Za-z0-9]&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">or</span> <span class="n">words</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">letters</span> <span class="o">=</span> <span class="n">w</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">w</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">letters</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_monogram</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IconResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A font-guaranteed letter monogram on a name-hashed gradient (the default).&quot;&quot;&quot;</span>
+    <span class="n">initials</span> <span class="o">=</span> <span class="n">_svg_escape</span><span class="p">(</span><span class="n">_initials</span><span class="p">(</span><span class="n">display_name</span><span class="p">,</span> <span class="n">app_name</span><span class="p">))</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;50&quot; y=&quot;50&quot; font-family=&quot;system-ui, -apple-system, &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;Segoe UI, Roboto, sans-serif&quot; font-size=&quot;44&quot; font-weight=&quot;700&quot; &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;fill=&quot;#ffffff&quot; text-anchor=&quot;middle&quot; dominant-baseline=&quot;central&quot;&gt;&#39;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">initials</span><span class="si">}</span><span class="s2">&lt;/text&gt;&quot;</span>
+    <span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">_gradient_svg</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">grad_id</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">_short_hash</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;monogram&quot;</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IconResult</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;image/svg+xml&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_render_glyph</span><span class="p">(</span><span class="n">glyph</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IconResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An emoji/symbol glyph centered on the app&#39;s gradient (opt-in accent).</span>
+
+<span class="sd">    The glyph is rendered as SVG ``&lt;text&gt;`` — the viewer&#39;s own color-emoji font</span>
+<span class="sd">    draws it, so we don&#39;t rasterize on the server. Empty glyph ⇒ monogram.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">glyph</span> <span class="o">=</span> <span class="p">(</span><span class="n">glyph</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">glyph</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_render_monogram</span><span class="p">(</span><span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">display_name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">inner</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;&lt;text x=&quot;50&quot; y=&quot;52&quot; font-size=&quot;56&quot; text-anchor=&quot;middle&quot; &#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;dominant-baseline=&quot;central&quot;&gt;</span><span class="si">{</span><span class="n">_svg_escape</span><span class="p">(</span><span class="n">glyph</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/text&gt;&#39;</span>
+    <span class="p">)</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="n">_gradient_svg</span><span class="p">(</span><span class="n">inner</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">grad_id</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">)</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">_short_hash</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;glyph&quot;</span><span class="p">,</span> <span class="n">glyph</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span> <span class="n">body</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IconResult</span><span class="p">(</span><span class="n">content_type</span><span class="o">=</span><span class="s2">&quot;image/svg+xml&quot;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="n">body</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Keyword resolution across tiers (request-time, for /_apps)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="resolve_keywords">
+<a class="viewcode-back" href="../../module_docs/enlace/appmeta.html#enlace.appmeta.resolve_keywords">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_keywords</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">app_keywords</span><span class="p">,</span>
+    <span class="n">platform_keywords</span><span class="p">,</span>
+    <span class="n">overlay_keywords</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Union app / platform / overlay keywords; return (merged, sources).</span>
+
+<span class="sd">    ``merged`` is what search matches on. ``sources`` *partitions* ``merged``:</span>
+<span class="sd">    each keyword appears in exactly one bucket — the first (highest-precedence)</span>
+<span class="sd">    tier that declared it, in order app → platform → overlay. This keeps the</span>
+<span class="sd">    UI&#39;s read-only-vs-editable split unambiguous: a keyword the app already</span>
+<span class="sd">    declares stays in the read-only ``app`` bucket even if the owner also typed</span>
+<span class="sd">    it into the overlay, so it isn&#39;t offered as a removable overlay chip</span>
+<span class="sd">    (removing it wouldn&#39;t change ``merged`` anyway).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;app&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;platform&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;overlay&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">tier</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="n">app_keywords</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;platform&quot;</span><span class="p">,</span> <span class="n">platform_keywords</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;overlay&quot;</span><span class="p">,</span> <span class="n">overlay_keywords</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">_norm_keywords</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">sources</span><span class="p">[</span><span class="n">tier</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kw</span><span class="p">)</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">sources</span><span class="p">[</span><span class="s2">&quot;app&quot;</span><span class="p">],</span> <span class="o">*</span><span class="n">sources</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">],</span> <span class="o">*</span><span class="n">sources</span><span class="p">[</span><span class="s2">&quot;overlay&quot;</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">merged</span><span class="p">,</span> <span class="n">sources</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

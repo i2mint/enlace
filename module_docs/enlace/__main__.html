@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.23 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.24 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=20522496"></script>
+      <script src="../../_static/documentation_options.js?v=ebdbb45b"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -24,7 +24,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="enlace.base" href="base.html" />
+    <link rel="next" title="enlace.appmeta" href="appmeta.html" />
     <link rel="prev" title="enlace" href="../enlace.html" /> 
 </head>
 
@@ -51,6 +51,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.__main__</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.app_meta"><code class="docutils literal notranslate"><span class="pre">app_meta()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.diagnose"><code class="docutils literal notranslate"><span class="pre">diagnose()</span></code></a></li>
@@ -59,6 +60,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.show_config"><code class="docutils literal notranslate"><span class="pre">show_config()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
@@ -72,6 +74,7 @@
 <li class="toctree-l1"><a class="reference internal" href="strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
@@ -120,6 +123,27 @@
 <span class="n">enlace</span> <span class="nb">list</span><span class="o">-</span><span class="n">apps</span>          <span class="c1"># List discovered apps</span>
 </pre></div>
 </div>
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.__main__.app_meta">
+<span class="sig-prename descclassname"><span class="pre">enlace.__main__.</span></span><span class="sig-name descname"><span class="pre">app_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/__main__.html#app_meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.__main__.app_meta" title="Link to this definition"></a></dt>
+<dd><p>Show each app’s resolved launcher metadata + provenance (title, keywords, icon).</p>
+<p>A local migration/debug aid: it re-harvests from the filesystem, so it
+reflects live edits without a server restart, and prints the provenance
+(which source each value came from). This is a LOCAL CLI, not an HTTP
+surface — it may show absolute filesystem paths, which the <code class="docutils literal notranslate"><span class="pre">/_apps</span></code>
+endpoint deliberately never exposes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>json</strong> – Output as JSON.</p></li>
+<li><p><strong>apps_dir</strong> – Path to the apps directory.</p></li>
+<li><p><strong>apps_dirs</strong> – Comma-separated container directories.</p></li>
+<li><p><strong>app_dirs</strong> – Comma-separated individual app directories.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.__main__.build">
 <span class="sig-prename descclassname"><span class="pre">enlace.__main__.</span></span><span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/__main__.html#build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.__main__.build" title="Link to this definition"></a></dt>
@@ -248,13 +272,13 @@ authoritative signal.</p></li>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../enlace.html" class="btn btn-neutral float-left" title="enlace" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="base.html" class="btn btn-neutral float-right" title="enlace.base" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="appmeta.html" class="btn btn-neutral float-right" title="enlace.appmeta" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright NO COPYRIGHT.</p>
+    <p></p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

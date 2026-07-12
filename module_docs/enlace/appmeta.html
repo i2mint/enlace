@@ -1,0 +1,284 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.appmeta &mdash; enlace 0.1.24 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=ebdbb45b"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="enlace.base" href="base.html" />
+    <link rel="prev" title="enlace.__main__" href="__main__.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.appmeta</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.AppMetaConfig"><code class="docutils literal notranslate"><span class="pre">AppMetaConfig</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.appmeta.AppMetaConfig.model_config"><code class="docutils literal notranslate"><span class="pre">AppMetaConfig.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.AppMetaEntry"><code class="docutils literal notranslate"><span class="pre">AppMetaEntry</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#enlace.appmeta.AppMetaEntry.model_config"><code class="docutils literal notranslate"><span class="pre">AppMetaEntry.model_config</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.IconResult"><code class="docutils literal notranslate"><span class="pre">IconResult</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.app_dir_of"><code class="docutils literal notranslate"><span class="pre">app_dir_of()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.effective_icon_spec"><code class="docutils literal notranslate"><span class="pre">effective_icon_spec()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.harvest_app_metadata"><code class="docutils literal notranslate"><span class="pre">harvest_app_metadata()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.resolve_icon"><code class="docutils literal notranslate"><span class="pre">resolve_icon()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.appmeta.resolve_keywords"><code class="docutils literal notranslate"><span class="pre">resolve_keywords()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">enlace.build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="manifest.html">enlace.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="strategies.html">enlace.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_build.html">enlace.tests.test_build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_gzip.html">enlace.tests.test_gzip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_manifest.html">enlace.tests.test_manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">enlace.appmeta</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/enlace/appmeta.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-enlace.appmeta">
+<span id="enlace-appmeta"></span><h1>enlace.appmeta<a class="headerlink" href="#module-enlace.appmeta" title="Link to this heading"></a></h1>
+<p>App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.</p>
+<p>This module gives every discovered app a <em>title</em>, a <em>description</em>, a set of
+<em>keywords</em>, and an <em>icon</em> — assembled from the standard places an app already
+declares that information, so that a launcher UI can present a searchable grid
+of apps without each app having to be hand-registered.</p>
+<p>Two things live here:</p>
+<ol class="arabic simple">
+<li><p><strong>Harvest + resolve</strong> (<cite>harvest_app_metadata</cite>) — at <em>discovery</em> time, read the
+app-declared metadata from, in precedence order, <code class="docutils literal notranslate"><span class="pre">app.toml</span></code> → a Web App
+Manifest → the <code class="docutils literal notranslate"><span class="pre">index.html</span></code> <code class="docutils literal notranslate"><span class="pre">&lt;head&gt;</span></code> → <code class="docutils literal notranslate"><span class="pre">package.json</span></code> → <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>
+→ filesystem icon conventions, and bake the resolved values onto the
+<code class="docutils literal notranslate"><span class="pre">AppConfig</span></code>. Scalars are first-non-empty-wins; keywords are <em>unioned</em> across
+every source (so app-declared keywords accumulate rather than overwrite).</p></li>
+<li><p><strong>Icon rendering</strong> (<cite>resolve_icon</cite>) — at <em>request</em> time, turn an app’s icon
+spec (an emoji, a relative image path, a <code class="docutils literal notranslate"><span class="pre">data:</span></code> URI, an absolute URL, or
+nothing) into bytes to serve (or a redirect). An unset icon falls back to a
+deterministic, font-guaranteed letter <em>monogram</em> on a name-hashed gradient, so
+a grid of many apps reads as one coherent system rather than a wall of
+placeholders.</p></li>
+</ol>
+<p>Layering note: this module is pure read-model. The <em>editable</em> overlay (a
+runtime store of owner-added keywords / icon overrides) and its HTTP write
+surface live in the <code class="docutils literal notranslate"><span class="pre">enlace_auth</span></code> plugin, not here — enlace core never mutates
+metadata. Core only <em>reads</em> an injected overlay mapping via <code class="docutils literal notranslate"><span class="pre">request.app.state</span></code>
+(see <code class="docutils literal notranslate"><span class="pre">enlace.compose</span></code>).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.appmeta.AppMetaConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">AppMetaConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_icon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">~enlace.appmeta.AppMetaEntry]</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">editors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/appmeta.html#AppMetaConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.AppMetaConfig" title="Link to this definition"></a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">[app_meta]</span></code> table of <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">default_icon</span></code> and <code class="docutils literal notranslate"><span class="pre">apps</span></code> are consumed by enlace core (read model).
+<code class="docutils literal notranslate"><span class="pre">editors</span></code> and <code class="docutils literal notranslate"><span class="pre">store_path</span></code> are <em>held but not acted on</em> by core — the
+<code class="docutils literal notranslate"><span class="pre">enlace_auth</span></code> plugin reads them to gate and persist the runtime overlay,
+mirroring how <code class="docutils literal notranslate"><span class="pre">PlatformConfig.auth</span></code> / <code class="docutils literal notranslate"><span class="pre">.stores</span></code> are carried for the
+plugin without core interpreting them.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.appmeta.AppMetaConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#enlace.appmeta.AppMetaConfig.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.appmeta.AppMetaEntry">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">AppMetaEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/appmeta.html#AppMetaEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.AppMetaEntry" title="Link to this definition"></a></dt>
+<dd><p>Per-app static override from <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code> (<code class="docutils literal notranslate"><span class="pre">[app_meta.apps.&lt;name&gt;]</span></code>).</p>
+<p>The platform owner’s static layer, applied on top of app-declared metadata.
+<code class="docutils literal notranslate"><span class="pre">keywords</span></code> here are <em>added</em> to the app’s own (union), not replaced; the
+scalar fields override first-non-empty-wins if set.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.appmeta.AppMetaEntry.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#enlace.appmeta.AppMetaEntry.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.appmeta.IconResult">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">IconResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">body</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytes</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">redirect_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">immutable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/appmeta.html#IconResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.IconResult" title="Link to this definition"></a></dt>
+<dd><p>The outcome of resolving an icon spec.</p>
+<p>Exactly one of (<code class="docutils literal notranslate"><span class="pre">body</span></code>, <code class="docutils literal notranslate"><span class="pre">redirect_url</span></code>) is set. <code class="docutils literal notranslate"><span class="pre">token</span></code> is a short
+content hash used as the <code class="docutils literal notranslate"><span class="pre">?v=</span></code> cache-buster and the <code class="docutils literal notranslate"><span class="pre">ETag</span></code>. <code class="docutils literal notranslate"><span class="pre">immutable</span></code>
+is False only for the redirect form (whose target we don’t control).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.appmeta.app_dir_of">
+<span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">app_dir_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/enlace/appmeta.html#app_dir_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.app_dir_of" title="Link to this definition"></a></dt>
+<dd><p>Reconstruct an app’s own directory from its <code class="docutils literal notranslate"><span class="pre">AppConfig</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">source_dir</span></code> is the <em>container</em> dir and <code class="docutils literal notranslate"><span class="pre">name</span></code> the subdir, for both the
+walked-container and individual-app-dir discovery paths — so <code class="docutils literal notranslate"><span class="pre">source_dir</span> <span class="pre">/</span>
+<span class="pre">name</span></code> is the app dir in both cases.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.appmeta.effective_icon_spec">
+<span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">effective_icon_spec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay_icon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_icon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/enlace/appmeta.html#effective_icon_spec"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.effective_icon_spec" title="Link to this definition"></a></dt>
+<dd><p>The icon spec to render, applying Tier A (overlay) over C/D, then default.</p>
+<p>Empty string means “no explicit icon” — the renderer produces a monogram.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.appmeta.harvest_app_metadata">
+<span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">harvest_app_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frontend_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../../_modules/enlace/appmeta.html#harvest_app_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.harvest_app_metadata" title="Link to this definition"></a></dt>
+<dd><p>Resolve app-declared metadata for one app; return an <code class="docutils literal notranslate"><span class="pre">AppConfig</span></code> update dict.</p>
+<p>Called at the tail of discovery for <em>both</em> the asgi and non-asgi paths, so
+external/process apps (which have no frontend on disk) are covered too. Every
+harvester is a no-op when its source file is missing, so an app with only an
+<code class="docutils literal notranslate"><span class="pre">app.toml</span></code> — or nothing — resolves cleanly without raising.</p>
+<dl class="simple">
+<dt>Precedence (first non-empty wins for scalars; keywords union across all):</dt><dd><p>Tier C.1 app.toml (already on <code class="docutils literal notranslate"><span class="pre">config</span></code>, gated by provenance for the title)
+Tier C.2 manifest → C.3 &lt;head&gt; → C.4 package.json → C.5 pyproject → C.6 fs
+Tier D   derived (title = auto-derived name; icon = “” ⇒ monogram at render)</p>
+</dd>
+</dl>
+<p>Returns only the fields that changed, suitable for <code class="docutils literal notranslate"><span class="pre">model_copy(update=...)</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.appmeta.resolve_icon">
+<span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">resolve_icon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#enlace.appmeta.IconResult" title="enlace.appmeta.IconResult"><span class="pre">IconResult</span></a></span></span><a class="reference internal" href="../../_modules/enlace/appmeta.html#resolve_icon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.resolve_icon" title="Link to this definition"></a></dt>
+<dd><p>Turn an icon spec into servable bytes (or a redirect) plus a cache token.</p>
+<p>Dispatch order: explicit <code class="docutils literal notranslate"><span class="pre">emoji:</span></code> → <code class="docutils literal notranslate"><span class="pre">data:</span></code> URI → absolute https URL
+(redirect) → contained image file → bare glyph → monogram fallback. Any spec
+that fails its form’s validation falls through to the monogram, so the
+endpoint never errors and never serves an unexpected file type.</p>
+<p><code class="docutils literal notranslate"><span class="pre">token_only=True</span></code> skips reading file bytes (the <code class="docutils literal notranslate"><span class="pre">?v=</span></code> token for a file is
+stat-derived, so it matches the full resolve either way). <code class="docutils literal notranslate"><span class="pre">/_apps</span></code> uses it
+to avoid reading every app’s icon file on every listing; the icon endpoint
+uses the full form to get the bytes to serve.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.appmeta.resolve_keywords">
+<span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">resolve_keywords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_keywords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform_keywords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay_keywords</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/enlace/appmeta.html#resolve_keywords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.resolve_keywords" title="Link to this definition"></a></dt>
+<dd><p>Union app / platform / overlay keywords; return (merged, sources).</p>
+<p><code class="docutils literal notranslate"><span class="pre">merged</span></code> is what search matches on. <code class="docutils literal notranslate"><span class="pre">sources</span></code> <em>partitions</em> <code class="docutils literal notranslate"><span class="pre">merged</span></code>:
+each keyword appears in exactly one bucket — the first (highest-precedence)
+tier that declared it, in order app → platform → overlay. This keeps the
+UI’s read-only-vs-editable split unambiguous: a keyword the app already
+declares stays in the read-only <code class="docutils literal notranslate"><span class="pre">app</span></code> bucket even if the owner also typed
+it into the overlay, so it isn’t offered as a removable overlay chip
+(removing it wouldn’t change <code class="docutils literal notranslate"><span class="pre">merged</span></code> anyway).</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="__main__.html" class="btn btn-neutral float-left" title="enlace.__main__" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="base.html" class="btn btn-neutral float-right" title="enlace.base" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

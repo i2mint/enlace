@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.base &mdash; enlace 0.1.23 documentation</title>
+  <title>enlace.base &mdash; enlace 0.1.24 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=20522496"></script>
+      <script src="../../_static/documentation_options.js?v=ebdbb45b"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -48,6 +48,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace.html">enlace</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/base.html">enlace.base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/build.html">enlace.build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/compose.html">enlace.compose</a></li>
@@ -61,6 +62,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/strategies.html">enlace.strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/supervise.html">enlace.supervise</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
@@ -128,6 +130,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_validator</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.appmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppMetaConfig</span>
 
 <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">tomllib</span>
@@ -235,6 +239,17 @@
     <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
+    <span class="c1"># App-launcher metadata. Resolved at discovery from app.toml + harvested</span>
+    <span class="c1"># sources (manifest, index.html &lt;head&gt;, package.json, pyproject) — see</span>
+    <span class="c1"># enlace.appmeta. `keywords` is the union of every app-declared source;</span>
+    <span class="c1"># `icon` is an app-dir-relative path, an emoji/glyph, a data: URI, an</span>
+    <span class="c1"># absolute https URL, or &quot;&quot; (⇒ a generated monogram at serve time).</span>
+    <span class="c1"># `launchable=None` means &quot;derive from mode&quot; (see compose._app_launch).</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">keywords</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">launchable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="c1"># Mode: how this app is served (orthogonal to app_type which is what was</span>
     <span class="c1"># detected). Free-form string validated against the strategy registry —</span>
     <span class="c1"># see ``enlace.strategies`` for the open/closed extension point.</span>
@@ -328,6 +343,11 @@
     <span class="c1"># without enlace having to know the schema.</span>
     <span class="n">auth</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">stores</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="c1"># App-launcher metadata config (platform.toml [app_meta]). `default_icon`</span>
+    <span class="c1"># and `apps` (Tier B static overrides) are read by enlace core; `editors`</span>
+    <span class="c1"># and `store_path` are carried for the enlace_auth plugin (the editable</span>
+    <span class="c1"># overlay&#39;s authz + persistence), which enlace core never interprets.</span>
+    <span class="n">app_meta</span><span class="p">:</span> <span class="n">AppMetaConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">AppMetaConfig</span><span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -389,6 +409,10 @@
         <span class="n">stores_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stores&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">stores_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;stores&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stores_data</span>
+        <span class="c1"># [app_meta] table — the app-launcher metadata config.</span>
+        <span class="n">app_meta_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;app_meta&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">app_meta_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;app_meta&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta_data</span>
 
         <span class="c1"># Resolve relative path-like fields against the TOML file&#39;s own</span>
         <span class="c1"># directory (not the CWD), so the config is host-portable. Done</span>
@@ -405,6 +429,12 @@
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;shared_assets_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;apps_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest_dir&quot;</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">platform_data</span><span class="p">:</span>
                 <span class="n">platform_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">platform_data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="c1"># [app_meta].store_path is path-like too; resolve it against the TOML</span>
+        <span class="c1"># dir for the same host-portability reason (a ~-prefixed/absolute value</span>
+        <span class="c1"># is left as-is by _resolve).</span>
+        <span class="n">app_meta</span> <span class="o">=</span> <span class="n">platform_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;app_meta&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app_meta</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;store_path&quot;</span><span class="p">):</span>
+            <span class="n">app_meta</span><span class="p">[</span><span class="s2">&quot;store_path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">app_meta</span><span class="p">[</span><span class="s2">&quot;store_path&quot;</span><span class="p">])</span>
 
         <span class="c1"># Environment variable overrides</span>
         <span class="n">env_apps_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ENLACE_APPS_DIRS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
@@ -479,7 +509,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright NO COPYRIGHT.</p>
+    <p></p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

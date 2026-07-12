@@ -4,6 +4,7 @@
 
    module_docs/enlace
    module_docs/enlace/__main__
+   module_docs/enlace/appmeta
    module_docs/enlace/base
    module_docs/enlace/build
    module_docs/enlace/compose
@@ -17,6 +18,7 @@
    module_docs/enlace/strategies
    module_docs/enlace/supervise
    module_docs/enlace/tests/conftest
+   module_docs/enlace/tests/test_appmeta
    module_docs/enlace/tests/test_base
    module_docs/enlace/tests/test_build
    module_docs/enlace/tests/test_compose
