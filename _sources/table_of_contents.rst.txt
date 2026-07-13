@@ -12,6 +12,7 @@
    module_docs/enlace/discover
    module_docs/enlace/doctor
    module_docs/enlace/frontend
+   module_docs/enlace/gzip_selective
    module_docs/enlace/manifest
    module_docs/enlace/proxy
    module_docs/enlace/serve
@@ -27,6 +28,7 @@
    module_docs/enlace/tests/test_discover
    module_docs/enlace/tests/test_frontend_404
    module_docs/enlace/tests/test_gzip
+   module_docs/enlace/tests/test_gzip_selective
    module_docs/enlace/tests/test_manifest
    module_docs/enlace/tests/test_strategies
    module_docs/enlace/tests/test_supervise

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; enlace 0.1.25 documentation</title>
+  <title>Index &mdash; enlace 0.1.26 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=4fa33042"></script>
+      <script src="_static/documentation_options.js?v=785bba28"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,6 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/discover.html">enlace.discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/doctor.html">enlace.doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/gzip_selective.html">enlace.gzip_selective</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/manifest.html">enlace.manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/serve.html">enlace.serve</a></li>
@@ -71,6 +72,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_gzip_selective.html">enlace.tests.test_gzip_selective</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
@@ -377,14 +379,21 @@
 </li>
       </ul></li>
       <li>
+    enlace.gzip_selective
+
+      <ul>
+        <li><a href="module_docs/enlace/gzip_selective.html#module-enlace.gzip_selective">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
     enlace.manifest
 
       <ul>
         <li><a href="module_docs/enlace/manifest.html#module-enlace.manifest">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     enlace.proxy
 
@@ -512,7 +521,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/appmeta.html#enlace.appmeta.IconResult">IconResult (class in enlace.appmeta)</a>
 </li>
+      <li><a href="module_docs/enlace/gzip_selective.html#enlace.gzip_selective.INCOMPRESSIBLE_PREFIXES">INCOMPRESSIBLE_PREFIXES (in module enlace.gzip_selective)</a>
+</li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.is_alive">is_alive() (enlace.supervise.ManagedProcess method)</a>
+</li>
+      <li><a href="module_docs/enlace/gzip_selective.html#enlace.gzip_selective.is_compressible">is_compressible() (in module enlace.gzip_selective)</a>
 </li>
       <li><a href="module_docs/enlace/diagnose.html#enlace.diagnose.DiagnosticReport.is_enlaceable">is_enlaceable (enlace.diagnose.DiagnosticReport property)</a>
 
@@ -660,6 +673,8 @@
 </li>
         <li><a href="module_docs/enlace/frontend.html#module-enlace.frontend">enlace.frontend</a>
 </li>
+        <li><a href="module_docs/enlace/gzip_selective.html#module-enlace.gzip_selective">enlace.gzip_selective</a>
+</li>
         <li><a href="module_docs/enlace/manifest.html#module-enlace.manifest">enlace.manifest</a>
 </li>
         <li><a href="module_docs/enlace/proxy.html#module-enlace.proxy">enlace.proxy</a>
@@ -739,6 +754,8 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="module_docs/enlace/gzip_selective.html#enlace.gzip_selective.SelectiveGZipMiddleware">SelectiveGZipMiddleware (class in enlace.gzip_selective)</a>
+</li>
       <li><a href="module_docs/enlace.html#enlace.serve">serve() (in module enlace)</a>
 
       <ul>
@@ -753,14 +770,14 @@
 </li>
       <li><a href="module_docs/enlace.html#enlace.skills_dir">skills_dir() (in module enlace)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace.html#enlace.SourceRef">SourceRef (class in enlace)</a>
 
       <ul>
         <li><a href="module_docs/enlace/manifest.html#enlace.manifest.SourceRef">(class in enlace.manifest)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="module_docs/enlace/frontend.html#enlace.frontend.SPAStaticFiles">SPAStaticFiles (class in enlace.frontend)</a>
 </li>
       <li><a href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess.start">start() (enlace.supervise.ManagedProcess method)</a>

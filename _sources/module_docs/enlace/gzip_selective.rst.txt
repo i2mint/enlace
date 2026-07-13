@@ -1,0 +1,4 @@
+enlace.gzip_selective
+=====================
+.. automodule:: enlace.gzip_selective
+   :members:

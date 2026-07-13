@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.25 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.26 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=4fa33042"></script>
+      <script src="../../_static/documentation_options.js?v=785bba28"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -56,6 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/discover.html">enlace.discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/doctor.html">enlace.doctor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/gzip_selective.html">enlace.gzip_selective</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/manifest.html">enlace.manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/proxy.html">enlace.proxy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/serve.html">enlace.serve</a></li>
@@ -71,6 +72,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_gzip_selective.html">enlace.tests.test_gzip_selective</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
@@ -130,13 +132,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span><span class="p">,</span> <span class="n">Response</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.cors</span><span class="w"> </span><span class="kn">import</span> <span class="n">CORSMiddleware</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.middleware.gzip</span><span class="w"> </span><span class="kn">import</span> <span class="n">GZipMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mount</span><span class="p">,</span> <span class="n">Route</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">PlatformConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_apps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.frontend</span><span class="w"> </span><span class="kn">import</span> <span class="n">LandingWithUnknownApp404</span><span class="p">,</span> <span class="n">SPAStaticFiles</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.gzip_selective</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelectiveGZipMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
     <span class="n">DeployManifest</span><span class="p">,</span>
@@ -354,10 +356,17 @@
 
     <span class="c1"># Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST</span>
     <span class="c1"># middleware — it must wrap everything downstream (meta injection, sub-app</span>
-    <span class="c1"># responses, static files) and see final bytes. GZipMiddleware only acts</span>
-    <span class="c1"># when the client sends Accept-Encoding: gzip, skips responses under</span>
-    <span class="c1"># minimum_size, respects pre-encoded responses, and sets Vary correctly.</span>
-    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">GZipMiddleware</span><span class="p">,</span> <span class="n">minimum_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
+    <span class="c1"># responses, static files) and see final bytes.</span>
+    <span class="c1">#</span>
+    <span class="c1"># NOT Starlette&#39;s GZipMiddleware, which compresses *everything* — including</span>
+    <span class="c1"># `206 Partial Content`. That gzips a byte range while Content-Range still</span>
+    <span class="c1"># describes the uncompressed representation, so the two headers disagree and</span>
+    <span class="c1"># media seeking breaks (and Safari will not play &lt;video&gt; at all without</span>
+    <span class="c1"># working ranges). It also spends real CPU, synchronously on the shared event</span>
+    <span class="c1"># loop, gzipping video and images that are already compressed, for ~1% gain.</span>
+    <span class="c1"># SelectiveGZipMiddleware skips ranged exchanges and incompressible content</span>
+    <span class="c1"># types, and is otherwise identical. See gzip_selective.py.</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">SelectiveGZipMiddleware</span><span class="p">,</span> <span class="n">minimum_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">parent</span></div>
 

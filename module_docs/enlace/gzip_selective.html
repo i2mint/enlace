@@ -1,0 +1,193 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>enlace.gzip_selective &mdash; enlace 0.1.26 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="enlace.manifest" href="manifest.html" />
+    <link rel="prev" title="enlace.frontend" href="frontend.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            enlace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
+<li class="toctree-l1"><a class="reference internal" href="__main__.html">enlace.__main__</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appmeta.html">enlace.appmeta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="base.html">enlace.base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="build.html">enlace.build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compose.html">enlace.compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="discover.html">enlace.discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="doctor.html">enlace.doctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frontend.html">enlace.frontend</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.gzip_selective</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.gzip_selective.INCOMPRESSIBLE_PREFIXES"><code class="docutils literal notranslate"><span class="pre">INCOMPRESSIBLE_PREFIXES</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.gzip_selective.SelectiveGZipMiddleware"><code class="docutils literal notranslate"><span class="pre">SelectiveGZipMiddleware</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.gzip_selective.is_compressible"><code class="docutils literal notranslate"><span class="pre">is_compressible()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="manifest.html">enlace.manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proxy.html">enlace.proxy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serve.html">enlace.serve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="strategies.html">enlace.strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="supervise.html">enlace.supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/conftest.html">enlace.tests.conftest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_base.html">enlace.tests.test_base</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_build.html">enlace.tests.test_build</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_compose.html">enlace.tests.test_compose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_discover.html">enlace.tests.test_discover</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_gzip.html">enlace.tests.test_gzip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_gzip_selective.html">enlace.tests.test_gzip_selective</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_manifest.html">enlace.tests.test_manifest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_strategies.html">enlace.tests.test_strategies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tests/test_supervise.html">enlace.tests.test_supervise</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">enlace.util</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">enlace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">enlace.gzip_selective</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/module_docs/enlace/gzip_selective.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-enlace.gzip_selective">
+<span id="enlace-gzip-selective"></span><h1>enlace.gzip_selective<a class="headerlink" href="#module-enlace.gzip_selective" title="Link to this heading"></a></h1>
+<p>Compression that knows what it must not compress.</p>
+<p>Starlette’s <code class="docutils literal notranslate"><span class="pre">GZipMiddleware</span></code> compresses <em>every</em> response above <code class="docutils literal notranslate"><span class="pre">minimum_size</span></code>
+when the client offers gzip. On a platform that also serves media, that is wrong in
+two ways, and enlace hit both.</p>
+<p><strong>1. It corrupts byte-range responses.</strong> <code class="docutils literal notranslate"><span class="pre">GZipMiddleware</span></code> has no exclusion for
+<code class="docutils literal notranslate"><span class="pre">206</span> <span class="pre">Partial</span> <span class="pre">Content</span></code> or <code class="docutils literal notranslate"><span class="pre">Content-Range</span></code>. Wrapped around a <code class="docutils literal notranslate"><span class="pre">StaticFiles</span></code> mount
+serving video, it gzips the partial body while <code class="docutils literal notranslate"><span class="pre">Content-Range</span></code> still describes the
+<em>uncompressed</em> representation. Observed against a real mp4 through enlace:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">HTTP</span><span class="o">/</span><span class="mi">2</span> <span class="mi">206</span>
+<span class="n">content</span><span class="o">-</span><span class="n">encoding</span><span class="p">:</span> <span class="n">gzip</span>
+<span class="n">content</span><span class="o">-</span><span class="nb">range</span><span class="p">:</span>   <span class="nb">bytes</span> <span class="mi">0</span><span class="o">-</span><span class="mi">65535</span><span class="o">/</span><span class="mi">112651</span>   <span class="o">&lt;-</span> <span class="n">offsets</span> <span class="n">into</span> <span class="n">the</span> <span class="n">UNCOMPRESSED</span> <span class="n">file</span>
+<span class="n">content</span><span class="o">-</span><span class="n">length</span><span class="p">:</span>  <span class="mi">64076</span>                  <span class="o">&lt;-</span> <span class="n">length</span> <span class="n">of</span> <span class="n">the</span> <span class="n">COMPRESSED</span> <span class="n">body</span>
+</pre></div>
+</div>
+<p>Per RFC 9110 §14.4 the range describes the selected representation, so those headers
+now disagree. Byte ranges are the entire basis of <code class="docutils literal notranslate"><span class="pre">&lt;video&gt;</span></code> playback — seeking,
+streaming, and Safari’s refusal to play media at all without them — so this quietly
+undermines the very thing a static media mount exists to provide.</p>
+<p><strong>2. It burns the shared event loop for nothing.</strong> Video, audio, most images and
+archives are already compressed: gzipping them buys ~1% for the full CPU cost, and
+Starlette compresses <em>synchronously inside the asyncio loop</em> — a loop that, in
+enlace, is shared by every app on the platform.</p>
+<p>So: compress text, never compress a ranged exchange, never compress bytes that are
+already compressed. Pure ASGI (enlace forbids <code class="docutils literal notranslate"><span class="pre">BaseHTTPMiddleware</span></code>).</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.gzip_selective.INCOMPRESSIBLE_PREFIXES">
+<span class="sig-prename descclassname"><span class="pre">enlace.gzip_selective.</span></span><span class="sig-name descname"><span class="pre">INCOMPRESSIBLE_PREFIXES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('video/',</span> <span class="pre">'audio/',</span> <span class="pre">'image/',</span> <span class="pre">'font/woff')</span></span><a class="headerlink" href="#enlace.gzip_selective.INCOMPRESSIBLE_PREFIXES" title="Link to this definition"></a></dt>
+<dd><p>Content types whose bytes are already compressed. <code class="docutils literal notranslate"><span class="pre">image/svg+xml</span></code> is deliberately
+NOT here — SVG is text and compresses extremely well.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.gzip_selective.SelectiveGZipMiddleware">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.gzip_selective.</span></span><span class="sig-name descname"><span class="pre">SelectiveGZipMiddleware</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">MutableMapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Awaitable</span><span class="p"><span class="pre">[</span></span><span class="pre">MutableMapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">MutableMapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Awaitable</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Awaitable</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimum_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compresslevel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/gzip_selective.html#SelectiveGZipMiddleware"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.gzip_selective.SelectiveGZipMiddleware" title="Link to this definition"></a></dt>
+<dd><p>Gzip, minus the responses that must not be compressed.</p>
+<p>Drop-in replacement for <code class="docutils literal notranslate"><span class="pre">starlette.middleware.gzip.GZipMiddleware</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.gzip_selective.is_compressible">
+<span class="sig-prename descclassname"><span class="pre">enlace.gzip_selective.</span></span><span class="sig-name descname"><span class="pre">is_compressible</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../../_modules/enlace/gzip_selective.html#is_compressible"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.gzip_selective.is_compressible" title="Link to this definition"></a></dt>
+<dd><p>Whether a response of this content type is worth compressing.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="frontend.html" class="btn btn-neutral float-left" title="enlace.frontend" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="manifest.html" class="btn btn-neutral float-right" title="enlace.manifest" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
