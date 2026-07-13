@@ -25,13 +25,13 @@ from typing import Callable, Optional, Sequence
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZipMiddleware
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps
 from enlace.frontend import LandingWithUnknownApp404, SPAStaticFiles
+from enlace.gzip_selective import SelectiveGZipMiddleware
 from enlace.manifest import (
     DeployHeadersMiddleware,
     DeployManifest,
@@ -244,10 +244,17 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
 
     # Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST
     # middleware — it must wrap everything downstream (meta injection, sub-app
-    # responses, static files) and see final bytes. GZipMiddleware only acts
-    # when the client sends Accept-Encoding: gzip, skips responses under
-    # minimum_size, respects pre-encoded responses, and sets Vary correctly.
-    parent.add_middleware(GZipMiddleware, minimum_size=1024)
+    # responses, static files) and see final bytes.
+    #
+    # NOT Starlette's GZipMiddleware, which compresses *everything* — including
+    # `206 Partial Content`. That gzips a byte range while Content-Range still
+    # describes the uncompressed representation, so the two headers disagree and
+    # media seeking breaks (and Safari will not play <video> at all without
+    # working ranges). It also spends real CPU, synchronously on the shared event
+    # loop, gzipping video and images that are already compressed, for ~1% gain.
+    # SelectiveGZipMiddleware skips ranged exchanges and incompressible content
+    # types, and is otherwise identical. See gzip_selective.py.
+    parent.add_middleware(SelectiveGZipMiddleware, minimum_size=1024)
 
     return parent
 
