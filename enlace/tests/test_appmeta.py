@@ -498,3 +498,79 @@ def test_overlay_keywords_and_icon_merged_from_di_store():
     # overlay icon wins
     r = client.get("/_apps/pubapp/icon")
     assert "⭐" in r.content.decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# updated_at: the launcher's "last updated" sort key
+# ---------------------------------------------------------------------------
+
+
+def _write_manifest(manifest_dir, app_name, *, committed_at=None, deployed_at=None):
+    """Drop a deploy manifest for `app_name` (what deploy.py writes at deploy time)."""
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    body = {"schema_version": 1, "app": app_name, "app_source": {"sha": "abc123"}}
+    if committed_at is not None:
+        body["app_source"]["committed_at"] = committed_at
+    if deployed_at is not None:
+        body["deployed_at"] = deployed_at
+    _write(manifest_dir / f"{app_name}.json", json.dumps(body))
+
+
+def _updated_at_of(cfg):
+    return TestClient(build_backend(cfg)).get("/_apps").json()["apps"][0]["updated_at"]
+
+
+def test_updated_at_prefers_committed_at_over_deployed_at(tmp_path):
+    """When the source last CHANGED beats when we last SHIPPED it.
+
+    A full deploy stamps every app with the same `deployed_at`, so ordering by it
+    would tie the whole grid. `committed_at` is the signal that actually varies.
+    """
+    manifests = tmp_path / "manifests"
+    _write_manifest(
+        manifests,
+        "pubapp",
+        committed_at="2026-04-28T12:16:50+02:00",
+        deployed_at="2026-07-13T07:02:33+00:00",
+    )
+    cfg = PlatformConfig(apps=[_make_public_app()], manifest_dir=manifests)
+    assert _updated_at_of(cfg) == "2026-04-28T12:16:50+02:00"
+
+
+def test_updated_at_falls_back_to_deployed_at(tmp_path):
+    """Manifests written before `committed_at` existed still date their app."""
+    manifests = tmp_path / "manifests"
+    _write_manifest(manifests, "pubapp", deployed_at="2026-07-13T07:02:33+00:00")
+    cfg = PlatformConfig(apps=[_make_public_app()], manifest_dir=manifests)
+    assert _updated_at_of(cfg) == "2026-07-13T07:02:33+00:00"
+
+
+def test_updated_at_is_null_without_a_manifest(tmp_path):
+    """No manifest ⇒ unknown, NOT epoch-zero.
+
+    The launcher sorts unknowns last rather than pretending they are ancient, so
+    an app that has never been deployed with a manifest-writing deploy.py does not
+    masquerade as the oldest thing on the platform.
+    """
+    cfg = PlatformConfig(apps=[_make_public_app()], manifest_dir=tmp_path / "empty")
+    assert _updated_at_of(cfg) is None
+
+
+def test_updated_at_survives_a_metadata_edit(tmp_path):
+    """`build_launcher_item` carries updated_at, so an overlay edit can't drop it.
+
+    enlace_auth's PATCH handler returns a freshly-built item; if the date lived
+    anywhere but on the AppConfig, an edited app would come back undated and the
+    tile would fall to the bottom of the "last updated" sort.
+    """
+    from enlace.compose import build_launcher_item
+
+    manifests = tmp_path / "manifests"
+    _write_manifest(manifests, "pubapp", committed_at="2026-04-28T12:16:50+02:00")
+    app = _make_public_app()
+    cfg = PlatformConfig(apps=[app], manifest_dir=manifests)
+    build_backend(cfg)  # stamps updated_at onto the AppConfig at startup
+
+    item = build_launcher_item(app, cfg, {"description": "edited"})
+    assert item["description"] == "edited"
+    assert item["updated_at"] == "2026-04-28T12:16:50+02:00"

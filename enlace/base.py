@@ -137,6 +137,13 @@ class AppConfig(BaseModel):
     icon: str = ""
     launchable: Optional[bool] = None
 
+    # When this app's source last changed (ISO-8601), for the launcher's "last
+    # updated" sort. NOT declared in app.toml — it is stamped onto the config at
+    # startup from the app's deploy manifest (``SourceRef.committed_at``), because
+    # only the deploy tool can see the git history. ``None`` when there is no
+    # manifest yet, which the launcher renders as "unknown" and sorts last.
+    updated_at: Optional[str] = None
+
     # Mode: how this app is served (orthogonal to app_type which is what was
     # detected). Free-form string validated against the strategy registry —
     # see ``enlace.strategies`` for the open/closed extension point.

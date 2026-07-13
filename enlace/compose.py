@@ -142,6 +142,7 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         app.name: load_manifest(app.name, manifest_dir, enlace_version=enlace_version)
         for app in config.apps
     }
+    _stamp_updated_at(config, per_app_manifests)
     _add_meta_routes(parent, config, platform_manifest, per_app_manifests)
 
     # landing_app takes precedence over the default Python index. When set
@@ -351,6 +352,30 @@ def _add_router_root_redirects(parent: FastAPI) -> None:
                 existing.add(bare)
 
 
+def _stamp_updated_at(
+    config: PlatformConfig, manifests: dict[str, DeployManifest]
+) -> None:
+    """Stamp each app's "last updated" onto its config, from its deploy manifest.
+
+    Prefers ``app_source.committed_at`` (when the source last actually *changed*)
+    over ``deployed_at`` (when we last *shipped* it) — a full deploy writes the
+    same ``deployed_at`` to every app, which would make the launcher's "last
+    updated" sort a meaningless tie. ``committed_at`` is absent on manifests
+    written before it existed, so the fallback keeps those apps sortable-ish
+    rather than undated.
+
+    Mutating the ``AppConfig`` (rather than passing manifests down) is deliberate:
+    ``build_launcher_item`` is also called by the ``enlace_auth`` plugin after a
+    metadata edit, and it holds these same config objects — so the field is
+    carried there for free, and an edited app cannot come back missing its date.
+    """
+    for app in config.apps:
+        manifest = manifests.get(app.name)
+        if manifest is None:
+            continue
+        app.updated_at = manifest.app_source.committed_at or manifest.deployed_at
+
+
 def _can_access(
     access: str,
     user_id: Optional[str],
@@ -486,6 +511,8 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
         "has_api": app.app_type != "frontend_only",
         "launchable": launchable,
         "launch_url": launch_url,
+        # ISO-8601 or null — see _stamp_updated_at. The launcher sorts on it.
+        "updated_at": app.updated_at,
     }
 
 
