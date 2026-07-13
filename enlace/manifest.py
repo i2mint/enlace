@@ -51,6 +51,12 @@ class SourceRef(BaseModel):
     ref: Optional[str] = None
     dirty: Optional[bool] = None
     local_path: Optional[str] = None
+    # When this source last actually CHANGED (ISO-8601; the committer date of the
+    # newest commit touching it). Distinct from the manifest's ``deployed_at``,
+    # which is when we last *shipped* it — a full deploy stamps every app with the
+    # same instant, so it cannot order apps by recency. This can, which is what the
+    # launcher's "last updated" sort needs. Optional: an app outside git has none.
+    committed_at: Optional[str] = None
 
 
 class ExternalRef(BaseModel):
