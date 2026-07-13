@@ -113,6 +113,10 @@ The `mode` field on `AppConfig` determines how an app is served:
 - **Process-mode apps are NOT imported** — if `app.toml` declares `mode="process"`, discovery skips Python introspection entirely. The app may not even be Python.
 - **Dev supervisor is pure asyncio** — no external dependencies for process supervision. Health checks use stdlib `asyncio.open_connection`. Production supervision is delegated to systemd (future).
 - **Reverse proxy requires httpx** — `pip install enlace[process]`. Import is lazy; asgi-only users don't need it.
+- **An app directory contains only code + build output** — enlace serves an app's
+  `frontend_dir` as static files, and deploys mirror that dir authoritatively. Never suggest
+  that an app keep media or runtime state inside it. See
+  `~/.claude/skills/app-data-lifecycle/SKILL.md`.
 
 ## Research Docs
 
