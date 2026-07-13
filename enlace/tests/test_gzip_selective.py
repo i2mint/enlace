@@ -1,13 +1,11 @@
 """Tests for SelectiveGZipMiddleware.
 
-The regression these lock down: Starlette's GZipMiddleware compressed `206 Partial Content`
-responses, producing a gzipped body alongside a `Content-Range` that described the
-*uncompressed* representation. Byte ranges are how `<video>` streams and seeks (and Safari
-refuses to play media without them), so this broke media serving on a platform that had
-just moved its video behind a StaticFiles mount.
+The regression these lock down: Starlette's GZipMiddleware compressed `206 Partial
+Content` responses, producing a gzipped body alongside a `Content-Range` that described
+the *uncompressed* representation. Byte ranges are how `<video>` streams and seeks (and
+Safari refuses to play media without them), so this broke media serving on a platform
+that had just moved its video behind a StaticFiles mount.
 """
-
-import gzip
 
 import pytest
 from fastapi import FastAPI
@@ -46,8 +44,8 @@ def _app() -> FastAPI:
 
     @app.get("/partial")
     async def partial():
-        # What StaticFiles emits for a Range request: a 206 whose Content-Range describes
-        # the FULL representation, not the slice.
+        # What StaticFiles emits for a Range request: a 206 whose Content-Range
+        # describes the FULL representation, not the slice.
         body = video_bytes[:4096]
         return Response(
             body,
@@ -121,7 +119,7 @@ def test_206_is_never_compressed(client):
 
 
 def test_206_not_compressed_even_for_text(client):
-    """Compressibility of the *type* is irrelevant: it is the RANGE that makes it unsafe."""
+    """Compressibility of the *type* is irrelevant: the RANGE makes it unsafe."""
     r = client.get("/partial-text", headers=GZIP)
     assert r.status_code == 206
     assert "content-encoding" not in r.headers
@@ -172,7 +170,7 @@ def test_is_compressible(ctype, want):
 
 
 def test_gzip_roundtrip_streaming():
-    """A streaming (chunked) response must compress correctly and not advertise a length."""
+    """A streaming (chunked) response compresses correctly, advertising no length."""
     app = FastAPI()
     app.add_middleware(SelectiveGZipMiddleware, minimum_size=10)
 
