@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.tests.test_diagnose_auth &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.tests.test_diagnose_auth &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,7 +105,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.tests.test_diagnose_auth</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Diagnostic checks for auth/store patterns in sub-apps.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Diagnostic checks for auth/store patterns in sub-apps."""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
@@ -115,7 +115,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_write_app</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
     <span class="n">app_dir</span> <span class="o">=</span> <span class="n">tmp_path</span> <span class="o">/</span> <span class="n">name</span>
     <span class="n">app_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">()</span>
-    <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;server.py&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">app_dir</span> <span class="o">/</span> <span class="s2">"server.py"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">app_dir</span>
 
 
@@ -126,9 +126,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">test_subapp_auth_middleware_flagged</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
     <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span>
         <span class="n">tmp_path</span><span class="p">,</span>
-        <span class="s2">&quot;bad_auth&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;from starlette.middleware.authentication import AuthenticationMiddleware</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;app.add_middleware(AuthenticationMiddleware)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"bad_auth"</span><span class="p">,</span>
+        <span class="s2">"from starlette.middleware.authentication import AuthenticationMiddleware</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"app.add_middleware(AuthenticationMiddleware)</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">Category</span><span class="o">.</span><span class="n">SUBAPP_AUTH_MIDDLEWARE</span> <span class="ow">in</span> <span class="n">_cats</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
@@ -137,15 +137,15 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">test_identity_header_flagged</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
     <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span>
         <span class="n">tmp_path</span><span class="p">,</span>
-        <span class="s2">&quot;bad_headers&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;def h(req):</span><span class="se">\n</span><span class="s2">    return req.headers.get(&#39;X-User-ID&#39;)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"bad_headers"</span><span class="p">,</span>
+        <span class="s2">"def h(req):</span><span class="se">\n</span><span class="s2">    return req.headers.get('X-User-ID')</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">Category</span><span class="o">.</span><span class="n">CLIENT_IDENTITY_HEADER</span> <span class="ow">in</span> <span class="n">_cats</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">test_hardcoded_user_id_flagged</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-    <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="s2">&quot;bad_uid&quot;</span><span class="p">,</span> <span class="s2">&quot;user_id = &#39;admin&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">,</span> <span class="s2">"bad_uid"</span><span class="p">,</span> <span class="s2">"user_id = 'admin'</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">Category</span><span class="o">.</span><span class="n">HARDCODED_USER_ID</span> <span class="ow">in</span> <span class="n">_cats</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
 
@@ -153,8 +153,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">test_session_cookie_flagged</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
     <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span>
         <span class="n">tmp_path</span><span class="p">,</span>
-        <span class="s2">&quot;bad_cookie&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;def h(resp):</span><span class="se">\n</span><span class="s2">    resp.set_cookie(&#39;session&#39;, &#39;val&#39;)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"bad_cookie"</span><span class="p">,</span>
+        <span class="s2">"def h(resp):</span><span class="se">\n</span><span class="s2">    resp.set_cookie('session', 'val')</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">Category</span><span class="o">.</span><span class="n">SESSION_COOKIE_IN_SUBAPP</span> <span class="ow">in</span> <span class="n">_cats</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
@@ -163,8 +163,8 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">test_enlace_import_flagged</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
     <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span>
         <span class="n">tmp_path</span><span class="p">,</span>
-        <span class="s2">&quot;bad_import&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;from enlace.stores import PrefixedStore</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"bad_import"</span><span class="p">,</span>
+        <span class="s2">"from enlace.stores import PrefixedStore</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">Category</span><span class="o">.</span><span class="n">STORE_IMPORT_IN_APP</span> <span class="ow">in</span> <span class="n">_cats</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
@@ -173,10 +173,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">test_unsafe_store_key_flagged</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
     <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span>
         <span class="n">tmp_path</span><span class="p">,</span>
-        <span class="s2">&quot;bad_key&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;def h(request):</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;    store = request.state.store</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;    store[request.body] = 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"bad_key"</span><span class="p">,</span>
+        <span class="s2">"def h(request):</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    store = request.state.store</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    store[request.body] = 1</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
     <span class="k">assert</span> <span class="n">Category</span><span class="o">.</span><span class="n">UNSAFE_KEY_IN_STORE</span> <span class="ow">in</span> <span class="n">_cats</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
@@ -185,15 +185,15 @@
 <div class="viewcode-block" id="test_clean_app_has_no_new_issues">
 <a class="viewcode-back" href="../../../module_docs/enlace/tests/test_diagnose_auth.html#enlace.tests.test_diagnose_auth.test_clean_app_has_no_new_issues">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_clean_app_has_no_new_issues</span><span class="p">(</span><span class="n">tmp_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A well-behaved app should trigger none of our new checks.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""A well-behaved app should trigger none of our new checks."""</span>
     <span class="n">app_dir</span> <span class="o">=</span> <span class="n">_write_app</span><span class="p">(</span>
         <span class="n">tmp_path</span><span class="p">,</span>
-        <span class="s2">&quot;clean&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;from fastapi import FastAPI</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;app = FastAPI()</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;@app.get(&#39;/&#39;)</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;def root(request):</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;    return {&#39;user_id&#39;: request.state.user_id}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"clean"</span><span class="p">,</span>
+        <span class="s2">"from fastapi import FastAPI</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"app = FastAPI()</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"@app.get('/')</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"def root(request):</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"    return {'user_id': request.state.user_id}</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
     <span class="n">cats</span> <span class="o">=</span> <span class="n">_cats</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>

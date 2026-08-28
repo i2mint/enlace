@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.compose &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.compose &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,7 +105,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.compose</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;ASGI app composition for enlace.</span>
+<span></span><span class="sd">"""ASGI app composition for enlace.</span>
 
 <span class="sd">Builds a single FastAPI application by mounting discovered sub-apps and applying</span>
 <span class="sd">cross-cutting middleware. Handles lifespan cascading to mounted sub-apps</span>
@@ -117,7 +117,7 @@
 <span class="sd">    sub-apps are mounted. ``enlace_auth.plugin`` is the canonical example:</span>
 <span class="sd">    when installed, it adds auth, sessions, the admin dashboard, and per-user</span>
 <span class="sd">    stores. enlace itself is auth-agnostic.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
@@ -148,7 +148,7 @@
     <span class="n">resolve_manifest_dir</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;enlace&quot;</span><span class="p">)</span>
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"enlace"</span><span class="p">)</span>
 
 <span class="n">Plugin</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">FastAPI</span><span class="p">,</span> <span class="n">PlatformConfig</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
 
@@ -156,18 +156,18 @@
 <div class="viewcode-block" id="EnlaceConfigError">
 <a class="viewcode-back" href="../../module_docs/enlace/compose.html#enlace.EnlaceConfigError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EnlaceConfigError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when platform configuration is unusable at startup.</span>
+<span class="w">    </span><span class="sd">"""Raised when platform configuration is unusable at startup.</span>
 
 <span class="sd">    Distinct from ``ValueError`` / ``RuntimeError`` so callers and tests can</span>
 <span class="sd">    target this specific class.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+<span class="sd">    """</span></div>
 
 
 
 <div class="viewcode-block" id="build_backend">
 <a class="viewcode-back" href="../../module_docs/enlace/compose.html#enlace.build_backend">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_backend</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Plugin</span><span class="p">]</span> <span class="o">=</span> <span class="p">())</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compose all app backends into a single ASGI application.</span>
+<span class="w">    </span><span class="sd">"""Compose all app backends into a single ASGI application.</span>
 
 <span class="sd">    For each discovered app:</span>
 <span class="sd">    - mode=asgi, asgi_app: mount the ASGI object at the route prefix</span>
@@ -181,18 +181,18 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A FastAPI application with all sub-apps mounted.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Signal to sub-apps that they&#39;re running under enlace, so they can skip</span>
+<span class="sd">    """</span>
+    <span class="c1"># Signal to sub-apps that they're running under enlace, so they can skip</span>
     <span class="c1"># their own CORS middleware, standalone startup blocks, etc.</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ENLACE_MANAGED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"ENLACE_MANAGED"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"1"</span>
 
     <span class="n">sub_apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># (route_prefix, app_id, asgi_app)</span>
 
     <span class="c1"># Dispatch every app through its registered BackendStrategy. Built-in</span>
     <span class="c1"># strategies cover asgi/process/external/static; plugins (e.g.</span>
     <span class="c1"># enlace_docker) contribute additional modes via entry points. Each</span>
-    <span class="c1"># strategy&#39;s ``make_asgi`` returns either an ASGI sub-app to mount or</span>
-    <span class="c1"># ``None`` (e.g. frontend-only apps, or apps whose port hasn&#39;t been</span>
+    <span class="c1"># strategy's ``make_asgi`` returns either an ASGI sub-app to mount or</span>
+    <span class="c1"># ``None`` (e.g. frontend-only apps, or apps whose port hasn't been</span>
     <span class="c1"># allocated yet).</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
 
@@ -204,32 +204,32 @@
 
     <span class="nd">@asynccontextmanager</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cascade_lifespan</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward startup/shutdown to mounted sub-apps.</span>
+<span class="w">        </span><span class="sd">"""Forward startup/shutdown to mounted sub-apps.</span>
 
 <span class="sd">        Starlette does NOT propagate lifespan events to mounted sub-apps</span>
 <span class="sd">        (issue #649, open since Sept 2019). This workaround iterates Mount</span>
 <span class="sd">        routes and enters their lifespan contexts.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">AsyncExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">stack</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Mount</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="s2">&quot;router&quot;</span><span class="p">):</span>
-                    <span class="n">lifespan</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">router</span><span class="p">,</span> <span class="s2">&quot;lifespan_context&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Mount</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="s2">"router"</span><span class="p">):</span>
+                    <span class="n">lifespan</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">router</span><span class="p">,</span> <span class="s2">"lifespan_context"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">lifespan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="k">await</span> <span class="n">stack</span><span class="o">.</span><span class="n">enter_async_context</span><span class="p">(</span><span class="n">lifespan</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">))</span>
             <span class="k">yield</span>
 
     <span class="n">parent</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span>
-        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;enlace platform&quot;</span><span class="p">,</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">"enlace platform"</span><span class="p">,</span>
         <span class="n">lifespan</span><span class="o">=</span><span class="n">cascade_lifespan</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># CORS on the parent only — sub-apps must NOT add their own CORS</span>
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
         <span class="n">CORSMiddleware</span><span class="p">,</span>
-        <span class="n">allow_origins</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">],</span>  <span class="c1"># Dev default; restrict in production</span>
+        <span class="n">allow_origins</span><span class="o">=</span><span class="p">[</span><span class="s2">"*"</span><span class="p">],</span>  <span class="c1"># Dev default; restrict in production</span>
         <span class="n">allow_credentials</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">allow_methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">],</span>
-        <span class="n">allow_headers</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;*&quot;</span><span class="p">],</span>
+        <span class="n">allow_methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"*"</span><span class="p">],</span>
+        <span class="n">allow_headers</span><span class="o">=</span><span class="p">[</span><span class="s2">"*"</span><span class="p">],</span>
     <span class="p">)</span>
 
     <span class="c1"># Compose-time plugins (pure ASGI middleware only — no BaseHTTPMiddleware</span>
@@ -258,14 +258,14 @@
     <span class="n">_add_meta_routes</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">platform_manifest</span><span class="p">,</span> <span class="n">per_app_manifests</span><span class="p">)</span>
 
     <span class="c1"># landing_app takes precedence over the default Python index. When set</span>
-    <span class="c1"># to a discovered app&#39;s name, the later frontend-mount loop will mount</span>
-    <span class="c1"># that app&#39;s frontend at / (see below). The built-in index is skipped.</span>
+    <span class="c1"># to a discovered app's name, the later frontend-mount loop will mount</span>
+    <span class="c1"># that app's frontend at / (see below). The built-in index is skipped.</span>
     <span class="n">landing_app_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">landing_app</span>
     <span class="k">if</span> <span class="n">landing_app_name</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_app_name</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;platform.landing_app = </span><span class="si">{</span><span class="n">landing_app_name</span><span class="si">!r}</span><span class="s2"> but no such app &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;was discovered. Known apps: &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">"platform.landing_app = </span><span class="si">{</span><span class="n">landing_app_name</span><span class="si">!r}</span><span class="s2"> but no such app "</span>
+            <span class="sa">f</span><span class="s2">"was discovered. Known apps: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">index_page</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">landing_app_name</span><span class="p">:</span>
@@ -283,7 +283,7 @@
     <span class="n">landing_app_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;static&quot;</span>
+            <span class="n">app_config</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">"static"</span>
             <span class="ow">and</span> <span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span>
             <span class="ow">and</span> <span class="n">app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
         <span class="p">):</span>
@@ -291,7 +291,7 @@
                 <span class="n">landing_app_config</span> <span class="o">=</span> <span class="n">app_config</span>
                 <span class="c1"># Still also mount at /{name}/ so the app is reachable by</span>
                 <span class="c1"># name; some deployments may link to both.</span>
-            <span class="n">frontend_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">frontend_prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
 
             <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">frontend_prefix</span><span class="p">)</span>
             <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
@@ -300,20 +300,20 @@
             <span class="p">)</span>
 
     <span class="c1"># Trailing-slash redirects for router roots contributed by plugins (e.g.</span>
-    <span class="c1"># enlace_auth&#39;s /_admin/). App and frontend prefixes already got theirs at</span>
+    <span class="c1"># enlace_auth's /_admin/). App and frontend prefixes already got theirs at</span>
     <span class="c1"># mount time; this covers prefix-mounted routers, which would otherwise</span>
-    <span class="c1"># 404 at the bare /prefix once the catch-all &quot;/&quot; mount shadows Starlette&#39;s</span>
+    <span class="c1"># 404 at the bare /prefix once the catch-all "/" mount shadows Starlette's</span>
     <span class="c1"># built-in redirect. Run after all routers are registered.</span>
     <span class="n">_add_router_root_redirects</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
 
-    <span class="c1"># landing_app: mount the chosen app&#39;s frontend at / as well, so the</span>
-    <span class="c1"># platform&#39;s root URL serves it instead of the default Python index.</span>
-    <span class="c1"># Unknown top-level paths (e.g. typo&#39;d app names) get a 404 page with a</span>
+    <span class="c1"># landing_app: mount the chosen app's frontend at / as well, so the</span>
+    <span class="c1"># platform's root URL serves it instead of the default Python index.</span>
+    <span class="c1"># Unknown top-level paths (e.g. typo'd app names) get a 404 page with a</span>
     <span class="c1"># link back to / instead of falling back to the landing index.html, which</span>
     <span class="c1"># would silently disguise broken links.</span>
     <span class="k">if</span> <span class="n">landing_app_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
-            <span class="s2">&quot;/&quot;</span><span class="p">,</span>
+            <span class="s2">"/"</span><span class="p">,</span>
             <span class="n">LandingWithUnknownApp404</span><span class="p">(</span>
                 <span class="n">landing_dir</span><span class="o">=</span><span class="n">landing_app_config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">,</span>
             <span class="p">),</span>
@@ -323,7 +323,7 @@
     <span class="c1"># Mounted last so it never shadows API or app-specific routes.</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">shared_assets_dir</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">shared_assets_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
         <span class="n">parent</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span>
-            <span class="s2">&quot;/&quot;</span><span class="p">,</span>
+            <span class="s2">"/"</span><span class="p">,</span>
             <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">shared_assets_dir</span><span class="p">)),</span>
         <span class="p">)</span>
 
@@ -336,7 +336,7 @@
         <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">headers_prefix_map</span><span class="p">[</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
-        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
+        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
         <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
         <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
@@ -358,7 +358,7 @@
     <span class="c1"># middleware — it must wrap everything downstream (meta injection, sub-app</span>
     <span class="c1"># responses, static files) and see final bytes.</span>
     <span class="c1">#</span>
-    <span class="c1"># NOT Starlette&#39;s GZipMiddleware, which compresses *everything* — including</span>
+    <span class="c1"># NOT Starlette's GZipMiddleware, which compresses *everything* — including</span>
     <span class="c1"># `206 Partial Content`. That gzips a byte range while Content-Range still</span>
     <span class="c1"># describes the uncompressed representation, so the two headers disagree and</span>
     <span class="c1"># media seeking breaks (and Safari will not play &lt;video&gt; at all without</span>
@@ -373,12 +373,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_detect_enlace_version</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the installed enlace version, or ``None`` if unknown.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Return the installed enlace version, or ``None`` if unknown."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">PackageNotFoundError</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">_v</span>
 
-        <span class="k">return</span> <span class="n">_v</span><span class="p">(</span><span class="s2">&quot;enlace&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_v</span><span class="p">(</span><span class="s2">"enlace"</span><span class="p">)</span>
     <span class="k">except</span> <span class="n">PackageNotFoundError</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover — defensive</span>
@@ -391,15 +391,15 @@
     <span class="n">platform_manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">,</span>
     <span class="n">per_app_manifests</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.</span>
+<span class="w">    </span><span class="sd">"""Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.</span>
 
 <span class="sd">    Two per-app paths are registered so the manifest is reachable both from</span>
 <span class="sd">    the API mount (``{route_prefix}/_meta``) and the frontend mount</span>
 <span class="sd">    (``/{name}/_meta``). Browser JS commonly fetches the latter with a</span>
 <span class="sd">    relative URL from the SPA root.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_meta&quot;</span><span class="p">,</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/_meta"</span><span class="p">,</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_platform_meta</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">platform_manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
@@ -407,11 +407,11 @@
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">_register_app_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span> <span class="o">+</span> <span class="s2">&quot;/_meta&quot;</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
+        <span class="n">_register_app_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span> <span class="o">+</span> <span class="s2">"/_meta"</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
         <span class="c1"># Same data under the frontend mount so SPA code can fetch it with a</span>
         <span class="c1"># path relative to its own root.</span>
-        <span class="n">frontend_meta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/_meta&quot;</span>
-        <span class="k">if</span> <span class="n">frontend_meta</span> <span class="o">!=</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span> <span class="o">+</span> <span class="s2">&quot;/_meta&quot;</span><span class="p">:</span>
+        <span class="n">frontend_meta</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/_meta"</span>
+        <span class="k">if</span> <span class="n">frontend_meta</span> <span class="o">!=</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span> <span class="o">+</span> <span class="s2">"/_meta"</span><span class="p">:</span>
             <span class="n">_register_app_meta</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">frontend_meta</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span>
 
 
@@ -421,52 +421,52 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_meta</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">payload</span>
 
-    <span class="n">parent</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_meta</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">],</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_meta</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">],</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Redirect GET/HEAD /{prefix} → /{prefix}/ so mounted apps work either way.</span>
+<span class="w">    </span><span class="sd">"""Redirect GET/HEAD /{prefix} → /{prefix}/ so mounted apps work either way.</span>
 
-<span class="sd">    Starlette ``mount()`` only matches paths starting with ``prefix + &quot;/&quot;``,</span>
+<span class="sd">    Starlette ``mount()`` only matches paths starting with ``prefix + "/"``,</span>
 <span class="sd">    so a bare ``/{prefix}`` returns 404. This adds a sibling route that</span>
 <span class="sd">    307-redirects to the trailing-slash form, matching how browsers commonly</span>
 <span class="sd">    expect URLs to behave. HEAD is included so health checks and crawlers</span>
 <span class="sd">    that probe with HEAD see the same routing as GET. State-changing methods</span>
-<span class="sd">    (POST/PUT/DELETE) intentionally aren&#39;t redirected — API clients should</span>
+<span class="sd">    (POST/PUT/DELETE) intentionally aren't redirected — API clients should</span>
 <span class="sd">    hit the canonical trailing-slash path directly.</span>
 
 <span class="sd">    No-op when ``prefix`` is empty or ``/`` (the root mount handles those).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">prefix</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">prefix</span> <span class="o">==</span> <span class="s2">"/"</span><span class="p">:</span>
         <span class="k">return</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_redirect</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">RedirectResponse</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">/"</span><span class="p">)</span>
 
     <span class="n">parent</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span>
         <span class="n">prefix</span><span class="p">,</span>
         <span class="n">_redirect</span><span class="p">,</span>
-        <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">],</span>
+        <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">],</span>
         <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_router_root_redirects</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add trailing-slash redirects for router roots like ``/_admin/``.</span>
+<span class="w">    </span><span class="sd">"""Add trailing-slash redirects for router roots like ``/_admin/``.</span>
 
-<span class="sd">    Plugins include routers at directory-style prefixes (e.g. enlace_auth&#39;s</span>
+<span class="sd">    Plugins include routers at directory-style prefixes (e.g. enlace_auth's</span>
 <span class="sd">    ``/_admin/``). Starlette serves only the trailing-slash form, and the</span>
 <span class="sd">    catch-all ``/`` 404 mount shadows its built-in redirect — so a bare</span>
 <span class="sd">    ``/_admin`` would 404. App and frontend prefixes are already handled at</span>
 <span class="sd">    mount time via :func:`_add_trailing_slash_redirect`; this generalizes the</span>
 <span class="sd">    same treatment to any remaining router root that lacks a no-slash sibling.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">existing</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">path</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">parent</span><span class="o">.</span><span class="n">routes</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">Route</span><span class="p">)}</span>
     <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">routes</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Route</span><span class="p">)</span> <span class="ow">or</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Route</span><span class="p">)</span> <span class="ow">or</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s2">"/"</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="k">if</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
-            <span class="n">bare</span> <span class="o">=</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+            <span class="n">bare</span> <span class="o">=</span> <span class="n">route</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">bare</span> <span class="ow">and</span> <span class="n">bare</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">:</span>
                 <span class="n">_add_trailing_slash_redirect</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">bare</span><span class="p">)</span>
                 <span class="n">existing</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">bare</span><span class="p">)</span>
@@ -475,12 +475,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_stamp_updated_at</span><span class="p">(</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span> <span class="n">manifests</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stamp each app&#39;s &quot;last updated&quot; onto its config, from its deploy manifest.</span>
+<span class="w">    </span><span class="sd">"""Stamp each app's "last updated" onto its config, from its deploy manifest.</span>
 
 <span class="sd">    Prefers ``app_source.committed_at`` (when the source last actually *changed*)</span>
 <span class="sd">    over ``deployed_at`` (when we last *shipped* it) — a full deploy writes the</span>
-<span class="sd">    same ``deployed_at`` to every app, which would make the launcher&#39;s &quot;last</span>
-<span class="sd">    updated&quot; sort a meaningless tie. ``committed_at`` is absent on manifests</span>
+<span class="sd">    same ``deployed_at`` to every app, which would make the launcher's "last</span>
+<span class="sd">    updated" sort a meaningless tie. ``committed_at`` is absent on manifests</span>
 <span class="sd">    written before it existed, so the fallback keeps those apps sortable-ish</span>
 <span class="sd">    rather than undated.</span>
 
@@ -488,7 +488,7 @@
 <span class="sd">    ``build_launcher_item`` is also called by the ``enlace_auth`` plugin after a</span>
 <span class="sd">    metadata edit, and it holds these same config objects — so the field is</span>
 <span class="sd">    carried there for free, and an edited app cannot come back missing its date.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -502,18 +502,18 @@
     <span class="n">user_email</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">allowed_users</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether a request can see an app of this access level in /_apps.</span>
+<span class="w">    </span><span class="sd">"""Whether a request can see an app of this access level in /_apps.</span>
 
 <span class="sd">    `public` / `local` → always.</span>
 <span class="sd">    `protected:user`   → only if authenticated AND (no allowed_users list, or</span>
-<span class="sd">                         the user&#39;s email is in it).</span>
+<span class="sd">                         the user's email is in it).</span>
 <span class="sd">    `protected:shared` → visible either way (gated at open-time, not</span>
 <span class="sd">                         discovery-time — users should know the app exists</span>
 <span class="sd">                         so they can ask for the password).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">access</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;public&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="s2">&quot;protected:shared&quot;</span><span class="p">):</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">access</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"public"</span><span class="p">,</span> <span class="s2">"local"</span><span class="p">,</span> <span class="s2">"protected:shared"</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">if</span> <span class="n">access</span> <span class="o">==</span> <span class="s2">&quot;protected:user&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">access</span> <span class="o">==</span> <span class="s2">"protected:user"</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">allowed_users</span><span class="p">:</span>
@@ -524,36 +524,36 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_app_launch</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether an app opens a human UI, and the URL to open.</span>
+<span class="w">    </span><span class="sd">"""Whether an app opens a human UI, and the URL to open.</span>
 
 <span class="sd">    ``has_frontend`` is metadata, not the launch signal: an ``external`` proxy</span>
 <span class="sd">    (typola) has no local frontend but serves a working UI at its route prefix,</span>
 <span class="sd">    and a ``process`` connector (an MCP endpoint) has a route but no human page.</span>
 <span class="sd">    An explicit ``app.toml`` ``launchable`` overrides the mode-derived default.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">has_frontend</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">launchable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">launchable</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">launchable</span>
-    <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;external&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"external"</span><span class="p">:</span>
         <span class="n">launchable</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"process"</span><span class="p">:</span>
         <span class="n">launchable</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">launchable</span> <span class="o">=</span> <span class="n">has_frontend</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">launchable</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">has_frontend</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span>  <span class="c1"># the SPA mount, not the API route_prefix</span>
-    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>  <span class="c1"># external proxy UI</span>
+        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span>  <span class="c1"># the SPA mount, not the API route_prefix</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"/"</span>  <span class="c1"># external proxy UI</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read one app&#39;s runtime overlay record (Tier A), or ``{}`` if none.</span>
+<span class="w">    </span><span class="sd">"""Read one app's runtime overlay record (Tier A), or ``{}`` if none.</span>
 
 <span class="sd">    ``app_meta_overlay`` is injected by the ``enlace_auth`` plugin; absent it</span>
 <span class="sd">    defaults to an empty dict, so core degrades to Tiers B/C/D with no overlay.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">overlay</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;app_meta_overlay&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">overlay</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"app_meta_overlay"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">overlay</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{}</span>
     <span class="k">try</span><span class="p">:</span>
@@ -564,11 +564,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolved_app_meta</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span> <span class="n">overlay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve an app&#39;s launcher fields across Tier A (overlay) / B / C / D.</span>
+<span class="w">    </span><span class="sd">"""Resolve an app's launcher fields across Tier A (overlay) / B / C / D.</span>
 
 <span class="sd">    Returns the display_name, description, keywords (+ per-tier sources), and</span>
 <span class="sd">    icon_url for one ``/_apps`` item.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">appmeta</span>
 
     <span class="n">tier_b</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
@@ -577,20 +577,20 @@
     <span class="n">b_icon</span> <span class="o">=</span> <span class="n">tier_b</span><span class="o">.</span><span class="n">icon</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">b_keywords</span> <span class="o">=</span> <span class="n">tier_b</span><span class="o">.</span><span class="n">keywords</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="p">[]</span>
 
-    <span class="n">display_name</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_name</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span>
-    <span class="n">description</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;description&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_desc</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">display_name</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"display_name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_name</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"description"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_desc</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="s2">""</span>
 
     <span class="n">keywords</span><span class="p">,</span> <span class="n">sources</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_keywords</span><span class="p">(</span>
         <span class="n">app_keywords</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">keywords</span><span class="p">,</span>
         <span class="n">platform_keywords</span><span class="o">=</span><span class="n">b_keywords</span><span class="p">,</span>
-        <span class="n">overlay_keywords</span><span class="o">=</span><span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="p">[]),</span>
+        <span class="n">overlay_keywords</span><span class="o">=</span><span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"keywords"</span><span class="p">,</span> <span class="p">[]),</span>
     <span class="p">)</span>
 
     <span class="n">icon_spec</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_icon</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">default_icon</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"icon"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b_icon</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span> <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">default_icon</span> <span class="ow">or</span> <span class="s2">""</span>
     <span class="p">)</span>
     <span class="c1"># token_only: the listing needs only the ?v= cache token, not the icon bytes,</span>
-    <span class="c1"># so a file-backed icon is stat&#39;d, not read (27 apps × every /_apps hit).</span>
+    <span class="c1"># so a file-backed icon is stat'd, not read (27 apps × every /_apps hit).</span>
     <span class="n">icon</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_icon</span><span class="p">(</span>
         <span class="n">icon_spec</span><span class="p">,</span>
         <span class="n">app_name</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -599,65 +599,65 @@
         <span class="n">token_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">display_name</span><span class="p">,</span>
-        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">description</span><span class="p">,</span>
-        <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="n">keywords</span><span class="p">,</span>
-        <span class="s2">&quot;keyword_sources&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
-        <span class="s2">&quot;icon_url&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;/_apps/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/icon?v=</span><span class="si">{</span><span class="n">icon</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">"display_name"</span><span class="p">:</span> <span class="n">display_name</span><span class="p">,</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="n">description</span><span class="p">,</span>
+        <span class="s2">"keywords"</span><span class="p">:</span> <span class="n">keywords</span><span class="p">,</span>
+        <span class="s2">"keyword_sources"</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
+        <span class="s2">"icon_url"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"/_apps/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/icon?v=</span><span class="si">{</span><span class="n">icon</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
     <span class="p">}</span>
 
 
 <div class="viewcode-block" id="build_launcher_item">
 <a class="viewcode-back" href="../../module_docs/enlace/compose.html#enlace.build_launcher_item">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_launcher_item</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span> <span class="n">overlay</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build one ``/_apps`` item: resolved metadata + launchability, for an app.</span>
+<span class="w">    </span><span class="sd">"""Build one ``/_apps`` item: resolved metadata + launchability, for an app.</span>
 
-<span class="sd">    Public (unlike the ``_``-helpers) so the ``enlace_auth`` plugin&#39;s</span>
+<span class="sd">    Public (unlike the ``_``-helpers) so the ``enlace_auth`` plugin's</span>
 <span class="sd">    metadata-edit endpoints can return the *identical* item shape after a</span>
 <span class="sd">    mutation — single source of truth for the item contract. ``overlay`` is the</span>
-<span class="sd">    app&#39;s Tier-A record (``{}`` if none).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    app's Tier-A record (``{}`` if none).</span>
+<span class="sd">    """</span>
     <span class="n">launchable</span><span class="p">,</span> <span class="n">launch_url</span> <span class="o">=</span> <span class="n">_app_launch</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
     <span class="n">resolved</span> <span class="o">=</span> <span class="n">_resolved_app_meta</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">overlay</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span>
-        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-        <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;display_name&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;keywords&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;keyword_sources&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;keyword_sources&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;icon_url&quot;</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">&quot;icon_url&quot;</span><span class="p">],</span>
-        <span class="s2">&quot;route&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span>  <span class="c1"># back-compat; new landing ignores</span>
-        <span class="s2">&quot;api_route&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
-        <span class="s2">&quot;access&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
-        <span class="s2">&quot;has_frontend&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()),</span>
-        <span class="s2">&quot;has_api&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">&quot;frontend_only&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;launchable&quot;</span><span class="p">:</span> <span class="n">launchable</span><span class="p">,</span>
-        <span class="s2">&quot;launch_url&quot;</span><span class="p">:</span> <span class="n">launch_url</span><span class="p">,</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s2">"display_name"</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">"display_name"</span><span class="p">],</span>
+        <span class="s2">"description"</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">"description"</span><span class="p">],</span>
+        <span class="s2">"keywords"</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">"keywords"</span><span class="p">],</span>
+        <span class="s2">"keyword_sources"</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">"keyword_sources"</span><span class="p">],</span>
+        <span class="s2">"icon_url"</span><span class="p">:</span> <span class="n">resolved</span><span class="p">[</span><span class="s2">"icon_url"</span><span class="p">],</span>
+        <span class="s2">"route"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>  <span class="c1"># back-compat; new landing ignores</span>
+        <span class="s2">"api_route"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
+        <span class="s2">"access"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="p">,</span>
+        <span class="s2">"has_frontend"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()),</span>
+        <span class="s2">"has_api"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">"frontend_only"</span><span class="p">,</span>
+        <span class="s2">"launchable"</span><span class="p">:</span> <span class="n">launchable</span><span class="p">,</span>
+        <span class="s2">"launch_url"</span><span class="p">:</span> <span class="n">launch_url</span><span class="p">,</span>
         <span class="c1"># ISO-8601 or null — see _stamp_updated_at. The launcher sorts on it.</span>
-        <span class="s2">&quot;updated_at&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span><span class="p">,</span>
+        <span class="s2">"updated_at"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add GET /_apps (+ per-app icon route) for the launcher UI.</span>
+<span class="w">    </span><span class="sd">"""Add GET /_apps (+ per-app icon route) for the launcher UI.</span>
 
 <span class="sd">    ``/_apps`` returns the resolved launcher metadata for every app the caller</span>
-<span class="sd">    can see; the landing app itself is hidden (it&#39;s the shell, not a listable</span>
-<span class="sd">    app). ``/_apps/{name}/icon`` serves each app&#39;s icon through the platform so</span>
-<span class="sd">    that even an auth-gated app&#39;s icon renders for an anonymous viewer who is</span>
+<span class="sd">    can see; the landing app itself is hidden (it's the shell, not a listable</span>
+<span class="sd">    app). ``/_apps/{name}/icon`` serves each app's icon through the platform so</span>
+<span class="sd">    that even an auth-gated app's icon renders for an anonymous viewer who is</span>
 <span class="sd">    allowed to *see* the app in the list. New fields are purely additive, so an</span>
 <span class="sd">    older landing UI keeps working.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">apps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
     <span class="n">landing_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">landing_app</span>
     <span class="n">apps_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">}</span>
 
-    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_apps&quot;</span><span class="p">)</span>
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/_apps"</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apps_listing</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_email&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">can_edit_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;app_meta_can_edit&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_email"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">can_edit_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"app_meta_can_edit"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">can_edit_meta</span> <span class="o">=</span> <span class="p">(</span>
             <span class="nb">bool</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">(</span><span class="n">user_email</span><span class="p">))</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">)</span> <span class="k">else</span> <span class="kc">False</span>
         <span class="p">)</span>
@@ -672,20 +672,20 @@
                 <span class="n">build_launcher_item</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;apps&quot;</span><span class="p">:</span> <span class="n">items</span><span class="p">,</span>
-            <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span><span class="p">:</span> <span class="n">user_email</span><span class="p">}</span> <span class="k">if</span> <span class="n">user_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;can_edit_meta&quot;</span><span class="p">:</span> <span class="n">can_edit_meta</span><span class="p">,</span>
+            <span class="s2">"apps"</span><span class="p">:</span> <span class="n">items</span><span class="p">,</span>
+            <span class="s2">"user"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span> <span class="s2">"email"</span><span class="p">:</span> <span class="n">user_email</span><span class="p">}</span> <span class="k">if</span> <span class="n">user_id</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"can_edit_meta"</span><span class="p">:</span> <span class="n">can_edit_meta</span><span class="p">,</span>
         <span class="p">}</span>
 
-    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/_apps/</span><span class="si">{name}</span><span class="s2">/icon&quot;</span><span class="p">)</span>
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/_apps/</span><span class="si">{name}</span><span class="s2">/icon"</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">app_icon</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">appmeta</span>
 
-        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">&quot;user_email&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_email"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">app</span> <span class="o">=</span> <span class="n">apps_by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="c1"># Access check FIRST, and a uniform 404 for unknown-or-forbidden — the</span>
-        <span class="c1"># icon endpoint must not be an oracle for apps the caller can&#39;t see.</span>
+        <span class="c1"># icon endpoint must not be an oracle for apps the caller can't see.</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">app</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_name</span>
@@ -696,14 +696,14 @@
         <span class="n">overlay</span> <span class="o">=</span> <span class="n">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="n">tier_b</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">apps</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="n">icon_spec</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">)</span>
+            <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"icon"</span><span class="p">)</span>
             <span class="ow">or</span> <span class="p">(</span><span class="n">tier_b</span><span class="o">.</span><span class="n">icon</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
             <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span>
             <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">default_icon</span>
-            <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+            <span class="ow">or</span> <span class="s2">""</span>
         <span class="p">)</span>
         <span class="n">display_name</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">)</span>
+            <span class="n">overlay</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"display_name"</span><span class="p">)</span>
             <span class="ow">or</span> <span class="p">(</span><span class="n">tier_b</span><span class="o">.</span><span class="n">display_name</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
             <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span>
         <span class="p">)</span>
@@ -714,91 +714,91 @@
             <span class="n">app_dir</span><span class="o">=</span><span class="n">appmeta</span><span class="o">.</span><span class="n">app_dir_of</span><span class="p">(</span><span class="n">app</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">icon</span><span class="o">.</span><span class="n">redirect_url</span><span class="p">:</span>
-            <span class="c1"># We don&#39;t control the remote bytes ⇒ never mark immutable.</span>
+            <span class="c1"># We don't control the remote bytes ⇒ never mark immutable.</span>
             <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span>
                 <span class="n">icon</span><span class="o">.</span><span class="n">redirect_url</span><span class="p">,</span>
                 <span class="n">status_code</span><span class="o">=</span><span class="mi">307</span><span class="p">,</span>
-                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Cache-Control&quot;</span><span class="p">:</span> <span class="s2">&quot;no-store&quot;</span><span class="p">},</span>
+                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"Cache-Control"</span><span class="p">:</span> <span class="s2">"no-store"</span><span class="p">},</span>
             <span class="p">)</span>
-        <span class="n">cache</span> <span class="o">=</span> <span class="s2">&quot;public, max-age=31536000, immutable&quot;</span> <span class="k">if</span> <span class="n">icon</span><span class="o">.</span><span class="n">immutable</span> <span class="k">else</span> <span class="s2">&quot;no-store&quot;</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="s2">"public, max-age=31536000, immutable"</span> <span class="k">if</span> <span class="n">icon</span><span class="o">.</span><span class="n">immutable</span> <span class="k">else</span> <span class="s2">"no-store"</span>
         <span class="c1"># An icon may be an SVG (generated monogram/glyph, or an editor-supplied</span>
         <span class="c1"># file/data-URI). nosniff does NOT stop script in an SVG loaded as a</span>
         <span class="c1"># *document*; this CSP neutralises any embedded script if someone</span>
-        <span class="c1"># navigates directly to the icon URL. Inert on the grid&#39;s &lt;img&gt; load,</span>
+        <span class="c1"># navigates directly to the icon URL. Inert on the grid's &lt;img&gt; load,</span>
         <span class="c1"># which never executes SVG script anyway.</span>
-        <span class="n">icon_csp</span> <span class="o">=</span> <span class="s2">&quot;default-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; sandbox&quot;</span>
+        <span class="n">icon_csp</span> <span class="o">=</span> <span class="s2">"default-src 'none'; style-src 'unsafe-inline'; sandbox"</span>
         <span class="k">return</span> <span class="n">Response</span><span class="p">(</span>
             <span class="n">content</span><span class="o">=</span><span class="n">icon</span><span class="o">.</span><span class="n">body</span><span class="p">,</span>
             <span class="n">media_type</span><span class="o">=</span><span class="n">icon</span><span class="o">.</span><span class="n">content_type</span><span class="p">,</span>
             <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;ETag&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="n">icon</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">,</span>
-                <span class="s2">&quot;X-Content-Type-Options&quot;</span><span class="p">:</span> <span class="s2">&quot;nosniff&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;Content-Security-Policy&quot;</span><span class="p">:</span> <span class="n">icon_csp</span><span class="p">,</span>
-                <span class="s2">&quot;Cache-Control&quot;</span><span class="p">:</span> <span class="n">cache</span><span class="p">,</span>
+                <span class="s2">"ETag"</span><span class="p">:</span> <span class="sa">f</span><span class="s1">'"</span><span class="si">{</span><span class="n">icon</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s1">"'</span><span class="p">,</span>
+                <span class="s2">"X-Content-Type-Options"</span><span class="p">:</span> <span class="s2">"nosniff"</span><span class="p">,</span>
+                <span class="s2">"Content-Security-Policy"</span><span class="p">:</span> <span class="n">icon_csp</span><span class="p">,</span>
+                <span class="s2">"Cache-Control"</span><span class="p">:</span> <span class="n">cache</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a GET / route that lists all discovered apps as a simple HTML page.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Add a GET / route that lists all discovered apps as a simple HTML page."""</span>
     <span class="n">apps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
 
-    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
+    <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">index</span><span class="p">():</span>
         <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
             <span class="n">has_frontend</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
-            <span class="n">has_api</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">&quot;frontend_only&quot;</span>
+            <span class="n">has_api</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">"frontend_only"</span>
             <span class="n">links</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">if</span> <span class="n">has_frontend</span><span class="p">:</span>
-                <span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;a href=&quot;/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/&quot;&gt;open&lt;/a&gt;&#39;</span><span class="p">)</span>
+                <span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'&lt;a href="/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">/"&gt;open&lt;/a&gt;'</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">has_api</span><span class="p">:</span>
-                <span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&lt;a href=&quot;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">}</span><span class="s1">/docs&quot;&gt;api docs&lt;/a&gt;&#39;</span><span class="p">)</span>
-            <span class="n">link_html</span> <span class="o">=</span> <span class="s2">&quot; · &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">links</span><span class="p">)</span> <span class="k">if</span> <span class="n">links</span> <span class="k">else</span> <span class="s2">&quot;(no routes)&quot;</span>
-            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;li&gt;&lt;strong&gt;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="si">}</span><span class="s2">&lt;/strong&gt; — </span><span class="si">{</span><span class="n">link_html</span><span class="si">}</span><span class="s2">&lt;/li&gt;&quot;</span><span class="p">)</span>
-        <span class="n">app_list</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="k">if</span> <span class="n">items</span> <span class="k">else</span> <span class="s2">&quot;&lt;li&gt;No apps discovered.&lt;/li&gt;&quot;</span>
+                <span class="n">links</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">'&lt;a href="</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">}</span><span class="s1">/docs"&gt;api docs&lt;/a&gt;'</span><span class="p">)</span>
+            <span class="n">link_html</span> <span class="o">=</span> <span class="s2">" · "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">links</span><span class="p">)</span> <span class="k">if</span> <span class="n">links</span> <span class="k">else</span> <span class="s2">"(no routes)"</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"&lt;li&gt;&lt;strong&gt;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="si">}</span><span class="s2">&lt;/strong&gt; — </span><span class="si">{</span><span class="n">link_html</span><span class="si">}</span><span class="s2">&lt;/li&gt;"</span><span class="p">)</span>
+        <span class="n">app_list</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="k">if</span> <span class="n">items</span> <span class="k">else</span> <span class="s2">"&lt;li&gt;No apps discovered.&lt;/li&gt;"</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="s2">&quot;&lt;!doctype html&gt;&quot;</span>
-            <span class="s2">&quot;&lt;html&gt;&lt;head&gt;&lt;meta charset=&#39;utf-8&#39;&gt;&quot;</span>
-            <span class="s2">&quot;&lt;title&gt;enlace&lt;/title&gt;&quot;</span>
-            <span class="s2">&quot;&lt;style&gt;&quot;</span>
-            <span class="s2">&quot;body{font-family:system-ui,sans-serif;max-width:640px;&quot;</span>
-            <span class="s2">&quot;margin:40px auto;padding:0 20px;color:#333}&quot;</span>
-            <span class="s2">&quot;a{color:#2563eb} li{margin:8px 0}&quot;</span>
-            <span class="s2">&quot;&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&quot;</span>
-            <span class="s2">&quot;&lt;h1&gt;enlace&lt;/h1&gt;&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;&lt;p&gt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">apps</span><span class="p">)</span><span class="si">}</span><span class="s2"> app</span><span class="si">{</span><span class="s1">&#39;s&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">apps</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2"> running:&lt;/p&gt;&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;&lt;ul&gt;</span><span class="si">{</span><span class="n">app_list</span><span class="si">}</span><span class="s2">&lt;/ul&gt;&quot;</span>
-            <span class="s2">&quot;&lt;/body&gt;&lt;/html&gt;&quot;</span>
+            <span class="s2">"&lt;!doctype html&gt;"</span>
+            <span class="s2">"&lt;html&gt;&lt;head&gt;&lt;meta charset='utf-8'&gt;"</span>
+            <span class="s2">"&lt;title&gt;enlace&lt;/title&gt;"</span>
+            <span class="s2">"&lt;style&gt;"</span>
+            <span class="s2">"body{font-family:system-ui,sans-serif;max-width:640px;"</span>
+            <span class="s2">"margin:40px auto;padding:0 20px;color:#333}"</span>
+            <span class="s2">"a{color:#2563eb} li{margin:8px 0}"</span>
+            <span class="s2">"&lt;/style&gt;&lt;/head&gt;&lt;body&gt;"</span>
+            <span class="s2">"&lt;h1&gt;enlace&lt;/h1&gt;"</span>
+            <span class="sa">f</span><span class="s2">"&lt;p&gt;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">apps</span><span class="p">)</span><span class="si">}</span><span class="s2"> app</span><span class="si">{</span><span class="s1">'s'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">apps</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2"> running:&lt;/p&gt;"</span>
+            <span class="sa">f</span><span class="s2">"&lt;ul&gt;</span><span class="si">{</span><span class="n">app_list</span><span class="si">}</span><span class="s2">&lt;/ul&gt;"</span>
+            <span class="s2">"&lt;/body&gt;&lt;/html&gt;"</span>
         <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_AppIdInjector</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pure-ASGI wrapper that stamps the app&#39;s name into scope state.</span>
+<span class="w">    </span><span class="sd">"""Pure-ASGI wrapper that stamps the app's name into scope state.</span>
 
 <span class="sd">    Sub-apps never read this themselves — ``StoreInjectionMiddleware`` does,</span>
-<span class="sd">    so it knows which app&#39;s per-user store to attach.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    so it knows which app's per-user store to attach.</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">app_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span> <span class="o">=</span> <span class="n">app_id</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;websocket&quot;</span><span class="p">):</span>
-            <span class="n">state</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="p">{})</span>
-            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;app_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"http"</span><span class="p">,</span> <span class="s2">"websocket"</span><span class="p">):</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"state"</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">"app_id"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_id</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_sub_app</span><span class="p">(</span><span class="n">app_config</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">object</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import and return the sub-app for a given AppConfig.</span>
+<span class="w">    </span><span class="sd">"""Import and return the sub-app for a given AppConfig.</span>
 
 <span class="sd">    For asgi_app type: imports the module and returns the app attribute.</span>
-<span class="sd">    For functions type: builds an APIRouter wrapping the module&#39;s public functions.</span>
+<span class="sd">    For functions type: builds an APIRouter wrapping the module's public functions.</span>
 
 <span class="sd">    Uses app_config.source_dir for correct sys.path resolution.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">entry_module_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -809,48 +809,48 @@
 
     <span class="n">module</span> <span class="o">=</span> <span class="n">_import_app_module</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">entry_module_path</span><span class="p">,</span> <span class="n">source_dir</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">app_type</span> <span class="o">==</span> <span class="s2">&quot;asgi_app&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">app_type</span> <span class="o">==</span> <span class="s2">"asgi_app"</span><span class="p">:</span>
         <span class="n">sub_app</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">app_attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">sub_app</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Module </span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">entry_module_path</span><span class="si">}</span><span class="s2"> has no attribute &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                <span class="sa">f</span><span class="s2">"Module </span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">entry_module_path</span><span class="si">}</span><span class="s2"> has no attribute "</span>
+                <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">'"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">sub_app</span>
 
-    <span class="k">elif</span> <span class="n">app_config</span><span class="o">.</span><span class="n">app_type</span> <span class="o">==</span> <span class="s2">&quot;functions&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">app_config</span><span class="o">.</span><span class="n">app_type</span> <span class="o">==</span> <span class="s2">"functions"</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_build_router_from_functions</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">app_config</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_router_from_functions</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">app_config</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a FastAPI sub-app from a module&#39;s public typed functions.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Build a FastAPI sub-app from a module's public typed functions."""</span>
     <span class="n">sub_app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">app_config</span><span class="o">.</span><span class="n">display_name</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">!=</span> <span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">func</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">!=</span> <span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="c1"># Use GET for no-param functions, POST for functions with params</span>
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-        <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;self&quot;</span><span class="p">,</span> <span class="s2">&quot;cls&quot;</span><span class="p">)]</span>
-        <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;GET&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">params</span> <span class="k">else</span> <span class="s2">&quot;POST&quot;</span>
-        <span class="n">sub_app</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="n">method</span><span class="p">])</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"self"</span><span class="p">,</span> <span class="s2">"cls"</span><span class="p">)]</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s2">"GET"</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">params</span> <span class="k">else</span> <span class="s2">"POST"</span>
+        <span class="n">sub_app</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="n">method</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">sub_app</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_import_app_module</span><span class="p">(</span><span class="n">entry_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">source_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import the app module from a filesystem path.</span>
+<span class="w">    </span><span class="sd">"""Import the app module from a filesystem path.</span>
 
 <span class="sd">    Uses source_dir.parent as the sys.path root. The path is added</span>
 <span class="sd">    permanently (needed for the lifetime of the server process).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">source_dir</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
     <span class="n">relative</span> <span class="o">=</span> <span class="n">entry_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
-    <span class="n">module_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">relative</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="n">module_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">relative</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">""</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">module_name</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
         <span class="k">del</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">module_name</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module_name</span><span class="p">)</span>
@@ -859,7 +859,7 @@
 <div class="viewcode-block" id="create_app">
 <a class="viewcode-back" href="../../module_docs/enlace/compose.html#enlace.create_app">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">create_app</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;App factory for Uvicorn&#39;s --factory flag.</span>
+<span class="w">    </span><span class="sd">"""App factory for Uvicorn's --factory flag.</span>
 
 <span class="sd">    Loads platform config, discovers apps, checks conflicts,</span>
 <span class="sd">    and builds the composed backend.</span>
@@ -871,7 +871,7 @@
 
 <span class="sd">    Each resolved object must be a callable</span>
 <span class="sd">    ``(parent: FastAPI, config: PlatformConfig) -&gt; None``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">discover_apps</span><span class="p">()</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">_apply_port_env</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="n">plugins</span> <span class="o">=</span> <span class="n">_load_plugins_from_env</span><span class="p">()</span>
@@ -880,52 +880,52 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_plugins_from_env</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Plugin</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse ENLACE_PLUGINS=mod:attr,mod2:attr2 and resolve to callables.&quot;&quot;&quot;</span>
-    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ENLACE_PLUGINS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">"""Parse ENLACE_PLUGINS=mod:attr,mod2:attr2 and resolve to callables."""</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ENLACE_PLUGINS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Plugin</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)):</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">spec</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">":"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">EnlaceConfigError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ENLACE_PLUGINS entry </span><span class="si">{</span><span class="n">spec</span><span class="si">!r}</span><span class="s2"> is not in &#39;module:attribute&#39; form&quot;</span>
+                <span class="sa">f</span><span class="s2">"ENLACE_PLUGINS entry </span><span class="si">{</span><span class="n">spec</span><span class="si">!r}</span><span class="s2"> is not in 'module:attribute' form"</span>
             <span class="p">)</span>
-        <span class="n">mod_name</span><span class="p">,</span> <span class="n">attr</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mod_name</span><span class="p">,</span> <span class="n">attr</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">mod_name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">EnlaceConfigError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ENLACE_PLUGINS: cannot import </span><span class="si">{</span><span class="n">mod_name</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"ENLACE_PLUGINS: cannot import </span><span class="si">{</span><span class="n">mod_name</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">EnlaceConfigError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ENLACE_PLUGINS: </span><span class="si">{</span><span class="n">mod_name</span><span class="si">!r}</span><span class="s2"> has no attribute </span><span class="si">{</span><span class="n">attr</span><span class="si">!r}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"ENLACE_PLUGINS: </span><span class="si">{</span><span class="n">mod_name</span><span class="si">!r}</span><span class="s2"> has no attribute </span><span class="si">{</span><span class="n">attr</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">EnlaceConfigError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ENLACE_PLUGINS: </span><span class="si">{</span><span class="n">spec</span><span class="si">!r}</span><span class="s2"> resolved to non-callable </span><span class="si">{</span><span class="n">obj</span><span class="si">!r}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"ENLACE_PLUGINS: </span><span class="si">{</span><span class="n">spec</span><span class="si">!r}</span><span class="s2"> resolved to non-callable </span><span class="si">{</span><span class="n">obj</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_apply_port_env</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlatformConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply auto-allocated ports from the ENLACE_PROCESS_PORTS env var.</span>
+<span class="w">    </span><span class="sd">"""Apply auto-allocated ports from the ENLACE_PROCESS_PORTS env var.</span>
 
 <span class="sd">    When serve.py runs in mixed mode, it auto-allocates ports for</span>
 <span class="sd">    ``needs_port`` apps and stores them in an env var so the gateway</span>
 <span class="sd">    subprocess can read them and set up correct proxy routes. The map only</span>
 <span class="sd">    ever contains needs_port apps, so we apply by name without re-checking</span>
 <span class="sd">    the mode here (which keeps this open to plugin strategies).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ENLACE_PROCESS_PORTS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ENLACE_PROCESS_PORTS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">config</span>
     <span class="k">try</span><span class="p">:</span>
@@ -937,10 +937,10 @@
     <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">port_map</span><span class="p">:</span>
             <span class="n">port</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">port_map</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-            <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;port&quot;</span><span class="p">:</span> <span class="n">port</span><span class="p">})</span>
+            <span class="n">app</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"port"</span><span class="p">:</span> <span class="n">port</span><span class="p">})</span>
         <span class="n">updated_apps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;apps&quot;</span><span class="p">:</span> <span class="n">updated_apps</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"apps"</span><span class="p">:</span> <span class="n">updated_apps</span><span class="p">})</span>
 </pre></div>
 
            </div>

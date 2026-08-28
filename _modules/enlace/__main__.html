@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,7 +105,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.__main__</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;CLI entry point for enlace.</span>
+<span></span><span class="sd">"""CLI entry point for enlace.</span>
 
 <span class="sd">Usage::</span>
 
@@ -113,7 +113,7 @@
 <span class="sd">    enlace show-config        # Show resolved configuration</span>
 <span class="sd">    enlace check              # Validate configuration</span>
 <span class="sd">    enlace list-apps          # List discovered apps</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">json_module</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
@@ -126,19 +126,19 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlatformConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.diagnose</span><span class="w"> </span><span class="kn">import</span> <span class="n">diagnose_app</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_apps</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.doctor</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_doctor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.doctor</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_plugin_checks</span><span class="p">,</span> <span class="n">run_doctor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.serve</span><span class="w"> </span><span class="kn">import</span> <span class="n">serve</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_config</span><span class="p">(</span>
-    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlatformConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build PlatformConfig from TOML, with CLI args as overrides.</span>
+<span class="w">    </span><span class="sd">"""Build PlatformConfig from TOML, with CLI args as overrides.</span>
 
 <span class="sd">    When no CLI directory args are given, uses platform.toml values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">PlatformConfig</span><span class="o">.</span><span class="n">from_toml</span><span class="p">()</span>
 
     <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -147,18 +147,18 @@
         <span class="n">resolved_apps_dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">apps_dirs</span><span class="p">:</span>
         <span class="n">resolved_apps_dirs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="n">Path</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">apps_dirs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">apps_dirs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">resolved_apps_dirs</span><span class="p">:</span>
-        <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;apps_dirs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolved_apps_dirs</span>
+        <span class="n">updates</span><span class="p">[</span><span class="s2">"apps_dirs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolved_apps_dirs</span>
 
     <span class="n">resolved_app_dirs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">app_dirs</span><span class="p">:</span>
         <span class="n">resolved_app_dirs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-            <span class="n">Path</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">app_dirs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">app_dirs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="n">resolved_app_dirs</span><span class="p">:</span>
-        <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;app_dirs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolved_app_dirs</span>
+        <span class="n">updates</span><span class="p">[</span><span class="s2">"app_dirs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolved_app_dirs</span>
 
     <span class="k">if</span> <span class="n">updates</span><span class="p">:</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">updates</span><span class="p">)</span>
@@ -172,11 +172,11 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Show resolved platform configuration with provenance annotations.</span>
+<span class="w">    </span><span class="sd">"""Show resolved platform configuration with provenance annotations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        verbose: Show provenance for every field.</span>
@@ -184,95 +184,95 @@
 <span class="sd">        apps_dir: Path to the apps directory.</span>
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">json</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">json_module</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
         <span class="k">return</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Platform Configuration (resolved)&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">38</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Platform Configuration (resolved)"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">38</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Meta-conventions:&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  entry_points: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">entry_points</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  app_attr: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  frontend_dir: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">frontend_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  apps_dirs: </span><span class="si">{</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">config</span><span class="o">.</span><span class="n">apps_dirs</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Meta-conventions:"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  entry_points: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">entry_points</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  app_attr: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  frontend_dir: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">frontend_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  apps_dirs: </span><span class="si">{</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">config</span><span class="o">.</span><span class="n">apps_dirs</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">app_dirs</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  app_dirs: </span><span class="si">{</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">config</span><span class="o">.</span><span class="n">app_dirs</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  app_dirs: </span><span class="si">{</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">config</span><span class="o">.</span><span class="n">app_dirs</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">()</span>
 
-    <span class="n">has_non_asgi</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;asgi&quot;</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span>
+    <span class="n">has_non_asgi</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">"asgi"</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Discovered Apps: None&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Discovered Apps: None"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Discovered Apps:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Discovered Apps:"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="n">prov</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">provenance</span>
 
             <span class="c1"># Show mode when non-asgi apps exist</span>
             <span class="k">if</span> <span class="n">has_non_asgi</span><span class="p">:</span>
-                <span class="n">mode_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mode&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;default&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    mode:     </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="si">}{</span><span class="n">mode_src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">mode_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'mode'</span><span class="p">,</span><span class="w"> </span><span class="s1">'default'</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">""</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    mode:     </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="si">}{</span><span class="n">mode_src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-            <span class="n">route_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;route_prefix&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;default&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    route:    </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">}{</span><span class="n">route_src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">route_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'route_prefix'</span><span class="p">,</span><span class="w"> </span><span class="s1">'default'</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    route:    </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">}{</span><span class="n">route_src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">entry_module_path</span><span class="p">:</span>
                 <span class="n">entry_src</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;entry_module_path&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                    <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'entry_module_path'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">""</span>
                 <span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    entry:    </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">entry_module_path</span><span class="si">}{</span><span class="n">entry_src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    entry:    </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">entry_module_path</span><span class="si">}{</span><span class="n">entry_src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-            <span class="n">type_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;app_type&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    type:     </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">}{</span><span class="n">type_src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">type_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'app_type'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    type:     </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">}{</span><span class="n">type_src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-            <span class="n">access_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;access&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;default&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    access:   </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}{</span><span class="n">access_src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">access_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'access'</span><span class="p">,</span><span class="w"> </span><span class="s1">'default'</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">""</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    access:   </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}{</span><span class="n">access_src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="c1"># Show process-mode details</span>
-            <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"process"</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">command</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    command:  </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">command</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    command:  </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">command</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    port:     </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;external&quot;</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    port:     </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"external"</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    upstream: </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;static&quot;</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    upstream: </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"static"</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">public_dir</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    dir:      </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">public_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    dir:      </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">public_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    frontend: </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    frontend: </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">build</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    build:    </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">build</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    build:    </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">build</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">cwd</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    build-cwd: </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">cwd</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    build-cwd: </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">cwd</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">install</span><span class="p">:</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    build-install: </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">install</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    build-install: </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">install</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">env_vars</span><span class="p">:</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    build-env: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">env_vars</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    build-env: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="n">env_vars</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">source_dir</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    source:   </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">source_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    source:   </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">source_dir</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="nb">print</span><span class="p">()</span>
 
     <span class="n">errors</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">check_conflicts</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Conflicts:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Conflicts:"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Conflicts: None&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warnings: None&quot;</span><span class="p">)</span></div>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Conflicts: None"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Warnings: None"</span><span class="p">)</span></div>
 
 
 
@@ -281,11 +281,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">check</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate platform configuration and check for conflicts.</span>
+<span class="w">    </span><span class="sd">"""Validate platform configuration and check for conflicts.</span>
 
 <span class="sd">    Exits with code 1 if errors are found.</span>
 
@@ -294,7 +294,7 @@
 <span class="sd">        apps_dir: Path to the apps directory.</span>
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.build</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_build</span>
 
     <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
@@ -305,18 +305,18 @@
         <span class="n">warnings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">validate_build</span><span class="p">(</span><span class="n">app</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">json</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">json_module</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="n">errors</span><span class="p">,</span> <span class="s2">&quot;warnings&quot;</span><span class="p">:</span> <span class="n">warnings</span><span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">json_module</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"errors"</span><span class="p">:</span> <span class="n">errors</span><span class="p">,</span> <span class="s2">"warnings"</span><span class="p">:</span> <span class="n">warnings</span><span class="p">},</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Errors:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Errors:"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No errors found.&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"No errors found."</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">warnings</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warnings:&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Warnings:"</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">w</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
@@ -327,24 +327,24 @@
 <a class="viewcode-back" href="../../module_docs/enlace/__main__.html#enlace.__main__.list_apps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">list_apps</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List discovered apps with their routes, types, and access levels.</span>
+<span class="w">    </span><span class="sd">"""List discovered apps with their routes, types, and access levels.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        apps_dir: Path to the apps directory.</span>
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No apps discovered.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"No apps discovered."</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="n">has_non_asgi</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">&quot;asgi&quot;</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span>
+    <span class="n">has_non_asgi</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">"asgi"</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span>
 
     <span class="c1"># Column widths</span>
     <span class="n">name_w</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span>
@@ -354,25 +354,25 @@
     <span class="k">if</span> <span class="n">has_non_asgi</span><span class="p">:</span>
         <span class="n">mode_w</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span>
         <span class="n">header</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;Name&#39;</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">&#39;Mode&#39;</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">mode_w</span><span class="si">}}</span><span class="s2">  &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;Route&#39;</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">&#39;Type&#39;</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  Access&quot;</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'Name'</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'Mode'</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">mode_w</span><span class="si">}}</span><span class="s2">  "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'Route'</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'Type'</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  Access"</span>
         <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">mode_w</span><span class="si">}}</span><span class="s2">  &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">mode</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">mode_w</span><span class="si">}}</span><span class="s2">  "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;Name&#39;</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">&#39;Route&#39;</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">&#39;Type&#39;</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  Access&quot;</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'Name'</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'Route'</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'Type'</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  Access"</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span></div>
 
 
@@ -380,14 +380,14 @@
 <div class="viewcode-block" id="build">
 <a class="viewcode-back" href="../../module_docs/enlace/__main__.html#enlace.__main__.build">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span>
-    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run declarative frontend builds for apps with a ``[build]`` section.</span>
+<span class="w">    </span><span class="sd">"""Run declarative frontend builds for apps with a ``[build]`` section.</span>
 
 <span class="sd">    Builds the named app, or every app that declares ``[build]`` when no name</span>
 <span class="sd">    is given. This is the explicit pre-deploy step — enlace never builds at</span>
@@ -400,7 +400,7 @@
 <span class="sd">        apps_dir: Path to the apps directory.</span>
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.build</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_cwd</span><span class="p">,</span> <span class="n">has_build</span><span class="p">,</span> <span class="n">run_build</span>
 
     <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
@@ -409,23 +409,23 @@
         <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">targets</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">app_name</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">targets</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;No app named </span><span class="si">{</span><span class="n">app_name</span><span class="si">!r}</span><span class="s2"> with a [build] section.&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"No app named </span><span class="si">{</span><span class="n">app_name</span><span class="si">!r}</span><span class="s2"> with a [build] section."</span><span class="p">,</span>
                 <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">targets</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No apps declare a [build] section. Nothing to build.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"No apps declare a [build] section. Nothing to build."</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
         <span class="n">cwd</span> <span class="o">=</span> <span class="n">build_cwd</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">run_build</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="n">dry_run</span><span class="p">)</span>
-        <span class="n">verb</span> <span class="o">=</span> <span class="s2">&quot;Would build&quot;</span> <span class="k">if</span> <span class="n">dry_run</span> <span class="k">else</span> <span class="s2">&quot;Building&quot;</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">verb</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (cwd: </span><span class="si">{</span><span class="n">cwd</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">verb</span> <span class="o">=</span> <span class="s2">"Would build"</span> <span class="k">if</span> <span class="n">dry_run</span> <span class="k">else</span> <span class="s2">"Building"</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">verb</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (cwd: </span><span class="si">{</span><span class="n">cwd</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  $ </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  $ </span><span class="si">{</span><span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">dry_run</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Build failed for </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (exit </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Build failed for </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (exit </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
 
 
@@ -435,10 +435,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">diagnose</span><span class="p">(</span>
     <span class="n">app_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Diagnose an app directory for enlace compatibility.</span>
+<span class="w">    </span><span class="sd">"""Diagnose an app directory for enlace compatibility.</span>
 
 <span class="sd">    Scans for hardcoded URLs, CORS middleware, SSR requirements, missing</span>
 <span class="sd">    entry points, and other patterns that block or complicate mounting.</span>
@@ -447,7 +447,7 @@
 <span class="sd">        app_dir: Path to the app directory to diagnose.</span>
 <span class="sd">        app_name: Override app name (defaults to directory name).</span>
 <span class="sd">        json: Output as JSON.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">app_name</span><span class="o">=</span><span class="n">app_name</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">json</span><span class="p">:</span>
@@ -461,7 +461,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_envfile</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse a simple KEY=VALUE envfile into ``os.environ``.</span>
+<span class="w">    </span><span class="sd">"""Parse a simple KEY=VALUE envfile into ``os.environ``.</span>
 
 <span class="sd">    Only handles the systemd/shell common case: blank lines, ``#`` comments,</span>
 <span class="sd">    and ``KEY=VALUE`` (value may be wrapped in single or double quotes). This</span>
@@ -478,32 +478,32 @@
 <span class="sd">    A genuinely missing path still hard-fails with ``sys.exit(2)``, because</span>
 <span class="sd">    that almost always means a typo or wrong path rather than a deliberate</span>
 <span class="sd">    permission topology.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;envfile not found: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"envfile not found: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
         <span class="c1"># Most often PermissionError: envfile is intentionally root-only</span>
-        <span class="c1"># and we&#39;re a non-root caller. Warn + degrade.</span>
+        <span class="c1"># and we're a non-root caller. Warn + degrade.</span>
         <span class="nb">print</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;envfile not readable (</span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">strerror</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">exc</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">); &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;continuing without env-based checks.&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"envfile not readable (</span><span class="si">{</span><span class="n">exc</span><span class="o">.</span><span class="n">strerror</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="n">exc</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">); "</span>
+            <span class="sa">f</span><span class="s2">"continuing without env-based checks."</span><span class="p">,</span>
             <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">raw</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">(),</span> <span class="mi">1</span><span class="p">):</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">):</span>
             <span class="k">continue</span>
-        <span class="k">if</span> <span class="s2">&quot;=&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"="</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">key</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s1">'"'</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
     <span class="k">return</span> <span class="kc">True</span>
@@ -513,23 +513,23 @@
 <a class="viewcode-back" href="../../module_docs/enlace/__main__.html#enlace.__main__.doctor">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">doctor</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
-    <span class="n">apps</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">envfile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">envfile</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">skip_env_checks</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Probe a running enlace gateway for silent-degradation failures.</span>
+<span class="w">    </span><span class="sd">"""Probe a running enlace gateway for silent-degradation failures.</span>
 
 <span class="sd">    Static checks cover signing-key / shared-password env vars (only</span>
-<span class="sd">    meaningful when run in the gateway&#39;s env — see ``--envfile`` /</span>
+<span class="sd">    meaningful when run in the gateway's env — see ``--envfile`` /</span>
 <span class="sd">    ``--skip-env-checks``), oauth importability, and frontend_dir sanity.</span>
 <span class="sd">    HTTP probes run when ``--base-url`` is given, against ``/auth/csrf``,</span>
-<span class="sd">    each app&#39;s frontend, and each app&#39;s API prefix.</span>
+<span class="sd">    each app's frontend, and each app's API prefix.</span>
 
 <span class="sd">    Exits nonzero if any check fails. Intended as a post-deploy smoke tool.</span>
 
@@ -544,13 +544,13 @@
 <span class="sd">            checks. Use this when probing from outside the service process</span>
 <span class="sd">            (e.g. a deploy script sourcing /opt/tw_platform/.env).</span>
 <span class="sd">        skip_env_checks: Skip signing-key / shared-password env checks</span>
-<span class="sd">            entirely. Use when you are running from a shell that doesn&#39;t</span>
-<span class="sd">            have the gateway&#39;s env and you trust the HTTP probes as the</span>
+<span class="sd">            entirely. Use when you are running from a shell that doesn't</span>
+<span class="sd">            have the gateway's env and you trust the HTTP probes as the</span>
 <span class="sd">            authoritative signal.</span>
 <span class="sd">        apps_dir: Path to the apps directory.</span>
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">envfile</span><span class="p">:</span>
         <span class="c1"># If the envfile is unreadable (e.g. root:root 0600 and we are the</span>
         <span class="c1"># deploy user) ``_load_envfile`` warns and returns False; auto-skip</span>
@@ -561,14 +561,20 @@
     <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
     <span class="n">app_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">apps</span><span class="p">:</span>
-        <span class="n">app_filter</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apps</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+        <span class="n">app_filter</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apps</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
 
+    <span class="c1"># Checks contributed by whatever plugins this platform loads (e.g.</span>
+    <span class="c1"># enlace_auth's auth + OAuth probes). Without this the plugin's own</span>
+    <span class="c1"># diagnostics never execute, however correct they are.</span>
+    <span class="n">plugin_static</span><span class="p">,</span> <span class="n">plugin_http</span> <span class="o">=</span> <span class="n">discover_plugin_checks</span><span class="p">()</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">run_doctor</span><span class="p">(</span>
         <span class="n">config</span><span class="p">,</span>
         <span class="n">base_url</span><span class="o">=</span><span class="n">base_url</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
         <span class="n">app_filter</span><span class="o">=</span><span class="n">app_filter</span><span class="p">,</span>
         <span class="n">include_env_checks</span><span class="o">=</span><span class="ow">not</span> <span class="n">skip_env_checks</span><span class="p">,</span>
+        <span class="n">extra_static_checks</span><span class="o">=</span><span class="n">plugin_static</span><span class="p">,</span>
+        <span class="n">extra_http_checks</span><span class="o">=</span><span class="n">plugin_http</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">json</span><span class="p">:</span>
@@ -586,11 +592,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">app_meta</span><span class="p">(</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">json</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Show each app&#39;s resolved launcher metadata + provenance (title, keywords, icon).</span>
+<span class="w">    </span><span class="sd">"""Show each app's resolved launcher metadata + provenance (title, keywords, icon).</span>
 
 <span class="sd">    A local migration/debug aid: it re-harvests from the filesystem, so it</span>
 <span class="sd">    reflects live edits without a server restart, and prints the provenance</span>
@@ -603,7 +609,7 @@
 <span class="sd">        apps_dir: Path to the apps directory.</span>
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">appmeta</span>
 
     <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
@@ -618,7 +624,7 @@
             <span class="n">platform_keywords</span><span class="o">=</span><span class="n">b_keywords</span><span class="p">,</span>
             <span class="n">overlay_keywords</span><span class="o">=</span><span class="p">[],</span>  <span class="c1"># overlay lives in the plugin store, not here</span>
         <span class="p">)</span>
-        <span class="n">icon_spec</span> <span class="o">=</span> <span class="p">(</span><span class="n">tier_b</span><span class="o">.</span><span class="n">icon</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span> <span class="ow">or</span> <span class="n">default_icon</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">icon_spec</span> <span class="o">=</span> <span class="p">(</span><span class="n">tier_b</span><span class="o">.</span><span class="n">icon</span> <span class="k">if</span> <span class="n">tier_b</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">icon</span> <span class="ow">or</span> <span class="n">default_icon</span> <span class="ow">or</span> <span class="s2">""</span>
         <span class="n">icon</span> <span class="o">=</span> <span class="n">appmeta</span><span class="o">.</span><span class="n">resolve_icon</span><span class="p">(</span>
             <span class="n">icon_spec</span><span class="p">,</span>
             <span class="n">app_name</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -626,23 +632,23 @@
             <span class="n">app_dir</span><span class="o">=</span><span class="n">appmeta</span><span class="o">.</span><span class="n">app_dir_of</span><span class="p">(</span><span class="n">app</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">icon_kind</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot;redirect&quot;</span>
+            <span class="s2">"redirect"</span>
             <span class="k">if</span> <span class="n">icon</span><span class="o">.</span><span class="n">redirect_url</span>
-            <span class="k">else</span> <span class="p">(</span><span class="s2">&quot;monogram&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">icon_spec</span> <span class="k">else</span> <span class="n">icon_spec</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">(</span><span class="s2">"monogram"</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">icon_spec</span> <span class="k">else</span> <span class="n">icon_spec</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
-                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
-                <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="n">merged</span><span class="p">,</span>
-                <span class="s2">&quot;keyword_sources&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
-                <span class="s2">&quot;icon&quot;</span><span class="p">:</span> <span class="n">icon_spec</span> <span class="ow">or</span> <span class="s2">&quot;(monogram)&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;icon_kind&quot;</span><span class="p">:</span> <span class="n">icon_kind</span><span class="p">,</span>
-                <span class="s2">&quot;icon_content_type&quot;</span><span class="p">:</span> <span class="n">icon</span><span class="o">.</span><span class="n">content_type</span> <span class="ow">or</span> <span class="s2">&quot;redirect&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;provenance&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"name"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">"display_name"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">display_name</span><span class="p">,</span>
+                <span class="s2">"description"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                <span class="s2">"keywords"</span><span class="p">:</span> <span class="n">merged</span><span class="p">,</span>
+                <span class="s2">"keyword_sources"</span><span class="p">:</span> <span class="n">sources</span><span class="p">,</span>
+                <span class="s2">"icon"</span><span class="p">:</span> <span class="n">icon_spec</span> <span class="ow">or</span> <span class="s2">"(monogram)"</span><span class="p">,</span>
+                <span class="s2">"icon_kind"</span><span class="p">:</span> <span class="n">icon_kind</span><span class="p">,</span>
+                <span class="s2">"icon_content_type"</span><span class="p">:</span> <span class="n">icon</span><span class="o">.</span><span class="n">content_type</span> <span class="ow">or</span> <span class="s2">"redirect"</span><span class="p">,</span>
+                <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">{</span>
                     <span class="n">k</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="s2">&quot;icon&quot;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"display_name"</span><span class="p">,</span> <span class="s2">"description"</span><span class="p">,</span> <span class="s2">"keywords"</span><span class="p">,</span> <span class="s2">"icon"</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">provenance</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
                 <span class="p">},</span>
             <span class="p">}</span>
@@ -653,20 +659,20 @@
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">records</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No apps discovered.&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"No apps discovered."</span><span class="p">)</span>
         <span class="k">return</span>
     <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span><span class="p">:</span>
-        <span class="n">prov</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;provenance&quot;</span><span class="p">]</span>
-        <span class="n">src</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;keyword_sources&quot;</span><span class="p">]</span>
-        <span class="n">title_src</span> <span class="o">=</span> <span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;display_name&quot;</span><span class="p">,</span> <span class="s2">&quot;derived&quot;</span><span class="p">)</span>
-        <span class="n">desc</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;(none)&quot;</span>
-        <span class="n">icon_src</span> <span class="o">=</span> <span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">,</span> <span class="s2">&quot;derived&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    title:       </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;display_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">title_src</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    description: </span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;none&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    keywords:    </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;keywords&#39;</span><span class="p">])</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;(none)&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;       app=</span><span class="si">{</span><span class="n">src</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> platform=</span><span class="si">{</span><span class="n">src</span><span class="p">[</span><span class="s1">&#39;platform&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    icon:        </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;icon&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">icon_src</span><span class="si">}</span><span class="s2">] -&gt; </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;icon_content_type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">prov</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">"provenance"</span><span class="p">]</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">"keyword_sources"</span><span class="p">]</span>
+        <span class="n">title_src</span> <span class="o">=</span> <span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"display_name"</span><span class="p">,</span> <span class="s2">"derived"</span><span class="p">)</span>
+        <span class="n">desc</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s2">"description"</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">"(none)"</span>
+        <span class="n">icon_src</span> <span class="o">=</span> <span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"icon"</span><span class="p">,</span> <span class="s2">"derived"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    title:       </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'display_name'</span><span class="p">]</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">title_src</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    description: </span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'description'</span><span class="p">,</span><span class="w"> </span><span class="s1">'none'</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    keywords:    </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'keywords'</span><span class="p">])</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'(none)'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"       app=</span><span class="si">{</span><span class="n">src</span><span class="p">[</span><span class="s1">'app'</span><span class="p">]</span><span class="si">}</span><span class="s2"> platform=</span><span class="si">{</span><span class="n">src</span><span class="p">[</span><span class="s1">'platform'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    icon:        </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'icon'</span><span class="p">]</span><span class="si">}</span><span class="s2">  [</span><span class="si">{</span><span class="n">icon_src</span><span class="si">}</span><span class="s2">] -&gt; </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'icon_content_type'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">()</span></div>
 
 
@@ -686,7 +692,7 @@
     <span class="p">)</span>
 
 
-<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
 

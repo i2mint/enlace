@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.gzip_selective &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.gzip_selective &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,9 +105,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.gzip_selective</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Compression that knows what it must not compress.</span>
+<span></span><span class="sd">"""Compression that knows what it must not compress.</span>
 
-<span class="sd">Starlette&#39;s ``GZipMiddleware`` compresses *every* response above ``minimum_size``</span>
+<span class="sd">Starlette's ``GZipMiddleware`` compresses *every* response above ``minimum_size``</span>
 <span class="sd">when the client offers gzip. On a platform that also serves media, that is wrong in</span>
 <span class="sd">two ways, and enlace hit both.</span>
 
@@ -123,7 +123,7 @@
 
 <span class="sd">Per RFC 9110 §14.4 the range describes the selected representation, so those headers</span>
 <span class="sd">now disagree. Byte ranges are the entire basis of ``&lt;video&gt;`` playback — seeking,</span>
-<span class="sd">streaming, and Safari&#39;s refusal to play media at all without them — so this quietly</span>
+<span class="sd">streaming, and Safari's refusal to play media at all without them — so this quietly</span>
 <span class="sd">undermines the very thing a static media mount exists to provide.</span>
 
 <span class="sd">**2. It burns the shared event loop for nothing.** Video, audio, most images and</span>
@@ -133,7 +133,7 @@
 
 <span class="sd">So: compress text, never compress a ranged exchange, never compress bytes that are</span>
 <span class="sd">already compressed. Pure ASGI (enlace forbids ``BaseHTTPMiddleware``).</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
@@ -145,27 +145,27 @@
 
 <span class="c1">#: Content types whose bytes are already compressed. ``image/svg+xml`` is deliberately</span>
 <span class="c1">#: NOT here — SVG is text and compresses extremely well.</span>
-<span class="n">INCOMPRESSIBLE_PREFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;video/&quot;</span><span class="p">,</span> <span class="s2">&quot;audio/&quot;</span><span class="p">,</span> <span class="s2">&quot;image/&quot;</span><span class="p">,</span> <span class="s2">&quot;font/woff&quot;</span><span class="p">)</span>
+<span class="n">INCOMPRESSIBLE_PREFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"video/"</span><span class="p">,</span> <span class="s2">"audio/"</span><span class="p">,</span> <span class="s2">"image/"</span><span class="p">,</span> <span class="s2">"font/woff"</span><span class="p">)</span>
 
 <span class="n">INCOMPRESSIBLE_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
     <span class="p">{</span>
-        <span class="s2">&quot;application/zip&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;application/gzip&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;application/x-gzip&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;application/zstd&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;application/pdf&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;application/wasm&quot;</span><span class="p">,</span>
+        <span class="s2">"application/zip"</span><span class="p">,</span>
+        <span class="s2">"application/gzip"</span><span class="p">,</span>
+        <span class="s2">"application/x-gzip"</span><span class="p">,</span>
+        <span class="s2">"application/zstd"</span><span class="p">,</span>
+        <span class="s2">"application/pdf"</span><span class="p">,</span>
+        <span class="s2">"application/wasm"</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
-<span class="n">COMPRESSIBLE_EXCEPTIONS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;image/svg+xml&quot;</span><span class="p">})</span>
+<span class="n">COMPRESSIBLE_EXCEPTIONS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"image/svg+xml"</span><span class="p">})</span>
 
 
 <div class="viewcode-block" id="is_compressible">
 <a class="viewcode-back" href="../../module_docs/enlace/gzip_selective.html#enlace.gzip_selective.is_compressible">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_compressible</span><span class="p">(</span><span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether a response of this content type is worth compressing.&quot;&quot;&quot;</span>
-    <span class="n">ctype</span> <span class="o">=</span> <span class="n">content_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">"""Whether a response of this content type is worth compressing."""</span>
+    <span class="n">ctype</span> <span class="o">=</span> <span class="n">content_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">";"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">ctype</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># unknown — let the size threshold decide</span>
     <span class="k">if</span> <span class="n">ctype</span> <span class="ow">in</span> <span class="n">COMPRESSIBLE_EXCEPTIONS</span><span class="p">:</span>
@@ -179,10 +179,10 @@
 <div class="viewcode-block" id="SelectiveGZipMiddleware">
 <a class="viewcode-back" href="../../module_docs/enlace/gzip_selective.html#enlace.gzip_selective.SelectiveGZipMiddleware">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SelectiveGZipMiddleware</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gzip, minus the responses that must not be compressed.</span>
+<span class="w">    </span><span class="sd">"""Gzip, minus the responses that must not be compressed.</span>
 
 <span class="sd">    Drop-in replacement for ``starlette.middleware.gzip.GZipMiddleware``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">ASGIApp</span><span class="p">,</span> <span class="n">minimum_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span> <span class="n">compresslevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
@@ -190,12 +190,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span> <span class="o">=</span> <span class="n">compresslevel</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">:</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">send</span><span class="p">:</span> <span class="n">Send</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;http&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http"</span><span class="p">:</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="n">request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="n">scope</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;gzip&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;accept-encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">"gzip"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"accept-encoding"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
             <span class="k">return</span>
 
@@ -203,7 +203,7 @@
         <span class="c1"># is a slice, but Content-Range describes the whole representation. This is a</span>
         <span class="c1"># property of the REQUEST, so we can settle it before the response exists — and</span>
         <span class="c1"># it is the case that matters, because every `&lt;video&gt;` fetch is a ranged fetch.</span>
-        <span class="k">if</span> <span class="s2">&quot;range&quot;</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"range"</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
             <span class="k">return</span>
 
@@ -213,11 +213,11 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Responder</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compresses a response, deciding from its ``http.response.start`` message.</span>
+<span class="w">    </span><span class="sd">"""Compresses a response, deciding from its ``http.response.start`` message.</span>
 
 <span class="sd">    The body is streamed, never buffered whole; only the start message is held, just</span>
 <span class="sd">    long enough to read status and ``Content-Type``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">ASGIApp</span><span class="p">,</span> <span class="n">minimum_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compresslevel</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
@@ -235,25 +235,25 @@
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_should_compress</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">&quot;headers&quot;</span><span class="p">])</span>
-        <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">206</span> <span class="ow">or</span> <span class="s2">&quot;content-range&quot;</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">"headers"</span><span class="p">])</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">"status"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">206</span> <span class="ow">or</span> <span class="s2">"content-range"</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># a ranged response: see the class docstring</span>
-        <span class="k">if</span> <span class="s2">&quot;content-encoding&quot;</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"content-encoding"</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># already encoded — never double-encode</span>
-        <span class="k">return</span> <span class="n">is_compressible</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;content-type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">is_compressible</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content-type"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"http.response.start"</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span> <span class="o">=</span> <span class="n">message</span>  <span class="c1"># hold it: we need the body to decide</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http.response.body"</span><span class="p">:</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="n">more_body</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;more_body&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"body"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
+        <span class="n">more_body</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"more_body"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">started</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">started</span> <span class="o">=</span> <span class="kc">True</span>
@@ -265,23 +265,23 @@
                 <span class="k">return</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span>
-                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wb&quot;</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">"wb"</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span>
             <span class="p">)</span>
-            <span class="n">headers</span> <span class="o">=</span> <span class="n">MutableHeaders</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">&quot;headers&quot;</span><span class="p">])</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Encoding&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;gzip&quot;</span>
-            <span class="n">headers</span><span class="o">.</span><span class="n">add_vary_header</span><span class="p">(</span><span class="s2">&quot;Accept-Encoding&quot;</span><span class="p">)</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="n">MutableHeaders</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">"headers"</span><span class="p">])</span>
+            <span class="n">headers</span><span class="p">[</span><span class="s2">"Content-Encoding"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"gzip"</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">add_vary_header</span><span class="p">(</span><span class="s2">"Accept-Encoding"</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">more_body</span><span class="p">:</span>
                 <span class="c1"># Whole body in one message: we know the compressed length exactly.</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
                 <span class="n">compressed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
-                <span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">compressed</span><span class="p">))</span>
-                <span class="n">message</span><span class="p">[</span><span class="s2">&quot;body&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">compressed</span>
+                <span class="n">headers</span><span class="p">[</span><span class="s2">"Content-Length"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">compressed</span><span class="p">))</span>
+                <span class="n">message</span><span class="p">[</span><span class="s2">"body"</span><span class="p">]</span> <span class="o">=</span> <span class="n">compressed</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">)</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
                 <span class="k">return</span>
             <span class="c1"># Streaming: the final length is unknown, so it must not be advertised.</span>
-            <span class="k">del</span> <span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Length&quot;</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">headers</span><span class="p">[</span><span class="s2">"Content-Length"</span><span class="p">]</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
@@ -292,14 +292,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">more_body</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">message</span><span class="p">[</span><span class="s2">&quot;body&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+        <span class="n">message</span><span class="p">[</span><span class="s2">"body"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">truncate</span><span class="p">()</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_unattached_send</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;send awaitable not set&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"send awaitable not set"</span><span class="p">)</span>
 </pre></div>
 
            </div>

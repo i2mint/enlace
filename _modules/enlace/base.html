@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.base &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.base &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,14 +105,14 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.base</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Core data structures for enlace platform configuration.</span>
+<span></span><span class="sd">"""Core data structures for enlace platform configuration.</span>
 
-<span class="sd">enlace does not enforce access — that&#39;s ``enlace_auth``&#39;s job. But enlace</span>
+<span class="sd">enlace does not enforce access — that's ``enlace_auth``'s job. But enlace</span>
 <span class="sd">*does* read ``AppConfig.access`` and ``AppConfig.allowed_users`` for one</span>
 <span class="sd">narrow purpose: filtering the ``/_apps`` listing so authenticated users</span>
-<span class="sd">don&#39;t see entries they couldn&#39;t open anyway. That makes the access string</span>
-<span class="sd">vocabulary part of enlace&#39;s contract — the values</span>
-<span class="sd">``&quot;public&quot; | &quot;local&quot; | &quot;protected:shared&quot; | &quot;protected:user&quot;`` are the</span>
+<span class="sd">don't see entries they couldn't open anyway. That makes the access string</span>
+<span class="sd">vocabulary part of enlace's contract — the values</span>
+<span class="sd">``"public" | "local" | "protected:shared" | "protected:user"`` are the</span>
 <span class="sd">ones ``compose._can_access`` understands; anything else is treated as</span>
 <span class="sd">deny-by-default.</span>
 
@@ -123,7 +123,7 @@
 <span class="sd">Likewise, ``[auth.*]`` and ``[stores.*]`` tables in ``platform.toml`` are</span>
 <span class="sd">preserved as untyped dicts on ``PlatformConfig`` so plugins can deserialize</span>
 <span class="sd">them with their own models.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
@@ -147,19 +147,19 @@
 <div class="viewcode-block" id="ConventionsConfig">
 <a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.ConventionsConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConventionsConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Meta-conventions controlling how apps are discovered.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Meta-conventions controlling how apps are discovered."""</span>
 
     <span class="n">entry_points</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;server.py&quot;</span><span class="p">,</span> <span class="s2">&quot;app.py&quot;</span><span class="p">,</span> <span class="s2">&quot;main.py&quot;</span><span class="p">],</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Ordered list of filenames to search for as backend entry points&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s2">"server.py"</span><span class="p">,</span> <span class="s2">"app.py"</span><span class="p">,</span> <span class="s2">"main.py"</span><span class="p">],</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Ordered list of filenames to search for as backend entry points"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">app_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;app&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Attribute name to look up on the entry module for an ASGI app&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"app"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Attribute name to look up on the entry module for an ASGI app"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">frontend_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;frontend&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Subdirectory name containing frontend assets&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"frontend"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Subdirectory name containing frontend assets"</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -167,21 +167,21 @@
 <div class="viewcode-block" id="BuildConfig">
 <a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.BuildConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BuildConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Declarative build instructions for an app&#39;s compiled frontend.</span>
+<span class="w">    </span><span class="sd">"""Declarative build instructions for an app's compiled frontend.</span>
 
 <span class="sd">    Mirrors the ``[build]`` table in ``app.toml``. It describes the app, not</span>
 <span class="sd">    its deployment — a Vite/Next/esbuild app has a ``build`` command whether</span>
-<span class="sd">    or not enlace serves it — so it keeps the &quot;apps don&#39;t know about enlace&quot;</span>
+<span class="sd">    or not enlace serves it — so it keeps the "apps don't know about enlace"</span>
 <span class="sd">    principle intact. enlace (or any deployer) runs these as an explicit step</span>
 <span class="sd">    via ``enlace build``; enlace never builds at request time.</span>
 
 <span class="sd">    ``install`` / ``build`` accept either a single string (split with</span>
 <span class="sd">    ``shlex``) or a list of argv tokens. ``cwd`` is resolved relative to the</span>
-<span class="sd">    app directory at discovery time; ``None`` means &quot;the app directory&quot;.</span>
+<span class="sd">    app directory at discovery time; ``None`` means "the app directory".</span>
 <span class="sd">    ``env_vars`` is a *hint* of which env vars the build honours (e.g.</span>
 <span class="sd">    ``VITE_API_BASE``) so deployers know what they may inject — enlace does</span>
 <span class="sd">    not choose values. ``outputs`` is an optional hint of produced paths.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">cwd</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">install</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -189,10 +189,10 @@
     <span class="n">env_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">outputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;build&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"install"</span><span class="p">,</span> <span class="s2">"build"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_split_commands</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Accept a shell string or an argv list for command fields.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Accept a shell string or an argv list for command fields."""</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
@@ -202,76 +202,76 @@
 <div class="viewcode-block" id="AppConfig">
 <a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.AppConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AppConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved configuration for a single discovered app.</span>
+<span class="w">    </span><span class="sd">"""Resolved configuration for a single discovered app.</span>
 
-<span class="sd">    ``extra=&quot;allow&quot;`` lets plugin strategies (e.g. ``enlace_docker``) carry</span>
+<span class="sd">    ``extra="allow"`` lets plugin strategies (e.g. ``enlace_docker``) carry</span>
 <span class="sd">    their own typed fields — ``dockerfile``, ``image``, ``compose_file``,</span>
 <span class="sd">    ``service``, etc. — without enlace having to enumerate them. The</span>
-<span class="sd">    plugin&#39;s ``BackendStrategy`` reads them via attribute access</span>
+<span class="sd">    plugin's ``BackendStrategy`` reads them via attribute access</span>
 <span class="sd">    (``app.dockerfile``); enlace itself ignores them.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">)</span>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"allow"</span><span class="p">)</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">route_prefix</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">entry_module_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">app_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;asgi_app&quot;</span><span class="p">,</span> <span class="s2">&quot;functions&quot;</span><span class="p">,</span> <span class="s2">&quot;frontend_only&quot;</span><span class="p">]</span>
-    <span class="n">app_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;app&quot;</span>
+    <span class="n">app_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"asgi_app"</span><span class="p">,</span> <span class="s2">"functions"</span><span class="p">,</span> <span class="s2">"frontend_only"</span><span class="p">]</span>
+    <span class="n">app_attr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"app"</span>
     <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">source_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="c1"># Declarative frontend build (from app.toml&#39;s [build] table). Mode-agnostic</span>
+    <span class="c1"># Declarative frontend build (from app.toml's [build] table). Mode-agnostic</span>
     <span class="c1"># — any app with a compiled frontend can declare it. Run via `enlace build`</span>
     <span class="c1"># as an explicit pre-deploy step; never at request time. See BuildConfig.</span>
     <span class="n">build</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BuildConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Auth policy field. Consumed by enlace_auth (if installed) — enlace</span>
     <span class="c1"># itself does not interpret this. Free-form string to avoid coupling</span>
-    <span class="c1"># enlace&#39;s data model to auth&#39;s vocabulary; enlace_auth normalizes it.</span>
-    <span class="n">access</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;local&quot;</span>
+    <span class="c1"># enlace's data model to auth's vocabulary; enlace_auth normalizes it.</span>
+    <span class="n">access</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"local"</span>
     <span class="n">shared_password_env</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">allowed_users</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Restrict access to these specific user emails. When non-empty, &quot;</span>
-            <span class="s2">&quot;requests authenticated as anyone else are rejected (for &quot;</span>
-            <span class="s2">&quot;access=protected:user apps) or the app is hidden (from /_apps). &quot;</span>
-            <span class="s2">&quot;Empty list means any authenticated user allowed.&quot;</span>
+            <span class="s2">"Restrict access to these specific user emails. When non-empty, "</span>
+            <span class="s2">"requests authenticated as anyone else are rejected (for "</span>
+            <span class="s2">"access=protected:user apps) or the app is hidden (from /_apps). "</span>
+            <span class="s2">"Empty list means any authenticated user allowed."</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
     <span class="c1"># App-launcher metadata. Resolved at discovery from app.toml + harvested</span>
     <span class="c1"># sources (manifest, index.html &lt;head&gt;, package.json, pyproject) — see</span>
     <span class="c1"># enlace.appmeta. `keywords` is the union of every app-declared source;</span>
     <span class="c1"># `icon` is an app-dir-relative path, an emoji/glyph, a data: URI, an</span>
-    <span class="c1"># absolute https URL, or &quot;&quot; (⇒ a generated monogram at serve time).</span>
-    <span class="c1"># `launchable=None` means &quot;derive from mode&quot; (see compose._app_launch).</span>
-    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="c1"># absolute https URL, or "" (⇒ a generated monogram at serve time).</span>
+    <span class="c1"># `launchable=None` means "derive from mode" (see compose._app_launch).</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">keywords</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">launchable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="c1"># When this app&#39;s source last changed (ISO-8601), for the launcher&#39;s &quot;last</span>
-    <span class="c1"># updated&quot; sort. NOT declared in app.toml — it is stamped onto the config at</span>
-    <span class="c1"># startup from the app&#39;s deploy manifest (``SourceRef.committed_at``), because</span>
+    <span class="c1"># When this app's source last changed (ISO-8601), for the launcher's "last</span>
+    <span class="c1"># updated" sort. NOT declared in app.toml — it is stamped onto the config at</span>
+    <span class="c1"># startup from the app's deploy manifest (``SourceRef.committed_at``), because</span>
     <span class="c1"># only the deploy tool can see the git history. ``None`` when there is no</span>
-    <span class="c1"># manifest yet, which the launcher renders as &quot;unknown&quot; and sorts last.</span>
+    <span class="c1"># manifest yet, which the launcher renders as "unknown" and sorts last.</span>
     <span class="n">updated_at</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># Mode: how this app is served (orthogonal to app_type which is what was</span>
     <span class="c1"># detected). Free-form string validated against the strategy registry —</span>
     <span class="c1"># see ``enlace.strategies`` for the open/closed extension point.</span>
-    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;asgi&quot;</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"asgi"</span>
 
     <span class="c1"># Process-mode fields</span>
     <span class="n">command</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">socket</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">env</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
-    <span class="n">health_check_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;/health&quot;</span>
+    <span class="n">health_check_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"/health"</span>
     <span class="n">ready_timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span>
-    <span class="n">restart_policy</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;always&quot;</span><span class="p">,</span> <span class="s2">&quot;on-failure&quot;</span><span class="p">,</span> <span class="s2">&quot;never&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;on-failure&quot;</span>
+    <span class="n">restart_policy</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"always"</span><span class="p">,</span> <span class="s2">"on-failure"</span><span class="p">,</span> <span class="s2">"never"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"on-failure"</span>
     <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
     <span class="n">restart_delay_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
 
@@ -281,20 +281,20 @@
     <span class="c1"># Static-mode fields</span>
     <span class="n">public_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_display_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">display_name</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">display_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">display_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_mode_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delegate per-mode validation to the registered strategy.</span>
+<span class="w">        </span><span class="sd">"""Delegate per-mode validation to the registered strategy.</span>
 
 <span class="sd">        The strategy decides what fields are required for its mode. Unknown</span>
 <span class="sd">        modes surface as a ``ValueError`` from the registry with an</span>
-<span class="sd">        actionable message (e.g. \&quot;install enlace_docker for docker\&quot;).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        actionable message (e.g. \"install enlace_docker for docker\").</span>
+<span class="sd">        """</span>
         <span class="c1"># Lazy import: enlace.strategies must not be a hard dependency of</span>
         <span class="c1"># enlace.base — strategies imports base via TYPE_CHECKING only.</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
@@ -308,7 +308,7 @@
 <div class="viewcode-block" id="PlatformConfig">
 <a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.PlatformConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PlatformConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolved configuration for the entire platform.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resolved configuration for the entire platform."""</span>
 
     <span class="c1"># Deprecated scalar — folded into apps_dirs by the validator below.</span>
     <span class="n">apps_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -323,28 +323,28 @@
     <span class="n">shared_assets_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># Directory where the deploy tool drops {app}.json build-identity files.</span>
-    <span class="c1"># When unset, enlace&#39;s /_meta endpoints serve minimal stubs (app name +</span>
+    <span class="c1"># When unset, enlace's /_meta endpoints serve minimal stubs (app name +</span>
     <span class="c1"># enlace_version) so the diagnostic plumbing exists from day one. See</span>
     <span class="c1"># enlace.manifest for the manifest schema.</span>
     <span class="n">manifest_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">index_page</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Serve an auto-generated index page at / listing all apps&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Serve an auto-generated index page at / listing all apps"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">landing_app</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Name of a discovered app whose frontend should serve /. &quot;</span>
-            <span class="s2">&quot;Overrides the built-in index_page. The app&#39;s frontend assets &quot;</span>
-            <span class="s2">&quot;replace the default enlace index.&quot;</span>
+            <span class="s2">"Name of a discovered app whose frontend should serve /. "</span>
+            <span class="s2">"Overrides the built-in index_page. The app's frontend assets "</span>
+            <span class="s2">"replace the default enlace index."</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+    <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"localhost"</span>
     <span class="n">backend_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span>
     <span class="n">frontend_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3000</span>
     <span class="n">process_port_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9100</span>
-    <span class="n">socket_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/tmp/enlace&quot;</span><span class="p">))</span>
+    <span class="n">socket_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/enlace"</span><span class="p">))</span>
     <span class="n">conventions</span><span class="p">:</span> <span class="n">ConventionsConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">ConventionsConfig</span><span class="p">)</span>
     <span class="n">apps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="c1"># Auth + stores configuration is preserved as untyped dicts so plugins</span>
@@ -355,31 +355,31 @@
     <span class="c1"># App-launcher metadata config (platform.toml [app_meta]). `default_icon`</span>
     <span class="c1"># and `apps` (Tier B static overrides) are read by enlace core; `editors`</span>
     <span class="c1"># and `store_path` are carried for the enlace_auth plugin (the editable</span>
-    <span class="c1"># overlay&#39;s authz + persistence), which enlace core never interprets.</span>
+    <span class="c1"># overlay's authz + persistence), which enlace core never interprets.</span>
     <span class="n">app_meta</span><span class="p">:</span> <span class="n">AppMetaConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">AppMetaConfig</span><span class="p">)</span>
 
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge deprecated apps_dir into apps_dirs for backward compat.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Merge deprecated apps_dir into apps_dirs for backward compat."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps_dir</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps_dirs</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">apps_dirs</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps_dir</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps_dirs</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_dirs</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">apps_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;apps&quot;</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apps_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="s2">"apps"</span><span class="p">)]</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">all_source_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;All directories to watch (for reload, etc.).&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""All directories to watch (for reload, etc.)."""</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apps_dirs</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dirs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PlatformConfig.from_toml">
 <a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.PlatformConfig.from_toml">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_toml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;platform.toml&quot;</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="s2">&quot;PlatformConfig&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load configuration from a TOML file, falling back to defaults.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_toml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"platform.toml"</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="s2">"PlatformConfig"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Load configuration from a TOML file, falling back to defaults.</span>
 
 <span class="sd">        Relative ``apps_dirs`` / ``app_dirs`` / ``shared_assets_dir`` entries</span>
-<span class="sd">        in the TOML are resolved against the **TOML file&#39;s own directory**,</span>
+<span class="sd">        in the TOML are resolved against the **TOML file's own directory**,</span>
 <span class="sd">        not the process working directory. This makes a platform config</span>
 <span class="sd">        host-portable: the same file works wherever the repo is checked out,</span>
 <span class="sd">        as long as sibling app repos keep their relative layout. Absolute</span>
@@ -393,37 +393,37 @@
 <span class="sd">        - ENLACE_APPS_DIR (legacy): single container directory</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            path: Path to platform.toml. If the file doesn&#39;t exist, returns</span>
+<span class="sd">            path: Path to platform.toml. If the file doesn't exist, returns</span>
 <span class="sd">                  a PlatformConfig with all default values.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="n">tomllib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to parse </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to parse </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
-        <span class="n">platform_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;platform&quot;</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="n">conventions_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;conventions&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">platform_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"platform"</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">conventions_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"conventions"</span><span class="p">,</span> <span class="p">{})</span>
         <span class="k">if</span> <span class="n">conventions_data</span><span class="p">:</span>
-            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;conventions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conventions_data</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"conventions"</span><span class="p">]</span> <span class="o">=</span> <span class="n">conventions_data</span>
 
         <span class="c1"># Auth and stores tables are forwarded verbatim as dicts; plugins</span>
         <span class="c1"># such as enlace_auth deserialize them with their own models.</span>
-        <span class="n">auth_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;auth&quot;</span><span class="p">)</span>
+        <span class="n">auth_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"auth"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">auth_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;auth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">auth_data</span>
-        <span class="n">stores_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stores&quot;</span><span class="p">)</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"auth"</span><span class="p">]</span> <span class="o">=</span> <span class="n">auth_data</span>
+        <span class="n">stores_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"stores"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">stores_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;stores&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stores_data</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"stores"</span><span class="p">]</span> <span class="o">=</span> <span class="n">stores_data</span>
         <span class="c1"># [app_meta] table — the app-launcher metadata config.</span>
-        <span class="n">app_meta_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;app_meta&quot;</span><span class="p">)</span>
+        <span class="n">app_meta_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"app_meta"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">app_meta_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;app_meta&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta_data</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"app_meta"</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta_data</span>
 
-        <span class="c1"># Resolve relative path-like fields against the TOML file&#39;s own</span>
+        <span class="c1"># Resolve relative path-like fields against the TOML file's own</span>
         <span class="c1"># directory (not the CWD), so the config is host-portable. Done</span>
         <span class="c1"># before env overrides — env values are intentionally verbatim.</span>
         <span class="n">base_dir</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
@@ -432,31 +432,31 @@
             <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">p</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span> <span class="k">else</span> <span class="p">(</span><span class="n">base_dir</span> <span class="o">/</span> <span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
 
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;apps_dirs&quot;</span><span class="p">,</span> <span class="s2">&quot;app_dirs&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"apps_dirs"</span><span class="p">,</span> <span class="s2">"app_dirs"</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">platform_data</span><span class="p">:</span>
                 <span class="n">platform_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">_resolve</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">platform_data</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;shared_assets_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;apps_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest_dir&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"shared_assets_dir"</span><span class="p">,</span> <span class="s2">"apps_dir"</span><span class="p">,</span> <span class="s2">"manifest_dir"</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">platform_data</span><span class="p">:</span>
                 <span class="n">platform_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">platform_data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
         <span class="c1"># [app_meta].store_path is path-like too; resolve it against the TOML</span>
         <span class="c1"># dir for the same host-portability reason (a ~-prefixed/absolute value</span>
         <span class="c1"># is left as-is by _resolve).</span>
-        <span class="n">app_meta</span> <span class="o">=</span> <span class="n">platform_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;app_meta&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app_meta</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;store_path&quot;</span><span class="p">):</span>
-            <span class="n">app_meta</span><span class="p">[</span><span class="s2">&quot;store_path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">app_meta</span><span class="p">[</span><span class="s2">&quot;store_path&quot;</span><span class="p">])</span>
+        <span class="n">app_meta</span> <span class="o">=</span> <span class="n">platform_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"app_meta"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">app_meta</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"store_path"</span><span class="p">):</span>
+            <span class="n">app_meta</span><span class="p">[</span><span class="s2">"store_path"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">app_meta</span><span class="p">[</span><span class="s2">"store_path"</span><span class="p">])</span>
 
         <span class="c1"># Environment variable overrides</span>
-        <span class="n">env_apps_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ENLACE_APPS_DIRS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">env_apps_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ENLACE_APPS_DIRS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">env_apps_dirs</span><span class="p">:</span>
-            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;apps_dirs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"apps_dirs"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">env_apps_dirs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span>
             <span class="p">]</span>
-        <span class="n">env_app_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ENLACE_APP_DIRS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">env_app_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ENLACE_APP_DIRS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">env_app_dirs</span><span class="p">:</span>
-            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;app_dirs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">env_app_dirs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span><span class="p">]</span>
-        <span class="n">env_apps_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ENLACE_APPS_DIR&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">env_apps_dir</span> <span class="ow">and</span> <span class="s2">&quot;apps_dirs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">platform_data</span><span class="p">:</span>
-            <span class="n">platform_data</span><span class="p">[</span><span class="s2">&quot;apps_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">env_apps_dir</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"app_dirs"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">env_app_dirs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span> <span class="k">if</span> <span class="n">d</span><span class="p">]</span>
+        <span class="n">env_apps_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ENLACE_APPS_DIR"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">env_apps_dir</span> <span class="ow">and</span> <span class="s2">"apps_dirs"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">platform_data</span><span class="p">:</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"apps_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">env_apps_dir</span>
 
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">platform_data</span><span class="p">)</span></div>
 
@@ -464,21 +464,21 @@
 <div class="viewcode-block" id="PlatformConfig.check_conflicts">
 <a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.PlatformConfig.check_conflicts">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_conflicts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check for name and route conflicts across all apps.</span>
+<span class="w">        </span><span class="sd">"""Check for name and route conflicts across all apps.</span>
 
 <span class="sd">        Returns all conflicts found (not just the first), so the user can fix</span>
 <span class="sd">        them all at once.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># Check duplicate app names (across sources)</span>
         <span class="n">names</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-            <span class="n">source</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">source_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">source_dir</span> <span class="k">else</span> <span class="s2">&quot;unknown&quot;</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">source_dir</span><span class="p">)</span> <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">source_dir</span> <span class="k">else</span> <span class="s2">"unknown"</span>
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
                 <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Name conflict: &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; found in both &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">names</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; and &#39;</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Name conflict: '</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">' found in both "</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">names</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">'"</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">names</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span>
@@ -488,8 +488,8 @@
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
                 <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Route conflict: &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">}</span><span class="s2">&#39; claimed by both &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">routes</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; and &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Route conflict: '</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">}</span><span class="s2">' claimed by both "</span>
+                    <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">routes</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">routes</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span>
@@ -497,11 +497,11 @@
         <span class="c1"># Check duplicate ports among process-mode apps</span>
         <span class="n">ports</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;process&quot;</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"process"</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">port</span> <span class="ow">in</span> <span class="n">ports</span><span class="p">:</span>
                     <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Port conflict: port </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2"> claimed by both &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">ports</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="p">]</span><span class="si">}</span><span class="s2">&#39; and &#39;</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+                        <span class="sa">f</span><span class="s2">"Port conflict: port </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="si">}</span><span class="s2"> claimed by both "</span>
+                        <span class="sa">f</span><span class="s2">"'</span><span class="si">{</span><span class="n">ports</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="p">]</span><span class="si">}</span><span class="s2">' and '</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">'"</span>
                     <span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">ports</span><span class="p">[</span><span class="n">app</span><span class="o">.</span><span class="n">port</span><span class="p">]</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span>

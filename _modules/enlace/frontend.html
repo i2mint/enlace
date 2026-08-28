@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.frontend &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.frontend &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,9 +105,9 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.frontend</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;SPA-aware static file serving for enlace.</span>
+<span></span><span class="sd">"""SPA-aware static file serving for enlace.</span>
 
-<span class="sd">Starlette&#39;s StaticFiles returns 404 for paths that don&#39;t map to a file on disk.</span>
+<span class="sd">Starlette's StaticFiles returns 404 for paths that don't map to a file on disk.</span>
 <span class="sd">SPAs with client-side routing (React Router, Next.js, etc.) need unmatched paths</span>
 <span class="sd">to fall back appropriately so the JS router can handle them.</span>
 
@@ -116,7 +116,7 @@
 <span class="sd">from ``generateStaticParams``.  This module resolves</span>
 <span class="sd">``/projects/&lt;any-uuid&gt;`` → ``projects/_.html`` so the correct page shell</span>
 <span class="sd">is served and the client JS can read the real param from the URL.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
@@ -129,7 +129,7 @@
 <div class="viewcode-block" id="SPAStaticFiles">
 <a class="viewcode-back" href="../../module_docs/enlace/frontend.html#enlace.frontend.SPAStaticFiles">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SPAStaticFiles</span><span class="p">(</span><span class="n">StaticFiles</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;StaticFiles subclass with SPA / Next.js dynamic-route fallback.</span>
+<span class="w">    </span><span class="sd">"""StaticFiles subclass with SPA / Next.js dynamic-route fallback.</span>
 
 <span class="sd">    Resolution order for a request path:</span>
 
@@ -138,7 +138,7 @@
 <span class="sd">       param placeholder) and try again — e.g.</span>
 <span class="sd">       ``projects/abc123`` → ``projects/_.html``.</span>
 <span class="sd">    3. Fall back to ``/index.html`` (classic SPA catch-all).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="SPAStaticFiles.get_response">
 <a class="viewcode-back" href="../../module_docs/enlace/frontend.html#enlace.frontend.SPAStaticFiles.get_response">[docs]</a>
@@ -148,7 +148,7 @@
         <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">response</span>
 
-        <span class="c1"># 2. Try replacing dynamic segments with &quot;_&quot;.</span>
+        <span class="c1"># 2. Try replacing dynamic segments with "_".</span>
         <span class="n">wildcard_path</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_with_wildcards</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">wildcard_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_try_resolve</span><span class="p">(</span><span class="n">wildcard_path</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
@@ -156,15 +156,15 @@
                 <span class="k">return</span> <span class="n">response</span>
 
         <span class="c1"># 3. Fallback to index.html (classic SPA catch-all).</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="s2">"index.html"</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span></div>
 
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_try_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attempt normal StaticFiles resolution; return None on 404.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Attempt normal StaticFiles resolution; return None on 404."""</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s2">&quot;status_code&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exc</span><span class="p">,</span> <span class="s2">"status_code"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
                 <span class="k">return</span> <span class="kc">None</span>
             <span class="k">raise</span>
         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
@@ -172,24 +172,24 @@
         <span class="k">return</span> <span class="n">response</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_with_wildcards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Walk *path* segments, replacing any that don&#39;t exist on disk with ``_``.</span>
+<span class="w">        </span><span class="sd">"""Walk *path* segments, replacing any that don't exist on disk with ``_``.</span>
 
 <span class="sd">        Returns the rewritten path if a valid match is found, else None.</span>
 
 <span class="sd">        Next.js static export for a dynamic route ``[id]`` with</span>
-<span class="sd">        ``generateStaticParams`` returning ``[{id: &quot;_&quot;}]`` produces::</span>
+<span class="sd">        ``generateStaticParams`` returning ``[{id: "_"}]`` produces::</span>
 
 <span class="sd">            projects/_.html   ← the HTML page shell</span>
 <span class="sd">            projects/_/       ← RSC data directory</span>
 
-<span class="sd">        For a request like ``projects/abc123``, ``abc123`` doesn&#39;t exist on</span>
+<span class="sd">        For a request like ``projects/abc123``, ``abc123`` doesn't exist on</span>
 <span class="sd">        disk but ``_`` does (as both a directory and, with ``.html``, a file).</span>
 <span class="sd">        We rewrite to ``projects/_`` and let ``StaticFiles(html=True)``</span>
-<span class="sd">        resolve ``_.html`` — but only if ``_`` isn&#39;t **also** a directory</span>
+<span class="sd">        resolve ``_.html`` — but only if ``_`` isn't **also** a directory</span>
 <span class="sd">        (which would take priority and fail to find ``index.html`` inside).</span>
 <span class="sd">        So we explicitly try ``_.html`` when the wildcard is a directory.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">segments</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span><span class="p">]</span>
+<span class="sd">        """</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span><span class="p">]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">segments</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
@@ -197,44 +197,44 @@
         <span class="n">changed</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span><span class="p">:</span>
-            <span class="n">candidate</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span> <span class="o">+</span> <span class="p">[</span><span class="n">segment</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="n">segment</span>
+            <span class="n">candidate</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span> <span class="o">+</span> <span class="p">[</span><span class="n">segment</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="n">segment</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">stat_result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">stat_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">segment</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Try the wildcard placeholder instead.</span>
-                <span class="n">wildcard_candidate</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;_&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="s2">&quot;_&quot;</span>
+                <span class="n">wildcard_candidate</span> <span class="o">=</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span> <span class="o">+</span> <span class="p">[</span><span class="s2">"_"</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="s2">"_"</span>
                 <span class="n">_</span><span class="p">,</span> <span class="n">stat_w</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">wildcard_candidate</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="n">stat_w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+                    <span class="n">resolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span>
                     <span class="n">changed</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Neither the real segment nor &quot;_&quot; exists.</span>
+                    <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Neither the real segment nor "_" exists.</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">changed</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="c1"># The rewritten path ends with &quot;_&quot; which may be a directory.</span>
+        <span class="c1"># The rewritten path ends with "_" which may be a directory.</span>
         <span class="c1"># StaticFiles(html=True) would look for _/index.html inside it,</span>
         <span class="c1"># but Next.js puts the page at _.html (sibling, not child).</span>
         <span class="c1"># Try the explicit .html path first.</span>
         <span class="n">html_path</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;.html&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s2">".html"</span><span class="p">])</span> <span class="k">if</span> <span class="n">resolved</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">html_path</span><span class="p">:</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">stat_html</span> <span class="o">=</span> <span class="k">await</span> <span class="n">anyio</span><span class="o">.</span><span class="n">to_thread</span><span class="o">.</span><span class="n">run_sync</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lookup_path</span><span class="p">,</span> <span class="n">html_path</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">stat_html</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">html_path</span>
 
-        <span class="k">return</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">resolved</span><span class="p">)</span></div>
 
 
 
-<span class="n">_NOT_FOUND_PAGE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&lt;!doctype html&gt;</span>
-<span class="s2">&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;</span>
-<span class="s2">&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;</span>
+<span class="n">_NOT_FOUND_PAGE</span> <span class="o">=</span> <span class="s2">"""&lt;!doctype html&gt;</span>
+<span class="s2">&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;</span>
+<span class="s2">&lt;meta name="viewport" content="width=device-width,initial-scale=1"&gt;</span>
 <span class="s2">&lt;title&gt;Page not found&lt;/title&gt;</span>
 <span class="s2">&lt;style&gt;</span>
 <span class="s2"> body{font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;</span>
@@ -253,76 +253,76 @@
 <span class="s2"> code{background:#0f1115;padding:1px 6px;border-radius:4px;</span>
 <span class="s2">      border:1px solid #2a2e38;color:#e6e8eb;word-break:break-all}</span>
 <span class="s2">&lt;/style&gt;&lt;/head&gt;&lt;body&gt;</span>
-<span class="s2">&lt;div class=&quot;card&quot;&gt;</span>
+<span class="s2">&lt;div class="card"&gt;</span>
 <span class="s2">&lt;h1&gt;Page not found&lt;/h1&gt;</span>
-<span class="s2">&lt;p&gt;There&#39;s nothing at &lt;code&gt;</span><span class="si">{path}</span><span class="s2">&lt;/code&gt;. The app may have been renamed or</span>
+<span class="s2">&lt;p&gt;There's nothing at &lt;code&gt;</span><span class="si">{path}</span><span class="s2">&lt;/code&gt;. The app may have been renamed or</span>
 <span class="s2">moved &amp;mdash; or it might need you to sign in first.&lt;/p&gt;</span>
-<span class="s2">&lt;a class=&quot;btn&quot; href=&quot;/&quot;&gt;See available apps&lt;/a&gt;</span>
-<span class="s2">&lt;div class=&quot;nav&quot;&gt;</span>
-<span class="s2">  &lt;a href=&quot;/&quot;&gt;Home&lt;/a&gt;</span>
-<span class="s2">  &lt;a href=&quot;/auth/login&quot;&gt;Sign in&lt;/a&gt;</span>
+<span class="s2">&lt;a class="btn" href="/"&gt;See available apps&lt;/a&gt;</span>
+<span class="s2">&lt;div class="nav"&gt;</span>
+<span class="s2">  &lt;a href="/"&gt;Home&lt;/a&gt;</span>
+<span class="s2">  &lt;a href="/auth/login"&gt;Sign in&lt;/a&gt;</span>
 <span class="s2">&lt;/div&gt;</span>
-<span class="s2">&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;&quot;&quot;&quot;</span>
+<span class="s2">&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;"""</span>
 
 
 <div class="viewcode-block" id="LandingWithUnknownApp404">
 <a class="viewcode-back" href="../../module_docs/enlace/frontend.html#enlace.frontend.LandingWithUnknownApp404">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LandingWithUnknownApp404</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;ASGI app that serves the landing frontend at ``/`` and 404s elsewhere.</span>
+<span class="w">    </span><span class="sd">"""ASGI app that serves the landing frontend at ``/`` and 404s elsewhere.</span>
 
 <span class="sd">    Wraps ``StaticFiles`` for the landing app so that:</span>
 
 <span class="sd">    - ``/``, ``/index.html``, and any real file in the landing dir (e.g.</span>
 <span class="sd">      ``/assets/index-abc.js``) are served as usual.</span>
 <span class="sd">    - Any other path returns a friendly 404 HTML page with a link back to</span>
-<span class="sd">      ``/``, instead of silently falling back to the landing&#39;s ``index.html``.</span>
+<span class="sd">      ``/``, instead of silently falling back to the landing's ``index.html``.</span>
 
 <span class="sd">    Per-app SPA mounts (``/{name}/...``) live on more-specific Starlette</span>
 <span class="sd">    mounts that are registered earlier and take precedence over this one,</span>
 <span class="sd">    so SPA client-side routing for known apps still works. This wrapper</span>
 <span class="sd">    only handles paths that fall through to ``/``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">landing_dir</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">landing_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_files</span> <span class="o">=</span> <span class="n">StaticFiles</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">landing_dir</span><span class="p">),</span> <span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">:</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">send</span><span class="p">:</span> <span class="n">Send</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;http&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http"</span><span class="p">:</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="c1"># Starlette mounts strip the mount prefix from path before delegating;</span>
-        <span class="c1"># for the &quot;/&quot; mount, the path that arrives here is the original path</span>
-        <span class="c1"># without leading &quot;/&quot;. e.g. request &quot;/foo&quot; -&gt; path &quot;foo&quot;.</span>
-        <span class="n">rel</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">rel</span> <span class="ow">or</span> <span class="n">rel</span> <span class="o">==</span> <span class="s2">&quot;index.html&quot;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_real_file</span><span class="p">(</span><span class="n">rel</span><span class="p">):</span>
+        <span class="c1"># for the "/" mount, the path that arrives here is the original path</span>
+        <span class="c1"># without leading "/". e.g. request "/foo" -&gt; path "foo".</span>
+        <span class="n">rel</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"path"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rel</span> <span class="ow">or</span> <span class="n">rel</span> <span class="o">==</span> <span class="s2">"index.html"</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_real_file</span><span class="p">(</span><span class="n">rel</span><span class="p">):</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="n">method</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;method&quot;</span><span class="p">,</span> <span class="s2">&quot;GET&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-        <span class="n">original</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">rel</span>  <span class="c1"># what the user actually typed</span>
-        <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">):</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"method"</span><span class="p">,</span> <span class="s2">"GET"</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="s2">"/"</span> <span class="o">+</span> <span class="n">rel</span>  <span class="c1"># what the user actually typed</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">):</span>
             <span class="k">await</span> <span class="n">_send_plain_404</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
             <span class="k">return</span>
-        <span class="n">body</span> <span class="o">=</span> <span class="n">_NOT_FOUND_PAGE</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{path}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_escape</span><span class="p">(</span><span class="n">original</span><span class="p">))</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">_NOT_FOUND_PAGE</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="si">{path}</span><span class="s2">"</span><span class="p">,</span> <span class="n">_escape</span><span class="p">(</span><span class="n">original</span><span class="p">))</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
         <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
             <span class="p">{</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="mi">404</span><span class="p">,</span>
-                <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">[</span>
-                    <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-type&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;text/html; charset=utf-8&quot;</span><span class="p">),</span>
-                    <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-length&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)),</span>
+                <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"http.response.start"</span><span class="p">,</span>
+                <span class="s2">"status"</span><span class="p">:</span> <span class="mi">404</span><span class="p">,</span>
+                <span class="s2">"headers"</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="sa">b</span><span class="s2">"content-type"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">"text/html; charset=utf-8"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="sa">b</span><span class="s2">"content-length"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)),</span>
                 <span class="p">],</span>
             <span class="p">}</span>
         <span class="p">)</span>
         <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
-            <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span> <span class="k">else</span> <span class="n">data</span><span class="p">}</span>
+            <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"http.response.body"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">:</span> <span class="sa">b</span><span class="s2">""</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"HEAD"</span> <span class="k">else</span> <span class="n">data</span><span class="p">}</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_real_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">&quot;..&quot;</span> <span class="ow">in</span> <span class="n">rel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">".."</span> <span class="ow">in</span> <span class="n">rel</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
             <span class="k">return</span> <span class="kc">False</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">candidate</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dir</span> <span class="o">/</span> <span class="n">rel</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
@@ -338,26 +338,26 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_escape</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="p">(</span>
-        <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&amp;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;amp;&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;lt;&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&amp;gt;&quot;</span><span class="p">)</span>
-        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&amp;quot;&quot;</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&amp;"</span><span class="p">,</span> <span class="s2">"&amp;amp;"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&lt;"</span><span class="p">,</span> <span class="s2">"&amp;lt;"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"&gt;"</span><span class="p">,</span> <span class="s2">"&amp;gt;"</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'"'</span><span class="p">,</span> <span class="s2">"&amp;quot;"</span><span class="p">)</span>
     <span class="p">)</span>
 
 
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send_plain_404</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">body</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;HEAD&quot;</span> <span class="k">else</span> <span class="sa">b</span><span class="s2">&quot;Not Found&quot;</span>
+    <span class="n">body</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">""</span> <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">"HEAD"</span> <span class="k">else</span> <span class="sa">b</span><span class="s2">"Not Found"</span>
     <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
         <span class="p">{</span>
-            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.start&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="mi">404</span><span class="p">,</span>
-            <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-type&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;text/plain; charset=utf-8&quot;</span><span class="p">),</span>
-                <span class="p">(</span><span class="sa">b</span><span class="s2">&quot;content-length&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)),</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"http.response.start"</span><span class="p">,</span>
+            <span class="s2">"status"</span><span class="p">:</span> <span class="mi">404</span><span class="p">,</span>
+            <span class="s2">"headers"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">(</span><span class="sa">b</span><span class="s2">"content-type"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">"text/plain; charset=utf-8"</span><span class="p">),</span>
+                <span class="p">(</span><span class="sa">b</span><span class="s2">"content-length"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)),</span>
             <span class="p">],</span>
         <span class="p">}</span>
     <span class="p">)</span>
-    <span class="k">await</span> <span class="n">send</span><span class="p">({</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;http.response.body&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">:</span> <span class="n">body</span><span class="p">})</span>
+    <span class="k">await</span> <span class="n">send</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"http.response.body"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">:</span> <span class="n">body</span><span class="p">})</span>
 </pre></div>
 
            </div>

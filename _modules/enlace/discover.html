@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.discover &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.discover &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,12 +105,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.discover</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Convention-based app discovery for enlace.</span>
+<span></span><span class="sd">"""Convention-based app discovery for enlace.</span>
 
 <span class="sd">Walks an apps directory, discovers backend entry points and frontend assets,</span>
 <span class="sd">detects app types, loads per-app TOML overrides, and returns validated AppConfig</span>
 <span class="sd">objects with provenance tracking.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
@@ -134,7 +134,7 @@
 <div class="viewcode-block" id="AppDiscoverer">
 <a class="viewcode-back" href="../../module_docs/enlace/discover.html#enlace.AppDiscoverer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AppDiscoverer</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for app discovery strategies.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Protocol for app discovery strategies."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">discover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]:</span> <span class="o">...</span></div>
 
@@ -143,14 +143,14 @@
 <div class="viewcode-block" id="ConventionDiscoverer">
 <a class="viewcode-back" href="../../module_docs/enlace/discover.html#enlace.ConventionDiscoverer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConventionDiscoverer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discovers apps by filesystem conventions.</span>
+<span class="w">    </span><span class="sd">"""Discovers apps by filesystem conventions.</span>
 
 <span class="sd">    Walks the apps directory, finds entry points, detects app types,</span>
 <span class="sd">    loads TOML overrides, and returns validated AppConfig objects.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        conventions: Meta-conventions controlling discovery behavior.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conventions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ConventionsConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">conventions</span> <span class="o">=</span> <span class="n">conventions</span> <span class="ow">or</span> <span class="n">ConventionsConfig</span><span class="p">()</span>
@@ -158,14 +158,14 @@
 <div class="viewcode-block" id="ConventionDiscoverer.discover">
 <a class="viewcode-back" href="../../module_docs/enlace/discover.html#enlace.ConventionDiscoverer.discover">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">discover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Discover all apps in the given directory.</span>
+<span class="w">        </span><span class="sd">"""Discover all apps in the given directory.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            apps_dir: Path to the directory containing app subdirectories.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List of AppConfig objects, sorted by name.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">apps_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[]</span>
 
@@ -180,19 +180,19 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_discover_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Discover a single app from its directory.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Discover a single app from its directory."""</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_strategy</span>
 
         <span class="n">name</span> <span class="o">=</span> <span class="n">app_dir</span><span class="o">.</span><span class="n">name</span>
         <span class="n">route_prefix</span> <span class="o">=</span> <span class="n">derive_route_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
-        <span class="c1"># Check app.toml first. The declared mode&#39;s strategy decides whether</span>
+        <span class="c1"># Check app.toml first. The declared mode's strategy decides whether</span>
         <span class="c1"># to skip Python introspection (built-in: asgi inspects, all others</span>
-        <span class="c1"># don&#39;t; plugins like enlace_docker also opt out).</span>
-        <span class="n">override_file</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="s2">&quot;app.toml&quot;</span>
+        <span class="c1"># don't; plugins like enlace_docker also opt out).</span>
+        <span class="n">override_file</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="s2">"app.toml"</span>
         <span class="n">toml_data</span> <span class="o">=</span> <span class="n">_load_toml</span><span class="p">(</span><span class="n">override_file</span><span class="p">)</span> <span class="k">if</span> <span class="n">override_file</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="k">else</span> <span class="p">{}</span>
 
-        <span class="n">declared_mode</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="s2">&quot;asgi&quot;</span><span class="p">)</span>
+        <span class="n">declared_mode</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mode"</span><span class="p">,</span> <span class="s2">"asgi"</span><span class="p">)</span>
         <span class="n">strategy</span> <span class="o">=</span> <span class="n">get_strategy</span><span class="p">(</span><span class="n">declared_mode</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">strategy</span><span class="o">.</span><span class="n">skip_python_introspection</span><span class="p">:</span>
@@ -208,33 +208,33 @@
 
         <span class="c1"># -- Standard asgi-mode discovery (current behavior) --</span>
         <span class="n">entry_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_entry_point</span><span class="p">(</span><span class="n">app_dir</span><span class="p">)</span>
-        <span class="c1"># app.toml&#39;s `frontend_dir` (if set) overrides the convention.</span>
+        <span class="c1"># app.toml's `frontend_dir` (if set) overrides the convention.</span>
         <span class="c1"># Without this, an app whose build outputs to e.g. ./dist would be</span>
-        <span class="c1"># silently skipped — discovery would conclude &quot;no frontend&quot; and the</span>
+        <span class="c1"># silently skipped — discovery would conclude "no frontend" and the</span>
         <span class="c1"># later _apply_overrides step never runs.</span>
-        <span class="n">frontend_override</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;frontend_dir&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">toml_data</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">frontend_override</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"frontend_dir"</span><span class="p">)</span> <span class="k">if</span> <span class="n">toml_data</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="n">frontend_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_frontend_dir</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">override</span><span class="o">=</span><span class="n">frontend_override</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">entry_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">frontend_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Not an app directory</span>
 
         <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;route_prefix&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;convention: directory_name&quot;</span>
+        <span class="n">provenance</span><span class="p">[</span><span class="s2">"route_prefix"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"convention: directory_name"</span>
 
         <span class="k">if</span> <span class="n">entry_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">app_type</span><span class="p">,</span> <span class="n">type_source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect_app_type</span><span class="p">(</span>
                 <span class="n">entry_path</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">app_attr</span>
             <span class="p">)</span>
-            <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;app_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_source</span>
-            <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;entry_module_path&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;convention: first match (</span><span class="si">{</span><span class="n">entry_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="n">provenance</span><span class="p">[</span><span class="s2">"app_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_source</span>
+            <span class="n">provenance</span><span class="p">[</span><span class="s2">"entry_module_path"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"convention: first match (</span><span class="si">{</span><span class="n">entry_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">app_type</span> <span class="o">=</span> <span class="s2">&quot;frontend_only&quot;</span>
+            <span class="n">app_type</span> <span class="o">=</span> <span class="s2">"frontend_only"</span>
             <span class="n">entry_path</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;app_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;convention: no backend entry, has frontend&quot;</span>
+            <span class="n">provenance</span><span class="p">[</span><span class="s2">"app_type"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"convention: no backend entry, has frontend"</span>
 
-        <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;source_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">)</span>
+        <span class="n">provenance</span><span class="p">[</span><span class="s2">"source_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">)</span>
 
         <span class="n">config</span> <span class="o">=</span> <span class="n">AppConfig</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
@@ -254,14 +254,14 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_metadata</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_finalize_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppConfig</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bake app-declared launcher metadata onto a freshly discovered config.</span>
+<span class="w">        </span><span class="sd">"""Bake app-declared launcher metadata onto a freshly discovered config.</span>
 
 <span class="sd">        Runs for *every* app on *both* discovery paths (asgi and non-asgi), so</span>
 <span class="sd">        external/process apps without a frontend on disk are covered too. The</span>
 <span class="sd">        harvest reads the manifest / ``index.html`` head / ``package.json`` /</span>
 <span class="sd">        ``pyproject`` / fs icon conventions; each source is a no-op when absent,</span>
 <span class="sd">        so this never raises on an app that only has an ``app.toml`` (or nothing).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.appmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">harvest_app_metadata</span>
 
         <span class="n">updates</span> <span class="o">=</span> <span class="n">harvest_app_metadata</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">frontend_dir</span><span class="p">)</span>
@@ -278,22 +278,22 @@
         <span class="n">toml_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
         <span class="n">declared_mode</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppConfig</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build an AppConfig for process/external/static modes from app.toml.</span>
+<span class="w">        </span><span class="sd">"""Build an AppConfig for process/external/static modes from app.toml.</span>
 
 <span class="sd">        Skips Python introspection — the app may not be Python at all.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;override: app.toml&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;route_prefix&quot;</span><span class="p">:</span> <span class="s2">&quot;convention: directory_name&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;source_dir&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">),</span>
-            <span class="s2">&quot;app_type&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;inferred from mode=</span><span class="si">{</span><span class="n">declared_mode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">"mode"</span><span class="p">:</span> <span class="s2">"override: app.toml"</span><span class="p">,</span>
+            <span class="s2">"route_prefix"</span><span class="p">:</span> <span class="s2">"convention: directory_name"</span><span class="p">,</span>
+            <span class="s2">"source_dir"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">),</span>
+            <span class="s2">"app_type"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"inferred from mode=</span><span class="si">{</span><span class="n">declared_mode</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="c1"># Infer app_type from mode</span>
-        <span class="k">if</span> <span class="n">declared_mode</span> <span class="o">==</span> <span class="s2">&quot;static&quot;</span><span class="p">:</span>
-            <span class="n">app_type</span> <span class="o">=</span> <span class="s2">&quot;frontend_only&quot;</span>
+        <span class="k">if</span> <span class="n">declared_mode</span> <span class="o">==</span> <span class="s2">"static"</span><span class="p">:</span>
+            <span class="n">app_type</span> <span class="o">=</span> <span class="s2">"frontend_only"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">app_type</span> <span class="o">=</span> <span class="s2">&quot;asgi_app&quot;</span>  <span class="c1"># process/external — opaque to enlace</span>
+            <span class="n">app_type</span> <span class="o">=</span> <span class="s2">"asgi_app"</span>  <span class="c1"># process/external — opaque to enlace</span>
 
         <span class="c1"># Start with convention defaults, then overlay TOML fields</span>
         <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
@@ -312,11 +312,11 @@
             <span class="n">toml_data</span><span class="p">,</span>
             <span class="n">app_dir</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">fields</span><span class="p">[</span><span class="s2">&quot;provenance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">provenance</span>
+        <span class="n">fields</span><span class="p">[</span><span class="s2">"provenance"</span><span class="p">]</span> <span class="o">=</span> <span class="n">provenance</span>
         <span class="k">return</span> <span class="n">AppConfig</span><span class="p">(</span><span class="o">**</span><span class="n">fields</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_find_entry_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find the first matching entry point in the app directory.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Find the first matching entry point in the app directory."""</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">entry_points</span><span class="p">:</span>
             <span class="n">candidate</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">name</span>
             <span class="k">if</span> <span class="n">candidate</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
@@ -326,22 +326,22 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_find_frontend_dir</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">override</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the app has a frontend assets directory.</span>
+<span class="w">        </span><span class="sd">"""Check if the app has a frontend assets directory.</span>
 
 <span class="sd">        ``override`` is the ``frontend_dir`` value from app.toml (if any) and</span>
 <span class="sd">        takes precedence over the convention. The directory must exist and</span>
 <span class="sd">        contain an ``index.html``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">candidate_name</span> <span class="o">=</span> <span class="n">override</span> <span class="k">if</span> <span class="n">override</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">conventions</span><span class="o">.</span><span class="n">frontend_dir</span>
         <span class="n">frontend</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">candidate_name</span>
-        <span class="k">if</span> <span class="n">frontend</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">frontend</span> <span class="o">/</span> <span class="s2">&quot;index.html&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">frontend</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">frontend</span> <span class="o">/</span> <span class="s2">"index.html"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">frontend</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_detect_app_type</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">entry_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">app_attr</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect whether the entry module provides an ASGI app or functions.</span>
+<span class="w">        </span><span class="sd">"""Detect whether the entry module provides an ASGI app or functions.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple of (app_type, provenance_source).</span>
@@ -350,25 +350,25 @@
 <span class="sd">            ImportError: If the module exists but fails to import (e.g. syntax</span>
 <span class="sd">                error, missing dependency). This is intentionally NOT caught —</span>
 <span class="sd">                silently swallowing import errors is an anti-pattern.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">_import_module_from_path</span><span class="p">(</span><span class="n">entry_path</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">)</span>
 
         <span class="c1"># Check for ASGI app attribute</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">app_attr</span><span class="p">):</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">app_attr</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-                <span class="k">return</span> <span class="s2">&quot;asgi_app&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;detected: has &#39;</span><span class="si">{</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">&#39; attribute&quot;</span>
+                <span class="k">return</span> <span class="s2">"asgi_app"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"detected: has '</span><span class="si">{</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">' attribute"</span>
 
         <span class="c1"># Check for typed public functions</span>
         <span class="n">public_functions</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">name</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">module</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">==</span> <span class="n">module</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="p">]</span>
         <span class="k">if</span> <span class="n">public_functions</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;functions&quot;</span><span class="p">,</span> <span class="s2">&quot;detected: no app attr, has public functions&quot;</span>
+            <span class="k">return</span> <span class="s2">"functions"</span><span class="p">,</span> <span class="s2">"detected: no app attr, has public functions"</span>
 
-        <span class="k">return</span> <span class="s2">&quot;asgi_app&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;detected: has &#39;</span><span class="si">{</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">&#39; attribute (fallback)&quot;</span>
+        <span class="k">return</span> <span class="s2">"asgi_app"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"detected: has '</span><span class="si">{</span><span class="n">app_attr</span><span class="si">}</span><span class="s2">' attribute (fallback)"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_apply_overrides</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -376,7 +376,7 @@
         <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
         <span class="n">toml_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AppConfig</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply per-app TOML overrides to a discovered asgi-mode config.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Apply per-app TOML overrides to a discovered asgi-mode config."""</span>
         <span class="n">updates</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">provenance</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">provenance</span><span class="p">)</span>
         <span class="n">updates</span><span class="p">,</span> <span class="n">provenance</span> <span class="o">=</span> <span class="n">_overlay_toml_fields</span><span class="p">(</span>
@@ -385,13 +385,13 @@
             <span class="n">toml_data</span><span class="p">,</span>
             <span class="n">app_dir</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">updates</span><span class="p">[</span><span class="s2">&quot;provenance&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">provenance</span>
+        <span class="n">updates</span><span class="p">[</span><span class="s2">"provenance"</span><span class="p">]</span> <span class="o">=</span> <span class="n">provenance</span>
         <span class="k">return</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">updates</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ConventionDiscoverer.discover_app_dir">
 <a class="viewcode-back" href="../../module_docs/enlace/discover.html#enlace.ConventionDiscoverer.discover_app_dir">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">discover_app_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppConfig</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Discover a single directory that IS the app itself.</span>
+<span class="w">        </span><span class="sd">"""Discover a single directory that IS the app itself.</span>
 
 <span class="sd">        Unlike discover(), which walks children of a container directory,</span>
 <span class="sd">        this treats app_dir itself as the app directory.</span>
@@ -401,7 +401,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            AppConfig if the directory is a valid app, None otherwise.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">app_dir</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">app_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">is_skippable</span><span class="p">(</span><span class="n">app_dir</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
@@ -412,12 +412,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_load_toml</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a TOML file, returning an empty dict on missing file.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Load a TOML file, returning an empty dict on missing file."""</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">tomllib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to parse </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to parse </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
 
 <span class="c1"># Cross-cutting TOML keys that all strategies share. Mode-specific keys</span>
@@ -425,37 +425,37 @@
 <span class="c1"># contributed by each ``BackendStrategy`` and merged in by</span>
 <span class="c1"># ``_resolved_field_map`` below.</span>
 <span class="n">_CORE_TOML_FIELD_MAP</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;route&quot;</span><span class="p">:</span> <span class="s2">&quot;route_prefix&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;access&quot;</span><span class="p">:</span> <span class="s2">&quot;access&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;shared_password_env&quot;</span><span class="p">:</span> <span class="s2">&quot;shared_password_env&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;allowed_users&quot;</span><span class="p">:</span> <span class="s2">&quot;allowed_users&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;display_name&quot;</span><span class="p">:</span> <span class="s2">&quot;display_name&quot;</span><span class="p">,</span>
+    <span class="s2">"route"</span><span class="p">:</span> <span class="s2">"route_prefix"</span><span class="p">,</span>
+    <span class="s2">"access"</span><span class="p">:</span> <span class="s2">"access"</span><span class="p">,</span>
+    <span class="s2">"shared_password_env"</span><span class="p">:</span> <span class="s2">"shared_password_env"</span><span class="p">,</span>
+    <span class="s2">"allowed_users"</span><span class="p">:</span> <span class="s2">"allowed_users"</span><span class="p">,</span>
+    <span class="s2">"display_name"</span><span class="p">:</span> <span class="s2">"display_name"</span><span class="p">,</span>
     <span class="c1"># `title` is an alias for `display_name`. If an app.toml sets BOTH, the</span>
     <span class="c1"># later key in this map wins (dict-insertion order in _overlay_toml_fields)</span>
     <span class="c1"># — declaring both is an authoring mistake; no app does.</span>
-    <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;display_name&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;frontend_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;frontend_dir&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;mode&quot;</span><span class="p">,</span>
+    <span class="s2">"title"</span><span class="p">:</span> <span class="s2">"display_name"</span><span class="p">,</span>
+    <span class="s2">"frontend_dir"</span><span class="p">:</span> <span class="s2">"frontend_dir"</span><span class="p">,</span>
+    <span class="s2">"mode"</span><span class="p">:</span> <span class="s2">"mode"</span><span class="p">,</span>
     <span class="c1"># App-launcher metadata (see enlace.appmeta). These are the app-declared</span>
     <span class="c1"># (Tier C.1) values; harvested sources fill the gaps at the tail of</span>
     <span class="c1"># _discover_app.</span>
-    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="s2">&quot;keywords&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;icon&quot;</span><span class="p">:</span> <span class="s2">&quot;icon&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;launchable&quot;</span><span class="p">:</span> <span class="s2">&quot;launchable&quot;</span><span class="p">,</span>
+    <span class="s2">"description"</span><span class="p">:</span> <span class="s2">"description"</span><span class="p">,</span>
+    <span class="s2">"keywords"</span><span class="p">:</span> <span class="s2">"keywords"</span><span class="p">,</span>
+    <span class="s2">"icon"</span><span class="p">:</span> <span class="s2">"icon"</span><span class="p">,</span>
+    <span class="s2">"launchable"</span><span class="p">:</span> <span class="s2">"launchable"</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="c1"># Core path keys (resolved relative to the app directory). Strategy-specific</span>
 <span class="c1"># path keys are contributed via ``BackendStrategy.path_keys``.</span>
-<span class="n">_CORE_PATH_KEYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;frontend_dir&quot;</span><span class="p">}</span>
+<span class="n">_CORE_PATH_KEYS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"frontend_dir"</span><span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_resolved_field_map</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the effective TOML field map by merging core + strategy maps.</span>
+<span class="w">    </span><span class="sd">"""Build the effective TOML field map by merging core + strategy maps.</span>
 
 <span class="sd">    Recomputed per call so newly-registered plugin strategies are picked up</span>
 <span class="sd">    without restarting the process. Cheap — the registry is small.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_strategy_field_maps</span>
 
     <span class="n">strategy_map</span><span class="p">,</span> <span class="n">strategy_paths</span> <span class="o">=</span> <span class="n">collect_strategy_field_maps</span><span class="p">()</span>
@@ -470,10 +470,10 @@
     <span class="n">toml_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Apply TOML overrides to a fields dict and provenance dict.</span>
+<span class="w">    </span><span class="sd">"""Apply TOML overrides to a fields dict and provenance dict.</span>
 
 <span class="sd">    Returns the updated (fields, provenance) pair.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">field_map</span><span class="p">,</span> <span class="n">path_keys</span> <span class="o">=</span> <span class="n">_resolved_field_map</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">toml_key</span><span class="p">,</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">field_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">toml_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">toml_data</span><span class="p">:</span>
@@ -483,38 +483,38 @@
         <span class="k">if</span> <span class="n">toml_key</span> <span class="ow">in</span> <span class="n">path_keys</span><span class="p">:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">value</span>
         <span class="c1"># command: accept string (split via shlex) or array</span>
-        <span class="k">if</span> <span class="n">toml_key</span> <span class="o">==</span> <span class="s2">&quot;command&quot;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">toml_key</span> <span class="o">==</span> <span class="s2">"command"</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
         <span class="n">fields</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="n">provenance</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;override: app.toml&quot;</span>
+        <span class="n">provenance</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"override: app.toml"</span>
 
-    <span class="c1"># The [build] table is structured (not a flat scalar), so it&#39;s parsed</span>
+    <span class="c1"># The [build] table is structured (not a flat scalar), so it's parsed</span>
     <span class="c1"># separately into a BuildConfig rather than going through field_map.</span>
-    <span class="n">build_table</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;build&quot;</span><span class="p">)</span>
+    <span class="n">build_table</span> <span class="o">=</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"build"</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">build_table</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="n">fields</span><span class="p">[</span><span class="s2">&quot;build&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_parse_build_config</span><span class="p">(</span><span class="n">build_table</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
-        <span class="n">provenance</span><span class="p">[</span><span class="s2">&quot;build&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;override: app.toml [build]&quot;</span>
+        <span class="n">fields</span><span class="p">[</span><span class="s2">"build"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_parse_build_config</span><span class="p">(</span><span class="n">build_table</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">)</span>
+        <span class="n">provenance</span><span class="p">[</span><span class="s2">"build"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"override: app.toml [build]"</span>
 
     <span class="k">return</span> <span class="n">fields</span><span class="p">,</span> <span class="n">provenance</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_parse_build_config</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``BuildConfig`` from an app.toml ``[build]`` table.</span>
+<span class="w">    </span><span class="sd">"""Build a ``BuildConfig`` from an app.toml ``[build]`` table.</span>
 
 <span class="sd">    ``cwd`` is resolved relative to the app directory here (it needs the app</span>
 <span class="sd">    dir as context); command-string splitting is handled by the model.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildConfig</span>
 
     <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-    <span class="n">cwd</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cwd&quot;</span><span class="p">)</span>
+    <span class="n">cwd</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"cwd"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cwd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;cwd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">cwd</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"cwd"</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_dir</span> <span class="o">/</span> <span class="n">cwd</span>
     <span class="k">return</span> <span class="n">BuildConfig</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_import_module_from_path</span><span class="p">(</span><span class="n">entry_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">apps_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Import a module from a filesystem path.</span>
+<span class="w">    </span><span class="sd">"""Import a module from a filesystem path.</span>
 
 <span class="sd">    Adds the apps_dir parent to sys.path temporarily so that imports</span>
 <span class="sd">    resolve correctly.</span>
@@ -522,7 +522,7 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        ImportError: If the module has a genuine import error (syntax error,</span>
 <span class="sd">            missing dependency). This is intentionally propagated.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">apps_dir</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
     <span class="n">added_to_path</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="n">root</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
@@ -531,7 +531,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="c1"># Build module path: apps/foo/server.py -&gt; apps.foo.server</span>
         <span class="n">relative</span> <span class="o">=</span> <span class="n">entry_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
-        <span class="n">module_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">relative</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">module_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">relative</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="s2">""</span><span class="p">))</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">)</span>
 
         <span class="c1"># Remove cached module to ensure fresh import</span>
         <span class="k">if</span> <span class="n">module_name</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
@@ -549,7 +549,7 @@
 <div class="viewcode-block" id="discover_apps">
 <a class="viewcode-back" href="../../module_docs/enlace/discover.html#enlace.discover_apps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">discover_apps</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PlatformConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlatformConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;High-level discovery: load config, discover apps, check conflicts.</span>
+<span class="w">    </span><span class="sd">"""High-level discovery: load config, discover apps, check conflicts.</span>
 
 <span class="sd">    Iterates over all configured source directories:</span>
 <span class="sd">    - ``config.apps_dirs``: container directories (walk children)</span>
@@ -563,7 +563,7 @@
 
 <span class="sd">    Raises:</span>
 <span class="sd">        RuntimeError: If name or route conflicts are detected.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">PlatformConfig</span><span class="o">.</span><span class="n">from_toml</span><span class="p">()</span>
     <span class="n">discoverer</span> <span class="o">=</span> <span class="n">ConventionDiscoverer</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">conventions</span><span class="p">)</span>
@@ -583,12 +583,12 @@
     <span class="c1"># Sort globally by name for deterministic order</span>
     <span class="n">all_apps</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;apps&quot;</span><span class="p">:</span> <span class="n">all_apps</span><span class="p">})</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"apps"</span><span class="p">:</span> <span class="n">all_apps</span><span class="p">})</span>
     <span class="n">errors</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">check_conflicts</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;Configuration conflicts detected:</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">)</span>
+            <span class="s2">"Configuration conflicts detected:</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">config</span></div>
 

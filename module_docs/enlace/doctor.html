@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.doctor &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.doctor &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -135,7 +135,11 @@ of them and returns a <code class="docutils literal notranslate"><span class="pr
 <li><p><code class="docutils literal notranslate"><span class="pre">detail</span></code> is a short human-readable string. Structured payloads go in
 <code class="docutils literal notranslate"><span class="pre">extra</span></code> (dict) so <code class="docutils literal notranslate"><span class="pre">--json</span></code> consumers don’t re-parse prose.</p></li>
 <li><p>Plugins can supply extra static or HTTP probes via <code class="docutils literal notranslate"><span class="pre">extra_static_checks</span></code>
-and <code class="docutils literal notranslate"><span class="pre">extra_http_checks</span></code> on <code class="docutils literal notranslate"><span class="pre">run_doctor</span></code>.</p></li>
+and <code class="docutils literal notranslate"><span class="pre">extra_http_checks</span></code> on <code class="docutils literal notranslate"><span class="pre">run_doctor</span></code>. Those are also discovered
+automatically from the plugins the platform is configured to load — see
+<code class="xref py py-func docutils literal notranslate"><span class="pre">discover_plugin_checks()</span></code>. A check nobody runs is not a check, and the
+hand-wiring alternative meant a plugin could ship a correct diagnosis of its
+own failure mode that never once executed.</p></li>
 </ul>
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.doctor.Check">

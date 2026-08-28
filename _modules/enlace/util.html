@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.util &mdash; enlace 0.1.26 documentation</title>
+  <title>enlace.util &mdash; enlace 0.1.27 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=785bba28"></script>
+      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -105,52 +105,52 @@
            <div itemprop="articleBody">
              
   <h1>Source code for enlace.util</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Internal helpers for enlace.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Internal helpers for enlace."""</span>
 
 
 <div class="viewcode-block" id="derive_display_name">
 <a class="viewcode-back" href="../../module_docs/enlace/util.html#enlace.util.derive_display_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">derive_display_name</span><span class="p">(</span><span class="n">dir_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a directory name to a human-readable display name.</span>
+<span class="w">    </span><span class="sd">"""Convert a directory name to a human-readable display name.</span>
 
-<span class="sd">    &gt;&gt;&gt; derive_display_name(&quot;chord_analyzer&quot;)</span>
-<span class="sd">    &#39;Chord Analyzer&#39;</span>
-<span class="sd">    &gt;&gt;&gt; derive_display_name(&quot;todo&quot;)</span>
-<span class="sd">    &#39;Todo&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">dir_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span></div>
+<span class="sd">    &gt;&gt;&gt; derive_display_name("chord_analyzer")</span>
+<span class="sd">    'Chord Analyzer'</span>
+<span class="sd">    &gt;&gt;&gt; derive_display_name("todo")</span>
+<span class="sd">    'Todo'</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">dir_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span></div>
 
 
 
 <div class="viewcode-block" id="derive_route_prefix">
 <a class="viewcode-back" href="../../module_docs/enlace/util.html#enlace.util.derive_route_prefix">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">derive_route_prefix</span><span class="p">(</span><span class="n">dir_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive an API route prefix from a directory name.</span>
+<span class="w">    </span><span class="sd">"""Derive an API route prefix from a directory name.</span>
 
-<span class="sd">    &gt;&gt;&gt; derive_route_prefix(&quot;chord_analyzer&quot;)</span>
-<span class="sd">    &#39;/api/chord_analyzer&#39;</span>
-<span class="sd">    &gt;&gt;&gt; derive_route_prefix(&quot;todo&quot;)</span>
-<span class="sd">    &#39;/api/todo&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;/api/</span><span class="si">{</span><span class="n">dir_name</span><span class="si">}</span><span class="s2">&quot;</span></div>
+<span class="sd">    &gt;&gt;&gt; derive_route_prefix("chord_analyzer")</span>
+<span class="sd">    '/api/chord_analyzer'</span>
+<span class="sd">    &gt;&gt;&gt; derive_route_prefix("todo")</span>
+<span class="sd">    '/api/todo'</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"/api/</span><span class="si">{</span><span class="n">dir_name</span><span class="si">}</span><span class="s2">"</span></div>
 
 
 
 <div class="viewcode-block" id="is_skippable">
 <a class="viewcode-back" href="../../module_docs/enlace/util.html#enlace.util.is_skippable">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">is_skippable</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True if a directory name should be skipped during discovery.</span>
+<span class="w">    </span><span class="sd">"""Return True if a directory name should be skipped during discovery.</span>
 
-<span class="sd">    Directories starting with &#39;_&#39; or &#39;.&#39; are skipped.</span>
+<span class="sd">    Directories starting with '_' or '.' are skipped.</span>
 
-<span class="sd">    &gt;&gt;&gt; is_skippable(&quot;_internal&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; is_skippable("_internal")</span>
 <span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; is_skippable(&quot;.git&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; is_skippable(".git")</span>
 <span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; is_skippable(&quot;my_app&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; is_skippable("my_app")</span>
 <span class="sd">    False</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span></div>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">))</span></div>
 
 </pre></div>
 
