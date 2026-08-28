@@ -88,26 +88,26 @@ Add fields that are only relevant for non-asgi modes. Make them optional and val
 
 ```python
 # For process mode
-command: Optional[str] = None           # e.g., "node server.js", "uvicorn myapp:app"
-port: Optional[int] = None              # port the process listens on
-socket: Optional[str] = None            # alternative: Unix domain socket path
-env: dict[str, str] = {}                # per-app environment variables
-build: Optional[str] = None             # build command, run before start
+command: Optional[str] = None  # e.g., "node server.js", "uvicorn myapp:app"
+port: Optional[int] = None  # port the process listens on
+socket: Optional[str] = None  # alternative: Unix domain socket path
+env: dict[str, str] = {}  # per-app environment variables
+build: Optional[str] = None  # build command, run before start
 
 # For external mode
-upstream_url: Optional[str] = None      # e.g., "http://192.168.1.50:3000"
+upstream_url: Optional[str] = None  # e.g., "http://192.168.1.50:3000"
 
 # For static mode
-public_dir: Optional[str] = None        # directory to serve, relative to app path
+public_dir: Optional[str] = None  # directory to serve, relative to app path
 
 # Shared across process/external
 health_check_path: Optional[str] = "/health"
-ready_timeout: int = 30                 # seconds to wait for health check
+ready_timeout: int = 30  # seconds to wait for health check
 
 # Restart policy (process mode only)
 restart_policy: Literal["always", "on-failure", "never"] = "on-failure"
 max_retries: int = 5
-restart_delay_ms: int = 100             # initial backoff delay in ms
+restart_delay_ms: int = 100  # initial backoff delay in ms
 ```
 
 **Important:** Keep the existing `app_type` field (`"asgi_app"`, `"functions"`, `"frontend_only"`) for now — it describes *what was discovered*, not *how to run it*. The new `mode` field describes *how to run it*. They're orthogonal: an `asgi_app` can run in `mode="asgi"` (mounted) or `mode="process"` (spawned via uvicorn). A `functions` app is always `mode="asgi"` (it gets wrapped into a FastAPI router). Don't conflate them.
@@ -126,8 +126,8 @@ Add a `model_validator` (or `__post_init__` if using dataclasses) that enforces 
 Add to `PlatformConfig`:
 
 ```python
-process_port_start: int = 9001          # first port for auto-allocation
-socket_dir: str = "/run/enlace"         # directory for Unix domain sockets
+process_port_start: int = 9001  # first port for auto-allocation
+socket_dir: str = "/run/enlace"  # directory for Unix domain sockets
 ```
 
 ---
@@ -198,6 +198,7 @@ A dataclass (or small class) that wraps one child process with its lifecycle sta
 @dataclass
 class ManagedProcess:
     """A supervised child process with health checking and restart logic."""
+
     name: str
     config: AppConfig
     proc: Optional[asyncio.subprocess.Process] = None

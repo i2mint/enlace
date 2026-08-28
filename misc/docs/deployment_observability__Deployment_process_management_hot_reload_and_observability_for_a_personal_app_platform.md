@@ -21,6 +21,7 @@ import argh
 _children: list[subprocess.Popen] = []
 _shutting_down = False
 
+
 def _graceful_shutdown(signum, frame):
     global _shutting_down
     if _shutting_down:
@@ -39,16 +40,24 @@ def _graceful_shutdown(signum, frame):
             proc.wait()
     sys.exit(0)
 
+
 def serve(mode: str = "dev"):
     """Start frontend and backend servers."""
     signal.signal(signal.SIGTERM, _graceful_shutdown)
     signal.signal(signal.SIGINT, _graceful_shutdown)
     python = sys.executable
 
-    backend_cmd = [python, "-m", "uvicorn", "myplatform.backend:app",
-                   "--host", "127.0.0.1", "--port", "8000"]
-    frontend_cmd = [python, "-m", "http.server", "3000",
-                    "--directory", "frontend/dist"]
+    backend_cmd = [
+        python,
+        "-m",
+        "uvicorn",
+        "myplatform.backend:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000",
+    ]
+    frontend_cmd = [python, "-m", "http.server", "3000", "--directory", "frontend/dist"]
 
     if mode == "dev":
         backend_cmd += ["--reload", "--log-level", "info"]
@@ -67,6 +76,7 @@ def serve(mode: str = "dev"):
             time.sleep(0.5)
     except KeyboardInterrupt:
         _graceful_shutdown(signal.SIGINT, None)
+
 
 def main():
     argh.dispatch_commands([serve])
@@ -141,11 +151,13 @@ For the CLI managing child processes, the key distinction is: **SIGINT** propaga
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.db = await create_db_pool()
     yield  # Server runs here
     await app.state.db.close()  # Cleanup on SIGTERM
+
 
 app = FastAPI(lifespan=lifespan)
 ```
@@ -181,8 +193,10 @@ import asyncio, importlib, sys
 from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.responses import JSONResponse
 
+
 class SwappableApp:
     """ASGI wrapper that delegates to a hot-swappable inner app."""
+
     def __init__(self, initial_app: ASGIApp | None = None):
         self._app = initial_app
         self._lock = asyncio.Lock()
@@ -222,6 +236,7 @@ Combine the SwappableApp pattern with `watchfiles.awatch()` to detect config fil
 
 ```python
 from watchfiles import awatch
+
 
 class AppRegistry:
     def __init__(self, config_path, main_app, swappable_apps):
@@ -406,6 +421,7 @@ from pydantic_settings import BaseSettings
 from pydantic import SecretStr, Field
 from functools import lru_cache
 
+
 class Settings(BaseSettings):
     model_config = {"env_file": ".env", "extra": "ignore"}
 
@@ -413,6 +429,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///data/app.db"
     openai_api_key: SecretStr | None = None
     auth_password: SecretStr = Field(..., min_length=8)
+
 
 @lru_cache
 def get_settings() -> Settings:
@@ -434,6 +451,7 @@ import time, uuid, structlog
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 access_logger = structlog.stdlib.get_logger("api.access")
+
 
 class RequestLoggingMiddleware:
     def __init__(self, app: ASGIApp, exclude_paths: set[str] = frozenset({"/health"})):
@@ -472,7 +490,9 @@ class RequestLoggingMiddleware:
         finally:
             duration_ms = (time.perf_counter_ns() - start) / 1_000_000
             if path not in self.exclude_paths:
-                log = access_logger.warning if status_code >= 400 else access_logger.info
+                log = (
+                    access_logger.warning if status_code >= 400 else access_logger.info
+                )
                 log("request", status=status_code, duration_ms=round(duration_ms, 2))
 ```
 
@@ -489,6 +509,7 @@ ANALYTICS_SCRIPT = (
     b'<script defer src="https://analytics.thorwhalen.com/insight.js" '
     b'data-website-id="YOUR_SITE_ID"></script>'
 )
+
 
 class AnalyticsInjectionMiddleware:
     def __init__(self, app: ASGIApp, script: bytes = ANALYTICS_SCRIPT):
@@ -507,7 +528,8 @@ class AnalyticsInjectionMiddleware:
                 is_html = b"text/html" in headers.get(b"content-type", b"")
                 if is_html:
                     message["headers"] = [
-                        (k, v) for k, v in message["headers"]
+                        (k, v)
+                        for k, v in message["headers"]
                         if k.lower() != b"content-length"
                     ]
             elif message["type"] == "http.response.body" and is_html:
@@ -527,6 +549,7 @@ For tracking user actions beyond page views (file uploads, button clicks, API ca
 ```python
 import json, sqlite3, threading
 from datetime import datetime, timezone
+
 
 class EventLogger:
     def __init__(self, db_path: str = "events.db"):
@@ -549,8 +572,13 @@ class EventLogger:
             self.conn.execute(
                 "INSERT INTO events (timestamp, user_id, app_id, action, metadata) "
                 "VALUES (?, ?, ?, ?, ?)",
-                (datetime.now(timezone.utc).isoformat(), user_id, app_id, action,
-                 json.dumps(meta))
+                (
+                    datetime.now(timezone.utc).isoformat(),
+                    user_id,
+                    app_id,
+                    action,
+                    json.dumps(meta),
+                ),
             )
             self.conn.commit()
 ```
@@ -604,6 +632,7 @@ Use FastAPI's `Depends()` for all platform-provided services:
 def get_store(request: Request) -> MutableMapping:
     app_name = request.scope.get("app_name", "default")
     return request.app.state.platform_store[app_name]
+
 
 # App uses it — completely decoupled
 @router.get("/items")

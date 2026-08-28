@@ -67,14 +67,16 @@ import time
 from starlette.requests import HTTPConnection
 from starlette.responses import JSONResponse, RedirectResponse
 
+
 class PlatformAuthMiddleware:
     """Pure ASGI middleware — dispatches auth by path prefix against config registry.
-    
+
     ⚠️ SECURITY: Defaults to most restrictive access level for unmatched paths.
     """
+
     def __init__(self, app, auth_config: dict, session_backend):
         self.app = app
-        self.auth_config = auth_config        # {"/api/myapp": "protected:user", ...}
+        self.auth_config = auth_config  # {"/api/myapp": "protected:user", ...}
         self.session_backend = session_backend  # validates session cookies
 
     async def __call__(self, scope, receive, send):
@@ -130,17 +132,18 @@ class PlatformAuthMiddleware:
     @staticmethod
     def _normalize_path(path: str) -> str:
         """Normalize path to prevent auth bypass via path manipulation.
-        
+
         ⚠️ CRITICAL: This prevents //admin, /../admin, /%2e%2e/admin bypasses.
         """
         import posixpath
         import re
         from urllib.parse import unquote
+
         path = unquote(path)
-        path = re.sub(r'/+', '/', path)  # collapse multiple slashes
-        path = posixpath.normpath(path)   # resolve .. and .
-        if not path.startswith('/'):
-            path = '/' + path
+        path = re.sub(r"/+", "/", path)  # collapse multiple slashes
+        path = posixpath.normpath(path)  # resolve .. and .
+        if not path.startswith("/"):
+            path = "/" + path
         return path
 
     async def _try_authenticate(self, scope):
@@ -192,6 +195,7 @@ from itsdangerous import URLSafeTimedSerializer
 # ── Shared-password login endpoint (platform-level) ──
 SERIALIZER = URLSafeTimedSerializer(secret_key="platform-secret-key-change-me")
 
+
 async def shared_login(scope, receive, send):
     """POST /auth/shared-login — validates shared password, sets signed cookie."""
     body = await _read_body(receive)
@@ -212,8 +216,11 @@ async def shared_login(scope, receive, send):
     token = SERIALIZER.dumps({"app": app_path, "ts": time.time()})
     response = RedirectResponse(app_path, status_code=303)
     response.set_cookie(
-        "shared_auth", token,
-        httponly=True, secure=True, samesite="lax",
+        "shared_auth",
+        token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
         max_age=86400,  # 24 hours
         path=app_path,  # scope cookie to specific app
     )
@@ -233,13 +240,15 @@ import secrets
 import time
 from collections.abc import MutableMapping
 
+
 class SessionStore:
     """Server-side session storage using MutableMapping (dol-compatible).
-    
+
     Session data lives server-side; only the session ID travels in the cookie.
     """
+
     def __init__(self, store: MutableMapping, max_age: int = 86400):
-        self.store = store    # Any MutableMapping: dict, SQLite-backed, Redis, etc.
+        self.store = store  # Any MutableMapping: dict, SQLite-backed, Redis, etc.
         self.max_age = max_age
 
     def create(self, user_id: str, email: str) -> str:
@@ -285,30 +294,32 @@ When "Sign in with Google/GitHub" is needed later, Authlib handles the entire Au
 from authlib.integrations.starlette_client import OAuth
 
 oauth = OAuth()
-oauth.register('google',
-    client_id='...',
-    client_secret='...',
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid profile email'},
+oauth.register(
+    "google",
+    client_id="...",
+    client_secret="...",
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid profile email"},
 )
 
+
 # Platform-level route — apps never see this
-@platform_router.get('/auth/login/google')
+@platform_router.get("/auth/login/google")
 async def login_google(request: Request):
-    redirect_uri = request.url_for('auth_callback')
+    redirect_uri = request.url_for("auth_callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-@platform_router.get('/auth/callback')
+
+@platform_router.get("/auth/callback")
 async def auth_callback(request: Request):
     token = await oauth.google.authorize_access_token(request)
-    userinfo = token.get('userinfo')
+    userinfo = token.get("userinfo")
     # Create platform session — app never knows OAuth happened
-    session_id = session_store.create(
-        user_id=userinfo['sub'], email=userinfo['email']
+    session_id = session_store.create(user_id=userinfo["sub"], email=userinfo["email"])
+    response = RedirectResponse("/")
+    response.set_cookie(
+        "session", session_id, httponly=True, secure=True, samesite="lax"
     )
-    response = RedirectResponse('/')
-    response.set_cookie("session", session_id,
-        httponly=True, secure=True, samesite="lax")
     return response
 ```
 
@@ -419,7 +430,7 @@ ASGI scope modification is how Starlette's own `AuthenticationMiddleware` works 
 ```python
 # Sub-app endpoint — ZERO auth awareness
 async def get_preferences(request: Request):
-    user_id = request.state.user_id   # set by platform middleware
+    user_id = request.state.user_id  # set by platform middleware
     store = request.state.user_store  # pre-scoped MutableMapping
     return store.get("preferences", {})
 ```
@@ -433,8 +444,10 @@ This mirrors how multi-tenant SaaS platforms scope data. ABP.io automatically ap
 ```python
 from collections.abc import MutableMapping
 
+
 class PrefixedStore(MutableMapping):
     """Scopes a MutableMapping to a key prefix. dol-compatible."""
+
     def __init__(self, base: MutableMapping, prefix: str):
         self._base = base
         self._prefix = prefix
@@ -457,6 +470,7 @@ class PrefixedStore(MutableMapping):
     def __len__(self):
         return sum(1 for _ in self)
 
+
 # Platform middleware injects pre-scoped store
 class StoreInjectionMiddleware:
     def __init__(self, app, base_store: MutableMapping):
@@ -478,9 +492,12 @@ Using `dol`'s own `wrap_kvs` achieves the same result more concisely [49]:
 
 ```python
 from dol import wrap_kvs
-user_store = wrap_kvs(base_store,
+
+user_store = wrap_kvs(
+    base_store,
     key_of_id=lambda k: f"user/{user_id}/{k}",
-    id_of_key=lambda k: k.removeprefix(f"user/{user_id}/"))
+    id_of_key=lambda k: k.removeprefix(f"user/{user_id}/"),
+)
 ```
 
 ### Wiring it all together
@@ -494,11 +511,11 @@ from starlette.middleware import Middleware
 
 # ── App registry (from app.toml / platform.toml) ──
 AUTH_CONFIG = {
-    "/api/health":     "public",
-    "/api/blog":       "public",
-    "/api/dashboard":  "protected:shared",
-    "/api/notes":      "protected:user",
-    "/auth/":          "public",        # login routes themselves are public
+    "/api/health": "public",
+    "/api/blog": "public",
+    "/api/dashboard": "protected:shared",
+    "/api/notes": "protected:user",
+    "/auth/": "public",  # login routes themselves are public
 }
 
 # ── Platform assembly ──
@@ -520,9 +537,11 @@ app = Starlette(
     middleware=[
         # ⚠️ ORDER MATTERS: outermost middleware runs FIRST
         # Auth middleware is first — nothing bypasses it
-        Middleware(PlatformAuthMiddleware,
+        Middleware(
+            PlatformAuthMiddleware,
             auth_config=AUTH_CONFIG,
-            session_backend=session_store),
+            session_backend=session_store,
+        ),
         # Store injection runs after auth (needs scope["user"])
         Middleware(StoreInjectionMiddleware, base_store=data_store),
     ],

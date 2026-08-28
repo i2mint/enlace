@@ -166,7 +166,7 @@ from enlace import diagnose_app, discover_apps, build_backend
 
 # Diagnose an app
 report = diagnose_app("/path/to/my_app")
-print(report)              # Human-readable report
+print(report)  # Human-readable report
 print(report.is_enlaceable)  # True if no critical blockers
 
 # Discover and compose
@@ -297,6 +297,7 @@ are mounted:
 
 ```python
 from enlace import build_backend, discover_apps
+
 app = build_backend(discover_apps(), plugins=[my_plugin])
 ```
 

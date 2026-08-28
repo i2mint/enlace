@@ -94,10 +94,10 @@ enlace diagnose /path/to/app_dir --json
 from enlace import diagnose_app
 
 report = diagnose_app("/path/to/app_dir")
-print(report)                    # Human-readable text
-print(report.to_json())          # JSON
-print(report.is_enlaceable)      # True if no CRITICAL issues
-print(report.critical_count)     # Number of critical issues
+print(report)  # Human-readable text
+print(report.to_json())  # JSON
+print(report.is_enlaceable)  # True if no CRITICAL issues
+print(report.critical_count)  # Number of critical issues
 ```
 
 Always run `diagnose_app()` or `enlace diagnose` first. Read the report before

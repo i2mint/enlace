@@ -79,9 +79,9 @@ Request
 All state used by the platform itself (sessions, users, OAuth state, CSRF) lives in **one store factory** called the **platform store**. The factory produces namespaced sub-stores for each concern:
 
 ```python
-platform_store["sessions"]   # session_id -> {user_id, email, created}
-platform_store["users"]      # email      -> {password_hash, created}
-platform_store["oauth_state"]# state_tok  -> {provider, nonce, created}
+platform_store["sessions"]  # session_id -> {user_id, email, created}
+platform_store["users"]  # email      -> {password_hash, created}
+platform_store["oauth_state"]  # state_tok  -> {provider, nonce, created}
 ```
 
 Per-user app data lives in a **separate** data store, also a `MutableMapping`, wrapped per request into a `PrefixedStore(base, f"{user_id}/{app_id}/")`.
@@ -181,10 +181,12 @@ Rule: **no secrets in TOML.** Always `*_env` pointers to env vars. `enlace check
 # base.py additions (sketch)
 AccessLevel = Literal["public", "protected:shared", "protected:user"]
 
+
 class AppConfig(BaseModel):
     # ... existing fields ...
     access: AccessLevel = "public"
-    shared_password_env: str | None = None   # required if access == protected:shared
+    shared_password_env: str | None = None  # required if access == protected:shared
+
 
 class AuthConfig(BaseModel):
     enabled: bool = False
@@ -195,10 +197,11 @@ class AuthConfig(BaseModel):
     stores: StoreBackendConfig = StoreBackendConfig()
     oauth: dict[str, OAuthProviderConfig] = {}
 
+
 class PlatformConfig(BaseModel):
     # ... existing fields ...
     auth: AuthConfig = AuthConfig()
-    stores: dict[str, StoreBackendConfig] = {}   # e.g. {"user_data": ...}
+    stores: dict[str, StoreBackendConfig] = {}  # e.g. {"user_data": ...}
 ```
 
 ---
@@ -224,11 +227,14 @@ StoreFactory = Callable[[str], MutableMapping]
 # enlace/stores/backends.py (sketch)
 from dol import Files, wrap_kvs, ValueCodecs
 
+
 def make_file_store_factory(root: str) -> StoreFactory:
     """Factory producing JSON-valued MutableMappings under {root}/{name}/."""
+
     def factory(name: str) -> MutableMapping:
         base = Files(f"{root}/{name}")
         return wrap_kvs(base, value_codec=ValueCodecs.json())
+
     return factory
 ```
 
@@ -254,9 +260,11 @@ These are **documentation**, not package code. The package ships the file backen
 # enlace/stores/prefixed.py
 class PrefixedStore(MutableMapping):
     """Transparently prepends a prefix to every key operation."""
+
     def __init__(self, base: MutableMapping, prefix: str):
         self._base = base
         self._prefix = prefix
+
     # ... __getitem__/__setitem__/__delitem__/__iter__/__len__ as in
     #     user_data_persistence.md §"Per-user store injection"
 ```

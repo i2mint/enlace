@@ -23,10 +23,11 @@ return 401**, even for apps declared `access = "public"`.
 ```python
 from fastapi.testclient import TestClient
 from enlace.compose import create_app
+
 c = TestClient(create_app(), base_url="https://testserver")
 # Assume platform.toml has [auth] enabled=true and one app with access="public"
 c.get("/chord_renderer/").status_code  # 401, expected 200
-c.get("/").status_code                  # 401, expected 200
+c.get("/").status_code  # 401, expected 200
 ```
 
 ### Fix options

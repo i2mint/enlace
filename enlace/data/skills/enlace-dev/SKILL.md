@@ -38,7 +38,7 @@ changes MUST preserve the app's ability to run independently. The pattern:
 
 ```python
 # GOOD: works standalone AND under enlace
-if not os.environ.get('ENLACE_MANAGED'):
+if not os.environ.get("ENLACE_MANAGED"):
     app.add_middleware(CORSMiddleware, ...)
 
 # BAD: breaks standalone
@@ -89,6 +89,7 @@ class MyMiddleware:
             # your logic here
             pass
         await self.app(scope, receive, send)
+
 
 # NO: BaseHTTPMiddleware — NEVER use this
 ```

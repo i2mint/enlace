@@ -57,7 +57,8 @@ with enlace (e.g., their own CORS middleware):
 
 ```python
 import os
-if not os.environ.get('ENLACE_MANAGED'):
+
+if not os.environ.get("ENLACE_MANAGED"):
     app.add_middleware(CORSMiddleware, ...)
 ```
 
@@ -107,7 +108,8 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"])
 
 # AFTER: works standalone AND under enlace
 import os
-if not os.environ.get('ENLACE_MANAGED'):
+
+if not os.environ.get("ENLACE_MANAGED"):
     app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"])
 ```
 

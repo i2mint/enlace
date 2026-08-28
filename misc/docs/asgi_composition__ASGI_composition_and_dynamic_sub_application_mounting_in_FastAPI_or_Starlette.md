@@ -13,7 +13,7 @@ When you call `app.mount("/prefix", sub_app)`, Starlette creates a `Mount` objec
 ```python
 # What Mount does to the ASGI scope:
 scope["root_path"] = original_root_path + "/prefix"
-scope["path"] = "/remaining/path"       # prefix stripped
+scope["path"] = "/remaining/path"  # prefix stripped
 scope["app_root_path"] = original_root_path  # preserved for url_for()
 ```
 
@@ -78,14 +78,17 @@ Starlette's `app.routes` is a plain Python list — fully mutable at runtime [3]
 ```python
 from starlette.routing import Mount
 
+
 def register_app(parent: FastAPI, prefix: str, sub_app):
     parent.routes.append(Mount(prefix, app=sub_app))
-    parent.openapi_schema = None         # Clear cached OpenAPI schema
-    parent.middleware_stack = None        # Force middleware stack rebuild
+    parent.openapi_schema = None  # Clear cached OpenAPI schema
+    parent.middleware_stack = None  # Force middleware stack rebuild
+
 
 def unregister_app(parent: FastAPI, prefix: str):
-    parent.routes = [r for r in parent.routes
-                     if not (isinstance(r, Mount) and r.path == prefix)]
+    parent.routes = [
+        r for r in parent.routes if not (isinstance(r, Mount) and r.path == prefix)
+    ]
     parent.openapi_schema = None
     parent.middleware_stack = None
 ```
@@ -98,6 +101,7 @@ def unregister_app(parent: FastAPI, prefix: str):
 import asyncio
 
 _route_lock = asyncio.Lock()
+
 
 async def safe_register(parent, prefix, sub_app):
     async with _route_lock:
@@ -115,12 +119,13 @@ class DynamicDispatcher:
         path = scope["path"]
         for prefix, app in self.apps.items():
             if path.startswith(prefix):
-                scope["path"] = path[len(prefix):] or "/"
+                scope["path"] = path[len(prefix) :] or "/"
                 scope["root_path"] = scope.get("root_path", "") + prefix
                 await app(scope, receive, send)
                 return
         response = JSONResponse({"detail": "App not found"}, status_code=404)
         await response(scope, receive, send)
+
 
 dispatcher = DynamicDispatcher()
 app = FastAPI()
@@ -141,7 +146,7 @@ Litestar is worth noting as the one major framework with **explicit built-in `ap
 ```python
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"])  # ✅ Applies to all mounts
-app.add_middleware(CustomAuthMiddleware)                  # ✅ Applies to all mounts
+app.add_middleware(CustomAuthMiddleware)  # ✅ Applies to all mounts
 app.mount("/api/v1", v1_app)
 app.mount("/api/v2", v2_app)
 # Both v1_app and v2_app receive CORS headers and auth checks
@@ -163,6 +168,7 @@ class AuthMiddleware:
                 await response(scope, receive, send)
                 return
         await self.app(scope, receive, send)
+
 
 app.add_middleware(AuthMiddleware)  # Wraps everything including mounts
 ```
@@ -199,10 +205,10 @@ class IsolationMiddleware:
             logger.exception(f"Unhandled error in sub-app '{self.app_name}'")
             if scope["type"] == "http":
                 resp = JSONResponse(
-                    {"detail": f"Internal error in {self.app_name}"},
-                    status_code=500
+                    {"detail": f"Internal error in {self.app_name}"}, status_code=500
                 )
                 await resp(scope, receive, send)
+
 
 app.mount("/risky", IsolationMiddleware(risky_app, "risky"))
 ```
@@ -222,15 +228,17 @@ import contextlib
 from contextlib import asynccontextmanager
 from starlette.routing import Mount
 
+
 @asynccontextmanager
 async def cascade_lifespan(app: FastAPI):
     async with contextlib.AsyncExitStack() as stack:
         # Trigger lifespan for each mounted sub-app
         for route in app.routes:
-            if isinstance(route, Mount) and hasattr(route.app, 'router'):
+            if isinstance(route, Mount) and hasattr(route.app, "router"):
                 ctx = route.app.router.lifespan_context
                 await stack.enter_async_context(ctx(route.app))
         yield
+
 
 app = FastAPI(lifespan=cascade_lifespan)
 ```
@@ -273,9 +281,11 @@ The ASGI specification defines an application as any callable with signature `as
 from fastapi import FastAPI
 from litestar import Litestar, get as litestar_get
 
+
 @litestar_get("/hello")
 async def litestar_hello() -> dict:
     return {"from": "litestar"}
+
 
 litestar_app = Litestar(route_handlers=[litestar_hello])
 fastapi_app = FastAPI()
@@ -290,9 +300,11 @@ from flask import Flask
 
 flask_app = Flask(__name__)
 
+
 @flask_app.route("/")
 def flask_index():
     return "Hello from Flask"
+
 
 app.mount("/flask", WSGIMiddleware(flask_app))
 ```
@@ -342,10 +354,12 @@ from fastapi import FastAPI, WebSocket
 from starlette.applications import Starlette
 from starlette.routing import WebSocketRoute
 
+
 async def ws_handler(websocket: WebSocket):
     await websocket.accept()
     async for data in websocket.iter_text():
         await websocket.send_text(f"Echo: {data}")
+
 
 ws_app = Starlette(routes=[WebSocketRoute("/stream", ws_handler)])
 app = FastAPI()
@@ -382,6 +396,7 @@ import importlib
 from fastapi import FastAPI
 from starlette.routing import Mount
 
+
 def build_platform(config: dict) -> FastAPI:
     app = FastAPI(lifespan=cascade_lifespan)
     app.add_middleware(CORSMiddleware, allow_origins=["*"])
@@ -412,6 +427,7 @@ The **plugin-driven auto-registration pattern** is the closest match to your pla
 
 ```python
 import importlib, pkgutil
+
 
 def auto_discover_apps(app: FastAPI, plugin_dir: str = "apps"):
     for finder, name, ispkg in pkgutil.iter_modules([plugin_dir]):

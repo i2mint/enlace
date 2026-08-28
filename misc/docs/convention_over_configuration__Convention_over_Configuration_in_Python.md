@@ -184,6 +184,7 @@ pytest's test discovery is the most sophisticated CoC system in the Python ecosy
 def db():
     return ProductionDB()
 
+
 # root/integration/conftest.py — overrides for integration tests
 @pytest.fixture
 def db():
@@ -196,6 +197,7 @@ The hook system is equally instructive. Each hook call is a **1:N function call*
 # Example: custom collector that discovers .yaml test specs
 # conftest.py
 import pytest
+
 
 def pytest_collect_file(parent, file_path):
     if file_path.suffix == ".yaml" and file_path.name.startswith("test"):
@@ -224,9 +226,10 @@ The `autodiscover_modules()` function is particularly relevant — it iterates a
 # Django's autodiscover pattern (simplified)
 from django.utils.module_loading import autodiscover_modules
 
+
 def autodiscover():
     """Import 'server' module from each installed app."""
-    autodiscover_modules('server')
+    autodiscover_modules("server")
 ```
 
 **Conflict detection.** Django's model registry detects conflicting model names within an app and raises `RuntimeError` with a clear message: `"Conflicting 'model_name' models in application 'app_label': X and Y."` This is a good example of fail-fast conflict detection.
@@ -278,8 +281,8 @@ exclude = ["my_package.tests*"]
 **Celery's autodiscover** closely mirrors Django's pattern — `app.autodiscover_tasks()` scans a list of packages for a conventional `tasks.py` module (customizable via `related_name`) [44]:
 
 ```python
-app = Celery('myproject')
-app.autodiscover_tasks(['foo', 'bar', 'baz'])
+app = Celery("myproject")
+app.autodiscover_tasks(["foo", "bar", "baz"])
 # Imports foo.tasks, bar.tasks; baz.tasks skipped if absent
 ```
 
@@ -344,7 +347,8 @@ Research by Yin et al. (SOSP 2011) found that **38–54% of configuration errors
 
 ```python
 # Explicit priority list for entry point detection
-ENTRY_POINT_PRIORITY = ['server.py', 'app.py', 'main.py']
+ENTRY_POINT_PRIORITY = ["server.py", "app.py", "main.py"]
+
 
 def find_entry_point(app_dir: Path) -> Optional[Path]:
     """Return the first matching entry point, or None."""
@@ -489,17 +493,21 @@ from typing import Protocol, Optional
 from pydantic import BaseModel, Field
 import tomllib
 
+
 class AppConfig(BaseModel):
     """Resolved configuration for a single app."""
+
     name: str
     route_prefix: str
     module_path: str
     source: str = Field(description="Where this config came from")
 
+
 class PlatformConfig(BaseModel):
     """Resolved configuration for the entire platform."""
+
     apps: list[AppConfig]
-    
+
     def check_conflicts(self) -> list[str]:
         routes = {}
         errors = []
@@ -512,13 +520,16 @@ class PlatformConfig(BaseModel):
             routes[app.route_prefix] = app.name
         return errors
 
+
 class AppDiscoverer(Protocol):
     """Protocol for app discovery strategies."""
+
     def discover(self, apps_dir: Path) -> list[AppConfig]: ...
+
 
 class ConventionDiscoverer:
     """Filesystem-convention-based app discovery."""
-    
+
     def __init__(
         self,
         entry_points: list[str] = ("server.py", "app.py"),
@@ -526,51 +537,49 @@ class ConventionDiscoverer:
     ):
         self.entry_points = entry_points
         self.route_from = route_from
-    
+
     def discover(self, apps_dir: Path) -> list[AppConfig]:
         apps = []
         for app_dir in sorted(apps_dir.iterdir()):
-            if not app_dir.is_dir() or app_dir.name.startswith(('_', '.')):
+            if not app_dir.is_dir() or app_dir.name.startswith(("_", ".")):
                 continue
-            
+
             entry = self._find_entry_point(app_dir)
             if entry is None:
                 continue  # Not an app directory
-            
+
             config = AppConfig(
                 name=app_dir.name,
                 route_prefix=f"/api/{app_dir.name}/",
                 module_path=self._to_module_path(entry),
                 source="convention",
             )
-            
+
             # Apply per-app overrides
             override_file = app_dir / "app.toml"
             if override_file.exists():
                 config = self._apply_overrides(config, override_file)
-            
+
             apps.append(config)
         return apps
-    
+
     def _find_entry_point(self, app_dir: Path) -> Optional[Path]:
         for name in self.entry_points:
             candidate = app_dir / name
             if candidate.exists():
                 return candidate
         return None
-    
+
     def _to_module_path(self, path: Path) -> str:
-        return str(path.with_suffix('')).replace('/', '.')
-    
-    def _apply_overrides(
-        self, config: AppConfig, toml_path: Path
-    ) -> AppConfig:
-        with open(toml_path, 'rb') as f:
+        return str(path.with_suffix("")).replace("/", ".")
+
+    def _apply_overrides(self, config: AppConfig, toml_path: Path) -> AppConfig:
+        with open(toml_path, "rb") as f:
             overrides = tomllib.load(f)
         updates = {}
-        if 'route' in overrides:
-            updates['route_prefix'] = overrides['route']
-            updates['source'] = f"override: {toml_path}"
+        if "route" in overrides:
+            updates["route_prefix"] = overrides["route"]
+            updates["source"] = f"override: {toml_path}"
         return config.model_copy(update=updates)
 ```
 

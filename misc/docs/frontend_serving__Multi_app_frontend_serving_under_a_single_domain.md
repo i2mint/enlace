@@ -78,8 +78,10 @@ For a Python-based development server, Starlette's `StaticFiles` with `html=True
 ```python
 from starlette.staticfiles import StaticFiles
 
+
 class SPAStaticFiles(StaticFiles):
     """Serves index.html for any path that doesn't match a real file."""
+
     async def lookup_path(self, path: str):
         full_path, stat_result = await super().lookup_path(path)
         if stat_result is None:
@@ -215,15 +217,20 @@ class HTMLInjectionMiddleware:
                         b"</head>", self.head_injection + b"\n</head>", 1
                     )
                     import re
+
                     full_body = re.sub(
-                        rb"(<body[^>]*>)", rb"\1\n" + self.body_prefix, full_body, count=1
+                        rb"(<body[^>]*>)",
+                        rb"\1\n" + self.body_prefix,
+                        full_body,
+                        count=1,
                     )
                     full_body = full_body.replace(
                         b"</body>", self.body_suffix + b"\n</body>", 1
                     )
                     # Update Content-Length
                     new_headers = [
-                        (k, v) for k, v in initial_message["headers"]
+                        (k, v)
+                        for k, v in initial_message["headers"]
                         if k.lower() != b"content-length"
                     ]
                     new_headers.append(
@@ -241,12 +248,12 @@ This middleware buffers HTML responses, injects content before `</head>` and aft
 ```python
 app = HTMLInjectionMiddleware(
     inner_app,
-    head_html='''
+    head_html="""
         <script>window.__PLATFORM_USER__ = null;</script>
         <script src="/platform/analytics.js" defer></script>
         <script src="/platform/auth.js" defer></script>
-    ''',
-    body_prefix='<platform-nav></platform-nav>',
+    """,
+    body_prefix="<platform-nav></platform-nav>",
     body_suffix='<script src="/platform/nav-component.js"></script>',
 )
 ```

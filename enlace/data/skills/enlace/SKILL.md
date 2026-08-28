@@ -73,6 +73,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+
 @app.get("/hello")
 def hello():
     return {"message": "Hello from my_tool"}
@@ -89,6 +90,7 @@ auto-wraps them as endpoints:
 # apps/calculator/server.py
 def add(a: int, b: int) -> dict:
     return {"result": a + b}
+
 
 def multiply(a: float, b: float) -> dict:
     return {"result": a * b}

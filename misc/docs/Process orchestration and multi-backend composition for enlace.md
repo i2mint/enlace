@@ -23,10 +23,12 @@ Every process supervisor implements the same core loop: fork a child, watch for 
 ```python
 from circus import get_arbiter
 
-arbiter = get_arbiter([
-    {"cmd": "python api.py", "numprocesses": 1},
-    {"cmd": "node chat.js", "numprocesses": 1},
-])
+arbiter = get_arbiter(
+    [
+        {"cmd": "python api.py", "numprocesses": 1},
+        {"cmd": "node chat.js", "numprocesses": 1},
+    ]
+)
 arbiter.start()
 ```
 
@@ -85,16 +87,18 @@ Log management for N supervised processes needs two modes that serve different p
 ```python
 import asyncio, sys, datetime
 
-COLORS = ['\033[36m', '\033[33m', '\033[32m', '\033[35m', '\033[34m']
-RESET = '\033[0m'
+COLORS = ["\033[36m", "\033[33m", "\033[32m", "\033[35m", "\033[34m"]
+RESET = "\033[0m"
+
 
 async def stream_logs(proc, name: str, color: str, width: int):
     """Read lines from a subprocess and print with colored prefix."""
     async for line in proc.stdout:
-        ts = datetime.datetime.now().strftime('%H:%M:%S')
-        text = line.decode().rstrip('\n')
+        ts = datetime.datetime.now().strftime("%H:%M:%S")
+        text = line.decode().rstrip("\n")
         sys.stdout.write(f"{ts} {color}{name:<{width}}{RESET} | {text}\n")
         sys.stdout.flush()
+
 
 async def run_all(apps: dict[str, list[str]]):
     width = max(len(name) for name in apps)
@@ -138,6 +142,7 @@ Graceful shutdown follows a universal three-phase protocol: **signal → drain �
 ```python
 import asyncio, signal, os
 
+
 async def shutdown_all(children: list, timeout: float = 10.0):
     # Phase 1: SIGTERM to all
     for proc in children:
@@ -171,7 +176,9 @@ async def shutdown_all(children: list, timeout: float = 10.0):
 ```python
 loop = asyncio.get_running_loop()
 for sig in (signal.SIGTERM, signal.SIGINT):
-    loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(graceful_shutdown(s)))
+    loop.add_signal_handler(
+        sig, lambda s=sig: asyncio.create_task(graceful_shutdown(s))
+    )
 ```
 
 Note: `loop.add_signal_handler()` is Unix-only [15].
@@ -226,7 +233,7 @@ class CaddyManager:
                 lines.append(f"        reverse_proxy {sock}")
                 lines.append(f"    }}")
             # in-process apps are handled by the gateway
-        
+
         lines.append("    handle {")
         lines.append("        reverse_proxy localhost:8000")  # ASGI gateway
         lines.append("    }")
@@ -235,15 +242,18 @@ class CaddyManager:
 
     def reload(self, caddyfile_path: str) -> bool:
         import subprocess
+
         # Validate first
         result = subprocess.run(
             ["caddy", "adapt", "--config", caddyfile_path, "--validate"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         if result.returncode != 0:
             raise ValueError(f"Invalid Caddyfile: {result.stderr}")
         # POST to admin API for zero-downtime reload
         import httpx
+
         content = open(caddyfile_path, "rb").read()
         resp = httpx.post(
             "http://localhost:2019/load",
@@ -293,12 +303,15 @@ class SharedAuthMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         async with httpx.AsyncClient() as client:
-            resp = await client.get("http://localhost:8001/auth/verify", headers={
-                "cookie": request.headers.get("cookie", ""),
-                "authorization": request.headers.get("authorization", ""),
-                "x-forwarded-method": request.method,
-                "x-forwarded-uri": str(request.url.path),
-            })
+            resp = await client.get(
+                "http://localhost:8001/auth/verify",
+                headers={
+                    "cookie": request.headers.get("cookie", ""),
+                    "authorization": request.headers.get("authorization", ""),
+                    "x-forwarded-method": request.method,
+                    "x-forwarded-uri": str(request.url.path),
+                },
+            )
 
         if resp.status_code != 200:
             return RedirectResponse(f"/auth/login?next={request.url.path}")
@@ -319,11 +332,14 @@ async def verify(request):
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except jwt.InvalidTokenError:
         return JSONResponse({"error": "invalid"}, status_code=401)
-    return JSONResponse({"ok": True}, headers={
-        "X-User": payload["sub"],
-        "X-User-Id": str(payload["user_id"]),
-        "X-User-Role": payload.get("role", "user"),
-    })
+    return JSONResponse(
+        {"ok": True},
+        headers={
+            "X-User": payload["sub"],
+            "X-User-Id": str(payload["user_id"]),
+            "X-User-Role": payload.get("role", "user"),
+        },
+    )
 ```
 
 This pattern ensures **identical auth behavior** regardless of whether an app is mounted in-process or running as a supervised process behind Caddy. Proxied backends (Node.js, Go, etc.) receive `X-User` and `X-User-Id` headers set by Caddy after `forward_auth` succeeds — they simply read these headers and trust them, since Caddy strips any client-supplied values [18].
@@ -463,10 +479,10 @@ def detect_python_mode(app_dir: Path) -> str:
     deps = (app_dir / "requirements.txt").read_text().lower()
     asgi_frameworks = {"fastapi", "starlette", "litestar", "quart"}
     if any(fw in deps for fw in asgi_frameworks):
-        return "asgi"   # eligible for in-process mount
+        return "asgi"  # eligible for in-process mount
     if "django" in deps and ("uvicorn" in deps or "daphne" in deps):
-        return "asgi"   # Django ASGI mode
-    return "process"    # default to supervised process
+        return "asgi"  # Django ASGI mode
+    return "process"  # default to supervised process
 ```
 
 **What must always be explicit:** custom ports, environment variables and secrets, health check paths, inter-app dependencies, and the final decision on `mode` when the heuristic is ambiguous (e.g., Django can be either ASGI or WSGI). The convention system should propose defaults that the developer confirms or overrides in `platform.toml`.
@@ -503,13 +519,17 @@ from flask import Flask
 
 flask_app = Flask(__name__)
 
+
 @flask_app.route("/")
 def index():
     return "Hello from Flask"
 
-gateway = Starlette(routes=[
-    Mount("/legacy", app=WSGIMiddleware(flask_app)),
-])
+
+gateway = Starlette(
+    routes=[
+        Mount("/legacy", app=WSGIMiddleware(flask_app)),
+    ]
+)
 ```
 
 This buys single-process simplicity and a single port to manage. It costs process isolation — a segfault in a Flask C extension crashes the entire gateway — and limits concurrency to the thread pool size.
@@ -564,7 +584,9 @@ server.listen(process.env.SOCKET_PATH || '/tmp/app.sock')
 
 ```python
 import os
+
 SOCKET_DIR = "/run/enlace"
+
 
 def get_bind_address(app_name: str, dev_port: int) -> str:
     if socket_path := os.environ.get("ENLACE_SOCKET"):

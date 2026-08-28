@@ -28,7 +28,8 @@ The pattern: **env-var with current value as default**.
 ```python
 # GOOD: works standalone AND under enlace
 import os
-if not os.environ.get('ENLACE_MANAGED'):
+
+if not os.environ.get("ENLACE_MANAGED"):
     app.add_middleware(CORSMiddleware, ...)
 
 # BAD: breaks standalone

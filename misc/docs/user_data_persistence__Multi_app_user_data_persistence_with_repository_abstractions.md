@@ -15,13 +15,14 @@ The core mechanism is a `PrefixedStore` wrapper that transparently prepends `{us
 ```python
 from dol import wrap_kvs
 
+
 def make_user_app_store(backend, user_id, app_id):
     """Create a pre-scoped store for a specific user and app."""
     prefix = f"{user_id}/{app_id}/"
     return wrap_kvs(
         backend,
         id_of_key=lambda k: prefix + k,
-        key_of_id=lambda _id: _id[len(prefix):] if _id.startswith(prefix) else None
+        key_of_id=lambda _id: _id[len(prefix) :] if _id.startswith(prefix) else None,
     )
 ```
 
@@ -30,8 +31,10 @@ The **Mall pattern** — a mapping of mappings where outer keys select sub-store
 ```python
 from collections.abc import MutableMapping
 
+
 class Mall(MutableMapping):
     """Mapping of mappings: mall[user_id] returns a per-user MutableMapping."""
+
     def __init__(self, store_factory):
         self._factory = store_factory
         self._cache = {}
@@ -41,10 +44,17 @@ class Mall(MutableMapping):
             self._cache[key] = self._factory(key)
         return self._cache[key]
 
-    def __setitem__(self, key, value): self._cache[key] = value
-    def __delitem__(self, key): self._cache.pop(key, None)
-    def __iter__(self): yield from self._cache
-    def __len__(self): return len(self._cache)
+    def __setitem__(self, key, value):
+        self._cache[key] = value
+
+    def __delitem__(self, key):
+        self._cache.pop(key, None)
+
+    def __iter__(self):
+        yield from self._cache
+
+    def __len__(self):
+        return len(self._cache)
 ```
 
 The tradeoffs between isolation models map cleanly to this interface:
@@ -70,6 +80,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from fastapi import Request, Depends, HTTPException
 from typing import Annotated
 
+
 # Layer 1: Pure ASGI store injection (runs after auth middleware)
 class StoreInjectionMiddleware:
     def __init__(self, app: ASGIApp, mall: Mall):
@@ -84,6 +95,7 @@ class StoreInjectionMiddleware:
                 scope["state"]["store"] = self.mall[user_id]
         await self.app(scope, receive, send)
 
+
 # Layer 2: FastAPI dependency for typed extraction
 def get_store(request: Request) -> MutableMapping:
     store = getattr(request.state, "store", None)
@@ -91,7 +103,9 @@ def get_store(request: Request) -> MutableMapping:
         raise HTTPException(401, "Authentication required")
     return store
 
+
 UserStore = Annotated[MutableMapping, Depends(get_store)]
+
 
 # Layer 3: Handler knows nothing about auth
 @app.get("/data/{key}")
@@ -128,10 +142,10 @@ For a single-server deployment with <100 users, the simplest production architec
 Critical SQLite production tuning:
 
 ```python
-conn.execute("PRAGMA journal_mode=WAL")       # concurrent readers
-conn.execute("PRAGMA busy_timeout=5000")       # 5s retry on lock
-conn.execute("PRAGMA synchronous=NORMAL")      # safe with WAL
-conn.execute("PRAGMA cache_size=-20000")        # ~20MB page cache
+conn.execute("PRAGMA journal_mode=WAL")  # concurrent readers
+conn.execute("PRAGMA busy_timeout=5000")  # 5s retry on lock
+conn.execute("PRAGMA synchronous=NORMAL")  # safe with WAL
+conn.execute("PRAGMA cache_size=-20000")  # ~20MB page cache
 ```
 
 The total cost for this stack: **$5–16/month** for a VPS (Hetzner, DigitalOcean) plus near-zero storage costs. The MutableMapping abstraction ensures that migrating to PostgreSQL later is a backend swap, not a rewrite.
@@ -221,13 +235,13 @@ The `dol` library's `Pipe` composition makes cross-backend migration elegant. Th
 from dol import Pipe, KeyCodecs, ValueCodecs
 
 # Source: local pickle files
-src_wrap = Pipe(KeyCodecs.suffixed('.pkl'), ValueCodecs.pickle())
-src = src_wrap(Files('/data/local/'))
+src_wrap = Pipe(KeyCodecs.suffixed(".pkl"), ValueCodecs.pickle())
+src = src_wrap(Files("/data/local/"))
 
 # Destination: S3 with gzipped JSON
 dst_wrap = Pipe(
-    KeyCodecs.suffixed('.json.gz'),
-    ValueCodecs.csv() + ValueCodecs.str_to_bytes() + ValueCodecs.gzip()
+    KeyCodecs.suffixed(".json.gz"),
+    ValueCodecs.csv() + ValueCodecs.str_to_bytes() + ValueCodecs.gzip(),
 )
 dst = dst_wrap(s3_backend)
 
@@ -250,15 +264,18 @@ The MutableMapping interface makes per-user data export straightforward — iter
 def export_user_data(store, user_id):
     """GDPR Article 20: export everything for user X."""
     import zipfile, io, json
+
     buf = io.BytesIO()
     user_store = mall[user_id]  # pre-scoped via Mall
-    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
-        manifest = {'user_id': user_id, 'keys': []}
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        manifest = {"user_id": user_id, "keys": []}
         for key in user_store:
             value = user_store[key]
-            zf.writestr(key, value if isinstance(value, bytes) else json.dumps(value).encode())
-            manifest['keys'].append(key)
-        zf.writestr('manifest.json', json.dumps(manifest, indent=2))
+            zf.writestr(
+                key, value if isinstance(value, bytes) else json.dumps(value).encode()
+            )
+            manifest["keys"].append(key)
+        zf.writestr("manifest.json", json.dumps(manifest, indent=2))
     return buf.getvalue()
 ```
 
@@ -273,15 +290,16 @@ The attack surface for key-prefix isolation includes **path traversal** (`../../
 ```python
 import re
 
+
 class TenantIsolatedStore(MutableMapping):
     DANGEROUS = [
-        re.compile(r'\.\.'),           # path traversal
-        re.compile(r'\\'),             # backslashes
-        re.compile(r'\x00'),           # null bytes
-        re.compile(r'%2[eEfF]'),       # URL-encoded dots/slashes
-        re.compile(r'[\x00-\x1f]'),   # control characters
+        re.compile(r"\.\."),  # path traversal
+        re.compile(r"\\"),  # backslashes
+        re.compile(r"\x00"),  # null bytes
+        re.compile(r"%2[eEfF]"),  # URL-encoded dots/slashes
+        re.compile(r"[\x00-\x1f]"),  # control characters
     ]
-    ALLOWED = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9_\-\./]{0,500}$')
+    ALLOWED = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_\-\./]{0,500}$")
 
     def _sanitize_key(self, key):
         for pattern in self.DANGEROUS:
@@ -289,7 +307,7 @@ class TenantIsolatedStore(MutableMapping):
                 raise ValueError(f"Forbidden key pattern: {key!r}")
         if not self.ALLOWED.match(key):
             raise ValueError(f"Invalid key characters: {key!r}")
-        return '/'.join(p for p in key.split('/') if p)  # normalize
+        return "/".join(p for p in key.split("/") if p)  # normalize
 
     def _full_key(self, key):
         full = self._prefix + self._sanitize_key(key)
@@ -319,9 +337,9 @@ Among Python storage abstraction libraries, **`dol` is the only one that nativel
 import fsspec
 
 # FSMap: MutableMapping over any fsspec filesystem
-m = fsspec.get_mapper('s3://my-bucket/user_42/')
-m['settings.json'] = b'{"theme": "dark"}'
-data = m['settings.json']  # returns bytes
+m = fsspec.get_mapper("s3://my-bucket/user_42/")
+m["settings.json"] = b'{"theme": "dark"}'
+data = m["settings.json"]  # returns bytes
 ```
 
 **`cloudpathlib`** provides `pathlib.Path`-like access to S3/GCS/Azure. **`smart_open`** is a drop-in `open()` replacement for streaming I/O across cloud storage. Neither is dict-like, but both complement `dol` for specific use cases (path manipulation and streaming, respectively). **`django-storages`** dominates the Django ecosystem but is framework-coupled and file-oriented, not key-value.

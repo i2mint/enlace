@@ -261,8 +261,10 @@ The discovery module (`discover.py`) implements the `AppDiscoverer` protocol, mo
 from typing import Protocol
 from pathlib import Path
 
+
 class AppDiscoverer(Protocol):
     """Protocol for app discovery strategies."""
+
     def discover(self, apps_dir: Path) -> list[AppConfig]: ...
 ```
 
@@ -512,19 +514,21 @@ _dispatch_funcs = [
     enlace.create_session_secret,
 ]
 
+
 def main():
     parser = argh.ArghParser()
     parser.add_commands(_dispatch_funcs)
     parser.add_commands(
-        [enlace.generate_caddyfile, enlace.generate_systemd],
-        namespace="generate"
+        [enlace.generate_caddyfile, enlace.generate_systemd], namespace="generate"
     )
     try:
         import argcomplete
+
         argcomplete.autocomplete(parser)
     except ImportError:
         pass
     parser.dispatch()
+
 
 if __name__ == "__main__":
     main()
