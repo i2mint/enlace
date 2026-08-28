@@ -15,7 +15,11 @@ Design:
 - ``detail`` is a short human-readable string. Structured payloads go in
   ``extra`` (dict) so ``--json`` consumers don't re-parse prose.
 - Plugins can supply extra static or HTTP probes via ``extra_static_checks``
-  and ``extra_http_checks`` on ``run_doctor``.
+  and ``extra_http_checks`` on ``run_doctor``. Those are also discovered
+  automatically from the plugins the platform is configured to load — see
+  :func:`discover_plugin_checks`. A check nobody runs is not a check, and the
+  hand-wiring alternative meant a plugin could ship a correct diagnosis of its
+  own failure mode that never once executed.
 """
 
 from __future__ import annotations
@@ -207,6 +211,48 @@ def _check_api_mount(
 # ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
+
+
+def discover_plugin_checks(
+    specs: Optional[str] = None,
+) -> "tuple[tuple[StaticCheckFn, ...], tuple[HttpCheckFn, ...]]":
+    """Collect doctor checks contributed by the configured enlace plugins.
+
+    A plugin package may expose a ``diagnostics`` submodule with
+    ``static_checks`` and/or ``http_checks`` tuples; ``enlace_auth`` is the
+    reference. Plugins come from *specs* or, by default, the same
+    ``ENLACE_PLUGINS`` environment variable that decides what the platform
+    actually loads — so the checks that run always match the code that runs.
+
+    Discovery never raises: a plugin without a ``diagnostics`` module, or one
+    that cannot be imported, contributes nothing. The doctor's job is to report
+    problems, not to become one.
+
+    >>> static, http = discover_plugin_checks("")
+    >>> static, http
+    ((), ())
+    """
+    import importlib
+    import os
+
+    raw = os.environ.get("ENLACE_PLUGINS", "") if specs is None else specs
+    static: list[StaticCheckFn] = []
+    http: list[HttpCheckFn] = []
+    seen: set[str] = set()
+    for spec in (s.strip() for s in (raw or "").split(",")):
+        if not spec:
+            continue
+        package = spec.split(":", 1)[0].split(".", 1)[0]
+        if package in seen:
+            continue
+        seen.add(package)
+        try:
+            diagnostics = importlib.import_module(f"{package}.diagnostics")
+        except Exception:  # noqa: BLE001 - a broken plugin must not break doctor
+            continue
+        static.extend(getattr(diagnostics, "static_checks", ()) or ())
+        http.extend(getattr(diagnostics, "http_checks", ()) or ())
+    return tuple(static), tuple(http)
 
 
 StaticCheckFn = Callable[[PlatformConfig], "Iterable[Check]"]

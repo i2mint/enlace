@@ -19,7 +19,7 @@ import argh
 from enlace.base import PlatformConfig
 from enlace.diagnose import diagnose_app
 from enlace.discover import discover_apps
-from enlace.doctor import run_doctor
+from enlace.doctor import discover_plugin_checks, run_doctor
 from enlace.serve import serve
 
 
@@ -439,12 +439,18 @@ def doctor(
     if apps:
         app_filter = [a.strip() for a in apps.split(",") if a.strip()]
 
+    # Checks contributed by whatever plugins this platform loads (e.g.
+    # enlace_auth's auth + OAuth probes). Without this the plugin's own
+    # diagnostics never execute, however correct they are.
+    plugin_static, plugin_http = discover_plugin_checks()
     report = run_doctor(
         config,
         base_url=base_url or None,
         timeout=timeout,
         app_filter=app_filter,
         include_env_checks=not skip_env_checks,
+        extra_static_checks=plugin_static,
+        extra_http_checks=plugin_http,
     )
 
     if json:
