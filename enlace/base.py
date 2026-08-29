@@ -86,6 +86,35 @@ class BuildConfig(BaseModel):
         return v
 
 
+class AppImportError(BaseModel):
+    """Why an app's entry module could not be imported at discovery time.
+
+    Recorded (instead of raised) when discovery runs with
+    ``on_import_error="record"`` — see :func:`enlace.discover.discover_apps`.
+    Importing a module runs arbitrary module-level code, so ``exception_type``
+    is not necessarily an ``ImportError``: the failure seen in production was a
+    ``PermissionError`` from a dependency reading a root-only dotenv at import.
+    """
+
+    exception_type: str
+    message: str
+    entry_module_path: Optional[Path] = None
+
+    @classmethod
+    def from_exception(
+        cls, exc: BaseException, entry_module_path: Optional[Path] = None
+    ) -> "AppImportError":
+        """Build a record from the exception the import raised."""
+        return cls(
+            exception_type=type(exc).__name__,
+            message=str(exc),
+            entry_module_path=entry_module_path,
+        )
+
+    def __str__(self) -> str:
+        return f"{self.exception_type}: {self.message}"
+
+
 class AppConfig(BaseModel):
     """Resolved configuration for a single discovered app.
 
@@ -125,6 +154,12 @@ class AppConfig(BaseModel):
     )
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
+
+    # Set only when discovery ran with ``on_import_error="record"`` and this
+    # app's entry module raised on import. ``None`` on every healthy app, and
+    # on every app discovered under the default ``"raise"`` policy (which
+    # never gets far enough to build a config for a broken app).
+    import_error: Optional[AppImportError] = None
 
     # App-launcher metadata. Resolved at discovery from app.toml + harvested
     # sources (manifest, index.html <head>, package.json, pyproject) — see

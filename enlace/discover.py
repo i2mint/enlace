@@ -3,6 +3,13 @@
 Walks an apps directory, discovers backend entry points and frontend assets,
 detects app types, loads per-app TOML overrides, and returns validated AppConfig
 objects with provenance tracking.
+
+Discovering an ``asgi``-mode app *imports* its entry module, so a single broken
+app can take discovery down — and every CLI verb discovers first. The
+``on_import_error`` policy (``"raise"``, the default and historical behaviour,
+or ``"record"``) decides which happens: booting must still refuse a broken app,
+but the diagnostic verbs need to survive one in order to report it. See
+:func:`discover_apps`.
 """
 
 import importlib
@@ -10,9 +17,9 @@ import inspect
 import shlex
 import sys
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Literal, Optional, Protocol
 
-from enlace.base import AppConfig, ConventionsConfig, PlatformConfig
+from enlace.base import AppConfig, AppImportError, ConventionsConfig, PlatformConfig
 from enlace.util import derive_route_prefix, is_skippable
 
 if sys.version_info >= (3, 11):
@@ -22,6 +29,11 @@ else:
         import tomllib
     except ImportError:
         import tomli as tomllib  # type: ignore[no-redef]
+
+# What discovery does when importing an app's entry module raises.
+# "raise": propagate (the default — booting must not paper over a broken app).
+# "record": store the failure on the AppConfig and keep discovering.
+ImportErrorPolicy = Literal["raise", "record"]
 
 
 class AppDiscoverer(Protocol):
@@ -38,10 +50,20 @@ class ConventionDiscoverer:
 
     Args:
         conventions: Meta-conventions controlling discovery behavior.
+        on_import_error: What to do when an app's entry module fails to
+            import. ``"raise"`` (default) propagates, as it always has;
+            ``"record"`` stores an ``AppImportError`` on the app's config
+            and carries on with the remaining apps.
     """
 
-    def __init__(self, conventions: Optional[ConventionsConfig] = None):
+    def __init__(
+        self,
+        conventions: Optional[ConventionsConfig] = None,
+        *,
+        on_import_error: ImportErrorPolicy = "raise",
+    ):
         self.conventions = conventions or ConventionsConfig()
+        self.on_import_error = on_import_error
 
     def discover(self, apps_dir: Path) -> list[AppConfig]:
         """Discover all apps in the given directory.
@@ -106,9 +128,10 @@ class ConventionDiscoverer:
         provenance: dict[str, str] = {}
         provenance["route_prefix"] = "convention: directory_name"
 
+        import_error: Optional[AppImportError] = None
         if entry_path is not None:
-            app_type, type_source = self._detect_app_type(
-                entry_path, apps_dir, self.conventions.app_attr
+            app_type, type_source, import_error = self._detect_app_type_or_record(
+                entry_path, apps_dir
             )
             provenance["app_type"] = type_source
             provenance["entry_module_path"] = (
@@ -130,6 +153,7 @@ class ConventionDiscoverer:
             frontend_dir=frontend_dir,
             source_dir=apps_dir,
             provenance=provenance,
+            import_error=import_error,
         )
 
         # Apply per-app overrides (asgi-mode — remaining TOML fields)
@@ -233,8 +257,10 @@ class ConventionDiscoverer:
 
         Raises:
             ImportError: If the module exists but fails to import (e.g. syntax
-                error, missing dependency). This is intentionally NOT caught —
-                silently swallowing import errors is an anti-pattern.
+                error, missing dependency). This is intentionally NOT caught
+                *here* — silently swallowing import errors is an anti-pattern.
+                Whether the caller catches it is the ``on_import_error``
+                policy's decision; see ``_detect_app_type_or_record``.
         """
         module = _import_module_from_path(entry_path, apps_dir)
 
@@ -254,6 +280,37 @@ class ConventionDiscoverer:
             return "functions", "detected: no app attr, has public functions"
 
         return "asgi_app", f"detected: has '{app_attr}' attribute (fallback)"
+
+    def _detect_app_type_or_record(
+        self, entry_path: Path, apps_dir: Path
+    ) -> tuple[str, str, Optional[AppImportError]]:
+        """``_detect_app_type`` under the configured ``on_import_error`` policy.
+
+        Returns ``(app_type, provenance_source, import_error)``, the last being
+        ``None`` unless the import failed and the policy is ``"record"``.
+
+        The net is ``Exception``, not ``ImportError``: importing a module runs
+        arbitrary module-level code, so it can raise anything at all — the one
+        failure observed in production was a ``PermissionError`` raised by a
+        transitive dependency reading a dotenv file at import time, which a
+        narrower net would have let through unchanged. ``KeyboardInterrupt``
+        and ``SystemExit`` are not ``Exception`` subclasses and still escape.
+        """
+        try:
+            app_type, type_source = self._detect_app_type(
+                entry_path, apps_dir, self.conventions.app_attr
+            )
+        except Exception as exc:  # noqa: BLE001 - see the policy note above
+            if self.on_import_error == "raise":
+                raise
+            # Nothing was detected, so fall back to the same assumption
+            # _detect_app_type makes when it finds no evidence either way.
+            return (
+                "asgi_app",
+                f"unknown: entry module failed to import ({type(exc).__name__})",
+                AppImportError.from_exception(exc, entry_path),
+            )
+        return app_type, type_source, None
 
     def _apply_overrides(
         self,
@@ -427,7 +484,11 @@ def _import_module_from_path(entry_path: Path, apps_dir: Path) -> object:
                 pass
 
 
-def discover_apps(config: Optional[PlatformConfig] = None) -> PlatformConfig:
+def discover_apps(
+    config: Optional[PlatformConfig] = None,
+    *,
+    on_import_error: ImportErrorPolicy = "raise",
+) -> PlatformConfig:
     """High-level discovery: load config, discover apps, check conflicts.
 
     Iterates over all configured source directories:
@@ -436,6 +497,14 @@ def discover_apps(config: Optional[PlatformConfig] = None) -> PlatformConfig:
 
     Args:
         config: Platform configuration. If None, loads from platform.toml.
+        on_import_error: What to do when an ``asgi``-mode app's entry module
+            fails to import. ``"raise"`` (default) propagates, exactly as
+            before this argument existed — what ``serve`` and ``build_backend``
+            want, because a gateway must not boot pretending an app is fine.
+            ``"record"`` records the failure on that app's ``AppConfig``
+            (``import_error``) and keeps discovering, so a diagnostic caller
+            can *report* the broken app alongside the healthy ones instead of
+            dying on it.
 
     Returns:
         PlatformConfig with apps populated.
@@ -445,7 +514,9 @@ def discover_apps(config: Optional[PlatformConfig] = None) -> PlatformConfig:
     """
     if config is None:
         config = PlatformConfig.from_toml()
-    discoverer = ConventionDiscoverer(config.conventions)
+    discoverer = ConventionDiscoverer(
+        config.conventions, on_import_error=on_import_error
+    )
 
     all_apps: list[AppConfig] = []
 

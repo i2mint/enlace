@@ -207,6 +207,24 @@ apps/
 Everything enlace infers is inspectable (`enlace show-config --verbose`) and
 overridable via `app.toml`, `platform.toml`, environment variables, or CLI flags.
 
+#### When an app won't import
+
+Discovering an `asgi`-mode app *imports* its entry module, so a missing
+dependency — or any exception raised at module scope — is a discovery failure.
+What happens next is a policy you choose:
+
+```python
+discover_apps(config)                            # raise (default)
+discover_apps(config, on_import_error="record")  # record and carry on
+```
+
+`serve` keeps the default: a gateway must not boot pretending a broken app is
+fine. The diagnostic verbs (`doctor`, `check`, `list-apps`, `show-config`,
+`app-meta`) record instead, so one broken app no longer hides the health of
+every other one — `enlace doctor --json` still exits nonzero, but now with a
+parseable `FAIL` naming the app and its exception class, on
+`AppConfig.import_error`.
+
 ### Configuration
 
 **`platform.toml`** (project root):

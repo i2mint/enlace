@@ -10,6 +10,7 @@ from pathlib import Path
 
 from enlace.base import (
     AppConfig,
+    AppImportError,
     BuildConfig,
     ConventionsConfig,
     PlatformConfig,
@@ -37,6 +38,7 @@ except PackageNotFoundError:  # editable install with no metadata, etc.
 
 __all__ = [
     "AppConfig",
+    "AppImportError",
     "BuildConfig",
     "BuildResult",
     "ConventionsConfig",

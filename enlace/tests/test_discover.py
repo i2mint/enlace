@@ -9,6 +9,7 @@ from enlace.discover import ConventionDiscoverer, discover_apps
 from enlace.tests.conftest import (
     BROKEN_MODULE,
     FUNCTIONS_MODULE,
+    PERMISSION_ERROR_MODULE,
     _make_app_code,
 )
 
@@ -380,3 +381,120 @@ def test_discover_mixed_asgi_and_process(tmp_apps_dir):
     assert len(apps) == 2
     modes = {a.name: a.mode for a in apps}
     assert modes == {"alpha": "asgi", "beta": "process"}
+
+
+# --- on_import_error policy -------------------------------------------------
+#
+# Discovery imports every asgi-mode entry module, and every CLI verb discovers
+# first, so one broken app used to kill `enlace doctor` before it ran a single
+# check — nothing was reported about the thirty apps that were fine. "record"
+# is the seam that lets a diagnostic caller report the breakage instead of
+# dying on it. "raise" stays the default: booting must not paper over it.
+
+
+def _make_broken_app(apps_dir: Path, name: str, code: str) -> Path:
+    app_dir = apps_dir / name
+    app_dir.mkdir()
+    (app_dir / "server.py").write_text(code)
+    return app_dir
+
+
+def test_record_keeps_the_healthy_apps(multi_app_dir):
+    """A broken app among healthy ones is recorded; the others still discover."""
+    _make_broken_app(multi_app_dir, "broken", BROKEN_MODULE)
+
+    discoverer = ConventionDiscoverer(ConventionsConfig(), on_import_error="record")
+    apps = discoverer.discover(multi_app_dir)
+
+    assert [a.name for a in apps] == ["alpha", "beta", "broken", "gamma"]
+    by_name = {a.name: a for a in apps}
+    assert [n for n, a in by_name.items() if a.import_error] == ["broken"]
+
+    err = by_name["broken"].import_error
+    assert err.exception_type == "ModuleNotFoundError"
+    assert "nonexistent_package_xyz" in err.message
+    assert err.entry_module_path == multi_app_dir / "broken" / "server.py"
+    assert "failed to import" in by_name["broken"].provenance["app_type"]
+
+
+def test_record_when_the_broken_app_is_the_only_app(tmp_apps_dir):
+    """One broken app and nothing else still yields a config to report on."""
+    _make_broken_app(tmp_apps_dir, "broken", BROKEN_MODULE)
+
+    discoverer = ConventionDiscoverer(ConventionsConfig(), on_import_error="record")
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 1
+    assert apps[0].name == "broken"
+    assert apps[0].import_error.exception_type == "ModuleNotFoundError"
+
+
+def test_record_catches_more_than_ImportError(tmp_apps_dir):
+    """Import runs arbitrary code, so the net is Exception, not ImportError.
+
+    The only production instance of this crash was a PermissionError raised at
+    import time by a dependency reading a root-only dotenv. A seam catching
+    ImportError alone would have left that case exactly as it was.
+    """
+    _make_broken_app(tmp_apps_dir, "dotenv_reader", PERMISSION_ERROR_MODULE)
+
+    discoverer = ConventionDiscoverer(ConventionsConfig(), on_import_error="record")
+    apps = discoverer.discover(tmp_apps_dir)
+
+    assert len(apps) == 1
+    err = apps[0].import_error
+    assert err.exception_type == "PermissionError"
+    assert "Permission denied" in err.message
+
+
+def test_raise_is_the_default_for_non_import_errors_too(tmp_apps_dir):
+    """The default policy propagates whatever the import raised, unchanged."""
+    _make_broken_app(tmp_apps_dir, "dotenv_reader", PERMISSION_ERROR_MODULE)
+
+    discoverer = _make_discoverer()
+    with pytest.raises(PermissionError, match="Permission denied"):
+        discoverer.discover(tmp_apps_dir)
+
+
+def test_healthy_apps_carry_no_import_error(multi_app_dir):
+    """import_error is None on every healthy app, under either policy."""
+    for policy in ("raise", "record"):
+        discoverer = ConventionDiscoverer(ConventionsConfig(), on_import_error=policy)
+        apps = discoverer.discover(multi_app_dir)
+        assert [a.import_error for a in apps] == [None, None, None]
+
+
+def test_process_mode_app_is_never_imported(tmp_apps_dir):
+    """A process-mode app skips Python introspection, so it cannot break either way.
+
+    Its server.py here is un-importable, but nothing imports it — the blast
+    radius of this whole issue is asgi-mode apps.
+    """
+    app_dir = _make_broken_app(tmp_apps_dir, "worker", BROKEN_MODULE)
+    (app_dir / "app.toml").write_text(
+        'mode = "process"\ncommand = ["node", "server.js"]\nport = 3001\n'
+    )
+
+    for policy in ("raise", "record"):
+        discoverer = ConventionDiscoverer(ConventionsConfig(), on_import_error=policy)
+        apps = discoverer.discover(tmp_apps_dir)
+        assert len(apps) == 1
+        assert apps[0].mode == "process"
+        assert apps[0].import_error is None
+
+
+def test_discover_apps_forwards_the_policy(tmp_apps_dir):
+    """The high-level entry point exposes the seam and defaults to raising."""
+    (tmp_apps_dir / "ok").mkdir()
+    (tmp_apps_dir / "ok" / "server.py").write_text(_make_app_code("ok"))
+    _make_broken_app(tmp_apps_dir, "broken", BROKEN_MODULE)
+
+    config = PlatformConfig(apps_dir=tmp_apps_dir)
+
+    with pytest.raises(ModuleNotFoundError):
+        discover_apps(config)
+
+    recorded = discover_apps(config, on_import_error="record")
+    assert [a.name for a in recorded.apps] == ["broken", "ok"]
+    assert recorded.apps[0].import_error is not None
+    assert recorded.apps[1].import_error is None
