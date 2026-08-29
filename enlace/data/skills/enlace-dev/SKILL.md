@@ -99,11 +99,20 @@ class MyMiddleware:
 `app.mount()` only works on the top-level FastAPI instance. Mounting on an
 APIRouter silently fails (FastAPI issues #4194, #10180).
 
-### Never silently swallow ImportErrors during discovery
+### Never silently swallow import failures during discovery
 
 If a module file exists but fails to import (syntax error, missing dep), that is
 a real error. Propagate it. Only skip directories that have no entry point file.
 This prevents the Celery autodiscover anti-pattern.
+
+Reporting is not swallowing. `discover_apps(..., on_import_error="record")`
+records the failure on `AppConfig.import_error` and carries on, so the
+diagnostic verbs can name the broken app instead of dying on it — `enlace
+doctor` still exits nonzero, with a `FAIL` check. `serve` keeps the default
+`"raise"`. Never make `"record"` the default: a gateway that boots pretending a
+broken app is fine IS the anti-pattern. Note the net is `Exception`, not
+`ImportError` — a module runs arbitrary code at import (the failure seen in
+production was a `PermissionError`).
 
 ### Conflict detection: fail-fast, report ALL
 

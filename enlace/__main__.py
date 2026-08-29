@@ -18,19 +18,30 @@ import argh
 
 from enlace.base import PlatformConfig
 from enlace.diagnose import diagnose_app
-from enlace.discover import discover_apps
+from enlace.discover import ImportErrorPolicy, discover_apps
 from enlace.doctor import discover_plugin_checks, run_doctor
 from enlace.serve import serve
+
+# The diagnostic verbs (show-config, check, list-apps, app-meta, doctor) report
+# ON apps; they must survive one that cannot be imported in order to say so.
+# `serve` and `build_backend` keep the default "raise" — a gateway must not boot
+# pretending a broken app is fine. `build` keeps it too: it is a deploy step,
+# not a report.
+_DIAGNOSTIC_IMPORT_POLICY: ImportErrorPolicy = "record"
 
 
 def _build_config(
     apps_dir: str = "",
     apps_dirs: str = "",
     app_dirs: str = "",
+    *,
+    on_import_error: ImportErrorPolicy = "raise",
 ) -> PlatformConfig:
     """Build PlatformConfig from TOML, with CLI args as overrides.
 
     When no CLI directory args are given, uses platform.toml values.
+
+    ``on_import_error`` is forwarded to :func:`enlace.discover.discover_apps`.
     """
     config = PlatformConfig.from_toml()
 
@@ -56,7 +67,16 @@ def _build_config(
     if updates:
         config = config.model_copy(update=updates)
 
-    return discover_apps(config)
+    return discover_apps(config, on_import_error=on_import_error)
+
+
+def _import_error_lines(config: PlatformConfig) -> list[str]:
+    """One line per app whose entry module failed to import, or an empty list."""
+    return [
+        f"{app.name}: entry module failed to import — {app.import_error}"
+        for app in config.apps
+        if app.import_error is not None
+    ]
 
 
 def show_config(
@@ -76,7 +96,9 @@ def show_config(
         apps_dirs: Comma-separated container directories.
         app_dirs: Comma-separated individual app directories.
     """
-    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    config = _build_config(
+        apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
+    )
 
     if json:
         data = config.model_dump(mode="json")
@@ -121,6 +143,9 @@ def show_config(
 
             type_src = f"  [{prov.get('app_type', '')}]" if verbose else ""
             print(f"    type:     {app.app_type}{type_src}")
+
+            if app.import_error:
+                print(f"    import:   FAILED — {app.import_error}")
 
             access_src = f"  [{prov.get('access', 'default')}]" if verbose else ""
             print(f"    access:   {app.access}{access_src}")
@@ -185,9 +210,14 @@ def check(
     """
     from enlace.build import validate_build
 
-    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    config = _build_config(
+        apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
+    )
 
-    errors = config.check_conflicts()
+    # An un-importable app is an error, not a warning: `serve` would refuse to
+    # boot on it. Recording it rather than raising changes only the *shape* of
+    # the report — every healthy app still gets validated and listed.
+    errors = _import_error_lines(config) + config.check_conflicts()
     warnings: list[str] = []
     for app in config.apps:
         warnings.extend(validate_build(app))
@@ -223,7 +253,9 @@ def list_apps(
         apps_dirs: Comma-separated container directories.
         app_dirs: Comma-separated individual app directories.
     """
-    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    config = _build_config(
+        apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
+    )
 
     if not config.apps:
         print("No apps discovered.")
@@ -259,6 +291,13 @@ def list_apps(
                 f"{app.name:<{name_w}}  {app.route_prefix:<{route_w}}  "
                 f"{app.app_type:<{type_w}}  {app.access}"
             )
+
+    import_errors = _import_error_lines(config)
+    if import_errors:
+        print()
+        print("Un-importable apps (they are listed above but will not mount):")
+        for line in import_errors:
+            print(f"  - {line}")
 
 
 def build(
@@ -407,6 +446,10 @@ def doctor(
     HTTP probes run when ``--base-url`` is given, against ``/auth/csrf``,
     each app's frontend, and each app's API prefix.
 
+    An app whose entry module cannot be imported is reported as a ``FAIL``
+    check naming the app and its exception class, rather than taking the
+    doctor down with a traceback before it checks anything else.
+
     Exits nonzero if any check fails. Intended as a post-deploy smoke tool.
 
     Args:
@@ -434,7 +477,9 @@ def doctor(
         if not _load_envfile(envfile):
             skip_env_checks = True
 
-    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    config = _build_config(
+        apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
+    )
     app_filter: Optional[list[str]] = None
     if apps:
         app_filter = [a.strip() for a in apps.split(",") if a.strip()]
@@ -485,7 +530,9 @@ def app_meta(
     """
     from enlace import appmeta
 
-    config = _build_config(apps_dir, apps_dirs, app_dirs)
+    config = _build_config(
+        apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
+    )
     default_icon = config.app_meta.default_icon
 
     records = []

@@ -14,6 +14,10 @@ Design:
   of them and returns a ``Report`` so callers can emit pretty text OR JSON.
 - ``detail`` is a short human-readable string. Structured payloads go in
   ``extra`` (dict) so ``--json`` consumers don't re-parse prose.
+- An app enlace could not even import is reported as a ``FAIL`` check, not as
+  a traceback — see ``_check_app_imports`` and ``discover_apps``'
+  ``on_import_error``. A health tool that dies on the failure it exists to
+  detect reports nothing about the thirty apps that are fine.
 - Plugins can supply extra static or HTTP probes via ``extra_static_checks``
   and ``extra_http_checks`` on ``run_doctor``. Those are also discovered
   automatically from the plugins the platform is configured to load — see
@@ -103,6 +107,35 @@ class Report:
 # ---------------------------------------------------------------------------
 # Static checks (run without a live gateway)
 # ---------------------------------------------------------------------------
+
+
+def _check_app_imports(config: PlatformConfig) -> list[Check]:
+    """Apps whose entry module could not be imported at discovery time.
+
+    Only ever non-empty when the caller discovered with
+    ``on_import_error="record"`` (the CLI's diagnostic verbs do) — under the
+    default ``"raise"`` policy discovery dies before there is anything to
+    report, which is the very failure this check exists to replace.
+    """
+    out: list[Check] = []
+    for app in config.apps:
+        err = app.import_error
+        if err is None:
+            continue
+        out.append(
+            Check(
+                f"import:{app.name}",
+                FAIL,
+                f"{err.exception_type}: {err.message}",
+                extra={
+                    "app": app.name,
+                    "exception_type": err.exception_type,
+                    "message": err.message,
+                    "entry_module_path": str(err.entry_module_path or ""),
+                },
+            )
+        )
+    return out
 
 
 def _check_frontend_dirs(config: PlatformConfig) -> list[Check]:
@@ -291,6 +324,7 @@ def run_doctor(
     _ = include_env_checks  # signal to plugin authors via convention
     report = Report(base_url=base_url)
 
+    report.checks.extend(_check_app_imports(config))
     report.checks.extend(_check_frontend_dirs(config))
     for fn in extra_static_checks:
         report.checks.extend(fn(config))

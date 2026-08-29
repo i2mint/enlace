@@ -35,6 +35,15 @@ BROKEN_MODULE = textwrap.dedent("""\
     import nonexistent_package_xyz
 """)
 
+# Importing a module runs arbitrary code, so "the import failed" is not the
+# same set as "ImportError was raised". The only failure of this kind seen in
+# production was a PermissionError from a dependency reading a root-only
+# dotenv at import time — a seam that caught ImportError alone would have
+# fixed nothing. This module stands in for that class of failure.
+PERMISSION_ERROR_MODULE = textwrap.dedent("""\
+    raise PermissionError(13, "Permission denied", "/opt/somewhere/.env")
+""")
+
 
 @pytest.fixture
 def tmp_apps_dir(tmp_path):

@@ -1,3 +1,5 @@
+"""Tests for enlace.doctor — plugin check discovery and static checks."""
+
 # ---------------------------------------------------------------------- #
 # Plugin check discovery
 #
@@ -9,7 +11,8 @@
 import sys
 import types
 
-from enlace.doctor import discover_plugin_checks
+from enlace.base import AppConfig, AppImportError, PlatformConfig
+from enlace.doctor import FAIL, discover_plugin_checks, run_doctor
 
 
 def _fake_plugin(monkeypatch, name, *, static=(), http=(), broken=False):
@@ -67,3 +70,63 @@ def test_each_package_is_collected_once(monkeypatch):
 def test_empty_and_blank_specs_are_harmless():
     assert discover_plugin_checks("") == ((), ())
     assert discover_plugin_checks("  ,  ") == ((), ())
+
+
+# ---------------------------------------------------------------------- #
+# Un-importable apps
+#
+# The doctor used to die on the failure it exists to detect: discovery
+# imports every asgi-mode app, so one broken app meant no report at all.
+# ---------------------------------------------------------------------- #
+
+
+def _config_with_import_error(**err_kwargs) -> PlatformConfig:
+    """A config as `discover_apps(..., on_import_error="record")` would build it."""
+    return PlatformConfig(
+        apps=[
+            AppConfig(name="healthy", route_prefix="/api/healthy", app_type="asgi_app"),
+            AppConfig(
+                name="broken",
+                route_prefix="/api/broken",
+                app_type="asgi_app",
+                import_error=AppImportError(**err_kwargs),
+            ),
+        ]
+    )
+
+
+def test_an_unimportable_app_is_a_FAIL_naming_the_exception():
+    config = _config_with_import_error(
+        exception_type="ModuleNotFoundError",
+        message="No module named 'nonexistent_package_xyz'",
+        entry_module_path="/apps/broken/server.py",
+    )
+    report = run_doctor(config)
+
+    assert report.ok is False
+    check = next(c for c in report.checks if c.name == "import:broken")
+    assert check.status == FAIL
+    assert "ModuleNotFoundError" in check.detail
+    assert check.extra["app"] == "broken"
+    assert check.extra["exception_type"] == "ModuleNotFoundError"
+
+
+def test_a_non_ImportError_is_reported_the_same_way():
+    """The production case was a PermissionError, not an ImportError."""
+    config = _config_with_import_error(
+        exception_type="PermissionError",
+        message="[Errno 13] Permission denied: '/opt/somewhere/.env'",
+    )
+    check = next(c for c in run_doctor(config).checks if c.name == "import:broken")
+    assert check.extra["exception_type"] == "PermissionError"
+
+
+def test_healthy_apps_produce_no_import_checks():
+    config = PlatformConfig(
+        apps=[
+            AppConfig(name="healthy", route_prefix="/api/healthy", app_type="asgi_app")
+        ]
+    )
+    report = run_doctor(config)
+    assert [c for c in report.checks if c.name.startswith("import:")] == []
+    assert report.ok is True
