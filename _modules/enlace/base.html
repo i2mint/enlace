@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.base &mdash; enlace 0.1.27 documentation</title>
+  <title>enlace.base &mdash; enlace 0.1.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
+      <script src="../../_static/documentation_options.js?v=34399df3"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -199,6 +199,41 @@
 
 
 
+<div class="viewcode-block" id="AppImportError">
+<a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.AppImportError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AppImportError</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Why an app's entry module could not be imported at discovery time.</span>
+
+<span class="sd">    Recorded (instead of raised) when discovery runs with</span>
+<span class="sd">    ``on_import_error="record"`` — see :func:`enlace.discover.discover_apps`.</span>
+<span class="sd">    Importing a module runs arbitrary module-level code, so ``exception_type``</span>
+<span class="sd">    is not necessarily an ``ImportError``: the failure seen in production was a</span>
+<span class="sd">    ``PermissionError`` from a dependency reading a root-only dotenv at import.</span>
+<span class="sd">    """</span>
+
+    <span class="n">exception_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">entry_module_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="AppImportError.from_exception">
+<a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.AppImportError.from_exception">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_exception</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">,</span> <span class="n">entry_module_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppImportError"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a record from the exception the import raised."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">exception_type</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
+            <span class="n">entry_module_path</span><span class="o">=</span><span class="n">entry_module_path</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exception_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span></div>
+
+
+
 <div class="viewcode-block" id="AppConfig">
 <a class="viewcode-back" href="../../module_docs/enlace/base.html#enlace.AppConfig">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AppConfig</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -240,6 +275,12 @@
     <span class="p">)</span>
     <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="c1"># Set only when discovery ran with ``on_import_error="record"`` and this</span>
+    <span class="c1"># app's entry module raised on import. ``None`` on every healthy app, and</span>
+    <span class="c1"># on every app discovered under the default ``"raise"`` policy (which</span>
+    <span class="c1"># never gets far enough to build a config for a broken app).</span>
+    <span class="n">import_error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppImportError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># App-launcher metadata. Resolved at discovery from app.toml + harvested</span>
     <span class="c1"># sources (manifest, index.html &lt;head&gt;, package.json, pyproject) — see</span>

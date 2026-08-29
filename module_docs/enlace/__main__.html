@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.27 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
+      <script src="../../_static/documentation_options.js?v=34399df3"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -210,6 +210,9 @@ meaningful when run in the gateway’s env — see <code class="docutils literal
 <code class="docutils literal notranslate"><span class="pre">--skip-env-checks</span></code>), oauth importability, and frontend_dir sanity.
 HTTP probes run when <code class="docutils literal notranslate"><span class="pre">--base-url</span></code> is given, against <code class="docutils literal notranslate"><span class="pre">/auth/csrf</span></code>,
 each app’s frontend, and each app’s API prefix.</p>
+<p>An app whose entry module cannot be imported is reported as a <code class="docutils literal notranslate"><span class="pre">FAIL</span></code>
+check naming the app and its exception class, rather than taking the
+doctor down with a traceback before it checks anything else.</p>
 <p>Exits nonzero if any check fails. Intended as a post-deploy smoke tool.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

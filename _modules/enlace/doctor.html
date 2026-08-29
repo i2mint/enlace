@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.doctor &mdash; enlace 0.1.27 documentation</title>
+  <title>enlace.doctor &mdash; enlace 0.1.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
+      <script src="../../_static/documentation_options.js?v=34399df3"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -121,6 +121,10 @@
 <span class="sd">  of them and returns a ``Report`` so callers can emit pretty text OR JSON.</span>
 <span class="sd">- ``detail`` is a short human-readable string. Structured payloads go in</span>
 <span class="sd">  ``extra`` (dict) so ``--json`` consumers don't re-parse prose.</span>
+<span class="sd">- An app enlace could not even import is reported as a ``FAIL`` check, not as</span>
+<span class="sd">  a traceback — see ``_check_app_imports`` and ``discover_apps``'</span>
+<span class="sd">  ``on_import_error``. A health tool that dies on the failure it exists to</span>
+<span class="sd">  detect reports nothing about the thirty apps that are fine.</span>
 <span class="sd">- Plugins can supply extra static or HTTP probes via ``extra_static_checks``</span>
 <span class="sd">  and ``extra_http_checks`` on ``run_doctor``. Those are also discovered</span>
 <span class="sd">  automatically from the plugins the platform is configured to load — see</span>
@@ -219,6 +223,35 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># Static checks (run without a live gateway)</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_app_imports</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Apps whose entry module could not be imported at discovery time.</span>
+
+<span class="sd">    Only ever non-empty when the caller discovered with</span>
+<span class="sd">    ``on_import_error="record"`` (the CLI's diagnostic verbs do) — under the</span>
+<span class="sd">    default ``"raise"`` policy discovery dies before there is anything to</span>
+<span class="sd">    report, which is the very failure this check exists to replace.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">import_error</span>
+        <span class="k">if</span> <span class="n">err</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Check</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"import:</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">FAIL</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">err</span><span class="o">.</span><span class="n">exception_type</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">"app"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">"exception_type"</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">exception_type</span><span class="p">,</span>
+                    <span class="s2">"message"</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
+                    <span class="s2">"entry_module_path"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">entry_module_path</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_frontend_dirs</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]:</span>
@@ -409,6 +442,7 @@
     <span class="n">_</span> <span class="o">=</span> <span class="n">include_env_checks</span>  <span class="c1"># signal to plugin authors via convention</span>
     <span class="n">report</span> <span class="o">=</span> <span class="n">Report</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="n">base_url</span><span class="p">)</span>
 
+    <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_app_imports</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
     <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_frontend_dirs</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">extra_static_checks</span><span class="p">:</span>
         <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">fn</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>

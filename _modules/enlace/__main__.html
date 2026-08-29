@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.27 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
+      <script src="../../_static/documentation_options.js?v=34399df3"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -125,19 +125,30 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlatformConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.diagnose</span><span class="w"> </span><span class="kn">import</span> <span class="n">diagnose_app</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_apps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.discover</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImportErrorPolicy</span><span class="p">,</span> <span class="n">discover_apps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.doctor</span><span class="w"> </span><span class="kn">import</span> <span class="n">discover_plugin_checks</span><span class="p">,</span> <span class="n">run_doctor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.serve</span><span class="w"> </span><span class="kn">import</span> <span class="n">serve</span>
+
+<span class="c1"># The diagnostic verbs (show-config, check, list-apps, app-meta, doctor) report</span>
+<span class="c1"># ON apps; they must survive one that cannot be imported in order to say so.</span>
+<span class="c1"># `serve` and `build_backend` keep the default "raise" — a gateway must not boot</span>
+<span class="c1"># pretending a broken app is fine. `build` keeps it too: it is a deploy step,</span>
+<span class="c1"># not a report.</span>
+<span class="n">_DIAGNOSTIC_IMPORT_POLICY</span><span class="p">:</span> <span class="n">ImportErrorPolicy</span> <span class="o">=</span> <span class="s2">"record"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_config</span><span class="p">(</span>
     <span class="n">apps_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">apps_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
     <span class="n">app_dirs</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">on_import_error</span><span class="p">:</span> <span class="n">ImportErrorPolicy</span> <span class="o">=</span> <span class="s2">"raise"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlatformConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Build PlatformConfig from TOML, with CLI args as overrides.</span>
 
 <span class="sd">    When no CLI directory args are given, uses platform.toml values.</span>
+
+<span class="sd">    ``on_import_error`` is forwarded to :func:`enlace.discover.discover_apps`.</span>
 <span class="sd">    """</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">PlatformConfig</span><span class="o">.</span><span class="n">from_toml</span><span class="p">()</span>
 
@@ -163,7 +174,16 @@
     <span class="k">if</span> <span class="n">updates</span><span class="p">:</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="n">updates</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">discover_apps</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">discover_apps</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="n">on_import_error</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_import_error_lines</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""One line per app whose entry module failed to import, or an empty list."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: entry module failed to import — </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">import_error</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
+        <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">import_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">]</span>
 
 
 <div class="viewcode-block" id="show_config">
@@ -185,7 +205,9 @@
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
 <span class="sd">    """</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span>
+        <span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="n">_DIAGNOSTIC_IMPORT_POLICY</span>
+    <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">json</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)</span>
@@ -230,6 +252,9 @@
 
             <span class="n">type_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'app_type'</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">""</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    type:     </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">}{</span><span class="n">type_src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">import_error</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    import:   FAILED — </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">import_error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
             <span class="n">access_src</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"  [</span><span class="si">{</span><span class="n">prov</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'access'</span><span class="p">,</span><span class="w"> </span><span class="s1">'default'</span><span class="p">)</span><span class="si">}</span><span class="s2">]"</span> <span class="k">if</span> <span class="n">verbose</span> <span class="k">else</span> <span class="s2">""</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    access:   </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}{</span><span class="n">access_src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -297,9 +322,14 @@
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.build</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_build</span>
 
-    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span>
+        <span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="n">_DIAGNOSTIC_IMPORT_POLICY</span>
+    <span class="p">)</span>
 
-    <span class="n">errors</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">check_conflicts</span><span class="p">()</span>
+    <span class="c1"># An un-importable app is an error, not a warning: `serve` would refuse to</span>
+    <span class="c1"># boot on it. Recording it rather than raising changes only the *shape* of</span>
+    <span class="c1"># the report — every healthy app still gets validated and listed.</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="n">_import_error_lines</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="o">+</span> <span class="n">config</span><span class="o">.</span><span class="n">check_conflicts</span><span class="p">()</span>
     <span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">validate_build</span><span class="p">(</span><span class="n">app</span><span class="p">))</span>
@@ -338,7 +368,9 @@
 <span class="sd">        apps_dirs: Comma-separated container directories.</span>
 <span class="sd">        app_dirs: Comma-separated individual app directories.</span>
 <span class="sd">    """</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span>
+        <span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="n">_DIAGNOSTIC_IMPORT_POLICY</span>
+    <span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"No apps discovered."</span><span class="p">)</span>
@@ -373,7 +405,14 @@
             <span class="nb">print</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">route_w</span><span class="si">}}</span><span class="s2">  "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">app_type</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">type_w</span><span class="si">}}</span><span class="s2">  </span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
+
+    <span class="n">import_errors</span> <span class="o">=</span> <span class="n">_import_error_lines</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">import_errors</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Un-importable apps (they are listed above but will not mount):"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">import_errors</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
 
 
@@ -531,6 +570,10 @@
 <span class="sd">    HTTP probes run when ``--base-url`` is given, against ``/auth/csrf``,</span>
 <span class="sd">    each app's frontend, and each app's API prefix.</span>
 
+<span class="sd">    An app whose entry module cannot be imported is reported as a ``FAIL``</span>
+<span class="sd">    check naming the app and its exception class, rather than taking the</span>
+<span class="sd">    doctor down with a traceback before it checks anything else.</span>
+
 <span class="sd">    Exits nonzero if any check fails. Intended as a post-deploy smoke tool.</span>
 
 <span class="sd">    Args:</span>
@@ -558,7 +601,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">_load_envfile</span><span class="p">(</span><span class="n">envfile</span><span class="p">):</span>
             <span class="n">skip_env_checks</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span>
+        <span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="n">_DIAGNOSTIC_IMPORT_POLICY</span>
+    <span class="p">)</span>
     <span class="n">app_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">apps</span><span class="p">:</span>
         <span class="n">app_filter</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apps</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
@@ -612,7 +657,9 @@
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">appmeta</span>
 
-    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span><span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">)</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">_build_config</span><span class="p">(</span>
+        <span class="n">apps_dir</span><span class="p">,</span> <span class="n">apps_dirs</span><span class="p">,</span> <span class="n">app_dirs</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="n">_DIAGNOSTIC_IMPORT_POLICY</span>
+    <span class="p">)</span>
     <span class="n">default_icon</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">app_meta</span><span class="o">.</span><span class="n">default_icon</span>
 
     <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>

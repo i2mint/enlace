@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.discover &mdash; enlace 0.1.27 documentation</title>
+  <title>enlace.discover &mdash; enlace 0.1.28 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=dc233e31"></script>
+      <script src="../../_static/documentation_options.js?v=34399df3"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -121,6 +121,12 @@
 <p>Walks an apps directory, discovers backend entry points and frontend assets,
 detects app types, loads per-app TOML overrides, and returns validated AppConfig
 objects with provenance tracking.</p>
+<p>Discovering an <code class="docutils literal notranslate"><span class="pre">asgi</span></code>-mode app <em>imports</em> its entry module, so a single broken
+app can take discovery down — and every CLI verb discovers first. The
+<code class="docutils literal notranslate"><span class="pre">on_import_error</span></code> policy (<code class="docutils literal notranslate"><span class="pre">&quot;raise&quot;</span></code>, the default and historical behaviour,
+or <code class="docutils literal notranslate"><span class="pre">&quot;record&quot;</span></code>) decides which happens: booting must still refuse a broken app,
+but the diagnostic verbs need to survive one in order to report it. See
+<a class="reference internal" href="#enlace.discover.discover_apps" title="enlace.discover.discover_apps"><code class="xref py py-func docutils literal notranslate"><span class="pre">discover_apps()</span></code></a>.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.discover.AppDiscoverer">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">AppDiscoverer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/discover.html#AppDiscoverer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.AppDiscoverer" title="Link to this definition"></a></dt>
@@ -129,13 +135,19 @@ objects with provenance tracking.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.discover.ConventionDiscoverer">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">ConventionDiscoverer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conventions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.ConventionsConfig" title="enlace.base.ConventionsConfig"><span class="pre">ConventionsConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/discover.html#ConventionDiscoverer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.ConventionDiscoverer" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">ConventionDiscoverer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conventions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.ConventionsConfig" title="enlace.base.ConventionsConfig"><span class="pre">ConventionsConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_import_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'raise'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'record'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'raise'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/discover.html#ConventionDiscoverer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.ConventionDiscoverer" title="Link to this definition"></a></dt>
 <dd><p>Discovers apps by filesystem conventions.</p>
 <p>Walks the apps directory, finds entry points, detects app types,
 loads TOML overrides, and returns validated AppConfig objects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conventions</strong> – Meta-conventions controlling discovery behavior.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conventions</strong> – Meta-conventions controlling discovery behavior.</p></li>
+<li><p><strong>on_import_error</strong> – What to do when an app’s entry module fails to
+import. <code class="docutils literal notranslate"><span class="pre">&quot;raise&quot;</span></code> (default) propagates, as it always has;
+<code class="docutils literal notranslate"><span class="pre">&quot;record&quot;</span></code> stores an <code class="docutils literal notranslate"><span class="pre">AppImportError</span></code> on the app’s config
+and carries on with the remaining apps.</p></li>
+</ul>
 </dd>
 </dl>
 <dl class="py method">
@@ -172,14 +184,24 @@ this treats app_dir itself as the app directory.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.discover.discover_apps">
-<span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">discover_apps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></span><a class="reference internal" href="../../_modules/enlace/discover.html#discover_apps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.discover_apps" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">discover_apps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_import_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'raise'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'record'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'raise'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><span class="pre">PlatformConfig</span></a></span></span><a class="reference internal" href="../../_modules/enlace/discover.html#discover_apps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.discover_apps" title="Link to this definition"></a></dt>
 <dd><p>High-level discovery: load config, discover apps, check conflicts.</p>
 <p>Iterates over all configured source directories:
 - <code class="docutils literal notranslate"><span class="pre">config.apps_dirs</span></code>: container directories (walk children)
 - <code class="docutils literal notranslate"><span class="pre">config.app_dirs</span></code>: individual app directories (discover directly)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> – Platform configuration. If None, loads from platform.toml.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> – Platform configuration. If None, loads from platform.toml.</p></li>
+<li><p><strong>on_import_error</strong> – What to do when an <code class="docutils literal notranslate"><span class="pre">asgi</span></code>-mode app’s entry module
+fails to import. <code class="docutils literal notranslate"><span class="pre">&quot;raise&quot;</span></code> (default) propagates, exactly as
+before this argument existed — what <code class="docutils literal notranslate"><span class="pre">serve</span></code> and <code class="docutils literal notranslate"><span class="pre">build_backend</span></code>
+want, because a gateway must not boot pretending an app is fine.
+<code class="docutils literal notranslate"><span class="pre">&quot;record&quot;</span></code> records the failure on that app’s <code class="docutils literal notranslate"><span class="pre">AppConfig</span></code>
+(<code class="docutils literal notranslate"><span class="pre">import_error</span></code>) and keeps discovering, so a diagnostic caller
+can <em>report</em> the broken app alongside the healthy ones instead of
+dying on it.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>PlatformConfig with apps populated.</p>
