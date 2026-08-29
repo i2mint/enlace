@@ -214,7 +214,7 @@ dependency — or any exception raised at module scope — is a discovery failur
 What happens next is a policy you choose:
 
 ```python
-discover_apps(config)                            # raise (default)
+discover_apps(config)  # raise (default)
 discover_apps(config, on_import_error="record")  # record and carry on
 ```
 
