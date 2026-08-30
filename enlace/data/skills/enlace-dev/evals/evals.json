@@ -16,7 +16,7 @@
         "An init() function is defined in __main__.py and added to the list passed to the dispatch call at the bottom of the file",
         "The underlying implementation is importable from enlace (exported in __init__.py), not only reachable through the CLI",
         "It writes a default platform.toml and creates an apps/ directory",
-        "No new argh usage is introduced beyond the single existing dispatch call"
+        "No new CLI-library usage (`argh` today, `cw` after the migration) is introduced beyond the single existing dispatch call"
       ]
     }
   ]
