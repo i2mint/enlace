@@ -62,7 +62,7 @@ enlace/
 ├── compose.py     # build_backend(): mounts sub-apps, cascade_lifespan
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
 ├── serve.py       # Uvicorn subprocess orchestration, signal forwarding
-├── __main__.py    # CLI: one dispatch list of verb functions (argh today; migrating)
+├── __main__.py    # CLI: one dispatch list of verb functions (argh today; migrating to cw)
 ├── __init__.py    # Public API facade
 └── tests/         # Unit tests (test_discover.py, test_compose.py)
 ```
@@ -180,8 +180,9 @@ both the happy path and error cases (import errors, conflicts, missing files).
    `__main__.py`. **That list is the SSOT for the CLI surface**: a verb that is
    not in it does not exist. Do not introduce `argh` anywhere else in the
    package; the dispatch call is argh today (LGPL-3.0-or-later) and is being
-   migrated off, so what you should be matching is the *shape* — plain
-   functions, one list — not argh's API.
+   migrated to **`cw`** (MIT, zero runtime dependencies), so what you should be
+   matching is the *shape* — plain functions, one list — not the dispatcher's
+   API. Adding a verb must not require touching the dispatch call at all.
 5. Run `enlace check` before and after to verify nothing breaks
 
 ### CLI grammar trap (proven — read before changing the dispatch call)
@@ -199,10 +200,22 @@ silently reinterprets `enlace build --app-name x` as the positional form
 `enlace build x`. That is a same-exit-code, wrong-behaviour change, so tests
 that only check "did it run" will not catch it.
 
-Gate any replacement on golden output for `enlace build --help` and a real
-`enlace build --app-name <name> --dry-run` invocation. `enlace doctor` is also
-load-bearing: downstream deploy smoke tests shell out to `enlace doctor --json`
-and judge its output, so its grammar and its JSON shape are both contracts.
+**The replacement is `cw`, and its default lands on the right side of this
+trap** — but only its default. `cw.dispatch(FUNCS)` uses `cw.ARGH`, which
+reproduces `argh.dispatch_commands`' rule (*a parameter with a default becomes
+an option*), so `--app-name` stays an option and `enlace build --help` does not
+move. `convention=cw.MODERN` — and equally `cw.BY_NAME_IF_KWONLY` — is exactly
+the rule described above and *would* turn `app-name` into a positional. Verified
+on this signature. So: migrate with the default, and do not "modernise" the
+convention in the same change.
 
-<!-- argh-migration stage 2: name the house CLI adapter in the layout comment,
-     in step 4, and in evals/evals.json. Marker string: argh-migration -->
+`main()` also becomes `raise SystemExit(cw.dispatch([...]))`: `argh` exited by
+itself, `cw` *returns* the exit code, and dropping the `SystemExit` turns every
+usage error into exit 0.
+
+Gate any replacement on golden output for `enlace build --help` and a real
+`enlace build --app-name <name> --dry-run` invocation — `cw.testing.characterize`
+records that golden from the current argh code and `replay` diffs it after.
+`enlace doctor` is also load-bearing: downstream deploy smoke tests shell out to
+`enlace doctor --json` and judge its output, so its grammar and its JSON shape
+are both contracts.
