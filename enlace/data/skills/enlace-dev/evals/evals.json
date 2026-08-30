@@ -10,8 +10,14 @@
     {
       "id": 2,
       "prompt": "The show-config command currently works but it re-does the full discovery+import every time. I want to add a new enlace init command that creates a platform.toml and apps/ directory in the current directory. Keep it simple.",
-      "expected_output": "The agent adds an init() function, creates a default platform.toml and apps/ directory, registers the command in __main__.py's dispatch list, and exports from __init__.py. Follows the argh pattern used by existing commands.",
-      "files": []
+      "expected_output": "The agent adds an init() function, creates a default platform.toml and apps/ directory, registers the command in __main__.py's dispatch list, and exports the underlying function from __init__.py. Matches the structure of the existing verbs: a thin wrapper function in __main__.py over a public function, added to the single list passed to the dispatch call — not a second dispatch mechanism.",
+      "files": [],
+      "expectations": [
+        "An init() function is defined in __main__.py and added to the list passed to the dispatch call at the bottom of the file",
+        "The underlying implementation is importable from enlace (exported in __init__.py), not only reachable through the CLI",
+        "It writes a default platform.toml and creates an apps/ directory",
+        "No new argh usage is introduced beyond the single existing dispatch call"
+      ]
     }
   ]
 }
