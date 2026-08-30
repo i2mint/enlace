@@ -62,7 +62,7 @@ enlace/
 ├── compose.py     # build_backend(): mounts sub-apps, cascade_lifespan
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
 ├── serve.py       # Uvicorn subprocess orchestration, signal forwarding
-├── __main__.py    # CLI via argh.dispatch_commands
+├── __main__.py    # CLI: one dispatch list of verb functions (argh today; migrating)
 ├── __init__.py    # Public API facade
 └── tests/         # Unit tests (test_discover.py, test_compose.py)
 ```
@@ -174,6 +174,35 @@ both the happy path and error cases (import errors, conflicts, missing files).
 1. Create `enlace/{module}.py`
 2. Add exports to `enlace/__init__.py`
 3. Create `enlace/tests/test_{module}.py`
-4. If it adds CLI commands, register them in `enlace/__main__.py` via
-   `argh.dispatch_commands`
+4. If it adds CLI commands: write each verb as a plain function in
+   `enlace/__main__.py` — a thin wrapper over the public function you exported
+   in step 2 — and add it to the single dispatch list at the bottom of
+   `__main__.py`. **That list is the SSOT for the CLI surface**: a verb that is
+   not in it does not exist. Do not introduce `argh` anywhere else in the
+   package; the dispatch call is argh today (LGPL-3.0-or-later) and is being
+   migrated off, so what you should be matching is the *shape* — plain
+   functions, one list — not argh's API.
 5. Run `enlace check` before and after to verify nothing breaks
+
+### CLI grammar trap (proven — read before changing the dispatch call)
+
+`build(app_name="", *, dry_run=False, ...)` is the live signature of `enlace
+build`. Under `argh.dispatch_commands` it renders `--app-name` as an *option*.
+The identical signature under `argh.add_commands` raises
+`ArgumentNameMappingError` ("not keyword-only but has a default value"), because
+`add_commands` applies the post-0.30 `BY_NAME_IF_KWONLY` policy and
+`dispatch_commands` does not.
+
+The consequence for anyone replacing the dispatch call: an adapter whose rule is
+"keyword-only parameters become options, defaulted positionals stay positional"
+silently reinterprets `enlace build --app-name x` as the positional form
+`enlace build x`. That is a same-exit-code, wrong-behaviour change, so tests
+that only check "did it run" will not catch it.
+
+Gate any replacement on golden output for `enlace build --help` and a real
+`enlace build --app-name <name> --dry-run` invocation. `enlace doctor` is also
+load-bearing: downstream deploy smoke tests shell out to `enlace doctor --json`
+and judge its output, so its grammar and its JSON shape are both contracts.
+
+<!-- argh-migration stage 2: name the house CLI adapter in the layout comment,
+     in step 4, and in evals/evals.json. Marker string: argh-migration -->
