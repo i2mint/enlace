@@ -18,7 +18,7 @@ enlace (the platform)          your app
 ├── fastapi                    ├── fastapi
 ├── uvicorn                    ├── pandas (or whatever)
 ├── pydantic                   └── ... your domain libs
-└── argh
+└── cw
                                ← no dependency here
 ```
 
