@@ -458,7 +458,12 @@ Switching backends requires **no app code changes** — only `platform.toml` upd
 
 ## 10. CLI Interface
 
-enlace uses `argh` for CLI dispatch, following the `python-package-architecture` conventions.
+enlace uses `cw` for CLI dispatch, following the `python-package-architecture`
+conventions. (This spec was written against `argh`; the dispatcher was swapped for
+`cw` — MIT, zero runtime dependencies — with the CLI grammar held byte-identical.
+`cw`'s default convention reproduces `argh.dispatch_commands`, so every command line
+in this section is still the command line enlace accepts. See the `enlace-dev`
+skill's "CLI grammar trap" for the one rule that must not be relaxed.)
 
 ### 10.1 Top-Level Commands
 
@@ -706,7 +711,7 @@ TOML is the Python ecosystem standard (PEP 518, `pyproject.toml`). Python 3.11+ 
 
 Automatic HTTPS with zero configuration. Native WebSocket proxying. Simpler config syntax. See `deployment_observability.md` §"Caddy wins".
 
-### Why `argh` for CLI?
+### Why `cw` for CLI?
 
 Follows established conventions (see `python-package-architecture` skill). Functions are commands. Type annotations are argument types. Docstrings are help text. Zero boilerplate.
 

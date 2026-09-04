@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-import argh
+import cw
 
 from enlace.base import PlatformConfig
 from enlace.diagnose import diagnose_app
@@ -596,19 +596,30 @@ def app_meta(
         print()
 
 
+#: The SSOT for the CLI surface: a verb that is not in this list does not exist.
+COMMANDS = [
+    serve,
+    show_config,
+    check,
+    list_apps,
+    app_meta,
+    build,
+    diagnose,
+    doctor,
+]
+
+
 def main():
-    argh.dispatch_commands(
-        [
-            serve,
-            show_config,
-            check,
-            list_apps,
-            app_meta,
-            build,
-            diagnose,
-            doctor,
-        ]
-    )
+    """Dispatch the ``enlace`` command.
+
+    ``cw.dispatch`` *returns* the exit code where ``argh`` exited by itself, so the
+    ``SystemExit`` is load-bearing: without it every usage error would exit 0.
+
+    The convention is cw's default (:data:`cw.ARGH`) on purpose — it is what keeps
+    ``build``'s defaulted positional ``app_name`` rendering as ``--app-name``. See the
+    "CLI grammar trap" section of the ``enlace-dev`` skill before changing it.
+    """
+    raise SystemExit(cw.dispatch(COMMANDS))
 
 
 if __name__ == "__main__":

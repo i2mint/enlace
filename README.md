@@ -91,7 +91,7 @@ enlace (the platform)          your app (Python, Node, Go, ...)
 ├── fastapi                    ├── fastapi (or express, gin, ...)
 ├── uvicorn                    ├── pandas (or whatever you need)
 ├── pydantic                   └── ... your domain libs
-├── argh
+├── cw
 └── httpx (optional, for proxy)
                                ← no arrow here: your app does NOT import enlace
 ```

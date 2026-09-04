@@ -62,7 +62,7 @@ enlace/
 ├── compose.py     # build_backend(): mounts sub-apps, cascade_lifespan
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
 ├── serve.py       # Uvicorn subprocess orchestration, signal forwarding
-├── __main__.py    # CLI: one dispatch list of verb functions (argh today; migrating to cw)
+├── __main__.py    # CLI: one dispatch list of verb functions (cw)
 ├── __init__.py    # Public API facade
 └── tests/         # Unit tests (test_discover.py, test_compose.py)
 ```
@@ -178,17 +178,18 @@ both the happy path and error cases (import errors, conflicts, missing files).
    `enlace/__main__.py` — a thin wrapper over the public function you exported
    in step 2 — and add it to the single dispatch list at the bottom of
    `__main__.py`. **That list is the SSOT for the CLI surface**: a verb that is
-   not in it does not exist. Do not introduce `argh` anywhere else in the
-   package; the dispatch call is argh today (LGPL-3.0-or-later) and is being
-   migrated to **`cw`** (MIT, zero runtime dependencies), so what you should be
-   matching is the *shape* — plain functions, one list — not the dispatcher's
-   API. Adding a verb must not require touching the dispatch call at all.
+   not in it does not exist. Do not introduce a CLI library anywhere else in
+   the package; the single dispatch call is **`cw`** (MIT, zero runtime
+   dependencies), and what you should be matching is the *shape* — plain
+   functions, one list — not the dispatcher's API. Adding a verb must not
+   require touching the dispatch call at all.
 5. Run `enlace check` before and after to verify nothing breaks
 
 ### CLI grammar trap (proven — read before changing the dispatch call)
 
 `build(app_name="", *, dry_run=False, ...)` is the live signature of `enlace
-build`. Under `argh.dispatch_commands` it renders `--app-name` as an *option*.
+build`: a *defaulted positional*. Under `argh.dispatch_commands` — the call this
+package used before the `cw` migration — it rendered `--app-name` as an *option*.
 The identical signature under `argh.add_commands` raises
 `ArgumentNameMappingError` ("not keyword-only but has a default value"), because
 `add_commands` applies the post-0.30 `BY_NAME_IF_KWONLY` policy and
@@ -200,22 +201,25 @@ silently reinterprets `enlace build --app-name x` as the positional form
 `enlace build x`. That is a same-exit-code, wrong-behaviour change, so tests
 that only check "did it run" will not catch it.
 
-**The replacement is `cw`, and its default lands on the right side of this
-trap** — but only its default. `cw.dispatch(FUNCS)` uses `cw.ARGH`, which
-reproduces `argh.dispatch_commands`' rule (*a parameter with a default becomes
-an option*), so `--app-name` stays an option and `enlace build --help` does not
-move. `convention=cw.MODERN` — and equally `cw.BY_NAME_IF_KWONLY` — is exactly
-the rule described above and *would* turn `app-name` into a positional. Verified
-on this signature. So: migrate with the default, and do not "modernise" the
-convention in the same change.
+**`cw` lands on the right side of this trap — but only on its default.**
+`cw.dispatch(COMMANDS)` uses `cw.ARGH`, which reproduces `argh.dispatch_commands`'
+rule (*a parameter with a default becomes an option*), so `--app-name` stayed an
+option and `enlace build --help` did not move across the migration.
+`convention=cw.MODERN` — and equally `cw.BY_NAME_IF_KWONLY` — is exactly the rule
+described above and *would* turn `app-name` into the positional `enlace build
+<app-name>`. That reinterpretation runs, exits 0, and silently means something
+else. Verified on this signature, in both directions. **So: do not "modernise"
+the convention.** The dispatch call carries no `convention=` argument, and that
+absence is deliberate.
 
-`main()` also becomes `raise SystemExit(cw.dispatch([...]))`: `argh` exited by
-itself, `cw` *returns* the exit code, and dropping the `SystemExit` turns every
-usage error into exit 0.
+`main()` is `raise SystemExit(cw.dispatch(COMMANDS))`: `argh` exited by itself,
+`cw` *returns* the exit code, and dropping the `SystemExit` turns every usage
+error into exit 0 — invisible to every test that only checks "did it run".
 
-Gate any replacement on golden output for `enlace build --help` and a real
-`enlace build --app-name <name> --dry-run` invocation — `cw.testing.characterize`
-records that golden from the current argh code and `replay` diffs it after.
-`enlace doctor` is also load-bearing: downstream deploy smoke tests shell out to
-`enlace doctor --json` and judge its output, so its grammar and its JSON shape
-are both contracts.
+Both halves are pinned by `tests/test_cli_surface.py`, which asserts that
+`--app-name x` is accepted AND that `build x` is rejected, and that usage errors
+exit 2. Both assertions were shown to fail under the wrong convention and the
+missing `SystemExit` respectively before being committed. `enlace doctor` is also
+load-bearing: downstream deploy smoke tests shell out to `enlace doctor --json`
+and judge its output, so its grammar and its JSON shape are both contracts, and
+that test pins them too.
