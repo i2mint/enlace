@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.30 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -15,7 +15,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=73657eb8"></script>
+      <script src="../../_static/documentation_options.js?v=d71dfaa1"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -51,12 +51,14 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../enlace.html">enlace</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">enlace.__main__</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.COMMANDS"><code class="docutils literal notranslate"><span class="pre">COMMANDS</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.app_meta"><code class="docutils literal notranslate"><span class="pre">app_meta()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.diagnose"><code class="docutils literal notranslate"><span class="pre">diagnose()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.doctor"><code class="docutils literal notranslate"><span class="pre">doctor()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.list_apps"><code class="docutils literal notranslate"><span class="pre">list_apps()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#enlace.__main__.show_config"><code class="docutils literal notranslate"><span class="pre">show_config()</span></code></a></li>
 </ul>
 </li>
@@ -125,6 +127,17 @@
 <span class="n">enlace</span> <span class="nb">list</span><span class="o">-</span><span class="n">apps</span>          <span class="c1"># List discovered apps</span>
 </pre></div>
 </div>
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.__main__.COMMANDS">
+<span class="sig-prename descclassname"><span class="pre">enlace.__main__.</span></span><span class="sig-name descname"><span class="pre">COMMANDS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[&lt;function</span> <span class="pre">serve&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">show_config&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">check&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">list_apps&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">app_meta&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">build&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">diagnose&gt;,</span> <span class="pre">&lt;function</span> <span class="pre">doctor&gt;]</span></span><a class="headerlink" href="#enlace.__main__.COMMANDS" title="Link to this definition"></a></dt>
+<dd><p>a verb that is not in this list does not exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The SSOT for the CLI surface</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.__main__.app_meta">
 <span class="sig-prename descclassname"><span class="pre">enlace.__main__.</span></span><span class="sig-name descname"><span class="pre">app_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">json</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app_dirs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/__main__.html#app_meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.__main__.app_meta" title="Link to this definition"></a></dt>
@@ -251,6 +264,17 @@ authoritative signal.</p></li>
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.__main__.main">
+<span class="sig-prename descclassname"><span class="pre">enlace.__main__.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/enlace/__main__.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.__main__.main" title="Link to this definition"></a></dt>
+<dd><p>Dispatch the <code class="docutils literal notranslate"><span class="pre">enlace</span></code> command.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cw.dispatch</span></code> <em>returns</em> the exit code where <code class="docutils literal notranslate"><span class="pre">argh</span></code> exited by itself, so the
+<code class="docutils literal notranslate"><span class="pre">SystemExit</span></code> is load-bearing: without it every usage error would exit 0.</p>
+<p>The convention is cw’s default (<code class="xref py py-data docutils literal notranslate"><span class="pre">cw.ARGH</span></code>) on purpose — it is what keeps
+<code class="docutils literal notranslate"><span class="pre">build</span></code>’s defaulted positional <code class="docutils literal notranslate"><span class="pre">app_name</span></code> rendering as <code class="docutils literal notranslate"><span class="pre">--app-name</span></code>. See the
+“CLI grammar trap” section of the <code class="docutils literal notranslate"><span class="pre">enlace-dev</span></code> skill before changing it.</p>
 </dd></dl>
 
 <dl class="py function">

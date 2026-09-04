@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>enlace.__main__ &mdash; enlace 0.1.30 documentation</title>
+  <title>enlace.__main__ &mdash; enlace 0.1.31 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -14,7 +14,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=73657eb8"></script>
+      <script src="../../_static/documentation_options.js?v=d71dfaa1"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
@@ -121,7 +121,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">argh</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cw</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlatformConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.diagnose</span><span class="w"> </span><span class="kn">import</span> <span class="n">diagnose_app</span>
@@ -724,19 +724,33 @@
 
 
 
+<span class="c1">#: The SSOT for the CLI surface: a verb that is not in this list does not exist.</span>
+<span class="n">COMMANDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">serve</span><span class="p">,</span>
+    <span class="n">show_config</span><span class="p">,</span>
+    <span class="n">check</span><span class="p">,</span>
+    <span class="n">list_apps</span><span class="p">,</span>
+    <span class="n">app_meta</span><span class="p">,</span>
+    <span class="n">build</span><span class="p">,</span>
+    <span class="n">diagnose</span><span class="p">,</span>
+    <span class="n">doctor</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../module_docs/enlace/__main__.html#enlace.__main__.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-    <span class="n">argh</span><span class="o">.</span><span class="n">dispatch_commands</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="n">serve</span><span class="p">,</span>
-            <span class="n">show_config</span><span class="p">,</span>
-            <span class="n">check</span><span class="p">,</span>
-            <span class="n">list_apps</span><span class="p">,</span>
-            <span class="n">app_meta</span><span class="p">,</span>
-            <span class="n">build</span><span class="p">,</span>
-            <span class="n">diagnose</span><span class="p">,</span>
-            <span class="n">doctor</span><span class="p">,</span>
-        <span class="p">]</span>
-    <span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Dispatch the ``enlace`` command.</span>
+
+<span class="sd">    ``cw.dispatch`` *returns* the exit code where ``argh`` exited by itself, so the</span>
+<span class="sd">    ``SystemExit`` is load-bearing: without it every usage error would exit 0.</span>
+
+<span class="sd">    The convention is cw's default (:data:`cw.ARGH`) on purpose — it is what keeps</span>
+<span class="sd">    ``build``'s defaulted positional ``app_name`` rendering as ``--app-name``. See the</span>
+<span class="sd">    "CLI grammar trap" section of the ``enlace-dev`` skill before changing it.</span>
+<span class="sd">    """</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="n">cw</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">COMMANDS</span><span class="p">))</span></div>
+
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
