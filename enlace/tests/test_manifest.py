@@ -1,6 +1,8 @@
 """Tests for the deploy manifest layer (schema, endpoints, headers)."""
 
 import json
+import os
+from datetime import datetime
 
 import pytest
 from starlette.testclient import TestClient
@@ -186,6 +188,83 @@ def test_platform_meta_endpoint(single_app_dir, manifest_dir):
     resp = client.get("/_meta")
     assert resp.status_code == 200
     assert resp.json()["platform"] == "thorwhalen"
+
+
+def test_platform_meta_reflects_manifest_rewritten_after_startup(
+    single_app_dir, manifest_dir
+):
+    """/_meta must re-read the manifest instead of serving a process-start snapshot.
+
+    See i2mint/enlace#42: jobs other than a full deploy legitimately rewrite the
+    platform manifest while the backend is running, and a snapshot taken at
+    compose time reports the state the box left, with nothing in the payload to
+    say so.
+    """
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, app_source={"sha": "oldsha"})
+    config = PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    config = discover_apps(config)
+    client = TestClient(build_backend(config))
+
+    assert client.get("/_meta").json()["app_source"]["sha"] == "oldsha"
+
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, app_source={"sha": "newsha"})
+    # Push the mtime forward explicitly: two writes this close together can land
+    # inside one filesystem timestamp tick, which would make the test flaky.
+    path = manifest_dir / f"{PLATFORM_MANIFEST_NAME}.json"
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+
+    assert client.get("/_meta").json()["app_source"]["sha"] == "newsha"
+
+
+def test_platform_meta_picks_up_a_manifest_written_after_startup(
+    single_app_dir, manifest_dir
+):
+    # manifest_dir exists but is empty at compose time: the stub is served, and
+    # the real manifest is picked up once it appears.
+    config = PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    config = discover_apps(config)
+    client = TestClient(build_backend(config))
+
+    assert client.get("/_meta").json()["platform"] is None
+
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, platform="thorwhalen")
+
+    assert client.get("/_meta").json()["platform"] == "thorwhalen"
+
+
+def test_platform_meta_reports_manifest_mtime(single_app_dir, manifest_dir):
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, platform="thorwhalen")
+    config = PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    config = discover_apps(config)
+    client = TestClient(build_backend(config))
+
+    reported = client.get("/_meta").json()["manifest_mtime"]
+    assert reported is not None
+    parsed = datetime.fromisoformat(reported.replace("Z", "+00:00"))
+    on_disk = (manifest_dir / f"{PLATFORM_MANIFEST_NAME}.json").stat().st_mtime
+    assert abs(parsed.timestamp() - on_disk) < 1
+
+
+def test_platform_meta_mtime_is_none_without_manifest_file(
+    single_app_dir, manifest_dir
+):
+    # manifest_dir is configured but holds no platform manifest: the payload
+    # still carries the key, so a reader never has to guess whether it exists.
+    config = PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    config = discover_apps(config)
+    client = TestClient(build_backend(config))
+
+    assert client.get("/_meta").json()["manifest_mtime"] is None
+
+
+def test_platform_meta_mtime_is_none_without_manifest_dir(single_app_dir, monkeypatch):
+    monkeypatch.delenv("ENLACE_MANIFEST_DIR", raising=False)
+    config = PlatformConfig(apps_dir=single_app_dir)
+    config = discover_apps(config)
+    client = TestClient(build_backend(config))
+
+    assert client.get("/_meta").json()["manifest_mtime"] is None
 
 
 def test_meta_endpoint_returns_stub_without_manifest_file(single_app_dir, manifest_dir):

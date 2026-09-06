@@ -19,6 +19,7 @@ import logging
 import os
 import sys
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional, Sequence
 
@@ -36,6 +37,7 @@ from enlace.frontend import (
 )
 from enlace.gzip_selective import SelectiveGZipMiddleware
 from enlace.manifest import (
+    PLATFORM_MANIFEST_NAME,
     DeployHeadersMiddleware,
     DeployManifest,
     DeployMetaTagMiddleware,
@@ -146,7 +148,14 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         for app in config.apps
     }
     _stamp_updated_at(config, per_app_manifests)
-    _add_meta_routes(parent, config, platform_manifest, per_app_manifests)
+    _add_meta_routes(
+        parent,
+        config,
+        platform_manifest,
+        per_app_manifests,
+        manifest_dir=manifest_dir,
+        enlace_version=enlace_version,
+    )
 
     # landing_app takes precedence over the default Python index. When set
     # to a discovered app's name, the later frontend-mount loop will mount
@@ -275,11 +284,86 @@ def _detect_enlace_version() -> Optional[str]:
         return None
 
 
+class _MtimeCachedManifest:
+    """The platform manifest as it is on disk *now*, re-read when the file changes.
+
+    ``/_meta`` is a diagnostic endpoint, so a payload captured once at compose
+    time is the wrong answer. Anything that legitimately rewrites the manifest
+    while the backend runs — a connector refresh with its own unit, say — stays
+    invisible until a restart, and nothing in the response distinguishes "still
+    current" from "captured hours ago". See
+    https://github.com/i2mint/enlace/issues/42.
+
+    Reads are keyed on the manifest file's ``(mtime, size)``: self-invalidating,
+    and one ``stat`` per request on the cache-hit path. With no manifest
+    directory configured, or no file there, the compose-time manifest is served
+    unchanged — which is exactly the previous behaviour.
+    """
+
+    def __init__(
+        self,
+        manifest: DeployManifest,
+        *,
+        manifest_dir: Optional[Path] = None,
+        enlace_version: Optional[str] = None,
+    ):
+        self._manifest = manifest
+        self._manifest_dir = manifest_dir
+        self._enlace_version = enlace_version
+        self._path = (
+            None
+            if manifest_dir is None
+            else manifest_dir / f"{PLATFORM_MANIFEST_NAME}.json"
+        )
+        # None until the first request, so the first read refreshes rather than
+        # trusting a snapshot taken before the routes even existed.
+        self._stat_key: Optional[tuple[int, int]] = None
+
+    def payload(self) -> dict:
+        """Return the manifest as a dict, plus the ``manifest_mtime`` it reflects.
+
+        ``manifest_mtime`` is ISO-8601 UTC, or ``None`` when there is no manifest
+        file to date the answer by — so a reader is never left guessing how old
+        the payload is.
+        """
+        st = self._stat()
+        stat_key = None if st is None else (st.st_mtime_ns, st.st_size)
+        if stat_key != self._stat_key:
+            self._manifest = load_platform_manifest(
+                self._manifest_dir, enlace_version=self._enlace_version
+            )
+            self._stat_key = stat_key
+        payload = self._manifest.model_dump()
+        payload["manifest_mtime"] = None if st is None else _iso_utc(st.st_mtime)
+        return payload
+
+    def _stat(self) -> Optional[os.stat_result]:
+        """``stat`` the manifest file, or ``None`` if there is nothing to stat."""
+        if self._path is None:
+            return None
+        try:
+            return self._path.stat()
+        except OSError:
+            return None
+
+
+def _iso_utc(timestamp: float) -> str:
+    """Format a POSIX timestamp as ISO-8601 UTC, matching the manifest's own style."""
+    return (
+        datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
+
+
 def _add_meta_routes(
     parent: FastAPI,
     config: PlatformConfig,
     platform_manifest: DeployManifest,
     per_app_manifests: dict[str, DeployManifest],
+    *,
+    manifest_dir: Optional[Path] = None,
+    enlace_version: Optional[str] = None,
 ) -> None:
     """Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.
 
@@ -287,11 +371,21 @@ def _add_meta_routes(
     the API mount (``{route_prefix}/_meta``) and the frontend mount
     (``/{name}/_meta``). Browser JS commonly fetches the latter with a
     relative URL from the SPA root.
+
+    ``manifest_dir`` and ``enlace_version`` let the platform ``/_meta`` re-read
+    the manifest when it changes on disk instead of serving the compose-time
+    snapshot (see ``_MtimeCachedManifest``). Omitting them serves that snapshot,
+    as before.
     """
+    platform_meta = _MtimeCachedManifest(
+        platform_manifest,
+        manifest_dir=manifest_dir,
+        enlace_version=enlace_version,
+    )
 
     @parent.get("/_meta", include_in_schema=False)
     async def _platform_meta() -> dict:
-        return platform_manifest.model_dump()
+        return platform_meta.payload()
 
     for app_config in config.apps:
         manifest = per_app_manifests.get(app_config.name)
