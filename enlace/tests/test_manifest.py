@@ -217,6 +217,35 @@ def test_platform_meta_reflects_manifest_rewritten_after_startup(
     assert client.get("/_meta").json()["app_source"]["sha"] == "newsha"
 
 
+def test_platform_meta_survives_a_schema_invalid_rewrite(single_app_dir, manifest_dir):
+    """A rewrite /_meta can't validate must degrade, not turn /_meta into a 500.
+
+    Re-reading at request time means any job that rewrites the manifest can now
+    reach this code path. A value the schema rejects (here an unknown
+    ``deployer``) degrades to the stub, the same way a corrupt JSON file does,
+    and recovers as soon as a valid manifest is written back.
+    """
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, platform="thorwhalen")
+    config = PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    config = discover_apps(config)
+    client = TestClient(build_backend(config))
+    assert client.get("/_meta").json()["platform"] == "thorwhalen"
+
+    path = manifest_dir / f"{PLATFORM_MANIFEST_NAME}.json"
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, deployer="connector-refresh")
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+
+    resp = client.get("/_meta")
+    assert resp.status_code == 200
+    assert resp.json()["platform"] is None  # the stub: nothing valid to report
+    assert resp.json()["manifest_mtime"] is not None
+
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, platform="thorwhalen", deployer="ci")
+    os.utime(path, (st.st_atime + 4, st.st_mtime + 4))
+    assert client.get("/_meta").json()["platform"] == "thorwhalen"
+
+
 def test_platform_meta_picks_up_a_manifest_written_after_startup(
     single_app_dir, manifest_dir
 ):
