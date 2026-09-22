@@ -44,8 +44,8 @@ class RevalidatingStaticFiles(StaticFiles):
     loading the *previous* build in full, and a correct deploy looks failed.
 
     HTML files (including SPA fallbacks to ``index.html``, ``304``
-    revalidations and an ``html=True`` ``404.html`` page) get ``Cache-Control: html_cache_control`` — ``no-cache``
-    by default: the browser may keep its copy but must revalidate, which the
+    revalidations and an ``html=True`` ``404.html`` page) get
+    ``Cache-Control: html_cache_control`` — ``no-cache`` by default: the browser may keep its copy but must revalidate, which the
     existing ``ETag`` makes a cheap ``304``. Non-HTML assets are untouched, and
     a ``Cache-Control`` already on the response is never overridden. Pass
     ``html_cache_control=None`` to opt out.
