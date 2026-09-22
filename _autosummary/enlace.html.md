@@ -400,6 +400,12 @@ The stub has just `app` (the name we were asked about) and
 `enlace_version` filled in. That keeps the diagnostic plumbing working
 even before any deploy tool starts writing manifests.
 
+A manifest file that exists but can’t be used – unreadable, corrupt JSON,
+not a JSON object, or valid JSON the schema rejects (e.g. an unknown
+`deployer`) – also yields the stub, so it can neither stop the backend
+from starting nor turn `/_meta` into a 500. It is logged, and the stub
+carries `extra[MANIFEST_ERROR_KEY]` saying why.
+
 * **Return type:**
   [`DeployManifest`](enlace.manifest.html.md#enlace.manifest.DeployManifest)
 

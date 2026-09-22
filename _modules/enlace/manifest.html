@@ -291,7 +291,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">ValidationError</span>
 
 <span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"enlace.manifest"</span><span class="p">)</span>
 
@@ -369,16 +369,29 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_read_manifest_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="c1"># Don't let a corrupt manifest crash the server — log and degrade.</span>
-        <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Failed to read manifest </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
+<span class="c1">#: ``extra`` key naming why an on-disk manifest was not used. It exists only</span>
+<span class="c1">#: when something is wrong, so a healthy ``/_meta`` is quiet and a degraded</span>
+<span class="c1">#: one cannot be mistaken for "no manifest was ever written".</span>
+<span class="n">MANIFEST_ERROR_KEY</span> <span class="o">=</span> <span class="s2">"manifest_error"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_manifest_error_summary</span><span class="p">(</span><span class="n">error</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A short, path-free description of why a manifest file was rejected.</span>
+
+<span class="sd">    It is served publicly at ``/_meta``, so an ``OSError`` contributes only its</span>
+<span class="sd">    ``strerror`` (never the server path), and a ``ValidationError`` only each</span>
+<span class="sd">    field location and message (never the offending input values).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">):</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'.'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">err</span><span class="p">[</span><span class="s1">'loc'</span><span class="p">]))</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'&lt;root&gt;'</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">'msg'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">error</span><span class="o">.</span><span class="n">errors</span><span class="p">(</span><span class="n">include_url</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">include_input</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">strerror</span> <span class="ow">or</span> <span class="s2">""</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">detail</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">detail</span><span class="si">}</span><span class="s2">"</span>
 
 
 <div class="viewcode-block" id="load_manifest">
@@ -394,16 +407,33 @@
 <span class="sd">    The stub has just ``app`` (the name we were asked about) and</span>
 <span class="sd">    ``enlace_version`` filled in. That keeps the diagnostic plumbing working</span>
 <span class="sd">    even before any deploy tool starts writing manifests.</span>
+
+<span class="sd">    A manifest file that exists but can't be used -- unreadable, corrupt JSON,</span>
+<span class="sd">    not a JSON object, or valid JSON the schema rejects (e.g. an unknown</span>
+<span class="sd">    ``deployer``) -- also yields the stub, so it can neither stop the backend</span>
+<span class="sd">    from starting nor turn ``/_meta`` into a 500. It is logged, and the stub</span>
+<span class="sd">    carries ``extra[MANIFEST_ERROR_KEY]`` saying why.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">manifest_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">manifest_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">.json"</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">_read_manifest_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"app"</span><span class="p">,</span> <span class="n">app_name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">enlace_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"enlace_version"</span><span class="p">):</span>
-                <span class="n">data</span><span class="p">[</span><span class="s2">"enlace_version"</span><span class="p">]</span> <span class="o">=</span> <span class="n">enlace_version</span>
-            <span class="k">return</span> <span class="n">DeployManifest</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">DeployManifest</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">)</span></div>
+    <span class="n">stub</span> <span class="o">=</span> <span class="n">DeployManifest</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app_name</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">manifest_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stub</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">manifest_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">.json"</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"expected a JSON object, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"app"</span><span class="p">,</span> <span class="n">app_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">enlace_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"enlace_version"</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">"enlace_version"</span><span class="p">]</span> <span class="o">=</span> <span class="n">enlace_version</span>
+        <span class="k">return</span> <span class="n">DeployManifest</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stub</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># ValidationError is a ValueError</span>
+        <span class="c1"># Don't let a bad manifest crash the server -- log and degrade, loudly.</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Unusable manifest </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">stub</span><span class="o">.</span><span class="n">extra</span><span class="p">[</span><span class="n">MANIFEST_ERROR_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">_manifest_error_summary</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stub</span></div>
 
 
 
@@ -650,7 +680,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=c83fd883"></script>
+</div><script src="../../_static/documentation_options.js?v=e88e4268"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

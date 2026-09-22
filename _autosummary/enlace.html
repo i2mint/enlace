@@ -821,6 +821,11 @@ dying on it.</p></li>
 <p>The stub has just <code class="docutils literal notranslate"><span class="pre">app</span></code> (the name we were asked about) and
 <code class="docutils literal notranslate"><span class="pre">enlace_version</span></code> filled in. That keeps the diagnostic plumbing working
 even before any deploy tool starts writing manifests.</p>
+<p>A manifest file that exists but can’t be used – unreadable, corrupt JSON,
+not a JSON object, or valid JSON the schema rejects (e.g. an unknown
+<code class="docutils literal notranslate"><span class="pre">deployer</span></code>) – also yields the stub, so it can neither stop the backend
+from starting nor turn <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> into a 500. It is logged, and the stub
+carries <code class="docutils literal notranslate"><span class="pre">extra[MANIFEST_ERROR_KEY]</span></code> saying why.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.manifest.html#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeployManifest</span></code></a></span></p>
@@ -1083,7 +1088,7 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=c83fd883"></script>
+</div><script src="../_static/documentation_options.js?v=e88e4268"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

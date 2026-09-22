@@ -4,6 +4,12 @@ enlace.manifest
 .. automodule:: enlace.manifest
 
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      MANIFEST_ERROR_KEY
+   
    .. rubric:: Functions
 
    .. autosummary::

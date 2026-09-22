@@ -1,4 +1,4 @@
-> built 2026-09-22 14:18 UTC from 56398a5 (main) · enlace 0.1.35. Details: build_info.json
+> built 2026-09-22 14:48 UTC from 7a83c0c (main) · enlace 0.1.36. Details: build_info.json
 
 # index.html.md
 
@@ -1737,6 +1737,12 @@ The stub has just `app` (the name we were asked about) and
 `enlace_version` filled in. That keeps the diagnostic plumbing working
 even before any deploy tool starts writing manifests.
 
+A manifest file that exists but can’t be used – unreadable, corrupt JSON,
+not a JSON object, or valid JSON the schema rejects (e.g. an unknown
+`deployer`) – also yields the stub, so it can neither stop the backend
+from starting nor turn `/_meta` into a 500. It is logged, and the stub
+carries `extra[MANIFEST_ERROR_KEY]` saying why.
+
 * **Return type:**
   [`DeployManifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployManifest)
 
@@ -1846,6 +1852,11 @@ hidden from end users by default — apps can opt to surface the data visibly
 
 See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlace/issues/18) for design rationale.
 
+### Module Attributes
+
+| [`MANIFEST_ERROR_KEY`](_autosummary/enlace.manifest.html.md#enlace.manifest.MANIFEST_ERROR_KEY)   | `extra` key naming why an on-disk manifest was not used.   |
+|-----------------------------------------------------------------------|------------------------------------------------------------|
+
 ### Functions
 
 | [`load_manifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.load_manifest)(app_name, manifest_dir, \*[, ...])   | Load the deploy manifest for one app, or return a minimal stub.   |
@@ -1916,6 +1927,12 @@ Identity for an externally-installed dependency (e.g. an editable sibling).
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
+### enlace.manifest.MANIFEST_ERROR_KEY *= 'manifest_error'*
+
+`extra` key naming why an on-disk manifest was not used. It exists only
+when something is wrong, so a healthy `/_meta` is quiet and a degraded
+one cannot be mistaken for “no manifest was ever written”.
+
 ### *class* enlace.manifest.SourceRef(\*\*data)
 
 Bases: `BaseModel`
@@ -1933,6 +1950,12 @@ Load the deploy manifest for one app, or return a minimal stub.
 The stub has just `app` (the name we were asked about) and
 `enlace_version` filled in. That keeps the diagnostic plumbing working
 even before any deploy tool starts writing manifests.
+
+A manifest file that exists but can’t be used – unreadable, corrupt JSON,
+not a JSON object, or valid JSON the schema rejects (e.g. an unknown
+`deployer`) – also yields the stub, so it can neither stop the backend
+from starting nor turn `/_meta` into a 500. It is logged, and the stub
+carries `extra[MANIFEST_ERROR_KEY]` saying why.
 
 * **Return type:**
   [`DeployManifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployManifest)
@@ -2409,18 +2432,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-09-22 14:18 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/56398a5645907a467080a29c5a7be74995600648"><code>56398a5</code></a> on branch <code>main</code>, for **enlace 0.1.35** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-22 14:48 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/7a83c0c3e8779377ea519ce900d352eb86e52bd2"><code>7a83c0c</code></a> on branch <code>main</code>, for **enlace 0.1.36** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.35) is behind the latest release on PyPI (0.1.36): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.36) is behind the latest release on PyPI (0.1.37): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/56398a5645907a467080a29c5a7be74995600648"><code>56398a5645907a467080a29c5a7be74995600648</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/7a83c0c3e8779377ea519ce900d352eb86e52bd2"><code>7a83c0c3e8779377ea519ce900d352eb86e52bd2</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -2431,9 +2454,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/35739068517">35739068517</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/35742663154">35742663154</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>56398a5645907a467080a29c5a7be74995600648</code> (in the history of the built commit) |
+| Event commit | <code>7a83c0c3e8779377ea519ce900d352eb86e52bd2</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2458,13 +2481,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.36/">0.1.36</a>, newer than the documented version (0.1.35).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.37/">0.1.37</a>, newer than the documented version (0.1.36).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 56398a5645907a467080a29c5a7be74995600648
+git checkout 7a83c0c3e8779377ea519ce900d352eb86e52bd2
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

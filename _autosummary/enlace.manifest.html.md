@@ -27,6 +27,11 @@ hidden from end users by default — apps can opt to surface the data visibly
 
 See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlace/issues/18) for design rationale.
 
+### Module Attributes
+
+| [`MANIFEST_ERROR_KEY`](#enlace.manifest.MANIFEST_ERROR_KEY)   | `extra` key naming why an on-disk manifest was not used.   |
+|-----------------------------------------------------------------------|------------------------------------------------------------|
+
 ### Functions
 
 | [`load_manifest`](#enlace.manifest.load_manifest)(app_name, manifest_dir, \*[, ...])   | Load the deploy manifest for one app, or return a minimal stub.   |
@@ -97,6 +102,12 @@ Identity for an externally-installed dependency (e.g. an editable sibling).
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
+### enlace.manifest.MANIFEST_ERROR_KEY *= 'manifest_error'*
+
+`extra` key naming why an on-disk manifest was not used. It exists only
+when something is wrong, so a healthy `/_meta` is quiet and a degraded
+one cannot be mistaken for “no manifest was ever written”.
+
 ### *class* enlace.manifest.SourceRef(\*\*data)
 
 Bases: `BaseModel`
@@ -114,6 +125,12 @@ Load the deploy manifest for one app, or return a minimal stub.
 The stub has just `app` (the name we were asked about) and
 `enlace_version` filled in. That keeps the diagnostic plumbing working
 even before any deploy tool starts writing manifests.
+
+A manifest file that exists but can’t be used – unreadable, corrupt JSON,
+not a JSON object, or valid JSON the schema rejects (e.g. an unknown
+`deployer`) – also yields the stub, so it can neither stop the backend
+from starting nor turn `/_meta` into a 500. It is logged, and the stub
+carries `extra[MANIFEST_ERROR_KEY]` saying why.
 
 * **Return type:**
   [`DeployManifest`](#enlace.manifest.DeployManifest)

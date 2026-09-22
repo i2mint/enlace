@@ -285,6 +285,16 @@ per app, one route per app, one short header tuple per response). They’re
 hidden from end users by default — apps can opt to surface the data visibly
 (footer chip, About modal, devtools log) on top of the primitive.</p>
 <p>See <a class="reference external" href="https://github.com/i2mint/enlace/issues/18">https://github.com/i2mint/enlace/issues/18</a> for design rationale.</p>
+<p class="rubric">Module Attributes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.manifest.MANIFEST_ERROR_KEY" title="enlace.manifest.MANIFEST_ERROR_KEY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MANIFEST_ERROR_KEY</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">extra</span></code> key naming why an on-disk manifest was not used.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p class="rubric">Functions</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -389,6 +399,14 @@ rewrites the body it must run <strong>inside</strong> any compression middleware
 
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.manifest.MANIFEST_ERROR_KEY">
+<span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">MANIFEST_ERROR_KEY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'manifest_error'</span></span><a class="headerlink" href="#enlace.manifest.MANIFEST_ERROR_KEY" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">extra</span></code> key naming why an on-disk manifest was not used. It exists only
+when something is wrong, so a healthy <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> is quiet and a degraded
+one cannot be mistaken for “no manifest was ever written”.</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.manifest.SourceRef">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">SourceRef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/manifest.html#SourceRef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.SourceRef" title="Link to this definition">¶</a></dt>
@@ -411,6 +429,11 @@ rewrites the body it must run <strong>inside</strong> any compression middleware
 <p>The stub has just <code class="docutils literal notranslate"><span class="pre">app</span></code> (the name we were asked about) and
 <code class="docutils literal notranslate"><span class="pre">enlace_version</span></code> filled in. That keeps the diagnostic plumbing working
 even before any deploy tool starts writing manifests.</p>
+<p>A manifest file that exists but can’t be used – unreadable, corrupt JSON,
+not a JSON object, or valid JSON the schema rejects (e.g. an unknown
+<code class="docutils literal notranslate"><span class="pre">deployer</span></code>) – also yields the stub, so it can neither stop the backend
+from starting nor turn <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> into a 500. It is logged, and the stub
+carries <code class="docutils literal notranslate"><span class="pre">extra[MANIFEST_ERROR_KEY]</span></code> saying why.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#enlace.manifest.DeployManifest" title="enlace.manifest.DeployManifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeployManifest</span></code></a></span></p>
@@ -507,6 +530,7 @@ available; serve minimal stubs”.</p>
 <li><a class="reference internal" href="#enlace.manifest.ExternalRef.model_config"><code class="docutils literal notranslate"><span class="pre">ExternalRef.model_config</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#enlace.manifest.MANIFEST_ERROR_KEY"><code class="docutils literal notranslate"><span class="pre">MANIFEST_ERROR_KEY</span></code></a></li>
 <li><a class="reference internal" href="#enlace.manifest.SourceRef"><code class="docutils literal notranslate"><span class="pre">SourceRef</span></code></a><ul>
 <li><a class="reference internal" href="#enlace.manifest.SourceRef.model_config"><code class="docutils literal notranslate"><span class="pre">SourceRef.model_config</span></code></a></li>
 </ul>
@@ -525,7 +549,7 @@ available; serve minimal stubs”.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=c83fd883"></script>
+</div><script src="../_static/documentation_options.js?v=e88e4268"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
