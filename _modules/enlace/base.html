@@ -530,7 +530,59 @@
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"localhost"</span>
+    <span class="n">cors_origins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="s2">"*"</span><span class="p">],</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Origins allowed to call the platform cross-origin (CORS). "</span>
+            <span class="s1">'``["*"]`` (default): any origin, WITHOUT credentials -- a page on '</span>
+            <span class="s2">"another origin can read public responses but never a signed-in "</span>
+            <span class="s2">"user's. An explicit list (e.g. "</span>
+            <span class="s1">'``["https://app.example.com"]``): only those origins, WITH '</span>
+            <span class="s2">"credentials. ``[]``: no CORS headers at all (same-origin only)."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">backend_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"cors_origins"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_cors_origins</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">origins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Refuse CORS lists that would silently misbehave or re-open exposure.</span>
+
+<span class="sd">        - ``"*"`` must stand alone: mixed with named origins it would drop</span>
+<span class="sd">          credentials for them too.</span>
+<span class="sd">        - ``"null"`` is refused: any sandboxed iframe or ``data:`` page sends</span>
+<span class="sd">          ``Origin: null``, so allowing it with credentials lets any site in.</span>
+<span class="sd">        - Named origins must be ``scheme://host[:port]`` (no path, no trailing</span>
+<span class="sd">          slash) -- anything else never matches a browser's ``Origin``.</span>
+<span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlsplit</span>
+
+        <span class="k">if</span> <span class="s2">"*"</span> <span class="ow">in</span> <span class="n">origins</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">origins</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">'cors_origins: "*" cannot be combined with named origins '</span>
+                    <span class="s1">'(use ["*"] for anonymous access from anywhere, or list '</span>
+                    <span class="s2">"the origins that may send credentials)"</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">origins</span>
+        <span class="k">for</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">origins</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">origin</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"null"</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'cors_origins: "null" is not allowed'</span><span class="p">)</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">urlsplit</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">scheme</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"http"</span><span class="p">,</span> <span class="s2">"https"</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="ow">not</span> <span class="n">parts</span><span class="o">.</span><span class="n">netloc</span>
+                <span class="ow">or</span> <span class="n">parts</span><span class="o">.</span><span class="n">path</span>
+                <span class="ow">or</span> <span class="n">parts</span><span class="o">.</span><span class="n">query</span>
+                <span class="ow">or</span> <span class="n">parts</span><span class="o">.</span><span class="n">fragment</span>
+                <span class="ow">or</span> <span class="s2">"@"</span> <span class="ow">in</span> <span class="n">parts</span><span class="o">.</span><span class="n">netloc</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"cors_origins: </span><span class="si">{</span><span class="n">origin</span><span class="si">!r}</span><span class="s2"> is not an origin "</span>
+                    <span class="s2">"(expected scheme://host[:port], no path or trailing slash)"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">origins</span>
+
     <span class="n">frontend_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3000</span>
     <span class="n">process_port_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9100</span>
     <span class="n">socket_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">"/tmp/enlace"</span><span class="p">))</span>
@@ -726,7 +778,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=41ce360e"></script>
+</div><script src="../../_static/documentation_options.js?v=e3b9c749"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

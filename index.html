@@ -517,6 +517,10 @@ parseable <code class="docutils literal notranslate"><span class="pre">FAIL</spa
 <span class="n">apps_dirs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"apps"</span><span class="p">]</span><span class="w">                </span><span class="c1"># Directories containing app subdirs</span>
 <span class="n">app_dirs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"/path/to/standalone"</span><span class="p">]</span><span class="w">  </span><span class="c1"># Individual app directories</span>
 <span class="n">backend_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8000</span>
+<span class="n">cors_origins</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"*"</span><span class="p">]</span><span class="w">                </span><span class="c1"># default: any origin, never with credentials;</span>
+<span class="w">                                    </span><span class="c1"># or list origins ("https://host[:port]") that may</span>
+<span class="w">                                    </span><span class="c1"># send credentials (then only those get CORS);</span>
+<span class="w">                                    </span><span class="c1"># [] = no CORS. "*" can't be mixed; "null" refused.</span>
 
 <span class="k">[conventions]</span>
 <span class="n">entry_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"server.py"</span><span class="p">,</span><span class="w"> </span><span class="s2">"app.py"</span><span class="p">,</span><span class="w"> </span><span class="s2">"main.py"</span><span class="p">]</span>
@@ -659,7 +663,7 @@ browser rendered the current build or a stale cache.</p>
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 15:07 UTC from <a href="https://github.com/i2mint/enlace/commit/a164acd6144b8ad6f6b21df6b81dc8188c378df1">a164acd</a> (main) · enlace 0.1.37 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 15:46 UTC from <a href="https://github.com/i2mint/enlace/commit/41d530bb991385f6f7da329eb8fabb4d6f206935">41d530b</a> (main) · enlace 0.1.38 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -736,7 +740,7 @@ browser rendered the current build or a stale cache.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=41ce360e"></script>
+</div><script src="_static/documentation_options.js?v=e3b9c749"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
