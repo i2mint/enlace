@@ -258,6 +258,17 @@ class PlatformConfig(BaseModel):
         ),
     )
     domain: str = "localhost"
+    cors_origins: list[str] = Field(
+        default_factory=lambda: ["*"],
+        description=(
+            "Origins allowed to call the platform cross-origin (CORS). "
+            '``["*"]`` (default): any origin, WITHOUT credentials -- a page on '
+            "another origin can read public responses but never a signed-in "
+            "user's. An explicit list (e.g. "
+            '``["https://app.example.com"]``): only those origins, WITH '
+            "credentials. ``[]``: no CORS headers at all (same-origin only)."
+        ),
+    )
     backend_port: int = 8000
     frontend_port: int = 3000
     process_port_start: int = 9100

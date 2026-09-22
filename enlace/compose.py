@@ -117,13 +117,7 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
     )
 
     # CORS on the parent only — sub-apps must NOT add their own CORS
-    parent.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # Dev default; restrict in production
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    _add_cors(parent, config.cors_origins)
 
     # Compose-time plugins (pure ASGI middleware only — no BaseHTTPMiddleware
     # in plugins either, please). enlace_auth is the canonical plugin: it
@@ -434,6 +428,28 @@ def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
         _redirect,
         methods=["GET", "HEAD"],
         include_in_schema=False,
+    )
+
+
+def _add_cors(parent: FastAPI, origins: list[str]) -> None:
+    """Install CORS per ``PlatformConfig.cors_origins``.
+
+    Credentials are only ever allowed for an explicit origin list. With
+    ``["*"]`` plus credentials, Starlette reflects *any* request origin and
+    adds ``Access-Control-Allow-Credentials: true``, so a page on any origin
+    that gets the browser to send the session cookie could read a signed-in
+    user's responses. ``*`` therefore means "anyone, anonymously".
+    """
+    origins = list(origins or [])
+    if not origins:
+        return
+    wildcard = "*" in origins
+    parent.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"] if wildcard else origins,
+        allow_credentials=not wildcard,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
 
