@@ -23,7 +23,7 @@
 - [enlace.supervise](_autosummary/enlace.supervise.html.md): Dev-mode process supervisor for enlace.
 - [enlace.util](_autosummary/enlace.util.html.md): Internal helpers for enlace.
 - [For AI agents](ai-agents.html.md): &#96;enlace&#96; ships artifacts for coding agents alongside its code. This page lists
-- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-22 13:09 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-22 13:21 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
 
 ## Optional
 
