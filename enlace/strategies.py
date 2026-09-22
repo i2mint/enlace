@@ -352,6 +352,19 @@ class ProcessStrategy(BackendStrategy):
         )
 
 
+def _platform_cookie_names(platform) -> tuple[str, ...]:
+    """The platform's own cookie names, honouring a custom session cookie name.
+
+    ``[auth]`` is opaque to enlace core (enlace_auth owns its schema), so this
+    reads only the one key that renames a platform cookie.
+    """
+    from enlace.proxy import PLATFORM_COOKIE_NAMES
+
+    auth = getattr(platform, "auth", None) or {}
+    custom = auth.get("session_cookie_name") if isinstance(auth, dict) else None
+    return PLATFORM_COOKIE_NAMES + ((custom,) if custom else ())
+
+
 class ExternalStrategy(BackendStrategy):
     """Route to a pre-existing service at a known URL; no lifecycle."""
 
@@ -369,9 +382,24 @@ class ExternalStrategy(BackendStrategy):
     def make_asgi(self, app, platform):
         if not app.upstream_url:
             return None
-        from enlace.proxy import make_proxy_app
+        from enlace.proxy import (
+            EXTERNAL_DROP_REQUEST_HEADERS,
+            EXTERNAL_DROP_RESPONSE_HEADERS,
+            make_proxy_app,
+            platform_cookie_filter,
+        )
 
-        return make_proxy_app(upstream=app.upstream_url, strip_prefix=app.route_prefix)
+        # An external upstream is someone else's server: it must neither see
+        # the visitor's platform credentials nor set them on our origin.
+        return make_proxy_app(
+            upstream=app.upstream_url,
+            strip_prefix=app.route_prefix,
+            cookie_filter=platform_cookie_filter(
+                names=_platform_cookie_names(platform)
+            ),
+            drop_request_headers=EXTERNAL_DROP_REQUEST_HEADERS,
+            drop_response_headers=EXTERNAL_DROP_RESPONSE_HEADERS,
+        )
 
 
 class StaticStrategy(BackendStrategy):
