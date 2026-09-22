@@ -269,19 +269,64 @@ from the path.  Uses <code class="docutils literal notranslate"><span class="pre
 implementation for simple cases.</p>
 <p>This module is lazy-loaded: it only imports <code class="docutils literal notranslate"><span class="pre">httpx</span></code> when a proxy ASGI
 app is actually instantiated, so the dependency remains optional.</p>
-<p class="rubric">Functions</p>
+<p class="rubric">Module Attributes</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.proxy.make_proxy_app" title="enlace.proxy.make_proxy_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_proxy_app</span></code></a>(*, upstream[, strip_prefix])</p></td>
-<td><p>Create an ASGI app that proxies requests to <em>upstream</em>.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.proxy.PLATFORM_COOKIE_NAMES" title="enlace.proxy.PLATFORM_COOKIE_NAMES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PLATFORM_COOKIE_NAMES</span></code></a></p></td>
+<td><p>Cookies the platform itself sets on its own origin -- enlace_auth's defaults (<code class="docutils literal notranslate"><span class="pre">AuthConfig.session_cookie_name</span></code>, <code class="docutils literal notranslate"><span class="pre">CSRFMiddleware</span></code> cookie name, and the per-app <code class="docutils literal notranslate"><span class="pre">shared_auth_&lt;app&gt;</span></code> cookies).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.proxy.EXTERNAL_DROP_REQUEST_HEADERS" title="enlace.proxy.EXTERNAL_DROP_REQUEST_HEADERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXTERNAL_DROP_REQUEST_HEADERS</span></code></a></p></td>
+<td><p>Request headers carrying platform credentials, withheld from external upstreams (the CSRF double-submit token pairs with <code class="docutils literal notranslate"><span class="pre">enlace_csrf</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.proxy.EXTERNAL_DROP_RESPONSE_HEADERS" title="enlace.proxy.EXTERNAL_DROP_RESPONSE_HEADERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXTERNAL_DROP_RESPONSE_HEADERS</span></code></a></p></td>
+<td><p>Response headers an external upstream may not send on the platform origin: <code class="docutils literal notranslate"><span class="pre">Clear-Site-Data</span></code> could wipe the platform's cookies/storage, and <code class="docutils literal notranslate"><span class="pre">Service-Worker-Allowed</span></code> could let a script under the app's prefix register a service worker controlling the whole origin.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<p class="rubric">Functions</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.proxy.make_proxy_app" title="enlace.proxy.make_proxy_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_proxy_app</span></code></a>(*, upstream[, strip_prefix, ...])</p></td>
+<td><p>Create an ASGI app that proxies requests to <em>upstream</em>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.proxy.platform_cookie_filter" title="enlace.proxy.platform_cookie_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">platform_cookie_filter</span></code></a>(*[, names, prefixes])</p></td>
+<td><p>Return a filter that keeps every cookie except the platform's own.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.proxy.EXTERNAL_DROP_REQUEST_HEADERS">
+<span class="sig-prename descclassname"><span class="pre">enlace.proxy.</span></span><span class="sig-name descname"><span class="pre">EXTERNAL_DROP_REQUEST_HEADERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('x-csrf-token',)</span></span><a class="headerlink" href="#enlace.proxy.EXTERNAL_DROP_REQUEST_HEADERS" title="Link to this definition">¶</a></dt>
+<dd><p>Request headers carrying platform credentials, withheld from external
+upstreams (the CSRF double-submit token pairs with <code class="docutils literal notranslate"><span class="pre">enlace_csrf</span></code>).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.proxy.EXTERNAL_DROP_RESPONSE_HEADERS">
+<span class="sig-prename descclassname"><span class="pre">enlace.proxy.</span></span><span class="sig-name descname"><span class="pre">EXTERNAL_DROP_RESPONSE_HEADERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('clear-site-data',</span> <span class="pre">'service-worker-allowed')</span></span><a class="headerlink" href="#enlace.proxy.EXTERNAL_DROP_RESPONSE_HEADERS" title="Link to this definition">¶</a></dt>
+<dd><p>Response headers an external upstream may not send on the platform origin:
+<code class="docutils literal notranslate"><span class="pre">Clear-Site-Data</span></code> could wipe the platform’s cookies/storage, and
+<code class="docutils literal notranslate"><span class="pre">Service-Worker-Allowed</span></code> could let a script under the app’s prefix
+register a service worker controlling the whole origin.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.proxy.PLATFORM_COOKIE_NAMES">
+<span class="sig-prename descclassname"><span class="pre">enlace.proxy.</span></span><span class="sig-name descname"><span class="pre">PLATFORM_COOKIE_NAMES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('enlace_session',</span> <span class="pre">'enlace_csrf')</span></span><a class="headerlink" href="#enlace.proxy.PLATFORM_COOKIE_NAMES" title="Link to this definition">¶</a></dt>
+<dd><p>Cookies the platform itself sets on its own origin – enlace_auth’s defaults
+(<code class="docutils literal notranslate"><span class="pre">AuthConfig.session_cookie_name</span></code>, <code class="docutils literal notranslate"><span class="pre">CSRFMiddleware</span></code> cookie name, and the
+per-app <code class="docutils literal notranslate"><span class="pre">shared_auth_&lt;app&gt;</span></code> cookies). Keep in sync with enlace_auth. They
+are credentials for <em>this</em> platform and must never reach an upstream that
+is not part of it.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.proxy.make_proxy_app">
-<span class="sig-prename descclassname"><span class="pre">enlace.proxy.</span></span><span class="sig-name descname"><span class="pre">make_proxy_app</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">upstream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/proxy.html#make_proxy_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.proxy.make_proxy_app" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">enlace.proxy.</span></span><span class="sig-name descname"><span class="pre">make_proxy_app</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">upstream</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strip_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cookie_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_request_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_response_headers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/proxy.html#make_proxy_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.proxy.make_proxy_app" title="Link to this definition">¶</a></dt>
 <dd><p>Create an ASGI app that proxies requests to <em>upstream</em>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -289,10 +334,32 @@ app is actually instantiated, so the dependency remains optional.</p>
 <li><p><strong>upstream</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Base URL of the upstream server (e.g. <code class="docutils literal notranslate"><span class="pre">http://127.0.0.1:9100</span></code>).</p></li>
 <li><p><strong>strip_prefix</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Route prefix to strip before forwarding
 (e.g. <code class="docutils literal notranslate"><span class="pre">/api/blog</span></code> → upstream receives <code class="docutils literal notranslate"><span class="pre">/</span></code>).</p></li>
+<li><p><strong>cookie_filter</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]]</span>) – <code class="docutils literal notranslate"><span class="pre">name</span> <span class="pre">-&gt;</span> <span class="pre">bool</span></code>; when given, request cookies it
+rejects are not forwarded and upstream <code class="docutils literal notranslate"><span class="pre">Set-Cookie</span></code> headers
+naming them are dropped. <code class="docutils literal notranslate"><span class="pre">None</span></code> (the default) forwards all
+cookies, which suits a local process app that is part of the
+platform. See <a class="reference internal" href="#enlace.proxy.platform_cookie_filter" title="enlace.proxy.platform_cookie_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">platform_cookie_filter()</span></code></a>.</p></li>
+<li><p><strong>drop_response_headers</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span>) – header names
+(case-insensitive) never forwarded upstream / never passed back
+to the client. See <code class="docutils literal notranslate"><span class="pre">EXTERNAL_DROP_*</span></code> for what external apps use.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>An ASGI callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.proxy.platform_cookie_filter">
+<span class="sig-prename descclassname"><span class="pre">enlace.proxy.</span></span><span class="sig-name descname"><span class="pre">platform_cookie_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('enlace_session',</span> <span class="pre">'enlace_csrf')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefixes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('shared_auth_',)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/proxy.html#platform_cookie_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.proxy.platform_cookie_filter" title="Link to this definition">¶</a></dt>
+<dd><p>Return a filter that keeps every cookie except the platform’s own.</p>
+<p>Used for <code class="docutils literal notranslate"><span class="pre">mode=&quot;external&quot;</span></code> apps: an upstream on another host has no
+business seeing a visitor’s platform session, and must not be able to set
+(overwrite) one on the platform’s origin either.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -351,7 +418,11 @@ app is actually instantiated, so the dependency remains optional.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">enlace.proxy</a><ul>
+<li><a class="reference internal" href="#enlace.proxy.EXTERNAL_DROP_REQUEST_HEADERS"><code class="docutils literal notranslate"><span class="pre">EXTERNAL_DROP_REQUEST_HEADERS</span></code></a></li>
+<li><a class="reference internal" href="#enlace.proxy.EXTERNAL_DROP_RESPONSE_HEADERS"><code class="docutils literal notranslate"><span class="pre">EXTERNAL_DROP_RESPONSE_HEADERS</span></code></a></li>
+<li><a class="reference internal" href="#enlace.proxy.PLATFORM_COOKIE_NAMES"><code class="docutils literal notranslate"><span class="pre">PLATFORM_COOKIE_NAMES</span></code></a></li>
 <li><a class="reference internal" href="#enlace.proxy.make_proxy_app"><code class="docutils literal notranslate"><span class="pre">make_proxy_app()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.proxy.platform_cookie_filter"><code class="docutils literal notranslate"><span class="pre">platform_cookie_filter()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -363,7 +434,7 @@ app is actually instantiated, so the dependency remains optional.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=e88e4268"></script>
+</div><script src="../_static/documentation_options.js?v=41ce360e"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

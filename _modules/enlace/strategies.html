@@ -652,6 +652,19 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_platform_cookie_names</span><span class="p">(</span><span class="n">platform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The platform's own cookie names, honouring a custom session cookie name.</span>
+
+<span class="sd">    ``[auth]`` is opaque to enlace core (enlace_auth owns its schema), so this</span>
+<span class="sd">    reads only the one key that renames a platform cookie.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">PLATFORM_COOKIE_NAMES</span>
+
+    <span class="n">auth</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">platform</span><span class="p">,</span> <span class="s2">"auth"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">custom</span> <span class="o">=</span> <span class="n">auth</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"session_cookie_name"</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">auth</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">PLATFORM_COOKIE_NAMES</span> <span class="o">+</span> <span class="p">((</span><span class="n">custom</span><span class="p">,)</span> <span class="k">if</span> <span class="n">custom</span> <span class="k">else</span> <span class="p">())</span>
+
+
 <div class="viewcode-block" id="ExternalStrategy">
 <a class="viewcode-back" href="../../_autosummary/enlace.strategies.html#enlace.strategies.ExternalStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExternalStrategy</span><span class="p">(</span><span class="n">BackendStrategy</span><span class="p">):</span>
@@ -676,9 +689,24 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">make_asgi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">,</span> <span class="n">platform</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_proxy_app</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.proxy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">EXTERNAL_DROP_REQUEST_HEADERS</span><span class="p">,</span>
+            <span class="n">EXTERNAL_DROP_RESPONSE_HEADERS</span><span class="p">,</span>
+            <span class="n">make_proxy_app</span><span class="p">,</span>
+            <span class="n">platform_cookie_filter</span><span class="p">,</span>
+        <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">make_proxy_app</span><span class="p">(</span><span class="n">upstream</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">,</span> <span class="n">strip_prefix</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">)</span></div>
+        <span class="c1"># An external upstream is someone else's server: it must neither see</span>
+        <span class="c1"># the visitor's platform credentials nor set them on our origin.</span>
+        <span class="k">return</span> <span class="n">make_proxy_app</span><span class="p">(</span>
+            <span class="n">upstream</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">upstream_url</span><span class="p">,</span>
+            <span class="n">strip_prefix</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span>
+            <span class="n">cookie_filter</span><span class="o">=</span><span class="n">platform_cookie_filter</span><span class="p">(</span>
+                <span class="n">names</span><span class="o">=</span><span class="n">_platform_cookie_names</span><span class="p">(</span><span class="n">platform</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">drop_request_headers</span><span class="o">=</span><span class="n">EXTERNAL_DROP_REQUEST_HEADERS</span><span class="p">,</span>
+            <span class="n">drop_response_headers</span><span class="o">=</span><span class="n">EXTERNAL_DROP_RESPONSE_HEADERS</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 
@@ -782,7 +810,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=e88e4268"></script>
+</div><script src="../../_static/documentation_options.js?v=41ce360e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

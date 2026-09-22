@@ -263,7 +263,72 @@
 <span class="sd">app is actually instantiated, so the dependency remains optional.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="c1">#: Cookies the platform itself sets on its own origin -- enlace_auth's defaults</span>
+<span class="c1">#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, and the</span>
+<span class="c1">#: per-app ``shared_auth_&lt;app&gt;`` cookies). Keep in sync with enlace_auth. They</span>
+<span class="c1">#: are credentials for *this* platform and must never reach an upstream that</span>
+<span class="c1">#: is not part of it.</span>
+<span class="n">PLATFORM_COOKIE_NAMES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"enlace_session"</span><span class="p">,</span> <span class="s2">"enlace_csrf"</span><span class="p">)</span>
+<span class="n">PLATFORM_COOKIE_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"shared_auth_"</span><span class="p">,)</span>
+
+<span class="c1">#: Request headers carrying platform credentials, withheld from external</span>
+<span class="c1">#: upstreams (the CSRF double-submit token pairs with ``enlace_csrf``).</span>
+<span class="n">EXTERNAL_DROP_REQUEST_HEADERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"x-csrf-token"</span><span class="p">,)</span>
+
+<span class="c1">#: Response headers an external upstream may not send on the platform origin:</span>
+<span class="c1">#: ``Clear-Site-Data`` could wipe the platform's cookies/storage, and</span>
+<span class="c1">#: ``Service-Worker-Allowed`` could let a script under the app's prefix</span>
+<span class="c1">#: register a service worker controlling the whole origin.</span>
+<span class="n">EXTERNAL_DROP_RESPONSE_HEADERS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"clear-site-data"</span><span class="p">,</span> <span class="s2">"service-worker-allowed"</span><span class="p">)</span>
+
+<span class="n">CookieFilter</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span>  <span class="c1"># cookie name -&gt; forward it?</span>
+
+
+<div class="viewcode-block" id="platform_cookie_filter">
+<a class="viewcode-back" href="../../_autosummary/enlace.proxy.html#enlace.proxy.platform_cookie_filter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">platform_cookie_filter</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">names</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">PLATFORM_COOKIE_NAMES</span><span class="p">,</span>
+    <span class="n">prefixes</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">PLATFORM_COOKIE_PREFIXES</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CookieFilter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return a filter that keeps every cookie except the platform's own.</span>
+
+<span class="sd">    Used for ``mode="external"`` apps: an upstream on another host has no</span>
+<span class="sd">    business seeing a visitor's platform session, and must not be able to set</span>
+<span class="sd">    (overwrite) one on the platform's origin either.</span>
+<span class="sd">    """</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
+    <span class="n">prefixes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">prefixes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">name</span><span class="p">:</span> <span class="ow">not</span> <span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="ow">or</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefixes</span><span class="p">))</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_filter_cookie_header</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">keep</span><span class="p">:</span> <span class="n">CookieFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Drop the cookies *keep* rejects from a request ``Cookie`` header value."""</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">";"</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">keep</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+    <span class="k">return</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_set_cookie_allowed</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">keep</span><span class="p">:</span> <span class="n">CookieFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether a ``Set-Cookie`` header value may pass *keep*.</span>
+
+<span class="sd">    A nameless cookie (``=enlace_session=x`` or a bare value) is refused</span>
+<span class="sd">    outright: browsers send such a cookie as its bare value, so</span>
+<span class="sd">    ``=enlace_session=x`` reaches the server as ``enlace_session=x`` and would</span>
+<span class="sd">    shadow the real one.</span>
+<span class="sd">    """</span>
+    <span class="n">pair</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">";"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">"="</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pair</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">pair</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">keep</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
 
 <span class="c1"># Default per-request timeout (seconds) for proxied requests. Bounds a hung</span>
 <span class="c1"># upstream so a stuck app can't tie up the gateway indefinitely.</span>
@@ -291,18 +356,39 @@
 
 <div class="viewcode-block" id="make_proxy_app">
 <a class="viewcode-back" href="../../_autosummary/enlace.proxy.html#enlace.proxy.make_proxy_app">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">make_proxy_app</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">upstream</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">strip_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_proxy_app</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">upstream</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">strip_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
+    <span class="n">cookie_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CookieFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">drop_request_headers</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">drop_response_headers</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Create an ASGI app that proxies requests to *upstream*.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        upstream: Base URL of the upstream server (e.g. ``http://127.0.0.1:9100``).</span>
 <span class="sd">        strip_prefix: Route prefix to strip before forwarding</span>
 <span class="sd">            (e.g. ``/api/blog`` → upstream receives ``/``).</span>
+<span class="sd">        cookie_filter: ``name -&gt; bool``; when given, request cookies it</span>
+<span class="sd">            rejects are not forwarded and upstream ``Set-Cookie`` headers</span>
+<span class="sd">            naming them are dropped. ``None`` (the default) forwards all</span>
+<span class="sd">            cookies, which suits a local process app that is part of the</span>
+<span class="sd">            platform. See :func:`platform_cookie_filter`.</span>
+<span class="sd">        drop_request_headers / drop_response_headers: header names</span>
+<span class="sd">            (case-insensitive) never forwarded upstream / never passed back</span>
+<span class="sd">            to the client. See ``EXTERNAL_DROP_*`` for what external apps use.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An ASGI callable.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">_HttpxProxy</span><span class="p">(</span><span class="n">upstream</span><span class="o">=</span><span class="n">upstream</span><span class="p">,</span> <span class="n">strip_prefix</span><span class="o">=</span><span class="n">strip_prefix</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">_HttpxProxy</span><span class="p">(</span>
+        <span class="n">upstream</span><span class="o">=</span><span class="n">upstream</span><span class="p">,</span>
+        <span class="n">strip_prefix</span><span class="o">=</span><span class="n">strip_prefix</span><span class="p">,</span>
+        <span class="n">cookie_filter</span><span class="o">=</span><span class="n">cookie_filter</span><span class="p">,</span>
+        <span class="n">drop_request_headers</span><span class="o">=</span><span class="n">drop_request_headers</span><span class="p">,</span>
+        <span class="n">drop_response_headers</span><span class="o">=</span><span class="n">drop_response_headers</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 
@@ -315,7 +401,17 @@
         <span class="n">upstream</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">strip_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_DEFAULT_TIMEOUT_S</span><span class="p">,</span>
+        <span class="n">cookie_filter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CookieFilter</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">drop_request_headers</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+        <span class="n">drop_response_headers</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
     <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cookie_filter</span> <span class="o">=</span> <span class="n">cookie_filter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_drop_request</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"host"</span><span class="p">,</span> <span class="s2">"transfer-encoding"</span><span class="p">,</span> <span class="s2">"connection"</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">drop_request_headers</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_drop_response</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"transfer-encoding"</span><span class="p">,</span> <span class="s2">"connection"</span><span class="p">,</span> <span class="s2">"keep-alive"</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">drop_response_headers</span>
+        <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">upstream</span> <span class="o">=</span> <span class="n">upstream</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span> <span class="o">=</span> <span class="n">strip_prefix</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
@@ -370,9 +466,16 @@
         <span class="n">headers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"headers"</span><span class="p">,</span> <span class="p">[]):</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"host"</span><span class="p">,</span> <span class="s2">"transfer-encoding"</span><span class="p">,</span> <span class="s2">"connection"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop_request</span><span class="p">:</span>
                 <span class="k">continue</span>
-            <span class="n">headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">)</span>
+            <span class="n">decoded</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"cookie"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookie_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">decoded</span> <span class="o">=</span> <span class="n">_filter_cookie_header</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookie_filter</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">decoded</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="s2">"cookie"</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>  <span class="c1"># HTTP/2 may split cookies (RFC 9113)</span>
+                    <span class="n">decoded</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">headers</span><span class="p">[</span><span class="s1">'cookie'</span><span class="p">]</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="n">decoded</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">headers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">decoded</span>
 
         <span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
 
@@ -401,7 +504,12 @@
             <span class="n">response_headers</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">),</span> <span class="n">v</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">))</span>
                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">multi_items</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"transfer-encoding"</span><span class="p">,</span> <span class="s2">"connection"</span><span class="p">,</span> <span class="s2">"keep-alive"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop_response</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span>
+                    <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"set-cookie"</span>
+                    <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookie_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">_set_cookie_allowed</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cookie_filter</span><span class="p">)</span>
+                <span class="p">)</span>
             <span class="p">]</span>
 
             <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
@@ -476,7 +584,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=e88e4268"></script>
+</div><script src="../../_static/documentation_options.js?v=41ce360e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -4,9 +4,18 @@ enlace.proxy
 .. automodule:: enlace.proxy
 
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      PLATFORM_COOKIE_NAMES
+      EXTERNAL_DROP_REQUEST_HEADERS
+      EXTERNAL_DROP_RESPONSE_HEADERS
+   
    .. rubric:: Functions
 
    .. autosummary::
    
       make_proxy_app
+      platform_cookie_filter
    
