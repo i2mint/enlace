@@ -24,8 +24,8 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from fastapi import FastAPI, Request
-from pydantic import ValidationError
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from pydantic import ValidationError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
 
