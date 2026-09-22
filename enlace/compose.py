@@ -25,6 +25,7 @@ from typing import Callable, Optional, Sequence
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from pydantic import ValidationError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
 
@@ -329,9 +330,18 @@ class _MtimeCachedManifest:
         st = self._stat()
         stat_key = None if st is None else (st.st_mtime_ns, st.st_size)
         if stat_key != self._stat_key:
-            self._manifest = load_platform_manifest(
-                self._manifest_dir, enlace_version=self._enlace_version
-            )
+            try:
+                self._manifest = load_platform_manifest(
+                    self._manifest_dir, enlace_version=self._enlace_version
+                )
+            except ValidationError as e:
+                # Valid JSON the schema rejects: degrade to the stub, as the
+                # loader already does for corrupt JSON, rather than turning a
+                # diagnostic endpoint into a 500 until the file is rewritten.
+                _logger.warning("Invalid platform manifest %s: %s", self._path, e)
+                self._manifest = DeployManifest(
+                    app=PLATFORM_MANIFEST_NAME, enlace_version=self._enlace_version
+                )
             self._stat_key = stat_key
         payload = self._manifest.model_dump()
         payload["manifest_mtime"] = None if st is None else _iso_utc(st.st_mtime)
