@@ -113,3 +113,14 @@ def test_composed_platform_revalidates_app_html(tmp_path):
     asset = client.get("/site/app.js")
     assert asset.status_code == 200
     assert "cache-control" not in asset.headers
+
+
+def test_html_404_page_is_revalidated(tmp_path):
+    """Starlette serves ``404.html`` outside ``file_response``; it must still revalidate."""
+    d = _frontend(tmp_path)
+    (d / "404.html").write_text("<!doctype html><title>Not found</title>")
+    client = TestClient(RevalidatingStaticFiles(directory=str(d), html=True))
+    r = client.get("/missing")
+    assert r.status_code == 404
+    assert "Not found" in r.text
+    assert r.headers["cache-control"] == "no-cache"
