@@ -1,0 +1,24 @@
+enlace.manifest
+===============
+
+.. automodule:: enlace.manifest
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      load_manifest
+      load_platform_manifest
+      resolve_manifest_dir
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      DeployHeadersMiddleware
+      DeployManifest
+      DeployMetaTagMiddleware
+      ExternalRef
+      SourceRef
+   

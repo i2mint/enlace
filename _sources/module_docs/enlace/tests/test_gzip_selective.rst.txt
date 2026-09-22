@@ -1,4 +1,0 @@
-enlace.tests.test_gzip_selective
-================================
-.. automodule:: enlace.tests.test_gzip_selective
-   :members:

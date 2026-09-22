@@ -1,343 +1,746 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="alternate" type="text/markdown" href="index.html.md">
+<link rel="describedby" href="llms.txt" type="text/markdown">
+<link rel="alternate" type="text/markdown" href="index.html.md">
+<link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="API reference" href="api.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>enlace</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
 
 
-<!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
-<head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to enlace’s documentation! &mdash; enlace 0.1.31 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
-
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  --color-brand-primary: #006786;
+  --color-brand-content: #006786;
   
-      <script src="_static/jquery.js?v=5d32c60e"></script>
-      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=d71dfaa1"></script>
-      <script src="_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
-      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
-      <script src="_static/copybutton.js?v=f281be69"></script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="enlace" href="module_docs/enlace.html" /> 
-</head>
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #2ecbec;
+  --color-brand-content: #2ecbec;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #2ecbec;
+  --color-brand-content: #2ecbec;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
 
-          
-          
-          <a href="#" class="icon icon-home">
-            enlace
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace.html">enlace</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/__main__.html">enlace.__main__</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/appmeta.html">enlace.appmeta</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/base.html">enlace.base</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/build.html">enlace.build</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/compose.html">enlace.compose</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/diagnose.html">enlace.diagnose</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/discover.html">enlace.discover</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/doctor.html">enlace.doctor</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/frontend.html">enlace.frontend</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/gzip_selective.html">enlace.gzip_selective</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/manifest.html">enlace.manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/proxy.html">enlace.proxy</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/serve.html">enlace.serve</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/strategies.html">enlace.strategies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/supervise.html">enlace.supervise</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_gzip_selective.html">enlace.tests.test_gzip_selective</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/util.html">enlace.util</a></li>
-</ul>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">enlace</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Welcome to enlace’s documentation!</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <section id="welcome-to-enlace-s-documentation">
-<h1>Welcome to enlace’s documentation!<a class="headerlink" href="#welcome-to-enlace-s-documentation" title="Link to this heading"></a></h1>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace.html">enlace</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.AppConfig"><code class="docutils literal notranslate"><span class="pre">AppConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.AppImportError"><code class="docutils literal notranslate"><span class="pre">AppImportError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.BuildConfig"><code class="docutils literal notranslate"><span class="pre">BuildConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.BuildResult"><code class="docutils literal notranslate"><span class="pre">BuildResult</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.ConventionDiscoverer"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.ConventionsConfig"><code class="docutils literal notranslate"><span class="pre">ConventionsConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.DeployHeadersMiddleware"><code class="docutils literal notranslate"><span class="pre">DeployHeadersMiddleware</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.DeployManifest"><code class="docutils literal notranslate"><span class="pre">DeployManifest</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.DeployMetaTagMiddleware"><code class="docutils literal notranslate"><span class="pre">DeployMetaTagMiddleware</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.DiagnosticReport"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.EnlaceConfigError"><code class="docutils literal notranslate"><span class="pre">EnlaceConfigError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.ExternalRef"><code class="docutils literal notranslate"><span class="pre">ExternalRef</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.PlatformConfig"><code class="docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.SourceRef"><code class="docutils literal notranslate"><span class="pre">SourceRef</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.build_backend"><code class="docutils literal notranslate"><span class="pre">build_backend()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.diagnose_app"><code class="docutils literal notranslate"><span class="pre">diagnose_app()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.discover_apps"><code class="docutils literal notranslate"><span class="pre">discover_apps()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.load_platform_manifest"><code class="docutils literal notranslate"><span class="pre">load_platform_manifest()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.run_build"><code class="docutils literal notranslate"><span class="pre">run_build()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.serve"><code class="docutils literal notranslate"><span class="pre">serve()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.skills_dir"><code class="docutils literal notranslate"><span class="pre">skills_dir()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace.html#enlace.validate_build"><code class="docutils literal notranslate"><span class="pre">validate_build()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/__main__.html">enlace.__main__</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.COMMANDS"><code class="docutils literal notranslate"><span class="pre">COMMANDS</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.app_meta"><code class="docutils literal notranslate"><span class="pre">app_meta()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.build"><code class="docutils literal notranslate"><span class="pre">build()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.check"><code class="docutils literal notranslate"><span class="pre">check()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.diagnose"><code class="docutils literal notranslate"><span class="pre">diagnose()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.doctor"><code class="docutils literal notranslate"><span class="pre">doctor()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.list_apps"><code class="docutils literal notranslate"><span class="pre">list_apps()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/__main__.html#enlace.__main__.show_config"><code class="docutils literal notranslate"><span class="pre">show_config()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/appmeta.html">enlace.appmeta</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.AppMetaConfig"><code class="docutils literal notranslate"><span class="pre">AppMetaConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.AppMetaEntry"><code class="docutils literal notranslate"><span class="pre">AppMetaEntry</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.IconResult"><code class="docutils literal notranslate"><span class="pre">IconResult</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.app_dir_of"><code class="docutils literal notranslate"><span class="pre">app_dir_of()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.effective_icon_spec"><code class="docutils literal notranslate"><span class="pre">effective_icon_spec()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.harvest_app_metadata"><code class="docutils literal notranslate"><span class="pre">harvest_app_metadata()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.resolve_icon"><code class="docutils literal notranslate"><span class="pre">resolve_icon()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/appmeta.html#enlace.appmeta.resolve_keywords"><code class="docutils literal notranslate"><span class="pre">resolve_keywords()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/base.html">enlace.base</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.AppConfig"><code class="docutils literal notranslate"><span class="pre">AppConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.AppImportError"><code class="docutils literal notranslate"><span class="pre">AppImportError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.BuildConfig"><code class="docutils literal notranslate"><span class="pre">BuildConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.ConventionsConfig"><code class="docutils literal notranslate"><span class="pre">ConventionsConfig</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/base.html#enlace.base.PlatformConfig"><code class="docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/build.html">enlace.build</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.BuildResult"><code class="docutils literal notranslate"><span class="pre">BuildResult</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.app_dir_of"><code class="docutils literal notranslate"><span class="pre">app_dir_of()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.build_cwd"><code class="docutils literal notranslate"><span class="pre">build_cwd()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.has_build"><code class="docutils literal notranslate"><span class="pre">has_build()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.run_build"><code class="docutils literal notranslate"><span class="pre">run_build()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/build.html#enlace.build.validate_build"><code class="docutils literal notranslate"><span class="pre">validate_build()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/compose.html">enlace.compose</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/compose.html#enlace.compose.EnlaceConfigError"><code class="docutils literal notranslate"><span class="pre">EnlaceConfigError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/compose.html#enlace.compose.build_backend"><code class="docutils literal notranslate"><span class="pre">build_backend()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/compose.html#enlace.compose.build_launcher_item"><code class="docutils literal notranslate"><span class="pre">build_launcher_item()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/compose.html#enlace.compose.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/diagnose.html">enlace.diagnose</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/diagnose.html#enlace.diagnose.Category"><code class="docutils literal notranslate"><span class="pre">Category</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/diagnose.html#enlace.diagnose.DiagnosticReport"><code class="docutils literal notranslate"><span class="pre">DiagnosticReport</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/diagnose.html#enlace.diagnose.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/diagnose.html#enlace.diagnose.Severity"><code class="docutils literal notranslate"><span class="pre">Severity</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/diagnose.html#enlace.diagnose.diagnose_app"><code class="docutils literal notranslate"><span class="pre">diagnose_app()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/diagnose.html#enlace.diagnose.iter_diagnosers"><code class="docutils literal notranslate"><span class="pre">iter_diagnosers()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/diagnose.html#enlace.diagnose.register_diagnoser"><code class="docutils literal notranslate"><span class="pre">register_diagnoser()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/discover.html">enlace.discover</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/discover.html#enlace.discover.AppDiscoverer"><code class="docutils literal notranslate"><span class="pre">AppDiscoverer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/discover.html#enlace.discover.ConventionDiscoverer"><code class="docutils literal notranslate"><span class="pre">ConventionDiscoverer</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/discover.html#enlace.discover.discover_apps"><code class="docutils literal notranslate"><span class="pre">discover_apps()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/doctor.html">enlace.doctor</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/doctor.html#enlace.doctor.Check"><code class="docutils literal notranslate"><span class="pre">Check</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/doctor.html#enlace.doctor.Report"><code class="docutils literal notranslate"><span class="pre">Report</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/doctor.html#enlace.doctor.run_doctor"><code class="docutils literal notranslate"><span class="pre">run_doctor()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/frontend.html">enlace.frontend</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/frontend.html#enlace.frontend.LandingWithUnknownApp404"><code class="docutils literal notranslate"><span class="pre">LandingWithUnknownApp404</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/frontend.html#enlace.frontend.SPAStaticFiles"><code class="docutils literal notranslate"><span class="pre">SPAStaticFiles</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/gzip_selective.html">enlace.gzip_selective</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/gzip_selective.html#enlace.gzip_selective.INCOMPRESSIBLE_PREFIXES"><code class="docutils literal notranslate"><span class="pre">INCOMPRESSIBLE_PREFIXES</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/gzip_selective.html#enlace.gzip_selective.SelectiveGZipMiddleware"><code class="docutils literal notranslate"><span class="pre">SelectiveGZipMiddleware</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/gzip_selective.html#enlace.gzip_selective.is_compressible"><code class="docutils literal notranslate"><span class="pre">is_compressible()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/manifest.html">enlace.manifest</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.DeployHeadersMiddleware"><code class="docutils literal notranslate"><span class="pre">DeployHeadersMiddleware</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.DeployManifest"><code class="docutils literal notranslate"><span class="pre">DeployManifest</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.DeployMetaTagMiddleware"><code class="docutils literal notranslate"><span class="pre">DeployMetaTagMiddleware</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.ExternalRef"><code class="docutils literal notranslate"><span class="pre">ExternalRef</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.SourceRef"><code class="docutils literal notranslate"><span class="pre">SourceRef</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.load_platform_manifest"><code class="docutils literal notranslate"><span class="pre">load_platform_manifest()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/manifest.html#enlace.manifest.resolve_manifest_dir"><code class="docutils literal notranslate"><span class="pre">resolve_manifest_dir()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/proxy.html">enlace.proxy</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/proxy.html#enlace.proxy.make_proxy_app"><code class="docutils literal notranslate"><span class="pre">make_proxy_app()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/serve.html">enlace.serve</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/serve.html#enlace.serve.serve"><code class="docutils literal notranslate"><span class="pre">serve()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/strategies.html">enlace.strategies</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.AsgiStrategy"><code class="docutils literal notranslate"><span class="pre">AsgiStrategy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.BackendStrategy"><code class="docutils literal notranslate"><span class="pre">BackendStrategy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.ExternalStrategy"><code class="docutils literal notranslate"><span class="pre">ExternalStrategy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.Lifecycle"><code class="docutils literal notranslate"><span class="pre">Lifecycle</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.ProcessStrategy"><code class="docutils literal notranslate"><span class="pre">ProcessStrategy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.StaticStrategy"><code class="docutils literal notranslate"><span class="pre">StaticStrategy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.collect_strategy_field_maps"><code class="docutils literal notranslate"><span class="pre">collect_strategy_field_maps()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.get_strategy"><code class="docutils literal notranslate"><span class="pre">get_strategy()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.iter_strategies"><code class="docutils literal notranslate"><span class="pre">iter_strategies()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.known_modes"><code class="docutils literal notranslate"><span class="pre">known_modes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/strategies.html#enlace.strategies.register_strategy"><code class="docutils literal notranslate"><span class="pre">register_strategy()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/supervise.html">enlace.supervise</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/supervise.html#enlace.supervise.ManagedProcess"><code class="docutils literal notranslate"><span class="pre">ManagedProcess</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/supervise.html#enlace.supervise.supervise_all"><code class="docutils literal notranslate"><span class="pre">supervise_all()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/conftest.html">enlace.tests.conftest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_appmeta.html">enlace.tests.test_appmeta</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_base.html">enlace.tests.test_base</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_build.html">enlace.tests.test_build</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_compose.html">enlace.tests.test_compose</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html">enlace.tests.test_diagnose_auth</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_auth.html#enlace.tests.test_diagnose_auth.test_clean_app_has_no_new_issues"><code class="docutils literal notranslate"><span class="pre">test_clean_app_has_no_new_issues()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_diagnose_plugin.html">enlace.tests.test_diagnose_plugin</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_discover.html">enlace.tests.test_discover</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_frontend_404.html">enlace.tests.test_frontend_404</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_gzip.html">enlace.tests.test_gzip</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_gzip_selective.html">enlace.tests.test_gzip_selective</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_manifest.html">enlace.tests.test_manifest</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_strategies.html">enlace.tests.test_strategies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html">enlace.tests.test_supervise</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_backoff_delay_capped"><code class="docutils literal notranslate"><span class="pre">test_backoff_delay_capped()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_backoff_delay_increases"><code class="docutils literal notranslate"><span class="pre">test_backoff_delay_increases()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_backoff_not_reset_too_soon"><code class="docutils literal notranslate"><span class="pre">test_backoff_not_reset_too_soon()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_backoff_reset_after_stable"><code class="docutils literal notranslate"><span class="pre">test_backoff_reset_after_stable()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_health_check_no_port"><code class="docutils literal notranslate"><span class="pre">test_health_check_no_port()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_health_check_passes"><code class="docutils literal notranslate"><span class="pre">test_health_check_passes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_health_check_timeout"><code class="docutils literal notranslate"><span class="pre">test_health_check_timeout()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_log_streaming"><code class="docutils literal notranslate"><span class="pre">test_log_streaming()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_max_retries_exceeded"><code class="docutils literal notranslate"><span class="pre">test_max_retries_exceeded()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_should_not_restart_clean_exit"><code class="docutils literal notranslate"><span class="pre">test_should_not_restart_clean_exit()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_should_not_restart_never_policy"><code class="docutils literal notranslate"><span class="pre">test_should_not_restart_never_policy()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_should_restart_always_policy"><code class="docutils literal notranslate"><span class="pre">test_should_restart_always_policy()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_should_restart_on_failure"><code class="docutils literal notranslate"><span class="pre">test_should_restart_on_failure()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_start_and_stop"><code class="docutils literal notranslate"><span class="pre">test_start_and_stop()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/tests/test_supervise.html#enlace.tests.test_supervise.test_stop_already_exited"><code class="docutils literal notranslate"><span class="pre">test_stop_already_exited()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/enlace/util.html">enlace.util</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/util.html#enlace.util.derive_display_name"><code class="docutils literal notranslate"><span class="pre">derive_display_name()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/util.html#enlace.util.derive_route_prefix"><code class="docutils literal notranslate"><span class="pre">derive_route_prefix()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/enlace/util.html#enlace.util.is_skippable"><code class="docutils literal notranslate"><span class="pre">is_skippable()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
-<p>Release: 0.1.31</p>
-<p>Last change: Sep 04, 2026</p>
-</section>
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
 
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="module_docs/enlace.html" class="btn btn-neutral float-right" title="enlace" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
     </div>
+    <div class="header-center">
+      <a href="#"><div class="brand">enlace</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+  
+  <span class="sidebar-brand-text">enlace</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.appmeta.html">enlace.appmeta</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.base.html">enlace.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.build.html">enlace.build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.compose.html">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.diagnose.html">enlace.diagnose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.discover.html">enlace.discover</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.doctor.html">enlace.doctor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.frontend.html">enlace.frontend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.gzip_selective.html">enlace.gzip_selective</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.manifest.html">enlace.manifest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.proxy.html">enlace.proxy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.strategies.html">enlace.strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.supervise.html">enlace.supervise</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.util.html">enlace.util</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ai-agents.html">For AI agents</a></li>
+</ul>
 
-  <hr/>
+</div>
+</div>
 
-  <div role="contentinfo">
-    <p></p>
-  </div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/index.md.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <!-- generated by epythet -->
+<section id="enlace">
+<h1>enlace<a class="headerlink" href="#enlace" title="Link to this heading">¶</a></h1>
+<p>Serve all your web apps from a single command.
+They don’t import it. They don’t know it’s there.</p>
+<p>Tired of launching a separate server for each app? Register your
+apps with <code class="docutils literal notranslate"><span class="pre">enlace</span></code> — point it at where they live — and serve them
+all with one command. Python ASGI apps get mounted in-process.
+Non-Python apps (Node.js, Go, etc.) get spawned as supervised
+child processes and routed via reverse proxy. External services
+and static sites work too. Your apps stay independent — no code
+changes, no shared dependencies.
+For more details, see the <a class="reference internal" href="#philosophy">Philosophy</a> section.</p>
+<section id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
+<p>The quickest way to start is to use enlace via AI.
+That’s what we’ll demo here.
+For those who want to work in the CLI or Python directly, see the later <a class="reference internal" href="#under-the-hood">Under the hood</a> section.</p>
+<section id="install">
+<h3>Install<a class="headerlink" href="#install" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>enlace
+</pre></div>
+</div>
+<p>Skills are bundled with the package. To make them available to Claude Code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Link enlace's skills into your project (or globally)</span>
+skill<span class="w"> </span>link-skills<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import enlace; print(enlace.__path__[0])'</span><span class="k">)</span><span class="s2">"</span>
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
+<span class="c1"># Or symlink manually</span>
+ln<span class="w"> </span>-s<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">'from enlace import skills_dir; print(skills_dir())'</span><span class="k">)</span><span class="s2">"</span>/*<span class="w"> </span>.claude/skills/
+</pre></div>
+</div>
+</section>
+<section id="using-enlace-with-an-ai-agent">
+<h3>Using <code class="docutils literal notranslate"><span class="pre">enlace</span></code> with an AI agent<a class="headerlink" href="#using-enlace-with-an-ai-agent" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">enlace</span></code> ships with AI agent skills that let Claude Code (or any compatible
+agent) handle the entire workflow through natural language:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">"Add my_app to the platform"</span>
+<span class="s2">"Can my_app be enlaced?"</span>
+<span class="s2">"Diagnose /path/to/my_app and fix what you can"</span>
+<span class="s2">"List my apps"</span>
+<span class="s2">"List the apps configurations"</span>
+<span class="s2">"Serve all my apps"</span>
+</pre></div>
+</div>
+</section>
+<section id="available-skills">
+<h3>Available skills<a class="headerlink" href="#available-skills" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Skill</p></th>
+<th class="head"><p>What it does</p></th>
+<th class="head"><p>Trigger phrases</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>enlace</strong></p></td>
+<td><p>Create apps, configure platform.toml, understand conventions, serve</p></td>
+<td><p>“add an app”, “serve my apps”, “configure enlace”</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>enlace-diagnose</strong></p></td>
+<td><p>Analyze an app for compatibility, suggest fixes that preserve standalone operation</p></td>
+<td><p>“can this be enlaced?”, “diagnose this app”, “what needs to change?”</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>enlace-dev</strong></p></td>
+<td><p>Modify the enlace package itself — add features, fix bugs, extend middleware</p></td>
+<td><p>“add X to enlace”, “implement Y in enlace”</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="what-the-ai-does-for-you">
+<h3>What the AI does for you<a class="headerlink" href="#what-the-ai-does-for-you" title="Link to this heading">¶</a></h3>
+<p><strong>Onboarding an existing app:</strong>
+The agent runs <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">diagnose</span></code>, reads the report, and presents findings in
+three tiers: <code class="docutils literal notranslate"><span class="pre">enlace</span></code>-side fixes (no app changes), app changes that preserve
+standalone, and warnings. It proposes specific code changes and applies them
+with your approval.</p>
+<p><strong>Creating a new app:</strong>
+The agent scaffolds the directory structure, writes <code class="docutils literal notranslate"><span class="pre">server.py</span></code> with a FastAPI
+app, optionally creates <code class="docutils literal notranslate"><span class="pre">frontend/index.html</span></code>, registers it in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>,
+runs <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">check</span></code>, and starts serving.</p>
+<p><strong>Day-to-day operations:</strong>
+The agent runs <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">serve</span></code>, <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">check</span></code>, <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">show-config</span></code> as needed,
+interprets the output, and explains what’s happening.</p>
+</section>
+</section>
+<section id="philosophy">
+<h2>Philosophy<a class="headerlink" href="#philosophy" title="Link to this heading">¶</a></h2>
+<p><strong>Apps don’t depend on <code class="docutils literal notranslate"><span class="pre">enlace</span></code>.</strong> <code class="docutils literal notranslate"><span class="pre">enlace</span></code> is an operator’s tool, not a library
+your app imports. Your app is a standard Python module with <code class="docutils literal notranslate"><span class="pre">app</span> <span class="pre">=</span> <span class="pre">FastAPI()</span></code>.
+It runs standalone with <code class="docutils literal notranslate"><span class="pre">uvicorn</span> <span class="pre">server:app</span></code>. <code class="docutils literal notranslate"><span class="pre">enlace</span></code> just happens to know how
+to find it, mount it at a route prefix, and serve it alongside other apps.
+(See <a class="reference external" href="https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#1-zero-coupling-apps-dont-import-enlace">Zero Coupling</a>
+for how <code class="docutils literal notranslate"><span class="pre">enlace</span></code> provides services like auth and storage without creating a
+dependency.)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>enlace (the platform)          your app (Python, Node, Go, ...)
+├── fastapi                    ├── fastapi (or express, gin, ...)
+├── uvicorn                    ├── pandas (or whatever you need)
+├── pydantic                   └── ... your domain libs
+├── cw
+└── httpx (optional, for proxy)
+                               ← no arrow here: your app does NOT import enlace
+</pre></div>
+</div>
+<p><strong>Two principles in tension:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Apps should not need to change.</strong> All aggregation logic lives in <code class="docutils literal notranslate"><span class="pre">enlace</span></code>.
+When an app is hard to mount, prefer <code class="docutils literal notranslate"><span class="pre">enlace</span></code>-side config (app.toml, env vars)
+over app code changes.</p></li>
+<li><p><strong>Enlaced apps must still work alone.</strong> When changes are suggested, they
+preserve standalone operation. The pattern: env-var with current value as
+default — standalone uses the original, <code class="docutils literal notranslate"><span class="pre">enlace</span></code> overrides at build time.
+(See <a class="reference external" href="https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#2-standalone-preservation-enlaced-apps-must-still-work-alone">Standalone Preservation</a>
+for the env-var-with-default pattern and fix classification.)</p></li>
+</ol>
+<p>For the full rationale — including how these principles interact, where the
+balance sits today, and what <code class="docutils literal notranslate"><span class="pre">enlace</span></code> aspires to handle better — see the
+<a class="reference external" href="https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md">Design Principles</a> document.</p>
+</section>
+<section id="under-the-hood">
+<h2>Under the hood<a class="headerlink" href="#under-the-hood" title="Link to this heading">¶</a></h2>
+<p>For those who want direct control, here’s the CLI, Python API, and
+configuration system that the skills use internally.</p>
+<section id="simple-fastapi-example">
+<h3>Simple FastAPI example<a class="headerlink" href="#simple-fastapi-example" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>enlace
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create an app</span>
+mkdir<span class="w"> </span>-p<span class="w"> </span>apps/hello
+cat<span class="w"> </span>&gt;<span class="w"> </span>apps/hello/server.py<span class="w"> </span><span class="s">&lt;&lt; 'EOF'</span>
+<span class="s">from fastapi import FastAPI</span>
+<span class="s">app = FastAPI()</span>
 
-</footer>
+<span class="s">@app.get("/greet")</span>
+<span class="s">def greet(name: str = "world"):</span>
+<span class="s">    return {"message": f"Hello, {name}!"}</span>
+<span class="s">EOF</span>
+
+<span class="c1"># Serve it</span>
+enlace<span class="w"> </span>serve
+<span class="c1"># → http://localhost:8000/api/hello/greet?name=Thor</span>
+</pre></div>
+</div>
+</section>
+<section id="cli">
+<h3>CLI<a class="headerlink" href="#cli" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>enlace<span class="w"> </span>serve<span class="w">              </span><span class="c1"># Start backend (dev mode, hot reload)</span>
+enlace<span class="w"> </span>show-config<span class="w">        </span><span class="c1"># Resolved config with provenance</span>
+enlace<span class="w"> </span>check<span class="w">              </span><span class="c1"># Validate config, check route conflicts</span>
+enlace<span class="w"> </span>list-apps<span class="w">          </span><span class="c1"># Table: name, route, type, access</span>
+enlace<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>app_name<span class="o">]</span><span class="w">   </span><span class="c1"># Run declarative frontend builds (apps with a</span>
+<span class="w">                          </span><span class="c1"># [build] section); explicit pre-deploy step,</span>
+<span class="w">                          </span><span class="c1"># never builds at request time. --dry-run to preview.</span>
+enlace<span class="w"> </span>diagnose<span class="w"> </span>&lt;dir&gt;<span class="w">     </span><span class="c1"># Analyze an app for enlace compatibility</span>
+enlace<span class="w"> </span>doctor<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8000
+<span class="w">                          </span><span class="c1"># Post-deploy smoke: probe /auth/csrf and every</span>
+<span class="w">                          </span><span class="c1"># mounted app; exit nonzero on any failure.</span>
+</pre></div>
+</div>
+</section>
+<section id="python-api">
+<h3>Python API<a class="headerlink" href="#python-api" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">diagnose_app</span><span class="p">,</span> <span class="n">discover_apps</span><span class="p">,</span> <span class="n">build_backend</span>
+
+<span class="c1"># Diagnose an app</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">diagnose_app</span><span class="p">(</span><span class="s2">"/path/to/my_app"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>  <span class="c1"># Human-readable report</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">is_enlaceable</span><span class="p">)</span>  <span class="c1"># True if no critical blockers</span>
+
+<span class="c1"># Discover and compose</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">discover_apps</span><span class="p">()</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">build_backend</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># FastAPI app with all sub-apps mounted</span>
+</pre></div>
+</div>
+</section>
+<section id="app-discovery">
+<h3>App discovery<a class="headerlink" href="#app-discovery" title="Link to this heading">¶</a></h3>
+<p>enlace discovers apps by filesystem conventions:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>apps/
+├── my_tool/
+│   └── server.py          # has `app = FastAPI()` → mounted at /api/my_tool
+├── dashboard/
+│   ├── server.py           # backend
+│   └── frontend/
+│       └── index.html      # served at /dashboard/
+├── calculator/
+│   └── server.py           # typed functions, no `app` → auto-wrapped as routes
+├── blog_node/
+│   ├── app.toml            # mode = "process", command = ["node", "server.js"]
+│   └── server.js           # spawned + proxied at /api/blog_node
+└── docs/
+    ├── app.toml            # mode = "static", public_dir = "dist"
+    └── dist/index.html     # served directly
+</pre></div>
+</div>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Convention</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Override in <code class="docutils literal notranslate"><span class="pre">app.toml</span></code></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Serving mode</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">asgi</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mode</span></code> (<code class="docutils literal notranslate"><span class="pre">asgi</span></code>, <code class="docutils literal notranslate"><span class="pre">process</span></code>, <code class="docutils literal notranslate"><span class="pre">external</span></code>, <code class="docutils literal notranslate"><span class="pre">static</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Route prefix</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/api/{dir_name}</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">route</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Entry point</p></td>
+<td><p>First of <code class="docutils literal notranslate"><span class="pre">server.py</span></code>, <code class="docutils literal notranslate"><span class="pre">app.py</span></code>, <code class="docutils literal notranslate"><span class="pre">main.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">entry_point</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>ASGI app object</p></td>
+<td><p>Attribute named <code class="docutils literal notranslate"><span class="pre">app</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">app_attr</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Frontend assets</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">frontend/index.html</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">frontend_dir</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Everything enlace infers is inspectable (<code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">show-config</span> <span class="pre">--verbose</span></code>) and
+overridable via <code class="docutils literal notranslate"><span class="pre">app.toml</span></code>, <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>, environment variables, or CLI flags.</p>
+<section id="when-an-app-won-t-import">
+<h4>When an app won’t import<a class="headerlink" href="#when-an-app-won-t-import" title="Link to this heading">¶</a></h4>
+<p>Discovering an <code class="docutils literal notranslate"><span class="pre">asgi</span></code>-mode app <em>imports</em> its entry module, so a missing
+dependency — or any exception raised at module scope — is a discovery failure.
+What happens next is a policy you choose:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">discover_apps</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># raise (default)</span>
+<span class="n">discover_apps</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="s2">"record"</span><span class="p">)</span>  <span class="c1"># record and carry on</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">serve</span></code> keeps the default: a gateway must not boot pretending a broken app is
+fine. The diagnostic verbs (<code class="docutils literal notranslate"><span class="pre">doctor</span></code>, <code class="docutils literal notranslate"><span class="pre">check</span></code>, <code class="docutils literal notranslate"><span class="pre">list-apps</span></code>, <code class="docutils literal notranslate"><span class="pre">show-config</span></code>,
+<code class="docutils literal notranslate"><span class="pre">app-meta</span></code>) record instead, so one broken app no longer hides the health of
+every other one — <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span> <span class="pre">--json</span></code> still exits nonzero, but now with a
+parseable <code class="docutils literal notranslate"><span class="pre">FAIL</span></code> naming the app and its exception class, on
+<code class="docutils literal notranslate"><span class="pre">AppConfig.import_error</span></code>.</p>
+</section>
+</section>
+<section id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">¶</a></h3>
+<p><strong><code class="docutils literal notranslate"><span class="pre">platform.toml</span></code></strong> (project root):</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[platform]</span>
+<span class="n">apps_dirs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"apps"</span><span class="p">]</span><span class="w">                </span><span class="c1"># Directories containing app subdirs</span>
+<span class="n">app_dirs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"/path/to/standalone"</span><span class="p">]</span><span class="w">  </span><span class="c1"># Individual app directories</span>
+<span class="n">backend_port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">8000</span>
+
+<span class="k">[conventions]</span>
+<span class="n">entry_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"server.py"</span><span class="p">,</span><span class="w"> </span><span class="s2">"app.py"</span><span class="p">,</span><span class="w"> </span><span class="s2">"main.py"</span><span class="p">]</span>
+<span class="n">app_attr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"app"</span>
+<span class="n">frontend_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"frontend"</span>
+</pre></div>
+</div>
+<p><strong><code class="docutils literal notranslate"><span class="pre">app.toml</span></code></strong> (per-app, in app directory):</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Python ASGI (default mode — just overrides)</span>
+<span class="n">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/api/custom-route"</span>
+<span class="n">entry_point</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"backend/main.py"</span>
+<span class="n">access</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"public"</span>
+<span class="n">display_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"My App"</span>
+</pre></div>
+</div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Non-Python or separate process</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"process"</span>
+<span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"node"</span><span class="p">,</span><span class="w"> </span><span class="s2">"server.js"</span><span class="p">]</span>
+<span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3001</span>
+<span class="n">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/api/blog"</span>
+</pre></div>
+</div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># External upstream</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"external"</span>
+<span class="n">upstream_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"http://192.168.1.50:3000"</span>
+</pre></div>
+</div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Declarative frontend build (any app with a compiled frontend)</span>
+<span class="k">[build]</span>
+<span class="n">install</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"npm ci"</span><span class="w">                  </span><span class="c1"># string or argv list</span>
+<span class="n">build</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"npm run build"</span>
+<span class="n">env_vars</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"VITE_API_BASE"</span><span class="p">]</span><span class="w">        </span><span class="c1"># vars the build honours; deployers inject values</span>
+<span class="n">outputs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"dist"</span><span class="p">]</span><span class="w">                  </span><span class="c1"># optional hint of produced paths</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">build</span></code> runs these as an explicit pre-deploy step (<code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">build</span> <span class="pre">my_app</span></code>,
+or all apps with a <code class="docutils literal notranslate"><span class="pre">[build]</span></code> section). enlace never builds at request time and
+does not assume a toolchain — it just runs the argv the app declares, in the
+app directory, with the caller’s environment plus any injected overrides
+(e.g. <code class="docutils literal notranslate"><span class="pre">VITE_API_BASE</span></code>). The app keeps a normal build whether or not enlace
+serves it, so the “apps don’t know about enlace” principle holds.</p>
+<p>For process/external modes: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">enlace[process]</span></code></p>
+<p><strong>Override precedence</strong> (lowest → highest):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>defaults → filesystem conventions → app.toml → platform.toml → env vars → CLI flags
+</pre></div>
+</div>
+</section>
+<section id="app-modes">
+<h3>App modes<a class="headerlink" href="#app-modes" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Mode</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>How it works</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">asgi</span></code> (default)</p></td>
+<td><p>Python ASGI apps</p></td>
+<td><p>Imported + mounted on gateway FastAPI</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">process</span></code></p></td>
+<td><p>Any app as a child process</p></td>
+<td><p>Spawned, health-checked, reverse-proxied</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">external</span></code></p></td>
+<td><p>Pre-existing upstream</p></td>
+<td><p>Proxied, no lifecycle management</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">static</span></code></p></td>
+<td><p>Static file directory</p></td>
+<td><p>Served directly</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Within <code class="docutils literal notranslate"><span class="pre">asgi</span></code> mode, apps are further classified:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Type</p></th>
+<th class="head"><p>How detected</p></th>
+<th class="head"><p>How mounted</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">asgi_app</span></code></p></td>
+<td><p>Module has callable <code class="docutils literal notranslate"><span class="pre">app</span></code> attribute</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">parent.mount(prefix,</span> <span class="pre">sub_app)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">functions</span></code></p></td>
+<td><p>No <code class="docutils literal notranslate"><span class="pre">app</span></code> attr, has typed public functions</p></td>
+<td><p>Auto-wrapped as API routes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">frontend_only</span></code></p></td>
+<td><p>No backend entry, has <code class="docutils literal notranslate"><span class="pre">frontend/index.html</span></code></p></td>
+<td><p>Static file serving only</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="auth-sessions-plugins">
+<h3>Auth, sessions &amp; plugins<a class="headerlink" href="#auth-sessions-plugins" title="Link to this heading">¶</a></h3>
+<p>enlace itself is auth-agnostic. Cross-cutting concerns like authentication,
+sessions, and per-user storage are added by <strong>plugins</strong> — callables
+<code class="docutils literal notranslate"><span class="pre">(parent:</span> <span class="pre">FastAPI,</span> <span class="pre">config:</span> <span class="pre">PlatformConfig)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> invoked once after sub-apps
+are mounted:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_backend</span><span class="p">,</span> <span class="n">discover_apps</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">build_backend</span><span class="p">(</span><span class="n">discover_apps</span><span class="p">(),</span> <span class="n">plugins</span><span class="o">=</span><span class="p">[</span><span class="n">my_plugin</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Plugins can also be loaded by name from the <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> env var
+(comma-separated). The canonical example is <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code>, which adds
+auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps
+without coupling: services are injected into the ASGI scope, so apps read
+<code class="docutils literal notranslate"><span class="pre">request.state.store</span></code> rather than importing anything from enlace. Apps can also
+condition on the <code class="docutils literal notranslate"><span class="pre">ENLACE_MANAGED=1</span></code> env var (set by <code class="docutils literal notranslate"><span class="pre">build_backend()</span></code>), but
+never have to.</p>
+</section>
+<section id="html-caching">
+<h3>HTML caching<a class="headerlink" href="#html-caching" title="Link to this heading">¶</a></h3>
+<p>Every static mount (app frontends, the landing app, <code class="docutils literal notranslate"><span class="pre">mode=&quot;static&quot;</span></code> apps, shared assets) sends <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></code> on HTML documents — including SPA fallbacks and <code class="docutils literal notranslate"><span class="pre">304</span></code> revalidations — so browsers revalidate a page (a cheap <code class="docutils literal notranslate"><span class="pre">304</span></code> via its <code class="docutils literal notranslate"><span class="pre">ETag</span></code>) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> already set on a response is never overridden. The class is <code class="docutils literal notranslate"><span class="pre">enlace.frontend.RevalidatingStaticFiles</span></code> (<code class="docutils literal notranslate"><span class="pre">html_cache_control=None</span></code> opts out).</p>
+</section>
+<section id="deploy-manifest-meta">
+<h3>Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)<a class="headerlink" href="#deploy-manifest-meta" title="Link to this heading">¶</a></h3>
+<p>enlace answers “what is actually deployed?” via an always-on, cheap manifest
+layer. Every mounted app gets a <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> endpoint (plus a platform-level
+<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>), and every response carries <code class="docutils literal notranslate"><span class="pre">X-Deploy-*</span></code> headers. A deploy tool
+snapshots build identity (git SHA, deploy time, externals) at deploy time into
+<code class="docutils literal notranslate"><span class="pre">{manifest_dir}/{app}.json</span></code>; enlace owns the read paths and schema. This lets
+you tell whether the server is serving the SHA you think it is and whether the
+browser rendered the current build or a stale cache.</p>
+<p class="epythet-aggregates">This documentation as a single file: <a href="enlace.md">enlace.md</a> (Markdown, for agents).</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+</section>
+
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 12:57 UTC from <a href="https://github.com/i2mint/enlace/commit/ad646119c56cee0e67b9af200966ce178068219a">ad64611</a> (main) · enlace 0.1.32 · <a href="about-this-build.html">about this build</a></p>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="api.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">API reference</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            Made with 
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">enlace</a><ul>
+<li><a class="reference internal" href="#quick-start">Quick start</a><ul>
+<li><a class="reference internal" href="#install">Install</a></li>
+<li><a class="reference internal" href="#using-enlace-with-an-ai-agent">Using <code class="docutils literal notranslate"><span class="pre">enlace</span></code> with an AI agent</a></li>
+<li><a class="reference internal" href="#available-skills">Available skills</a></li>
+<li><a class="reference internal" href="#what-the-ai-does-for-you">What the AI does for you</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#philosophy">Philosophy</a></li>
+<li><a class="reference internal" href="#under-the-hood">Under the hood</a><ul>
+<li><a class="reference internal" href="#simple-fastapi-example">Simple FastAPI example</a></li>
+<li><a class="reference internal" href="#cli">CLI</a></li>
+<li><a class="reference internal" href="#python-api">Python API</a></li>
+<li><a class="reference internal" href="#app-discovery">App discovery</a><ul>
+<li><a class="reference internal" href="#when-an-app-won-t-import">When an app won’t import</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+<li><a class="reference internal" href="#app-modes">App modes</a></li>
+<li><a class="reference internal" href="#auth-sessions-plugins">Auth, sessions &amp; plugins</a></li>
+<li><a class="reference internal" href="#html-caching">HTML caching</a></li>
+<li><a class="reference internal" href="#deploy-manifest-meta">Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
         </div>
       </div>
-    </section>
+      
+      
+    </aside>
   </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+</div><script src="_static/documentation_options.js?v=201c9933"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=fd10adb8"></script>
+    </body>
 </html>

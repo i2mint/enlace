@@ -1,0 +1,16 @@
+enlace.base
+===========
+
+.. automodule:: enlace.base
+
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AppConfig
+      AppImportError
+      BuildConfig
+      ConventionsConfig
+      PlatformConfig
+   

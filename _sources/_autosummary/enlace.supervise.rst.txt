@@ -1,0 +1,18 @@
+enlace.supervise
+================
+
+.. automodule:: enlace.supervise
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      supervise_all
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      ManagedProcess
+   

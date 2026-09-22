@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "built_at": "2026-09-22T12:57:50Z",
+  "package": {
+    "name": "enlace",
+    "version": "0.1.32",
+    "display_name": "enlace",
+    "source": "pyproject.toml"
+  },
+  "git": {
+    "available": true,
+    "commit": "ad646119c56cee0e67b9af200966ce178068219a",
+    "short_commit": "ad64611",
+    "branch": "main",
+    "tags": [],
+    "dirty": false,
+    "remote_url": "https://github.com/i2mint/enlace",
+    "commit_url": "https://github.com/i2mint/enlace/commit/ad646119c56cee0e67b9af200966ce178068219a",
+    "error": null
+  },
+  "ci": {
+    "provider": "github",
+    "repository": "i2mint/enlace",
+    "sha": "ad646119c56cee0e67b9af200966ce178068219a",
+    "sha_in_history": true,
+    "ref": "refs/heads/main",
+    "ref_name": "main",
+    "run_id": "35730153558",
+    "run_url": "https://github.com/i2mint/enlace/actions/runs/35730153558",
+    "server_url": "https://github.com"
+  },
+  "tools": {
+    "epythet": "0.2.12",
+    "sphinx": "9.1.0",
+    "docutils": "0.22.4",
+    "python": "3.12.14"
+  },
+  "config": {
+    "theme": "auto",
+    "html_theme": "furo",
+    "accent": "#006786",
+    "mode": "auto",
+    "api_generator": "autosummary",
+    "ignore": [
+      "tests/",
+      "scrap/",
+      "examples/"
+    ],
+    "agent_outputs": true,
+    "aggregates": [
+      "md"
+    ],
+    "ai_artifacts": true,
+    "provenance": true,
+    "docs_dir": "docsrc"
+  },
+  "site": {
+    "modules_documented": 15,
+    "objects_documented": 152
+  },
+  "pypi": {
+    "checked": true,
+    "latest": "0.1.32",
+    "relation": "same",
+    "error": null
+  },
+  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout ad646119c56cee0e67b9af200966ce178068219a\npip install \"epythet==0.2.12\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "warnings": [],
+  "alignment": {
+    "aligned": true,
+    "notes": []
+  }
+}

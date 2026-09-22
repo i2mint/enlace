@@ -1,0 +1,66 @@
+﻿enlace
+======
+
+.. automodule:: enlace
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      build_backend
+      create_app
+      diagnose_app
+      discover_apps
+      load_manifest
+      load_platform_manifest
+      run_build
+      serve
+      skills_dir
+      validate_build
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AppConfig
+      AppImportError
+      BuildConfig
+      BuildResult
+      ConventionsConfig
+      DeployHeadersMiddleware
+      DeployManifest
+      DeployMetaTagMiddleware
+      DiagnosticReport
+      ExternalRef
+      Issue
+      PlatformConfig
+      ConventionDiscoverer
+      SourceRef
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      EnlaceConfigError
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   appmeta
+   base
+   build
+   compose
+   diagnose
+   discover
+   doctor
+   frontend
+   gzip_selective
+   manifest
+   proxy
+   strategies
+   supervise
+   util

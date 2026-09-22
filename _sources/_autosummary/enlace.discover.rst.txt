@@ -1,0 +1,19 @@
+enlace.discover
+===============
+
+.. automodule:: enlace.discover
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      discover_apps
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AppDiscoverer
+      ConventionDiscoverer
+   

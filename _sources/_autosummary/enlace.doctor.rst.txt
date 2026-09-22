@@ -1,0 +1,19 @@
+enlace.doctor
+=============
+
+.. automodule:: enlace.doctor
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      run_doctor
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Check
+      Report
+   

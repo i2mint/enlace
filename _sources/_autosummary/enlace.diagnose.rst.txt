@@ -1,0 +1,23 @@
+enlace.diagnose
+===============
+
+.. automodule:: enlace.diagnose
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      diagnose_app
+      iter_diagnosers
+      register_diagnoser
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Category
+      DiagnosticReport
+      Issue
+      Severity
+   

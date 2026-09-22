@@ -1,0 +1,20 @@
+enlace.compose
+==============
+
+.. automodule:: enlace.compose
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      build_backend
+      build_launcher_item
+      create_app
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      EnlaceConfigError
+   

@@ -1,4 +1,0 @@
-enlace.compose
-==============
-.. automodule:: enlace.compose
-   :members:

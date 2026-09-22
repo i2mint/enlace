@@ -1,0 +1,24 @@
+enlace.appmeta
+==============
+
+.. automodule:: enlace.appmeta
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      app_dir_of
+      effective_icon_spec
+      harvest_app_metadata
+      resolve_icon
+      resolve_keywords
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AppMetaConfig
+      AppMetaEntry
+      IconResult
+   

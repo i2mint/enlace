@@ -1,4 +1,0 @@
-enlace.diagnose
-===============
-.. automodule:: enlace.diagnose
-   :members:

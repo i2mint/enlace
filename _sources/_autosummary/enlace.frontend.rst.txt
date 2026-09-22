@@ -1,0 +1,20 @@
+enlace.frontend
+===============
+
+.. automodule:: enlace.frontend
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      is_html_path
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      LandingWithUnknownApp404
+      RevalidatingStaticFiles
+      SPAStaticFiles
+   

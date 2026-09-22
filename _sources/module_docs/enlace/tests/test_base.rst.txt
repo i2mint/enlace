@@ -1,4 +1,0 @@
-enlace.tests.test_base
-======================
-.. automodule:: enlace.tests.test_base
-   :members:

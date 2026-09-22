@@ -1,0 +1,26 @@
+# enlace
+
+> Serve all your web apps from a single process — they don't import it, they don't know it's there
+
+
+## Pages in this subsection
+
+- [enlace](enlace.html.md): enlace – Compose, serve, and deploy multiple web apps from a single codebase.
+- [enlace.appmeta](enlace.appmeta.html.md): App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.
+- [enlace.base](enlace.base.html.md): Core data structures for enlace platform configuration.
+- [enlace.build](enlace.build.html.md): Run and validate declarative app builds from &#96;app.toml&#96; &#96;&#91;build&#93;&#96;.
+- [enlace.compose](enlace.compose.html.md): ASGI app composition for enlace.
+- [enlace.diagnose](enlace.diagnose.html.md): Diagnose app compatibility with enlace.
+- [enlace.discover](enlace.discover.html.md): Convention-based app discovery for enlace.
+- [enlace.doctor](enlace.doctor.html.md): Post-deploy smoke checks for a running enlace gateway.
+- [enlace.frontend](enlace.frontend.html.md): SPA-aware static file serving for enlace.
+- [enlace.gzip_selective](enlace.gzip_selective.html.md): Compression that knows what it must not compress.
+- [enlace.manifest](enlace.manifest.html.md): Deploy manifest: build-identity for diagnosing “what is actually deployed”.
+- [enlace.proxy](enlace.proxy.html.md): Lightweight ASGI reverse proxy for process and external backends.
+- [enlace.strategies](enlace.strategies.html.md): Backend-strategy registry and built-in strategies for enlace.
+- [enlace.supervise](enlace.supervise.html.md): Dev-mode process supervisor for enlace.
+- [enlace.util](enlace.util.html.md): Internal helpers for enlace.
+
+## Optional
+
+- [Top-level llms.txt](../llms.txt): Complete documentation index.

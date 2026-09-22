@@ -1,0 +1,14 @@
+enlace.util
+===========
+
+.. automodule:: enlace.util
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      derive_display_name
+      derive_route_prefix
+      is_skippable
+   

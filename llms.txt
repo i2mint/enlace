@@ -1,0 +1,34 @@
+# enlace
+
+> Serve all your web apps from a single process — they don't import it, they don't know it's there
+
+
+## Pages
+
+- [enlace](index.html.md): Serve all your web apps from a single command.
+- [API reference](api.html.md): | &#96;enlace&#96;   | enlace -- Compose, serve, and deploy multiple web apps from a single codebase.   |
+- [enlace](_autosummary/enlace.html.md): enlace – Compose, serve, and deploy multiple web apps from a single codebase.
+- [enlace.appmeta](_autosummary/enlace.appmeta.html.md): App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.
+- [enlace.base](_autosummary/enlace.base.html.md): Core data structures for enlace platform configuration.
+- [enlace.build](_autosummary/enlace.build.html.md): Run and validate declarative app builds from &#96;app.toml&#96; &#96;&#91;build&#93;&#96;.
+- [enlace.compose](_autosummary/enlace.compose.html.md): ASGI app composition for enlace.
+- [enlace.diagnose](_autosummary/enlace.diagnose.html.md): Diagnose app compatibility with enlace.
+- [enlace.discover](_autosummary/enlace.discover.html.md): Convention-based app discovery for enlace.
+- [enlace.doctor](_autosummary/enlace.doctor.html.md): Post-deploy smoke checks for a running enlace gateway.
+- [enlace.frontend](_autosummary/enlace.frontend.html.md): SPA-aware static file serving for enlace.
+- [enlace.gzip_selective](_autosummary/enlace.gzip_selective.html.md): Compression that knows what it must not compress.
+- [enlace.manifest](_autosummary/enlace.manifest.html.md): Deploy manifest: build-identity for diagnosing “what is actually deployed”.
+- [enlace.proxy](_autosummary/enlace.proxy.html.md): Lightweight ASGI reverse proxy for process and external backends.
+- [enlace.strategies](_autosummary/enlace.strategies.html.md): Backend-strategy registry and built-in strategies for enlace.
+- [enlace.supervise](_autosummary/enlace.supervise.html.md): Dev-mode process supervisor for enlace.
+- [enlace.util](_autosummary/enlace.util.html.md): Internal helpers for enlace.
+- [For AI agents](ai-agents.html.md): &#96;enlace&#96; ships artifacts for coding agents alongside its code. This page lists
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-22 12:57 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
+
+## Optional
+
+- [enlace.md](enlace.md): Complete documentation in a single file.
+
+## Build
+
+- [build_info.json](build_info.json): build provenance (commit, version, tool versions, whether the docs match the package)

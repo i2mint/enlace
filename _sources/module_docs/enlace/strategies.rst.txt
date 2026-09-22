@@ -1,4 +1,0 @@
-enlace.strategies
-=================
-.. automodule:: enlace.strategies
-   :members:

@@ -1,4 +1,0 @@
-enlace.serve
-============
-.. automodule:: enlace.serve
-   :members:

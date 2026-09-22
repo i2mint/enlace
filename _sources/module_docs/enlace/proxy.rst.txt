@@ -1,4 +1,0 @@
-enlace.proxy
-============
-.. automodule:: enlace.proxy
-   :members:

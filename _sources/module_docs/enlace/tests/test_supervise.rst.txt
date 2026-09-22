@@ -1,4 +1,0 @@
-enlace.tests.test_supervise
-===========================
-.. automodule:: enlace.tests.test_supervise
-   :members:

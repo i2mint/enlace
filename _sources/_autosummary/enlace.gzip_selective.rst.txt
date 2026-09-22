@@ -1,0 +1,24 @@
+enlace.gzip\_selective
+======================
+
+.. automodule:: enlace.gzip_selective
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      INCOMPRESSIBLE_PREFIXES
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      is_compressible
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      SelectiveGZipMiddleware
+   

@@ -1,0 +1,27 @@
+enlace.strategies
+=================
+
+.. automodule:: enlace.strategies
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      collect_strategy_field_maps
+      get_strategy
+      iter_strategies
+      known_modes
+      register_strategy
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AsgiStrategy
+      BackendStrategy
+      ExternalStrategy
+      Lifecycle
+      ProcessStrategy
+      StaticStrategy
+   

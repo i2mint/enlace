@@ -1,4 +1,0 @@
-enlace.tests.test_diagnose_plugin
-=================================
-.. automodule:: enlace.tests.test_diagnose_plugin
-   :members:
