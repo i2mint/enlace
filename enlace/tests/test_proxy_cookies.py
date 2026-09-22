@@ -23,12 +23,19 @@ def _echo_transport(seen: dict):
     def handler(request: httpx.Request) -> httpx.Response:
         seen["cookie"] = request.headers.get("cookie")
         seen["authorization"] = request.headers.get("authorization")
+        seen["x-csrf-token"] = request.headers.get("x-csrf-token")
         return httpx.Response(
             200,
             headers=[
                 ("set-cookie", "enlace_session=forged; Path=/"),
                 ("set-cookie", "shared_auth_vault=forged; Path=/"),
                 ("set-cookie", "space_pref=dark; Path=/typola"),
+                ("set-cookie", "=enlace_session=forged; Path=/auth"),
+                ("set-cookie", " =enlace_csrf=forged"),
+                ("set-cookie", "nameless-value; Path=/"),
+                ("clear-site-data", '"cookies"'),
+                ("service-worker-allowed", "/"),
+                ("x-upstream", "kept"),
             ],
             json={"ok": True},
         )
@@ -82,7 +89,36 @@ def test_unfiltered_proxy_is_unchanged():
     proxy = make_proxy_app(upstream="http://127.0.0.1:9", strip_prefix="/typola")
     r = _client(proxy, seen).get("/typola/x", headers={"Cookie": VISITOR_COOKIES})
     assert seen["cookie"] == VISITOR_COOKIES
-    assert len(r.headers.get_list("set-cookie")) == 3
+    assert len(r.headers.get_list("set-cookie")) == 6
+    assert r.headers.get("clear-site-data") == '"cookies"'
+
+
+def test_external_strategy_isolates_upstream(tmp_path):
+    """Through ExternalStrategy: no platform credentials out, no takeover in."""
+    seen: dict = {}
+    app = AppConfig(
+        name="typola",
+        route_prefix="/typola",
+        app_type="asgi_app",
+        mode="external",
+        upstream_url="https://space.example",
+    )
+    proxy = ExternalStrategy().make_asgi(app, PlatformConfig(apps_dir=tmp_path))
+    r = _client(proxy, seen).get(
+        "/typola/x",
+        headers={
+            "Cookie": VISITOR_COOKIES,
+            "X-CSRF-Token": "SECRET-CSRF",
+            "Authorization": "Bearer upstream-own-token",
+        },
+    )
+    assert seen["cookie"] == "space_pref=light"
+    assert seen["x-csrf-token"] is None
+    assert seen["authorization"] == "Bearer upstream-own-token"
+    assert r.headers.get_list("set-cookie") == ["space_pref=dark; Path=/typola"]
+    assert "clear-site-data" not in r.headers
+    assert "service-worker-allowed" not in r.headers
+    assert r.headers["x-upstream"] == "kept"
 
 
 @pytest.mark.parametrize(

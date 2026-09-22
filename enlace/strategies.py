@@ -382,7 +382,12 @@ class ExternalStrategy(BackendStrategy):
     def make_asgi(self, app, platform):
         if not app.upstream_url:
             return None
-        from enlace.proxy import make_proxy_app, platform_cookie_filter
+        from enlace.proxy import (
+            EXTERNAL_DROP_REQUEST_HEADERS,
+            EXTERNAL_DROP_RESPONSE_HEADERS,
+            make_proxy_app,
+            platform_cookie_filter,
+        )
 
         # An external upstream is someone else's server: it must neither see
         # the visitor's platform credentials nor set them on our origin.
@@ -392,6 +397,8 @@ class ExternalStrategy(BackendStrategy):
             cookie_filter=platform_cookie_filter(
                 names=_platform_cookie_names(platform)
             ),
+            drop_request_headers=EXTERNAL_DROP_REQUEST_HEADERS,
+            drop_response_headers=EXTERNAL_DROP_RESPONSE_HEADERS,
         )
 
 

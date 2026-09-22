@@ -10,11 +10,23 @@ app is actually instantiated, so the dependency remains optional.
 
 from typing import Callable, Iterable, Optional
 
-#: Cookies the platform itself sets on its own origin (enlace_auth's defaults).
-#: They are credentials for *this* platform and must never reach an upstream
-#: that is not part of it.
+#: Cookies the platform itself sets on its own origin -- enlace_auth's defaults
+#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, and the
+#: per-app ``shared_auth_<app>`` cookies). Keep in sync with enlace_auth. They
+#: are credentials for *this* platform and must never reach an upstream that
+#: is not part of it.
 PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf")
 PLATFORM_COOKIE_PREFIXES = ("shared_auth_",)
+
+#: Request headers carrying platform credentials, withheld from external
+#: upstreams (the CSRF double-submit token pairs with ``enlace_csrf``).
+EXTERNAL_DROP_REQUEST_HEADERS = ("x-csrf-token",)
+
+#: Response headers an external upstream may not send on the platform origin:
+#: ``Clear-Site-Data`` could wipe the platform's cookies/storage, and
+#: ``Service-Worker-Allowed`` could let a script under the app's prefix
+#: register a service worker controlling the whole origin.
+EXTERNAL_DROP_RESPONSE_HEADERS = ("clear-site-data", "service-worker-allowed")
 
 CookieFilter = Callable[[str], bool]  # cookie name -> forward it?
 
@@ -45,9 +57,19 @@ def _filter_cookie_header(value: str, keep: CookieFilter) -> str:
     return "; ".join(parts)
 
 
-def _set_cookie_name(value: str) -> str:
-    """The cookie name a ``Set-Cookie`` header value sets."""
-    return value.split(";", 1)[0].split("=", 1)[0].strip()
+def _set_cookie_allowed(value: str, keep: CookieFilter) -> bool:
+    """Whether a ``Set-Cookie`` header value may pass *keep*.
+
+    A nameless cookie (``=enlace_session=x`` or a bare value) is refused
+    outright: browsers send such a cookie as its bare value, so
+    ``=enlace_session=x`` reaches the server as ``enlace_session=x`` and would
+    shadow the real one.
+    """
+    pair = value.split(";", 1)[0]
+    if "=" not in pair:
+        return False
+    name = pair.split("=", 1)[0].strip()
+    return bool(name) and keep(name)
 
 
 # Default per-request timeout (seconds) for proxied requests. Bounds a hung
@@ -79,6 +101,8 @@ def make_proxy_app(
     upstream: str,
     strip_prefix: str = "",
     cookie_filter: Optional[CookieFilter] = None,
+    drop_request_headers: Iterable[str] = (),
+    drop_response_headers: Iterable[str] = (),
 ):
     """Create an ASGI app that proxies requests to *upstream*.
 
@@ -91,12 +115,19 @@ def make_proxy_app(
             naming them are dropped. ``None`` (the default) forwards all
             cookies, which suits a local process app that is part of the
             platform. See :func:`platform_cookie_filter`.
+        drop_request_headers / drop_response_headers: header names
+            (case-insensitive) never forwarded upstream / never passed back
+            to the client. See ``EXTERNAL_DROP_*`` for what external apps use.
 
     Returns:
         An ASGI callable.
     """
     return _HttpxProxy(
-        upstream=upstream, strip_prefix=strip_prefix, cookie_filter=cookie_filter
+        upstream=upstream,
+        strip_prefix=strip_prefix,
+        cookie_filter=cookie_filter,
+        drop_request_headers=drop_request_headers,
+        drop_response_headers=drop_response_headers,
     )
 
 
@@ -110,8 +141,16 @@ class _HttpxProxy:
         strip_prefix: str = "",
         timeout: float = _DEFAULT_TIMEOUT_S,
         cookie_filter: Optional[CookieFilter] = None,
+        drop_request_headers: Iterable[str] = (),
+        drop_response_headers: Iterable[str] = (),
     ):
         self.cookie_filter = cookie_filter
+        self._drop_request = {"host", "transfer-encoding", "connection"} | {
+            h.lower() for h in drop_request_headers
+        }
+        self._drop_response = {"transfer-encoding", "connection", "keep-alive"} | {
+            h.lower() for h in drop_response_headers
+        }
         self.upstream = upstream.rstrip("/")
         self.strip_prefix = strip_prefix
         self.timeout = timeout
@@ -166,7 +205,7 @@ class _HttpxProxy:
         headers = {}
         for key, value in scope.get("headers", []):
             name = key.decode("latin-1").lower()
-            if name in ("host", "transfer-encoding", "connection"):
+            if name in self._drop_request:
                 continue
             decoded = value.decode("latin-1")
             if name == "cookie" and self.cookie_filter is not None:
@@ -204,11 +243,11 @@ class _HttpxProxy:
             response_headers = [
                 (k.encode("latin-1"), v.encode("latin-1"))
                 for k, v in response.headers.multi_items()
-                if k.lower() not in ("transfer-encoding", "connection", "keep-alive")
+                if k.lower() not in self._drop_response
                 and not (
                     k.lower() == "set-cookie"
                     and self.cookie_filter is not None
-                    and not self.cookie_filter(_set_cookie_name(v))
+                    and not _set_cookie_allowed(v, self.cookie_filter)
                 )
             ]
 
