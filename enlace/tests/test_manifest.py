@@ -11,6 +11,7 @@ from enlace.base import PlatformConfig
 from enlace.compose import build_backend
 from enlace.discover import discover_apps
 from enlace.manifest import (
+    MANIFEST_ERROR_KEY,
     MANIFEST_SCHEMA_VERSION,
     PLATFORM_MANIFEST_NAME,
     DeployManifest,
@@ -106,6 +107,7 @@ def test_load_manifest_handles_corrupt_file(tmp_path):
     m = load_manifest("foo", tmp_path)
     assert m.app == "foo"
     assert m.app_source.sha is None
+    assert m.extra[MANIFEST_ERROR_KEY].startswith("JSONDecodeError")
 
 
 def test_load_platform_manifest(tmp_path):
@@ -240,10 +242,55 @@ def test_platform_meta_survives_a_schema_invalid_rewrite(single_app_dir, manifes
     assert resp.status_code == 200
     assert resp.json()["platform"] is None  # the stub: nothing valid to report
     assert resp.json()["manifest_mtime"] is not None
+    # ...but it says why, instead of passing for "no manifest yet".
+    assert "deployer" in resp.json()["extra"][MANIFEST_ERROR_KEY]
 
     _write(manifest_dir, PLATFORM_MANIFEST_NAME, platform="thorwhalen", deployer="ci")
     os.utime(path, (st.st_atime + 4, st.st_mtime + 4))
-    assert client.get("/_meta").json()["platform"] == "thorwhalen"
+    healthy = client.get("/_meta").json()
+    assert healthy["platform"] == "thorwhalen"
+    assert MANIFEST_ERROR_KEY not in healthy["extra"]
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        json.dumps({"app": PLATFORM_MANIFEST_NAME, "deployer": "connector-refresh"}),
+        "[]",  # valid JSON, but not an object
+        "{ not valid json",
+    ],
+    ids=["schema-invalid", "non-object", "corrupt"],
+)
+@pytest.mark.parametrize("which", [PLATFORM_MANIFEST_NAME, "foo"])
+def test_backend_starts_despite_an_unusable_manifest(
+    single_app_dir, manifest_dir, content, which
+):
+    """A bad manifest must not stop the platform from starting.
+
+    #50 degraded only the request-time re-read of the platform manifest, but
+    ``build_backend`` loads the platform and every app manifest at compose
+    time, so the same schema-invalid file raised there and the whole backend
+    failed to start. A non-object JSON file raised ``AttributeError`` on both
+    paths.
+    """
+    (manifest_dir / f"{which}.json").write_text(content)
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    meta_path = "/_meta" if which == PLATFORM_MANIFEST_NAME else "/api/foo/_meta"
+    resp = client.get(meta_path)
+    assert resp.status_code == 200
+    error = resp.json()["extra"][MANIFEST_ERROR_KEY]
+    assert str(manifest_dir) not in error  # served publicly: no server paths
+    assert "connector-refresh" not in error  # nor the rejected input values
+
+
+def test_load_manifest_flags_non_object_json(tmp_path):
+    (tmp_path / "foo.json").write_text('"just a string"')
+    m = load_manifest("foo", tmp_path)
+    assert m.app == "foo"
+    assert m.extra[MANIFEST_ERROR_KEY].startswith("ValueError")
 
 
 def test_platform_meta_picks_up_a_manifest_written_after_startup(

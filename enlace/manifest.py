@@ -36,7 +36,7 @@ import re
 from pathlib import Path
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 _logger = logging.getLogger("enlace.manifest")
 
@@ -102,16 +102,29 @@ def resolve_manifest_dir(
     return config_manifest_dir
 
 
-def _read_manifest_file(path: Path) -> Optional[dict]:
-    try:
-        with open(path, "rb") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return None
-    except (OSError, ValueError) as e:
-        # Don't let a corrupt manifest crash the server — log and degrade.
-        _logger.warning("Failed to read manifest %s: %s", path, e)
-        return None
+#: ``extra`` key naming why an on-disk manifest was not used. It exists only
+#: when something is wrong, so a healthy ``/_meta`` is quiet and a degraded
+#: one cannot be mistaken for "no manifest was ever written".
+MANIFEST_ERROR_KEY = "manifest_error"
+
+
+def _manifest_error_summary(error: Exception) -> str:
+    """A short, path-free description of why a manifest file was rejected.
+
+    It is served publicly at ``/_meta``, so an ``OSError`` contributes only its
+    ``strerror`` (never the server path), and a ``ValidationError`` only each
+    field location and message (never the offending input values).
+    """
+    if isinstance(error, ValidationError):
+        detail = "; ".join(
+            f"{'.'.join(map(str, err['loc'])) or '<root>'}: {err['msg']}"
+            for err in error.errors(include_url=False, include_input=False)
+        )
+    elif isinstance(error, OSError):
+        detail = error.strerror or ""
+    else:
+        detail = str(error)
+    return f"{type(error).__name__}: {detail}"
 
 
 def load_manifest(
@@ -125,16 +138,33 @@ def load_manifest(
     The stub has just ``app`` (the name we were asked about) and
     ``enlace_version`` filled in. That keeps the diagnostic plumbing working
     even before any deploy tool starts writing manifests.
+
+    A manifest file that exists but can't be used -- unreadable, corrupt JSON,
+    not a JSON object, or valid JSON the schema rejects (e.g. an unknown
+    ``deployer``) -- also yields the stub, so it can neither stop the backend
+    from starting nor turn ``/_meta`` into a 500. It is logged, and the stub
+    carries ``extra[MANIFEST_ERROR_KEY]`` saying why.
     """
-    if manifest_dir is not None:
-        path = manifest_dir / f"{app_name}.json"
-        data = _read_manifest_file(path)
-        if data is not None:
-            data.setdefault("app", app_name)
-            if enlace_version is not None and not data.get("enlace_version"):
-                data["enlace_version"] = enlace_version
-            return DeployManifest.model_validate(data)
-    return DeployManifest(app=app_name, enlace_version=enlace_version)
+    stub = DeployManifest(app=app_name, enlace_version=enlace_version)
+    if manifest_dir is None:
+        return stub
+    path = manifest_dir / f"{app_name}.json"
+    try:
+        with open(path, "rb") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError(f"expected a JSON object, got {type(data).__name__}")
+        data.setdefault("app", app_name)
+        if enlace_version is not None and not data.get("enlace_version"):
+            data["enlace_version"] = enlace_version
+        return DeployManifest.model_validate(data)
+    except FileNotFoundError:
+        return stub
+    except (OSError, ValueError) as e:  # ValidationError is a ValueError
+        # Don't let a bad manifest crash the server -- log and degrade, loudly.
+        _logger.warning("Unusable manifest %s: %s", path, e)
+        stub.extra[MANIFEST_ERROR_KEY] = _manifest_error_summary(e)
+        return stub
 
 
 def load_platform_manifest(
