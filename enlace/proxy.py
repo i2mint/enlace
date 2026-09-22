@@ -8,7 +8,47 @@ This module is lazy-loaded: it only imports ``httpx`` when a proxy ASGI
 app is actually instantiated, so the dependency remains optional.
 """
 
-from typing import Optional
+from typing import Callable, Iterable, Optional
+
+#: Cookies the platform itself sets on its own origin (enlace_auth's defaults).
+#: They are credentials for *this* platform and must never reach an upstream
+#: that is not part of it.
+PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf")
+PLATFORM_COOKIE_PREFIXES = ("shared_auth_",)
+
+CookieFilter = Callable[[str], bool]  # cookie name -> forward it?
+
+
+def platform_cookie_filter(
+    *,
+    names: Iterable[str] = PLATFORM_COOKIE_NAMES,
+    prefixes: Iterable[str] = PLATFORM_COOKIE_PREFIXES,
+) -> CookieFilter:
+    """Return a filter that keeps every cookie except the platform's own.
+
+    Used for ``mode="external"`` apps: an upstream on another host has no
+    business seeing a visitor's platform session, and must not be able to set
+    (overwrite) one on the platform's origin either.
+    """
+    names = frozenset(names)
+    prefixes = tuple(prefixes)
+    return lambda name: not (name in names or name.startswith(prefixes))
+
+
+def _filter_cookie_header(value: str, keep: CookieFilter) -> str:
+    """Drop the cookies *keep* rejects from a request ``Cookie`` header value."""
+    parts = []
+    for part in value.split(";"):
+        name = part.split("=", 1)[0].strip()
+        if name and keep(name):
+            parts.append(part.strip())
+    return "; ".join(parts)
+
+
+def _set_cookie_name(value: str) -> str:
+    """The cookie name a ``Set-Cookie`` header value sets."""
+    return value.split(";", 1)[0].split("=", 1)[0].strip()
+
 
 # Default per-request timeout (seconds) for proxied requests. Bounds a hung
 # upstream so a stuck app can't tie up the gateway indefinitely.
@@ -34,18 +74,30 @@ def _request_timeout(accept: str, base: float) -> Optional[dict]:
     return None
 
 
-def make_proxy_app(*, upstream: str, strip_prefix: str = ""):
+def make_proxy_app(
+    *,
+    upstream: str,
+    strip_prefix: str = "",
+    cookie_filter: Optional[CookieFilter] = None,
+):
     """Create an ASGI app that proxies requests to *upstream*.
 
     Args:
         upstream: Base URL of the upstream server (e.g. ``http://127.0.0.1:9100``).
         strip_prefix: Route prefix to strip before forwarding
             (e.g. ``/api/blog`` → upstream receives ``/``).
+        cookie_filter: ``name -> bool``; when given, request cookies it
+            rejects are not forwarded and upstream ``Set-Cookie`` headers
+            naming them are dropped. ``None`` (the default) forwards all
+            cookies, which suits a local process app that is part of the
+            platform. See :func:`platform_cookie_filter`.
 
     Returns:
         An ASGI callable.
     """
-    return _HttpxProxy(upstream=upstream, strip_prefix=strip_prefix)
+    return _HttpxProxy(
+        upstream=upstream, strip_prefix=strip_prefix, cookie_filter=cookie_filter
+    )
 
 
 class _HttpxProxy:
@@ -57,7 +109,9 @@ class _HttpxProxy:
         upstream: str,
         strip_prefix: str = "",
         timeout: float = _DEFAULT_TIMEOUT_S,
+        cookie_filter: Optional[CookieFilter] = None,
     ):
+        self.cookie_filter = cookie_filter
         self.upstream = upstream.rstrip("/")
         self.strip_prefix = strip_prefix
         self.timeout = timeout
@@ -114,7 +168,14 @@ class _HttpxProxy:
             name = key.decode("latin-1").lower()
             if name in ("host", "transfer-encoding", "connection"):
                 continue
-            headers[name] = value.decode("latin-1")
+            decoded = value.decode("latin-1")
+            if name == "cookie" and self.cookie_filter is not None:
+                decoded = _filter_cookie_header(decoded, self.cookie_filter)
+                if not decoded:
+                    continue
+                if "cookie" in headers:  # HTTP/2 may split cookies (RFC 9113)
+                    decoded = f"{headers['cookie']}; {decoded}"
+            headers[name] = decoded
 
         import httpx
 
@@ -144,6 +205,11 @@ class _HttpxProxy:
                 (k.encode("latin-1"), v.encode("latin-1"))
                 for k, v in response.headers.multi_items()
                 if k.lower() not in ("transfer-encoding", "connection", "keep-alive")
+                and not (
+                    k.lower() == "set-cookie"
+                    and self.cookie_filter is not None
+                    and not self.cookie_filter(_set_cookie_name(v))
+                )
             ]
 
             await send(
