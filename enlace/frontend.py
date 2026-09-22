@@ -9,8 +9,13 @@ produces files like ``projects/_.html`` where ``_`` is the placeholder
 from ``generateStaticParams``.  This module resolves
 ``/projects/<any-uuid>`` → ``projects/_.html`` so the correct page shell
 is served and the client JS can read the real param from the URL.
+
+Every static mount enlace makes also tells browsers to **revalidate HTML
+documents** (``Cache-Control: no-cache``) — see :class:`RevalidatingStaticFiles`.
 """
 
+import mimetypes
+import os
 from pathlib import Path
 
 import anyio
@@ -18,8 +23,56 @@ from starlette.responses import Response
 from starlette.staticfiles import StaticFiles
 from starlette.types import Receive, Scope, Send
 
+DFLT_HTML_CACHE_CONTROL = "no-cache"
+HTML_MEDIA_TYPES = frozenset({"text/html", "application/xhtml+xml"})
 
-class SPAStaticFiles(StaticFiles):
+
+def is_html_path(path) -> bool:
+    """Whether *path* names an HTML document, judged by its file extension."""
+    media_type, _ = mimetypes.guess_type(os.fspath(path))
+    return media_type in HTML_MEDIA_TYPES
+
+
+class RevalidatingStaticFiles(StaticFiles):
+    """``StaticFiles`` that makes browsers revalidate HTML documents.
+
+    Starlette sends ``ETag`` and ``Last-Modified`` but no ``Cache-Control``.
+    Without one, browsers apply *heuristic* freshness (RFC 9111 §4.2.2,
+    typically 10% of the time since ``Last-Modified``) and reuse a page
+    without asking. For a built frontend that is the worst file to be stale:
+    the HTML names the (cache-busted) asset URLs, so a stale document keeps
+    loading the *previous* build in full, and a correct deploy looks failed.
+
+    HTML files (including SPA fallbacks to ``index.html`` and ``304``
+    revalidations) get ``Cache-Control: html_cache_control`` — ``no-cache``
+    by default: the browser may keep its copy but must revalidate, which the
+    existing ``ETag`` makes a cheap ``304``. Non-HTML assets are untouched, and
+    a ``Cache-Control`` already on the response is never overridden. Pass
+    ``html_cache_control=None`` to opt out.
+    """
+
+    def __init__(
+        self,
+        *args,
+        html_cache_control: str | None = DFLT_HTML_CACHE_CONTROL,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.html_cache_control = html_cache_control
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        """Build the file response, adding ``Cache-Control`` for HTML files."""
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        if (
+            self.html_cache_control
+            and "cache-control" not in response.headers
+            and is_html_path(full_path)
+        ):
+            response.headers["cache-control"] = self.html_cache_control
+        return response
+
+
+class SPAStaticFiles(RevalidatingStaticFiles):
     """StaticFiles subclass with SPA / Next.js dynamic-route fallback.
 
     Resolution order for a request path:
@@ -170,7 +223,7 @@ class LandingWithUnknownApp404:
 
     def __init__(self, *, landing_dir):
         self._dir = Path(landing_dir).resolve()
-        self._files = StaticFiles(directory=str(landing_dir), html=True)
+        self._files = RevalidatingStaticFiles(directory=str(landing_dir), html=True)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":

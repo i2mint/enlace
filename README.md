@@ -327,6 +327,10 @@ without coupling: services are injected into the ASGI scope, so apps read
 condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but
 never have to.
 
+### HTML caching
+
+Every static mount (app frontends, the landing app, `mode="static"` apps, shared assets) sends `Cache-Control: no-cache` on HTML documents — including SPA fallbacks and `304` revalidations — so browsers revalidate a page (a cheap `304` via its `ETag`) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a `Cache-Control` already set on a response is never overridden. The class is `enlace.frontend.RevalidatingStaticFiles` (`html_cache_control=None` opts out).
+
 ### Deploy manifest (`/_meta`)
 
 enlace answers "what is actually deployed?" via an always-on, cheap manifest
