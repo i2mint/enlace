@@ -393,12 +393,12 @@ class StaticStrategy(BackendStrategy):
     def make_asgi(self, app, platform):
         # Prefer public_dir; fall back to frontend_dir. Skip if neither
         # exists on disk — same conservatism as the legacy static loop.
-        from starlette.staticfiles import StaticFiles
+        from enlace.frontend import RevalidatingStaticFiles
 
         static_dir = app.public_dir or app.frontend_dir
         if not static_dir or not static_dir.is_dir():
             return None
-        return StaticFiles(directory=str(static_dir), html=True)
+        return RevalidatingStaticFiles(directory=str(static_dir), html=True)
 
 
 # Register the built-ins at import time so AppConfig validation works

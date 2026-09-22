@@ -26,11 +26,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
-from starlette.staticfiles import StaticFiles
 
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps
-from enlace.frontend import LandingWithUnknownApp404, SPAStaticFiles
+from enlace.frontend import (
+    LandingWithUnknownApp404,
+    RevalidatingStaticFiles,
+    SPAStaticFiles,
+)
 from enlace.gzip_selective import SelectiveGZipMiddleware
 from enlace.manifest import (
     DeployHeadersMiddleware,
@@ -212,7 +215,7 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
     if config.shared_assets_dir and config.shared_assets_dir.is_dir():
         parent.mount(
             "/",
-            StaticFiles(directory=str(config.shared_assets_dir)),
+            RevalidatingStaticFiles(directory=str(config.shared_assets_dir)),
         )
 
     # Deploy-identity response headers. Build the prefix → manifest map from
