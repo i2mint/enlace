@@ -234,6 +234,10 @@ parseable `FAIL` naming the app and its exception class, on
 apps_dirs = ["apps"]                # Directories containing app subdirs
 app_dirs = ["/path/to/standalone"]  # Individual app directories
 backend_port = 8000
+cors_origins = ["*"]                # default: any origin, never with credentials;
+                                    # or list origins ("https://host[:port]") that may
+                                    # send credentials (then only those get CORS);
+                                    # [] = no CORS. "*" can't be mixed; "null" refused.
 
 [conventions]
 entry_points = ["server.py", "app.py", "main.py"]
