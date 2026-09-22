@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 
 import anyio
-from starlette.responses import Response
+from starlette.responses import FileResponse, Response
 from starlette.staticfiles import StaticFiles
 from starlette.types import Receive, Scope, Send
 
@@ -43,11 +43,12 @@ class RevalidatingStaticFiles(StaticFiles):
     the HTML names the (cache-busted) asset URLs, so a stale document keeps
     loading the *previous* build in full, and a correct deploy looks failed.
 
-    HTML files (including SPA fallbacks to ``index.html`` and ``304``
-    revalidations) get ``Cache-Control: html_cache_control`` — ``no-cache``
-    by default: the browser may keep its copy but must revalidate, which the
-    existing ``ETag`` makes a cheap ``304``. Non-HTML assets are untouched, and
-    a ``Cache-Control`` already on the response is never overridden. Pass
+    HTML files (including SPA fallbacks to ``index.html``, ``304``
+    revalidations and an ``html=True`` ``404.html`` page) get
+    ``Cache-Control: html_cache_control`` — ``no-cache`` by default: the
+    browser may keep its copy but must revalidate, which the existing ``ETag``
+    makes a cheap ``304``. Non-HTML assets are untouched, and a
+    ``Cache-Control`` already on the response is never overridden. Pass
     ``html_cache_control=None`` to opt out.
     """
 
@@ -60,15 +61,31 @@ class RevalidatingStaticFiles(StaticFiles):
         super().__init__(*args, **kwargs)
         self.html_cache_control = html_cache_control
 
-    def file_response(self, full_path, stat_result, scope, status_code=200):
-        """Build the file response, adding ``Cache-Control`` for HTML files."""
-        response = super().file_response(full_path, stat_result, scope, status_code)
+    def _revalidate_if_html(self, response: Response, full_path) -> Response:
         if (
             self.html_cache_control
             and "cache-control" not in response.headers
             and is_html_path(full_path)
         ):
             response.headers["cache-control"] = self.html_cache_control
+        return response
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        """Build the file response, adding ``Cache-Control`` for HTML files."""
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        return self._revalidate_if_html(response, full_path)
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        """Resolve *path*, also revalidating an ``html=True`` ``404.html`` page.
+
+        Starlette serves ``404.html`` with a bare ``FileResponse`` rather than
+        through :meth:`file_response`, and a 404 is heuristically cacheable
+        (RFC 9110 §15.1), so without this a page that a later deploy adds can
+        keep showing the old "not found" document.
+        """
+        response = await super().get_response(path, scope)
+        if isinstance(response, FileResponse) and response.status_code == 404:
+            self._revalidate_if_html(response, response.path)
         return response
 
 
