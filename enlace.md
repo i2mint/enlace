@@ -1,4 +1,4 @@
-> built 2026-09-22 12:57 UTC from ad64611 (main) · enlace 0.1.32. Details: build_info.json
+> built 2026-09-22 13:09 UTC from db846a3 (main) · enlace 0.1.33. Details: build_info.json
 
 # index.html.md
 
@@ -328,7 +328,7 @@ never have to.
 
 ### HTML caching
 
-Every static mount (app frontends, the landing app, `mode="static"` apps, shared assets) sends `Cache-Control: no-cache` on HTML documents — including SPA fallbacks and `304` revalidations — so browsers revalidate a page (a cheap `304` via its `ETag`) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a `Cache-Control` already set on a response is never overridden. The class is `enlace.frontend.RevalidatingStaticFiles` (`html_cache_control=None` opts out).
+Every static mount (app frontends, the landing app, `mode="static"` apps, shared assets) sends `Cache-Control: no-cache` on HTML documents — including SPA fallbacks, `304` revalidations and an `html=True` `404.html` page — so browsers revalidate a page (a cheap `304` via its `ETag`) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a `Cache-Control` already set on a response is never overridden. The class is `enlace.frontend.RevalidatingStaticFiles` (`html_cache_control=None` opts out).
 
 ### Deploy manifest (`/_meta`)
 
@@ -1204,16 +1204,29 @@ without asking. For a built frontend that is the worst file to be stale:
 the HTML names the (cache-busted) asset URLs, so a stale document keeps
 loading the *previous* build in full, and a correct deploy looks failed.
 
-HTML files (including SPA fallbacks to `index.html` and `304`
-revalidations) get `Cache-Control: html_cache_control` — `no-cache`
-by default: the browser may keep its copy but must revalidate, which the
-existing `ETag` makes a cheap `304`. Non-HTML assets are untouched, and
-a `Cache-Control` already on the response is never overridden. Pass
+HTML files (including SPA fallbacks to `index.html`, `304`
+revalidations and an `html=True` `404.html` page) get
+`Cache-Control: html_cache_control` — `no-cache` by default: the
+browser may keep its copy but must revalidate, which the existing `ETag`
+makes a cheap `304`. Non-HTML assets are untouched, and a
+`Cache-Control` already on the response is never overridden. Pass
 `html_cache_control=None` to opt out.
 
 #### file_response(full_path, stat_result, scope, status_code=200)
 
 Build the file response, adding `Cache-Control` for HTML files.
+
+#### *async* get_response(path, scope)
+
+Resolve *path*, also revalidating an `html=True` `404.html` page.
+
+Starlette serves `404.html` with a bare `FileResponse` rather than
+through [`file_response()`](_autosummary/enlace.frontend.html.md#enlace.frontend.RevalidatingStaticFiles.file_response), and a 404 is heuristically cacheable
+(RFC 9110 §15.1), so without this a page that a later deploy adds can
+keep showing the old “not found” document.
+
+* **Return type:**
+  `Response`
 
 ### *class* enlace.frontend.SPAStaticFiles(\*args, html_cache_control='no-cache', \*\*kwargs)
 
@@ -1231,7 +1244,12 @@ Resolution order for a request path:
 
 #### *async* get_response(path, scope)
 
-Returns an HTTP response, given the incoming path, method and request headers.
+Resolve *path*, also revalidating an `html=True` `404.html` page.
+
+Starlette serves `404.html` with a bare `FileResponse` rather than
+through `file_response()`, and a 404 is heuristically cacheable
+(RFC 9110 §15.1), so without this a page that a later deploy adds can
+keep showing the old “not found” document.
 
 * **Return type:**
   `Response`
@@ -2391,16 +2409,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-09-22 12:57 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/ad646119c56cee0e67b9af200966ce178068219a"><code>ad64611</code></a> on branch <code>main</code>, for **enlace 0.1.32** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-22 13:09 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/db846a3353c66da2a5375a948ffddd4af6852b5f"><code>db846a3</code></a> on branch <code>main</code>, for **enlace 0.1.33** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.33) is behind the latest release on PyPI (0.1.34): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/ad646119c56cee0e67b9af200966ce178068219a"><code>ad646119c56cee0e67b9af200966ce178068219a</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/db846a3353c66da2a5375a948ffddd4af6852b5f"><code>db846a3353c66da2a5375a948ffddd4af6852b5f</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -2411,9 +2431,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/35730153558">35730153558</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/35731390230">35731390230</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>ad646119c56cee0e67b9af200966ce178068219a</code> (in the history of the built commit) |
+| Event commit | <code>db846a3353c66da2a5375a948ffddd4af6852b5f</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2438,13 +2458,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.32/">0.1.32</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.34/">0.1.34</a>, newer than the documented version (0.1.33).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout ad646119c56cee0e67b9af200966ce178068219a
+git checkout db846a3353c66da2a5375a948ffddd4af6852b5f
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

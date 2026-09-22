@@ -58,16 +58,29 @@ without asking. For a built frontend that is the worst file to be stale:
 the HTML names the (cache-busted) asset URLs, so a stale document keeps
 loading the *previous* build in full, and a correct deploy looks failed.
 
-HTML files (including SPA fallbacks to `index.html` and `304`
-revalidations) get `Cache-Control: html_cache_control` — `no-cache`
-by default: the browser may keep its copy but must revalidate, which the
-existing `ETag` makes a cheap `304`. Non-HTML assets are untouched, and
-a `Cache-Control` already on the response is never overridden. Pass
+HTML files (including SPA fallbacks to `index.html`, `304`
+revalidations and an `html=True` `404.html` page) get
+`Cache-Control: html_cache_control` — `no-cache` by default: the
+browser may keep its copy but must revalidate, which the existing `ETag`
+makes a cheap `304`. Non-HTML assets are untouched, and a
+`Cache-Control` already on the response is never overridden. Pass
 `html_cache_control=None` to opt out.
 
 #### file_response(full_path, stat_result, scope, status_code=200)
 
 Build the file response, adding `Cache-Control` for HTML files.
+
+#### *async* get_response(path, scope)
+
+Resolve *path*, also revalidating an `html=True` `404.html` page.
+
+Starlette serves `404.html` with a bare `FileResponse` rather than
+through [`file_response()`](#enlace.frontend.RevalidatingStaticFiles.file_response), and a 404 is heuristically cacheable
+(RFC 9110 §15.1), so without this a page that a later deploy adds can
+keep showing the old “not found” document.
+
+* **Return type:**
+  `Response`
 
 ### *class* enlace.frontend.SPAStaticFiles(\*args, html_cache_control='no-cache', \*\*kwargs)
 
@@ -85,7 +98,12 @@ Resolution order for a request path:
 
 #### *async* get_response(path, scope)
 
-Returns an HTTP response, given the incoming path, method and request headers.
+Resolve *path*, also revalidating an `html=True` `404.html` page.
+
+Starlette serves `404.html` with a bare `FileResponse` rather than
+through `file_response()`, and a 404 is heuristically cacheable
+(RFC 9110 §15.1), so without this a page that a later deploy adds can
+keep showing the old “not found” document.
 
 * **Return type:**
   `Response`

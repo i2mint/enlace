@@ -329,11 +329,12 @@ typically 10% of the time since <code class="docutils literal notranslate"><span
 without asking. For a built frontend that is the worst file to be stale:
 the HTML names the (cache-busted) asset URLs, so a stale document keeps
 loading the <em>previous</em> build in full, and a correct deploy looks failed.</p>
-<p>HTML files (including SPA fallbacks to <code class="docutils literal notranslate"><span class="pre">index.html</span></code> and <code class="docutils literal notranslate"><span class="pre">304</span></code>
-revalidations) get <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">html_cache_control</span></code> — <code class="docutils literal notranslate"><span class="pre">no-cache</span></code>
-by default: the browser may keep its copy but must revalidate, which the
-existing <code class="docutils literal notranslate"><span class="pre">ETag</span></code> makes a cheap <code class="docutils literal notranslate"><span class="pre">304</span></code>. Non-HTML assets are untouched, and
-a <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> already on the response is never overridden. Pass
+<p>HTML files (including SPA fallbacks to <code class="docutils literal notranslate"><span class="pre">index.html</span></code>, <code class="docutils literal notranslate"><span class="pre">304</span></code>
+revalidations and an <code class="docutils literal notranslate"><span class="pre">html=True</span></code> <code class="docutils literal notranslate"><span class="pre">404.html</span></code> page) get
+<code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">html_cache_control</span></code> — <code class="docutils literal notranslate"><span class="pre">no-cache</span></code> by default: the
+browser may keep its copy but must revalidate, which the existing <code class="docutils literal notranslate"><span class="pre">ETag</span></code>
+makes a cheap <code class="docutils literal notranslate"><span class="pre">304</span></code>. Non-HTML assets are untouched, and a
+<code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> already on the response is never overridden. Pass
 <code class="docutils literal notranslate"><span class="pre">html_cache_control=None</span></code> to opt out.</p>
 <dl class="field-list simple">
 </dl>
@@ -341,6 +342,21 @@ a <code class="docutils literal notranslate"><span class="pre">Cache-Control</sp
 <dt class="sig sig-object py" id="enlace.frontend.RevalidatingStaticFiles.file_response">
 <span class="sig-name descname"><span class="pre">file_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_code</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#RevalidatingStaticFiles.file_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.RevalidatingStaticFiles.file_response" title="Link to this definition">¶</a></dt>
 <dd><p>Build the file response, adding <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> for HTML files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.frontend.RevalidatingStaticFiles.get_response">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#RevalidatingStaticFiles.get_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.RevalidatingStaticFiles.get_response" title="Link to this definition">¶</a></dt>
+<dd><p>Resolve <em>path</em>, also revalidating an <code class="docutils literal notranslate"><span class="pre">html=True</span></code> <code class="docutils literal notranslate"><span class="pre">404.html</span></code> page.</p>
+<p>Starlette serves <code class="docutils literal notranslate"><span class="pre">404.html</span></code> with a bare <code class="docutils literal notranslate"><span class="pre">FileResponse</span></code> rather than
+through <a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles.file_response" title="enlace.frontend.RevalidatingStaticFiles.file_response"><code class="xref py py-meth docutils literal notranslate"><span class="pre">file_response()</span></code></a>, and a 404 is heuristically cacheable
+(RFC 9110 §15.1), so without this a page that a later deploy adds can
+keep showing the old “not found” document.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Response</span></code></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -363,7 +379,11 @@ param placeholder) and try again — e.g.
 <dl class="py method">
 <dt class="sig sig-object py" id="enlace.frontend.SPAStaticFiles.get_response">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#SPAStaticFiles.get_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.SPAStaticFiles.get_response" title="Link to this definition">¶</a></dt>
-<dd><p>Returns an HTTP response, given the incoming path, method and request headers.</p>
+<dd><p>Resolve <em>path</em>, also revalidating an <code class="docutils literal notranslate"><span class="pre">html=True</span></code> <code class="docutils literal notranslate"><span class="pre">404.html</span></code> page.</p>
+<p>Starlette serves <code class="docutils literal notranslate"><span class="pre">404.html</span></code> with a bare <code class="docutils literal notranslate"><span class="pre">FileResponse</span></code> rather than
+through <code class="xref py py-meth docutils literal notranslate"><span class="pre">file_response()</span></code>, and a 404 is heuristically cacheable
+(RFC 9110 §15.1), so without this a page that a later deploy adds can
+keep showing the old “not found” document.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Response</span></code></span></p>
@@ -441,6 +461,7 @@ param placeholder) and try again — e.g.
 <li><a class="reference internal" href="#enlace.frontend.LandingWithUnknownApp404"><code class="docutils literal notranslate"><span class="pre">LandingWithUnknownApp404</span></code></a></li>
 <li><a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles"><code class="docutils literal notranslate"><span class="pre">RevalidatingStaticFiles</span></code></a><ul>
 <li><a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles.file_response"><code class="docutils literal notranslate"><span class="pre">RevalidatingStaticFiles.file_response()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles.get_response"><code class="docutils literal notranslate"><span class="pre">RevalidatingStaticFiles.get_response()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#enlace.frontend.SPAStaticFiles"><code class="docutils literal notranslate"><span class="pre">SPAStaticFiles</span></code></a><ul>
@@ -459,7 +480,7 @@ param placeholder) and try again — e.g.
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=201c9933"></script>
+</div><script src="../_static/documentation_options.js?v=895ced55"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

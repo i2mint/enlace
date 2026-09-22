@@ -641,7 +641,7 @@ never have to.</p>
 </section>
 <section id="html-caching">
 <h3>HTML caching<a class="headerlink" href="#html-caching" title="Link to this heading">¶</a></h3>
-<p>Every static mount (app frontends, the landing app, <code class="docutils literal notranslate"><span class="pre">mode=&quot;static&quot;</span></code> apps, shared assets) sends <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></code> on HTML documents — including SPA fallbacks and <code class="docutils literal notranslate"><span class="pre">304</span></code> revalidations — so browsers revalidate a page (a cheap <code class="docutils literal notranslate"><span class="pre">304</span></code> via its <code class="docutils literal notranslate"><span class="pre">ETag</span></code>) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> already set on a response is never overridden. The class is <code class="docutils literal notranslate"><span class="pre">enlace.frontend.RevalidatingStaticFiles</span></code> (<code class="docutils literal notranslate"><span class="pre">html_cache_control=None</span></code> opts out).</p>
+<p>Every static mount (app frontends, the landing app, <code class="docutils literal notranslate"><span class="pre">mode=&quot;static&quot;</span></code> apps, shared assets) sends <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></code> on HTML documents — including SPA fallbacks, <code class="docutils literal notranslate"><span class="pre">304</span></code> revalidations and an <code class="docutils literal notranslate"><span class="pre">html=True</span></code> <code class="docutils literal notranslate"><span class="pre">404.html</span></code> page — so browsers revalidate a page (a cheap <code class="docutils literal notranslate"><span class="pre">304</span></code> via its <code class="docutils literal notranslate"><span class="pre">ETag</span></code>) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> already set on a response is never overridden. The class is <code class="docutils literal notranslate"><span class="pre">enlace.frontend.RevalidatingStaticFiles</span></code> (<code class="docutils literal notranslate"><span class="pre">html_cache_control=None</span></code> opts out).</p>
 </section>
 <section id="deploy-manifest-meta">
 <h3>Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)<a class="headerlink" href="#deploy-manifest-meta" title="Link to this heading">¶</a></h3>
@@ -659,7 +659,7 @@ browser rendered the current build or a stale cache.</p>
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 12:57 UTC from <a href="https://github.com/i2mint/enlace/commit/ad646119c56cee0e67b9af200966ce178068219a">ad64611</a> (main) · enlace 0.1.32 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 13:09 UTC from <a href="https://github.com/i2mint/enlace/commit/db846a3353c66da2a5375a948ffddd4af6852b5f">db846a3</a> (main) · enlace 0.1.33 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -736,7 +736,7 @@ browser rendered the current build or a stale cache.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=201c9933"></script>
+</div><script src="_static/documentation_options.js?v=895ced55"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
