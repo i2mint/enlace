@@ -270,6 +270,47 @@ class PlatformConfig(BaseModel):
         ),
     )
     backend_port: int = 8000
+
+    @field_validator("cors_origins")
+    @classmethod
+    def _check_cors_origins(cls, origins: list[str]) -> list[str]:
+        """Refuse CORS lists that would silently misbehave or re-open exposure.
+
+        - ``"*"`` must stand alone: mixed with named origins it would drop
+          credentials for them too.
+        - ``"null"`` is refused: any sandboxed iframe or ``data:`` page sends
+          ``Origin: null``, so allowing it with credentials lets any site in.
+        - Named origins must be ``scheme://host[:port]`` (no path, no trailing
+          slash) -- anything else never matches a browser's ``Origin``.
+        """
+        from urllib.parse import urlsplit
+
+        if "*" in origins:
+            if len(origins) > 1:
+                raise ValueError(
+                    'cors_origins: "*" cannot be combined with named origins '
+                    '(use ["*"] for anonymous access from anywhere, or list '
+                    "the origins that may send credentials)"
+                )
+            return origins
+        for origin in origins:
+            if origin.strip().lower() == "null":
+                raise ValueError('cors_origins: "null" is not allowed')
+            parts = urlsplit(origin)
+            if (
+                parts.scheme not in ("http", "https")
+                or not parts.netloc
+                or parts.path
+                or parts.query
+                or parts.fragment
+                or "@" in parts.netloc
+            ):
+                raise ValueError(
+                    f"cors_origins: {origin!r} is not an origin "
+                    "(expected scheme://host[:port], no path or trailing slash)"
+                )
+        return origins
+
     frontend_port: int = 3000
     process_port_start: int = 9100
     socket_dir: Path = Field(default=Path("/tmp/enlace"))

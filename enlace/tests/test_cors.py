@@ -76,3 +76,27 @@ def test_platform_toml_sets_it(tmp_path, apps_dir):
         f'[platform]\napps_dir = "{apps_dir}"\ncors_origins = ["https://a.example"]\n'
     )
     assert PlatformConfig.from_toml(toml).cors_origins == ["https://a.example"]
+
+
+@pytest.mark.parametrize(
+    "origins",
+    [
+        ["*", "https://a.example"],
+        ["null"],
+        ["https://a.example/"],
+        ["https://a.example/app"],
+        ["a.example"],
+        ["ftp://a.example"],
+        ["https://u@a.example"],
+    ],
+)
+def test_misleading_origin_lists_are_refused(apps_dir, origins):
+    with pytest.raises(ValueError):
+        PlatformConfig(apps_dir=apps_dir, cors_origins=origins)
+
+
+def test_valid_origin_list_with_port(apps_dir):
+    cfg = PlatformConfig(
+        apps_dir=apps_dir, cors_origins=["https://a.example", "http://localhost:5173"]
+    )
+    assert cfg.cors_origins == ["https://a.example", "http://localhost:5173"]
