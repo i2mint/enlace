@@ -4,13 +4,13 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<link rel="alternate" type="text/markdown" href="enlace.compose.html.md">
+<link rel="alternate" type="text/markdown" href="enlace.html_rewrite.html.md">
 <link rel="describedby" href="../llms.txt" type="text/markdown">
-<link rel="alternate" type="text/markdown" href="enlace.compose.html.md">
-<link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="enlace.diagnose" href="enlace.diagnose.html"><link rel="prev" title="enlace.build" href="enlace.build.html">
+<link rel="alternate" type="text/markdown" href="enlace.html_rewrite.html.md">
+<link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="enlace.manifest" href="enlace.manifest.html"><link rel="prev" title="enlace.gzip_selective" href="enlace.gzip_selective.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>enlace.compose - enlace</title>
+        <title>enlace.html_rewrite - enlace</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -208,13 +208,13 @@
 <li class="toctree-l3"><a class="reference internal" href="enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.build.html">enlace.build</a></li>
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.compose.html">enlace.compose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.discover.html">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.doctor.html">enlace.doctor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.frontend.html">enlace.frontend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.gzip_selective.html">enlace.gzip_selective</a></li>
-<li class="toctree-l3"><a class="reference internal" href="enlace.html_rewrite.html">enlace.html_rewrite</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.manifest.html">enlace.manifest</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.strategies.html">enlace.strategies</a></li>
@@ -245,7 +245,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/_autosummary/enlace.compose.rst.txt" title="View this page">
+  <a class="muted-link" href="../_sources/_autosummary/enlace.html_rewrite.rst.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -263,111 +263,65 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="module-enlace.compose">
-<span id="enlace-compose"></span><h1>enlace.compose<a class="headerlink" href="#module-enlace.compose" title="Link to this heading">¶</a></h1>
-<p>ASGI app composition for enlace.</p>
-<p>Builds a single FastAPI application by mounting discovered sub-apps and applying
-cross-cutting middleware. Handles lifespan cascading to mounted sub-apps
-(Starlette does not do this natively).</p>
-<dl class="simple">
-<dt>Plugins:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">build_backend</span></code> accepts a <code class="docutils literal notranslate"><span class="pre">plugins</span></code> argument — a sequence of callables
-<code class="docutils literal notranslate"><span class="pre">(parent:</span> <span class="pre">FastAPI,</span> <span class="pre">config:</span> <span class="pre">PlatformConfig)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> invoked once after
-sub-apps are mounted. <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code> is the canonical example:
-when installed, it adds auth, sessions, the admin dashboard, and per-user
-stores. enlace itself is auth-agnostic.</p>
-</dd>
-</dl>
+          <section id="module-enlace.html_rewrite">
+<span id="enlace-html-rewrite"></span><h1>enlace.html_rewrite<a class="headerlink" href="#module-enlace.html_rewrite" title="Link to this heading">¶</a></h1>
+<p>Rewrite HTML response bodies from pure-ASGI middleware.</p>
+<p>Several platform features edit the <code class="docutils literal notranslate"><span class="pre">&lt;head&gt;</span></code> of the HTML an app serves (deploy
+<code class="docutils literal notranslate"><span class="pre">&lt;meta&gt;</span></code> tags, the app’s icon links). Each needs the same careful dance —
+hold <code class="docutils literal notranslate"><span class="pre">http.response.start</span></code> until the whole body is buffered, rewrite it, fix
+<code class="docutils literal notranslate"><span class="pre">Content-Length</span></code> — and only for <code class="docutils literal notranslate"><span class="pre">text/html</span></code>. That dance lives here once.</p>
+<p>A middleware that rewrites bodies must sit <strong>inside</strong> any compression
+middleware, so it sees and edits uncompressed bytes.</p>
 <p class="rubric">Functions</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.compose.build_backend" title="enlace.compose.build_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_backend</span></code></a>(config, *[, plugins])</p></td>
-<td><p>Compose all app backends into a single ASGI application.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.html_rewrite.header_value" title="enlace.html_rewrite.header_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">header_value</span></code></a>(headers, name)</p></td>
+<td><p>Return the first matching header value (case-insensitive), or None.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.compose.build_launcher_item" title="enlace.compose.build_launcher_item"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_launcher_item</span></code></a>(app, config, overlay)</p></td>
-<td><p>Build one <code class="docutils literal notranslate"><span class="pre">/_apps</span></code> item: resolved metadata + launchability, for an app.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.html_rewrite.inject_into_head" title="enlace.html_rewrite.inject_into_head"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inject_into_head</span></code></a>(body, snippet)</p></td>
+<td><p>Insert <code class="docutils literal notranslate"><span class="pre">snippet</span></code> into <code class="docutils literal notranslate"><span class="pre">body</span></code> just before <code class="docutils literal notranslate"><span class="pre">&lt;/head&gt;</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.compose.create_app" title="enlace.compose.create_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_app</span></code></a>()</p></td>
-<td><p>App factory for Uvicorn's --factory flag.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<p class="rubric">Exceptions</p>
-<div class="table-wrapper autosummary longtable docutils container">
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.compose.EnlaceConfigError" title="enlace.compose.EnlaceConfigError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EnlaceConfigError</span></code></a></p></td>
-<td><p>Raised when platform configuration is unusable at startup.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.html_rewrite.rewrite_html_response" title="enlace.html_rewrite.rewrite_html_response"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rewrite_html_response</span></code></a>(app, scope, receive, ...)</p></td>
+<td><p>Run <code class="docutils literal notranslate"><span class="pre">app</span></code>, passing any <code class="docutils literal notranslate"><span class="pre">text/html</span></code> response body through <code class="docutils literal notranslate"><span class="pre">rewrite</span></code>.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<dl class="py exception">
-<dt class="sig sig-object py" id="enlace.compose.EnlaceConfigError">
-<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">EnlaceConfigError</span></span><a class="reference internal" href="../_modules/enlace/compose.html#EnlaceConfigError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.EnlaceConfigError" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#RuntimeError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></a></p>
-<p>Raised when platform configuration is unusable at startup.</p>
-<p>Distinct from <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> / <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> so callers and tests can
-target this specific class.</p>
-</dd></dl>
-
 <dl class="py function">
-<dt class="sig sig-object py" id="enlace.compose.build_backend">
-<span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">build_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#build_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.build_backend" title="Link to this definition">¶</a></dt>
-<dd><p>Compose all app backends into a single ASGI application.</p>
-<p>For each discovered app:</p>
-<ul class="simple">
-<li><p>mode=asgi, asgi_app: mount the ASGI object at the route prefix</p></li>
-<li><p>mode=asgi, functions: build an APIRouter with POST routes and include it</p></li>
-<li><p>mode=process/external: mount a reverse proxy at the route prefix</p></li>
-<li><p>mode=static: mount StaticFiles at the route prefix</p></li>
-<li><p>frontend_only (mode=asgi): skip (no backend to mount)</p></li>
-</ul>
+<dt class="sig sig-object py" id="enlace.html_rewrite.header_value">
+<span class="sig-prename descclassname"><span class="pre">enlace.html_rewrite.</span></span><span class="sig-name descname"><span class="pre">header_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/html_rewrite.html#header_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.html_rewrite.header_value" title="Link to this definition">¶</a></dt>
+<dd><p>Return the first matching header value (case-insensitive), or None.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></span>) – Platform configuration with apps already discovered.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code></span></p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A FastAPI application with all sub-apps mounted.</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>]</span></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="enlace.compose.build_launcher_item">
-<span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">build_launcher_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlay</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#build_launcher_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.build_launcher_item" title="Link to this definition">¶</a></dt>
-<dd><p>Build one <code class="docutils literal notranslate"><span class="pre">/_apps</span></code> item: resolved metadata + launchability, for an app.</p>
-<p>Public (unlike the <code class="docutils literal notranslate"><span class="pre">_</span></code>-helpers) so the <code class="docutils literal notranslate"><span class="pre">enlace_auth</span></code> plugin’s
-metadata-edit endpoints can return the <em>identical</em> item shape after a
-mutation — single source of truth for the item contract. <code class="docutils literal notranslate"><span class="pre">overlay</span></code> is the
-app’s Tier-A record (<code class="docutils literal notranslate"><span class="pre">{}</span></code> if none).</p>
+<dt class="sig sig-object py" id="enlace.html_rewrite.inject_into_head">
+<span class="sig-prename descclassname"><span class="pre">enlace.html_rewrite.</span></span><span class="sig-name descname"><span class="pre">inject_into_head</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snippet</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/html_rewrite.html#inject_into_head"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.html_rewrite.inject_into_head" title="Link to this definition">¶</a></dt>
+<dd><p>Insert <code class="docutils literal notranslate"><span class="pre">snippet</span></code> into <code class="docutils literal notranslate"><span class="pre">body</span></code> just before <code class="docutils literal notranslate"><span class="pre">&lt;/head&gt;</span></code>.</p>
+<p>Falls back to just after an opening <code class="docutils literal notranslate"><span class="pre">&lt;head</span> <span class="pre">...&gt;</span></code> tag, then to
+prepending — so even malformed HTML still carries the tags.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="enlace.compose.create_app">
-<span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">create_app</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#create_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.create_app" title="Link to this definition">¶</a></dt>
-<dd><p>App factory for Uvicorn’s –factory flag.</p>
-<p>Loads platform config, discovers apps, checks conflicts,
-and builds the composed backend.</p>
-<p>Plugins are loaded from the <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> env var: a comma-separated
-list of <code class="docutils literal notranslate"><span class="pre">module:attribute</span></code> pairs, e.g.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ENLACE_PLUGINS</span><span class="o">=</span><span class="n">enlace_auth</span><span class="p">:</span><span class="n">plugin</span>
-</pre></div>
-</div>
-<p>Each resolved object must be a callable
-<code class="docutils literal notranslate"><span class="pre">(parent:</span> <span class="pre">FastAPI,</span> <span class="pre">config:</span> <span class="pre">PlatformConfig)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code>.</p>
+<dt class="sig sig-object py" id="enlace.html_rewrite.rewrite_html_response">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.html_rewrite.</span></span><span class="sig-name descname"><span class="pre">rewrite_html_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receive</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rewrite</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/html_rewrite.html#rewrite_html_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.html_rewrite.rewrite_html_response" title="Link to this definition">¶</a></dt>
+<dd><p>Run <code class="docutils literal notranslate"><span class="pre">app</span></code>, passing any <code class="docutils literal notranslate"><span class="pre">text/html</span></code> response body through <code class="docutils literal notranslate"><span class="pre">rewrite</span></code>.</p>
+<p>Non-HTML responses stream through untouched. For HTML, the start message is
+held until the full body is buffered (the rewrite changes its length), then
+sent with a corrected <code class="docutils literal notranslate"><span class="pre">Content-Length</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -379,23 +333,23 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="enlace.diagnose.html">
+          <a class="next-page" href="enlace.manifest.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">enlace.diagnose</div>
+                <div class="title">enlace.manifest</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="enlace.build.html">
+          <a class="prev-page" href="enlace.gzip_selective.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">enlace.build</div>
+                <div class="title">enlace.gzip_selective</div>
                 
               </div>
             </a>
@@ -425,11 +379,10 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">enlace.compose</a><ul>
-<li><a class="reference internal" href="#enlace.compose.EnlaceConfigError"><code class="docutils literal notranslate"><span class="pre">EnlaceConfigError</span></code></a></li>
-<li><a class="reference internal" href="#enlace.compose.build_backend"><code class="docutils literal notranslate"><span class="pre">build_backend()</span></code></a></li>
-<li><a class="reference internal" href="#enlace.compose.build_launcher_item"><code class="docutils literal notranslate"><span class="pre">build_launcher_item()</span></code></a></li>
-<li><a class="reference internal" href="#enlace.compose.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li><a class="reference internal" href="#">enlace.html_rewrite</a><ul>
+<li><a class="reference internal" href="#enlace.html_rewrite.header_value"><code class="docutils literal notranslate"><span class="pre">header_value()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.html_rewrite.inject_into_head"><code class="docutils literal notranslate"><span class="pre">inject_into_head()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.html_rewrite.rewrite_html_response"><code class="docutils literal notranslate"><span class="pre">rewrite_html_response()</span></code></a></li>
 </ul>
 </li>
 </ul>

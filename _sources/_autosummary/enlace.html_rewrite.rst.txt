@@ -1,0 +1,14 @@
+enlace.html\_rewrite
+====================
+
+.. automodule:: enlace.html_rewrite
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      header_value
+      inject_into_head
+      rewrite_html_response
+   

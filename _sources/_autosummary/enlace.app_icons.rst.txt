@@ -1,0 +1,29 @@
+enlace.app\_icons
+=================
+
+.. automodule:: enlace.app_icons
+
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      display_name_of
+      has_own_pages
+      head_links
+      home_screen_gaps
+      icon_source
+      icons_dir_file
+      is_raster
+      manifest_json
+      overlay_entry
+      png_rendition
+      resolve_app_icon
+      web_manifest
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AppIconLinksMiddleware
+   

@@ -467,18 +467,20 @@ present, has a `build` command and that its working directory exists.
 
 ### Modules
 
-| [`appmeta`](enlace.appmeta.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.   |
-|----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| [`base`](enlace.base.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                                |
-| [`build`](enlace.build.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                     |
-| [`compose`](enlace.compose.md#module-enlace.compose)               | ASGI app composition for enlace.                                                       |
-| [`diagnose`](enlace.diagnose.md#module-enlace.diagnose)             | Diagnose app compatibility with enlace.                                                |
-| [`discover`](enlace.discover.md#module-enlace.discover)             | Convention-based app discovery for enlace.                                             |
-| [`doctor`](enlace.doctor.md#module-enlace.doctor)                 | Post-deploy smoke checks for a running enlace gateway.                                 |
-| [`frontend`](enlace.frontend.md#module-enlace.frontend)             | SPA-aware static file serving for enlace.                                              |
-| [`gzip_selective`](enlace.gzip_selective.md#module-enlace.gzip_selective) | Compression that knows what it must not compress.                                      |
-| [`manifest`](enlace.manifest.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".            |
-| [`proxy`](enlace.proxy.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                      |
-| [`strategies`](enlace.strategies.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                          |
-| [`supervise`](enlace.supervise.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                                |
-| [`util`](enlace.util.md#module-enlace.util)                     | Internal helpers for enlace.                                                           |
+| [`app_icons`](enlace.app_icons.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
+|----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`appmeta`](enlace.appmeta.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
+| [`base`](enlace.base.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
+| [`build`](enlace.build.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
+| [`compose`](enlace.compose.md#module-enlace.compose)               | ASGI app composition for enlace.                                                     |
+| [`diagnose`](enlace.diagnose.md#module-enlace.diagnose)             | Diagnose app compatibility with enlace.                                              |
+| [`discover`](enlace.discover.md#module-enlace.discover)             | Convention-based app discovery for enlace.                                           |
+| [`doctor`](enlace.doctor.md#module-enlace.doctor)                 | Post-deploy smoke checks for a running enlace gateway.                               |
+| [`frontend`](enlace.frontend.md#module-enlace.frontend)             | SPA-aware static file serving for enlace.                                            |
+| [`gzip_selective`](enlace.gzip_selective.md#module-enlace.gzip_selective) | Compression that knows what it must not compress.                                    |
+| [`html_rewrite`](enlace.html_rewrite.md#module-enlace.html_rewrite)     | Rewrite HTML response bodies from pure-ASGI middleware.                              |
+| [`manifest`](enlace.manifest.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
+| [`proxy`](enlace.proxy.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                    |
+| [`strategies`](enlace.strategies.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                        |
+| [`supervise`](enlace.supervise.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                              |
+| [`util`](enlace.util.md#module-enlace.util)                     | Internal helpers for enlace.                                                         |

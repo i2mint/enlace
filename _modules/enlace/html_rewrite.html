@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
-<link rel="alternate" type="text/markdown" href="util.html.md">
+<link rel="alternate" type="text/markdown" href="html_rewrite.html.md">
 <link rel="describedby" href="../../llms.txt" type="text/markdown"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>enlace.util - enlace</title>
+        <title>enlace.html_rewrite - enlace</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -254,53 +254,111 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for enlace.util</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Internal helpers for enlace."""</span>
+          <h1>Source code for enlace.html_rewrite</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Rewrite HTML response bodies from pure-ASGI middleware.</span>
+
+<span class="sd">Several platform features edit the ``&lt;head&gt;`` of the HTML an app serves (deploy</span>
+<span class="sd">``&lt;meta&gt;`` tags, the app's icon links). Each needs the same careful dance —</span>
+<span class="sd">hold ``http.response.start`` until the whole body is buffered, rewrite it, fix</span>
+<span class="sd">``Content-Length`` — and only for ``text/html``. That dance lives here once.</span>
+
+<span class="sd">A middleware that rewrites bodies must sit **inside** any compression</span>
+<span class="sd">middleware, so it sees and edits uncompressed bytes.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="n">HEAD_CLOSE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rb</span><span class="s2">"&lt;/head\s*&gt;"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+<span class="n">HEAD_OPEN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rb</span><span class="s2">"&lt;head[^&gt;]*&gt;"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="derive_display_name">
-<a class="viewcode-back" href="../../_autosummary/enlace.util.html#enlace.util.derive_display_name">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">derive_display_name</span><span class="p">(</span><span class="n">dir_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Convert a directory name to a human-readable display name.</span>
+<div class="viewcode-block" id="inject_into_head">
+<a class="viewcode-back" href="../../_autosummary/enlace.html_rewrite.html#enlace.html_rewrite.inject_into_head">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">inject_into_head</span><span class="p">(</span><span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">snippet</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Insert ``snippet`` into ``body`` just before ``&lt;/head&gt;``.</span>
 
-<span class="sd">    &gt;&gt;&gt; derive_display_name("chord_analyzer")</span>
-<span class="sd">    'Chord Analyzer'</span>
-<span class="sd">    &gt;&gt;&gt; derive_display_name("todo")</span>
-<span class="sd">    'Todo'</span>
+<span class="sd">    Falls back to just after an opening ``&lt;head ...&gt;`` tag, then to</span>
+<span class="sd">    prepending — so even malformed HTML still carries the tags.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">dir_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span></div>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">HEAD_CLOSE_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">body</span><span class="p">[:</span> <span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">()]</span> <span class="o">+</span> <span class="n">snippet</span> <span class="o">+</span> <span class="n">body</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">start</span><span class="p">()</span> <span class="p">:]</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">HEAD_OPEN_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">body</span><span class="p">[:</span> <span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">()]</span> <span class="o">+</span> <span class="n">snippet</span> <span class="o">+</span> <span class="n">body</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="p">:]</span>
+    <span class="k">return</span> <span class="n">snippet</span> <span class="o">+</span> <span class="n">body</span></div>
 
 
 
-<div class="viewcode-block" id="derive_route_prefix">
-<a class="viewcode-back" href="../../_autosummary/enlace.util.html#enlace.util.derive_route_prefix">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">derive_route_prefix</span><span class="p">(</span><span class="n">dir_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Derive an API route prefix from a directory name.</span>
+<div class="viewcode-block" id="header_value">
+<a class="viewcode-back" href="../../_autosummary/enlace.html_rewrite.html#enlace.html_rewrite.header_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">header_value</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Return the first matching header value (case-insensitive), or None."""</span>
+    <span class="n">lname</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">lname</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
 
-<span class="sd">    &gt;&gt;&gt; derive_route_prefix("chord_analyzer")</span>
-<span class="sd">    '/api/chord_analyzer'</span>
-<span class="sd">    &gt;&gt;&gt; derive_route_prefix("todo")</span>
-<span class="sd">    '/api/todo'</span>
+
+
+<div class="viewcode-block" id="rewrite_html_response">
+<a class="viewcode-back" href="../../_autosummary/enlace.html_rewrite.html#enlace.html_rewrite.rewrite_html_response">[docs]</a>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">rewrite_html_response</span><span class="p">(</span>
+    <span class="n">app</span><span class="p">,</span>
+    <span class="n">scope</span><span class="p">,</span>
+    <span class="n">receive</span><span class="p">,</span>
+    <span class="n">send</span><span class="p">,</span>
+    <span class="n">rewrite</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">bytes</span><span class="p">],</span> <span class="nb">bytes</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run ``app``, passing any ``text/html`` response body through ``rewrite``.</span>
+
+<span class="sd">    Non-HTML responses stream through untouched. For HTML, the start message is</span>
+<span class="sd">    held until the full body is buffered (the rewrite changes its length), then</span>
+<span class="sd">    sent with a corrected ``Content-Length``.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">"/api/</span><span class="si">{</span><span class="n">dir_name</span><span class="si">}</span><span class="s2">"</span></div>
+    <span class="n">start_message</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">chunks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">intercepting</span> <span class="o">=</span> <span class="kc">False</span>
 
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">send_wrapper</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+        <span class="k">nonlocal</span> <span class="n">start_message</span><span class="p">,</span> <span class="n">intercepting</span>
+        <span class="n">mtype</span> <span class="o">=</span> <span class="n">message</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span>
 
+        <span class="k">if</span> <span class="n">mtype</span> <span class="o">==</span> <span class="s2">"http.response.start"</span><span class="p">:</span>
+            <span class="n">content_type</span> <span class="o">=</span> <span class="n">header_value</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"headers"</span><span class="p">,</span> <span class="p">[]),</span> <span class="sa">b</span><span class="s2">"content-type"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">content_type</span> <span class="ow">and</span> <span class="n">content_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s2">"text/html"</span><span class="p">):</span>
+                <span class="n">intercepting</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">start_message</span> <span class="o">=</span> <span class="n">message</span>
+                <span class="k">return</span>  <span class="c1"># held until body is complete</span>
+            <span class="k">await</span> <span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">return</span>
 
-<div class="viewcode-block" id="is_skippable">
-<a class="viewcode-back" href="../../_autosummary/enlace.util.html#enlace.util.is_skippable">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">is_skippable</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Return True if a directory name should be skipped during discovery.</span>
+        <span class="k">if</span> <span class="n">mtype</span> <span class="o">==</span> <span class="s2">"http.response.body"</span> <span class="ow">and</span> <span class="n">intercepting</span><span class="p">:</span>
+            <span class="n">chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"body"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"more_body"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="k">return</span>  <span class="c1"># keep buffering until the last chunk</span>
+            <span class="n">new_body</span> <span class="o">=</span> <span class="n">rewrite</span><span class="p">(</span><span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
+            <span class="k">assert</span> <span class="n">start_message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">start_message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"headers"</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="sa">b</span><span class="s2">"content-length"</span>
+            <span class="p">]</span>
+            <span class="n">headers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">"content-length"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_body</span><span class="p">))</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+            <span class="k">await</span> <span class="n">send</span><span class="p">({</span><span class="o">**</span><span class="n">start_message</span><span class="p">,</span> <span class="s2">"headers"</span><span class="p">:</span> <span class="n">headers</span><span class="p">})</span>
+            <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"http.response.body"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">:</span> <span class="n">new_body</span><span class="p">,</span> <span class="s2">"more_body"</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
 
-<span class="sd">    Directories starting with '_' or '.' are skipped.</span>
+        <span class="k">await</span> <span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
-<span class="sd">    &gt;&gt;&gt; is_skippable("_internal")</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; is_skippable(".git")</span>
-<span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; is_skippable("my_app")</span>
-<span class="sd">    False</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"_"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">))</span></div>
+    <span class="k">await</span> <span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send_wrapper</span><span class="p">)</span></div>
+
 
 </pre></div>
         </article>

@@ -204,6 +204,7 @@
   <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.build.html">enlace.build</a></li>
@@ -213,6 +214,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.doctor.html">enlace.doctor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.frontend.html">enlace.frontend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.gzip_selective.html">enlace.gzip_selective</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.manifest.html">enlace.manifest</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.strategies.html">enlace.strategies</a></li>
@@ -647,6 +649,30 @@ never have to.</p>
 <h3>HTML caching<a class="headerlink" href="#html-caching" title="Link to this heading">¶</a></h3>
 <p>Every static mount (app frontends, the landing app, <code class="docutils literal notranslate"><span class="pre">mode=&quot;static&quot;</span></code> apps, shared assets) sends <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></code> on HTML documents — including SPA fallbacks, <code class="docutils literal notranslate"><span class="pre">304</span></code> revalidations and an <code class="docutils literal notranslate"><span class="pre">html=True</span></code> <code class="docutils literal notranslate"><span class="pre">404.html</span></code> page — so browsers revalidate a page (a cheap <code class="docutils literal notranslate"><span class="pre">304</span></code> via its <code class="docutils literal notranslate"><span class="pre">ETag</span></code>) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> already set on a response is never overridden. The class is <code class="docutils literal notranslate"><span class="pre">enlace.frontend.RevalidatingStaticFiles</span></code> (<code class="docutils literal notranslate"><span class="pre">html_cache_control=None</span></code> opts out).</p>
 </section>
+<section id="app-icons-tab-home-screen-launcher">
+<h3>App icons (tab, home screen, launcher)<a class="headerlink" href="#app-icons-tab-home-screen-launcher" title="Link to this heading">¶</a></h3>
+<p>Every app gets one icon, served in every form a browser or phone asks for:
+<code class="docutils literal notranslate"><span class="pre">/_apps/{name}/icon</span></code> (as-is), <code class="docutils literal notranslate"><span class="pre">/_apps/{name}/icon-{32,180,192,512}.png</span></code>
+(square PNGs, needs <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">enlace[icons]</span></code>), and a generated
+<code class="docutils literal notranslate"><span class="pre">/_apps/{name}/manifest.webmanifest</span></code>. enlace adds the matching <code class="docutils literal notranslate"><span class="pre">&lt;link</span> <span class="pre">rel=&quot;icon&quot;&gt;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&lt;link</span> <span class="pre">rel=&quot;apple-touch-icon&quot;&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;link</span> <span class="pre">rel=&quot;manifest&quot;&gt;</span></code> to each app’s HTML
+wherever the app’s own <code class="docutils literal notranslate"><span class="pre">&lt;head&gt;</span></code> lacks them, so the launcher tile, the browser tab
+and “Add to Home Screen” (iOS and Android) all show the same image.</p>
+<p>The icon is picked once per app: live launcher edit &gt; <code class="docutils literal notranslate"><span class="pre">[app_meta.apps.&lt;name&gt;].icon</span></code></p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">&lt;name&gt;.png</span></code> in <code class="docutils literal notranslate"><span class="pre">[app_meta].icons_dir</span></code> &gt; the app’s own icon (from its
+<code class="docutils literal notranslate"><span class="pre">&lt;head&gt;</span></code>, manifest or <code class="docutils literal notranslate"><span class="pre">icon.png</span></code>) &gt; a letter monogram. An icon from the platform
+tiers replaces the page’s own icon links; an app’s own icon only fills gaps.</p>
+</div></blockquote>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[app_meta]</span>
+<span class="n">icons_dir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"static/app_icons"</span><span class="w">   </span><span class="c1"># one folder of &lt;app&gt;.png, owned by the platform</span>
+<span class="n">manifest_display</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"browser"</span><span class="w">     </span><span class="c1"># or "standalone"</span>
+</pre></div>
+</div>
+<p>Home-screen icons must be raster: an app whose icon is only an SVG, emoji or
+monogram gets a favicon but no PNG. <code class="docutils literal notranslate"><span class="pre">enlace.app_icons.home_screen_gaps(config)</span></code>
+lists those apps.</p>
+</section>
 <section id="deploy-manifest-meta">
 <h3>Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)<a class="headerlink" href="#deploy-manifest-meta" title="Link to this heading">¶</a></h3>
 <p>enlace answers “what is actually deployed?” via an always-on, cheap manifest
@@ -663,7 +689,7 @@ browser rendered the current build or a stale cache.</p>
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 15:46 UTC from <a href="https://github.com/i2mint/enlace/commit/41d530bb991385f6f7da329eb8fabb4d6f206935">41d530b</a> (main) · enlace 0.1.38 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-24 11:08 UTC from <a href="https://github.com/i2mint/enlace/commit/7c047ff0861abef13fc5716426926d6913ff431a">7c047ff</a> (main) · enlace 0.1.39 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -726,6 +752,7 @@ browser rendered the current build or a stale cache.</p>
 <li><a class="reference internal" href="#app-modes">App modes</a></li>
 <li><a class="reference internal" href="#auth-sessions-plugins">Auth, sessions &amp; plugins</a></li>
 <li><a class="reference internal" href="#html-caching">HTML caching</a></li>
+<li><a class="reference internal" href="#app-icons-tab-home-screen-launcher">App icons (tab, home screen, launcher)</a></li>
 <li><a class="reference internal" href="#deploy-manifest-meta">Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)</a></li>
 </ul>
 </li>
@@ -740,7 +767,7 @@ browser rendered the current build or a stale cache.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=e3b9c749"></script>
+</div><script src="_static/documentation_options.js?v=4af9b32f"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

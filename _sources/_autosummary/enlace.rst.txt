@@ -50,6 +50,7 @@
    :toctree:
    :recursive:
 
+   app_icons
    appmeta
    base
    build
@@ -59,6 +60,7 @@
    doctor
    frontend
    gzip_selective
+   html_rewrite
    manifest
    proxy
    strategies

@@ -8,6 +8,7 @@
 - [enlace](index.html.md): Serve all your web apps from a single command.
 - [API reference](api.html.md): | &#96;enlace&#96;   | enlace -- Compose, serve, and deploy multiple web apps from a single codebase.   |
 - [enlace](_autosummary/enlace.html.md): enlace – Compose, serve, and deploy multiple web apps from a single codebase.
+- [enlace.app_icons](_autosummary/enlace.app_icons.html.md): One icon per app, served in every form a browser or phone asks for.
 - [enlace.appmeta](_autosummary/enlace.appmeta.html.md): App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.
 - [enlace.base](_autosummary/enlace.base.html.md): Core data structures for enlace platform configuration.
 - [enlace.build](_autosummary/enlace.build.html.md): Run and validate declarative app builds from &#96;app.toml&#96; &#96;&#91;build&#93;&#96;.
@@ -17,13 +18,14 @@
 - [enlace.doctor](_autosummary/enlace.doctor.html.md): Post-deploy smoke checks for a running enlace gateway.
 - [enlace.frontend](_autosummary/enlace.frontend.html.md): SPA-aware static file serving for enlace.
 - [enlace.gzip_selective](_autosummary/enlace.gzip_selective.html.md): Compression that knows what it must not compress.
+- [enlace.html_rewrite](_autosummary/enlace.html_rewrite.html.md): Rewrite HTML response bodies from pure-ASGI middleware.
 - [enlace.manifest](_autosummary/enlace.manifest.html.md): Deploy manifest: build-identity for diagnosing “what is actually deployed”.
 - [enlace.proxy](_autosummary/enlace.proxy.html.md): Lightweight ASGI reverse proxy for process and external backends.
 - [enlace.strategies](_autosummary/enlace.strategies.html.md): Backend-strategy registry and built-in strategies for enlace.
 - [enlace.supervise](_autosummary/enlace.supervise.html.md): Dev-mode process supervisor for enlace.
 - [enlace.util](_autosummary/enlace.util.html.md): Internal helpers for enlace.
 - [For AI agents](ai-agents.html.md): &#96;enlace&#96; ships artifacts for coding agents alongside its code. This page lists
-- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-22 15:46 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-24 11:08 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
 
 ## Optional
 

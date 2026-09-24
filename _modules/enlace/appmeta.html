@@ -201,6 +201,7 @@
   <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.build.html">enlace.build</a></li>
@@ -210,6 +211,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.doctor.html">enlace.doctor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.frontend.html">enlace.frontend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.gzip_selective.html">enlace.gzip_selective</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.manifest.html">enlace.manifest</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
@@ -343,7 +345,15 @@
     <span class="n">default_icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">apps</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">AppMetaEntry</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
     <span class="n">editors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">store_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">store_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># A platform-owned folder of app icons: ``&lt;app name&gt;.png`` (or .webp/.jpg/.svg)</span>
+    <span class="c1"># is that app's icon unless the overlay or ``apps.&lt;name&gt;.icon`` says otherwise.</span>
+    <span class="c1"># One place for the artwork, instead of a copy in every app. See app_icons.</span>
+    <span class="n">icons_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The ``display`` of generated web-app manifests. "browser" makes "Add to</span>
+    <span class="c1"># Home screen" a shortcut that opens a normal tab; "standalone" would drop</span>
+    <span class="c1"># the browser UI, which also hides the URL bar an auth redirect relies on.</span>
+    <span class="n">manifest_display</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"browser"</span></div>
 
 
 
@@ -515,8 +525,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">og_description</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="s2">""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">icon_href</span> <span class="o">=</span> <span class="s2">""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">apple_icon_href</span> <span class="o">=</span> <span class="s2">""</span>
+        <span class="c1"># (href, declared sizes, is_apple_touch) for every icon &lt;link&gt;, in order.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">icon_links</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_starttag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">attrs</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
@@ -550,10 +560,9 @@
             <span class="n">href</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"href"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">href</span><span class="p">:</span>
                 <span class="k">return</span>
-            <span class="k">if</span> <span class="s2">"apple-touch-icon"</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">apple_icon_href</span> <span class="o">=</span> <span class="n">href</span>
-            <span class="k">elif</span> <span class="s2">"icon"</span> <span class="ow">in</span> <span class="n">rel</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">icon_href</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">icon_href</span> <span class="o">=</span> <span class="n">href</span>
+            <span class="k">if</span> <span class="s2">"icon"</span> <span class="ow">in</span> <span class="n">rel</span><span class="o">.</span><span class="n">split</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">"apple-touch-icon"</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">:</span>
+                <span class="n">sizes</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sizes"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">icon_links</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">href</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="s2">"apple-touch-icon"</span> <span class="ow">in</span> <span class="n">rel</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_endtag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="s2">"title"</span><span class="p">:</span>
@@ -588,11 +597,73 @@
     <span class="p">)</span>
     <span class="n">h</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">description</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">og_description</span>
     <span class="n">h</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">_norm_keywords</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[,\n]"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">keywords</span><span class="p">))</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">keywords</span> <span class="k">else</span> <span class="p">[]</span>
-    <span class="n">href</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">icon_href</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">apple_icon_href</span>
-    <span class="k">if</span> <span class="n">href</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_looks_remote</span><span class="p">(</span><span class="n">href</span><span class="p">):</span>
-        <span class="c1"># hrefs are relative to the html file's directory (the frontend dir).</span>
-        <span class="n">h</span><span class="o">.</span><span class="n">icon</span> <span class="o">=</span> <span class="n">_rel_to_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">frontend_dir</span> <span class="o">/</span> <span class="n">href</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"./"</span><span class="p">))</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="n">_best_head_icon</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">icon_links</span><span class="p">,</span> <span class="n">app_dir</span><span class="o">=</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="o">=</span><span class="n">frontend_dir</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">icon</span> <span class="o">=</span> <span class="n">_rel_to_app</span><span class="p">(</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">best</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">h</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_head_icon_path</span><span class="p">(</span><span class="n">href</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map a ``&lt;link&gt;`` href to the file it names, or None.</span>
+
+<span class="sd">    hrefs are relative to the html file's directory (the frontend dir). Two</span>
+<span class="sd">    forms that a browser resolves fine used to miss here: a cache-busting query</span>
+<span class="sd">    (``icon.png?v=3``) and a mount-absolute path (``/{app}/favicon.svg``), which</span>
+<span class="sd">    is how Vite writes ``base``-prefixed links.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">href</span> <span class="ow">or</span> <span class="n">_looks_remote</span><span class="p">(</span><span class="n">href</span><span class="p">)</span> <span class="ow">or</span> <span class="n">href</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"data:"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">href</span> <span class="o">=</span> <span class="n">href</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"#"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"?"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">href</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+        <span class="n">mount</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app_dir</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">href</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">mount</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">href</span> <span class="o">=</span> <span class="n">href</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">mount</span><span class="p">)</span> <span class="p">:]</span>
+    <span class="k">while</span> <span class="n">href</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"./"</span><span class="p">):</span>
+        <span class="n">href</span> <span class="o">=</span> <span class="n">href</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">frontend_dir</span> <span class="o">/</span> <span class="n">href</span>
+    <span class="k">return</span> <span class="n">path</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_best_head_icon</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The largest icon a page declares: SVG first, then by pixel width.</span>
+
+<span class="sd">    The launcher, the home screen and the Android manifest all show the icon</span>
+<span class="sd">    far larger than a tab does, so a page's 16px favicon must not win just by</span>
+<span class="sd">    being listed first. Width is read from the file (PNG header) when it can</span>
+<span class="sd">    be, else from ``sizes``, else 180 for an apple-touch-icon.</span>
+<span class="sd">    """</span>
+    <span class="n">best</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">href</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">is_apple</span> <span class="ow">in</span> <span class="n">links</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">_head_icon_path</span><span class="p">(</span><span class="n">href</span><span class="p">,</span> <span class="n">app_dir</span><span class="o">=</span><span class="n">app_dir</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="o">=</span><span class="n">frontend_dir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">".svg"</span> <span class="ow">or</span> <span class="n">sizes</span> <span class="o">==</span> <span class="s2">"any"</span><span class="p">:</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fallback</span> <span class="o">=</span> <span class="mi">180</span> <span class="k">if</span> <span class="n">is_apple</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="n">_png_width</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_declared_width</span><span class="p">(</span><span class="n">sizes</span><span class="p">)</span> <span class="ow">or</span> <span class="n">fallback</span>
+        <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">best_score</span><span class="p">:</span>
+            <span class="n">best</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">score</span>
+    <span class="k">return</span> <span class="n">best</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_png_width</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Pixel width from a PNG header (0 if not a readable PNG)."""</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">head</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span> <span class="o">!=</span> <span class="sa">b</span><span class="s2">"</span><span class="se">\x89</span><span class="s2">PNG</span><span class="se">\r\n\x1a\n</span><span class="s2">"</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">head</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">24</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="o">.</span><span class="n">from_bytes</span><span class="p">(</span><span class="n">head</span><span class="p">[</span><span class="mi">16</span><span class="p">:</span><span class="mi">20</span><span class="p">],</span> <span class="s2">"big"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_declared_width</span><span class="p">(</span><span class="n">sizes</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The largest width in a ``sizes="16x16 32x32"`` attribute (0 if none)."""</span>
+    <span class="n">widths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(\d+)x\d+"</span><span class="p">,</span> <span class="n">sizes</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_from_package_json</span><span class="p">(</span><span class="n">app_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">frontend_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">_Harvest</span><span class="p">:</span>
@@ -1119,7 +1190,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=e3b9c749"></script>
+</div><script src="../../_static/documentation_options.js?v=4af9b32f"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

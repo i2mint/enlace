@@ -1,4 +1,4 @@
-> built 2026-09-22 15:46 UTC from 41d530b (main) · enlace 0.1.38. Details: build_info.json
+> built 2026-09-24 11:08 UTC from 7c047ff (main) · enlace 0.1.39. Details: build_info.json
 
 # index.html.md
 
@@ -334,6 +334,31 @@ never have to.
 
 Every static mount (app frontends, the landing app, `mode="static"` apps, shared assets) sends `Cache-Control: no-cache` on HTML documents — including SPA fallbacks, `304` revalidations and an `html=True` `404.html` page — so browsers revalidate a page (a cheap `304` via its `ETag`) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a `Cache-Control` already set on a response is never overridden. The class is `enlace.frontend.RevalidatingStaticFiles` (`html_cache_control=None` opts out).
 
+### App icons (tab, home screen, launcher)
+
+Every app gets one icon, served in every form a browser or phone asks for:
+`/_apps/{name}/icon` (as-is), `/_apps/{name}/icon-{32,180,192,512}.png`
+(square PNGs, needs `pip install enlace[icons]`), and a generated
+`/_apps/{name}/manifest.webmanifest`. enlace adds the matching `<link rel="icon">`,
+`<link rel="apple-touch-icon">` and `<link rel="manifest">` to each app’s HTML
+wherever the app’s own `<head>` lacks them, so the launcher tile, the browser tab
+and “Add to Home Screen” (iOS and Android) all show the same image.
+
+The icon is picked once per app: live launcher edit > `[app_meta.apps.<name>].icon`
+
+> `<name>.png` in `[app_meta].icons_dir` > the app’s own icon (from its
+> `<head>`, manifest or `icon.png`) > a letter monogram. An icon from the platform
+> tiers replaces the page’s own icon links; an app’s own icon only fills gaps.
+```toml
+[app_meta]
+icons_dir = "static/app_icons"   # one folder of <app>.png, owned by the platform
+manifest_display = "browser"     # or "standalone"
+```
+
+Home-screen icons must be raster: an app whose icon is only an SVG, emoji or
+monogram gets a favicon but no PNG. `enlace.app_icons.home_screen_gaps(config)`
+lists those apps.
+
 ### Deploy manifest (`/_meta`)
 
 enlace answers “what is actually deployed?” via an always-on, cheap manifest
@@ -345,6 +370,171 @@ you tell whether the server is serving the SHA you think it is and whether the
 browser rendered the current build or a stale cache.
 
 <p class="epythet-aggregates">This documentation as a single file: <a href="enlace.md">enlace.md</a> (Markdown, for agents).</p>
+
+
+# _autosummary/enlace.app_icons.html.md
+
+# enlace.app_icons
+
+One icon per app, served in every form a browser or phone asks for.
+
+An app’s icon appears in four places: the launcher grid, the browser tab
+(favicon), the iOS home screen (`apple-touch-icon`, PNG only) and the Android
+/ Chrome home screen (the web-app manifest’s `icons`). Left to each app, those
+four drift apart — most apps declare none of them, and the few that do declare
+different subsets. So the platform owns them, once:
+
+- **Source** — [`icon_source()`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.icon_source) picks one icon spec per app, in tier order:
+  runtime overlay (Tier A) > `[app_meta.apps.<name>].icon` (Tier B) > a file
+  named `<name>.<ext>` in `[app_meta].icons_dir` (Tier B, by convention) >
+  the app’s own declared/harvested icon (Tier C) > `default_icon` > monogram.
+- **Renditions** — `/_apps/{name}/icon` serves the source as-is;
+  `/_apps/{name}/icon-{size}.png` serves square PNGs (`PNG_SIZES`) cut
+  from a *raster* source; `/_apps/{name}/manifest.webmanifest` is generated.
+- **Wiring** — [`AppIconLinksMiddleware`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.AppIconLinksMiddleware) adds the `<link>` tags an app’s
+  HTML is missing. When the icon comes from the platform tiers (A/B), the page’s
+  own icon links are replaced, so the owner’s choice wins everywhere; otherwise
+  the app’s own links stand and only the gaps are filled.
+
+PNG renditions need Pillow and a raster source (PNG/JPEG/WebP/GIF/ICO). A
+vector-only icon (SVG, emoji glyph, monogram) still serves as the favicon, but
+has no PNG form — so no home-screen icon. Give such an app a PNG in
+`icons_dir`; [`home_screen_gaps()`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.home_screen_gaps) lists them.
+
+### Functions
+
+| [`display_name_of`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.display_name_of)(app, config, overlay)             | The app's display name across Tier A / B / C (same order as `/_apps`).                                             |
+|----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
+| [`has_own_pages`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.has_own_pages)(app)                                | Whether the platform serves this app's HTML itself (so it can wire its head).                                      |
+| [`head_links`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.head_links)(app, \*, icon, display_name, ...)      | Return `(snippet, head)`: tags to add, and the head minus replaced ones.                                           |
+| [`home_screen_gaps`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.home_screen_gaps)(config)                          | Names of launchable apps whose icon has no PNG form (no home-screen icon).                                         |
+| [`icon_source`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.icon_source)(app, config, overlay)                 | Return `(spec, root, platform_owned)` for one app's icon.                                                          |
+| [`icons_dir_file`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.icons_dir_file)(icons_dir, name)                   | The filename of `<name>.<ext>` in the platform icons dir, if present.                                              |
+| [`is_raster`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.is_raster)(icon)                                   | Whether an icon can be cut into PNG renditions (a raster, served inline).                                          |
+| [`manifest_json`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.manifest_json)(manifest)                           | Serialize a manifest (kept apart so routes and tests share one encoding).                                          |
+| [`overlay_entry`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.overlay_entry)(scope, name)                        | Read one app's runtime overlay record (Tier A), or `{}` if none.                                                   |
+| [`png_rendition`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.png_rendition)(body, size)                         | A `size``×``size` PNG cut from raster `body`, or None if impossible.                                               |
+| [`resolve_app_icon`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.resolve_app_icon)(app, config, overlay, \*[, ...]) | Resolve an app's icon to an [`IconResult`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.IconResult). |
+| [`web_manifest`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.web_manifest)(app, \*, display_name, ...)          | The web-app manifest for one app (what Android's "Add to Home screen" reads).                                      |
+
+### Classes
+
+| [`AppIconLinksMiddleware`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.AppIconLinksMiddleware)(app, \*, config, ...)   | Pure-ASGI middleware giving every app's HTML the same icon wiring.   |
+|-------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+
+### *class* enlace.app_icons.AppIconLinksMiddleware(app, , config, is_protected)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Pure-ASGI middleware giving every app’s HTML the same icon wiring.
+
+For `text/html` responses under `/{app}/`, see [`head_links()`](_autosummary/enlace.app_icons.html.md#enlace.app_icons.head_links). The
+overlay (Tier A) is read per request from `app.state.app_meta_overlay`, so
+a live icon edit in the launcher reaches tabs and home screens with no
+redeploy. Must sit inside compression (it edits the body).
+
+### enlace.app_icons.display_name_of(app, config, overlay)
+
+The app’s display name across Tier A / B / C (same order as `/_apps`).
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.app_icons.has_own_pages(app)
+
+Whether the platform serves this app’s HTML itself (so it can wire its head).
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.app_icons.head_links(app, , icon, display_name, protected, page_head, replace)
+
+Return `(snippet, head)`: tags to add, and the head minus replaced ones.
+
+Adds each of favicon / apple-touch-icon / manifest / home-screen title only
+where the page lacks it — unless `replace`, in which case the page’s own
+icon links are dropped and the platform’s take their place.
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes), [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)]
+
+### enlace.app_icons.home_screen_gaps(config)
+
+Names of launchable apps whose icon has no PNG form (no home-screen icon).
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.app_icons.icon_source(app, config, overlay)
+
+Return `(spec, root, platform_owned)` for one app’s icon.
+
+`root` is the directory a file spec is resolved (and contained) under.
+`platform_owned` is True when the icon comes from the platform tiers
+(overlay, `[app_meta.apps]`, `icons_dir`) rather than the app itself —
+the signal that the page’s own icon links should be replaced.
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
+
+### enlace.app_icons.icons_dir_file(icons_dir, name)
+
+The filename of `<name>.<ext>` in the platform icons dir, if present.
+
+Raster formats are probed before SVG, so an app with both gets PNG
+renditions (the SVG can sit beside it as the editable source).
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.app_icons.is_raster(icon)
+
+Whether an icon can be cut into PNG renditions (a raster, served inline).
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.app_icons.manifest_json(manifest)
+
+Serialize a manifest (kept apart so routes and tests share one encoding).
+
+* **Return type:**
+  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+
+### enlace.app_icons.overlay_entry(scope, name)
+
+Read one app’s runtime overlay record (Tier A), or `{}` if none.
+
+`app_meta_overlay` is injected on the root app’s state by the
+`enlace_auth` plugin; absent it, core degrades to Tiers B/C/D.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### enlace.app_icons.png_rendition(body, size)
+
+A `size``×``size` PNG cut from raster `body`, or None if impossible.
+
+Non-square sources are center-cropped (a home-screen tile is square, and
+padding would add a frame the artwork never had). Transparency is kept for
+the favicon but flattened onto white for the larger sizes, because iOS
+renders a transparent apple-touch-icon’s clear pixels as black.
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)]
+
+### enlace.app_icons.resolve_app_icon(app, config, overlay, , token_only=False)
+
+Resolve an app’s icon to an [`IconResult`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.IconResult).
+
+### enlace.app_icons.web_manifest(app, , display_name, description, token, has_png, display)
+
+The web-app manifest for one app (what Android’s “Add to Home screen” reads).
+
+Scoped to the app’s own mount so each app installs as its own shortcut.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 
 # _autosummary/enlace.appmeta.html.md
@@ -1808,21 +1998,73 @@ present, has a `build` command and that its working directory exists.
 
 ### Modules
 
-| [`appmeta`](_autosummary/enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.   |
-|----------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                                |
-| [`build`](_autosummary/enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                     |
-| [`compose`](_autosummary/enlace.compose.html.md#module-enlace.compose)               | ASGI app composition for enlace.                                                       |
-| [`diagnose`](_autosummary/enlace.diagnose.html.md#module-enlace.diagnose)             | Diagnose app compatibility with enlace.                                                |
-| [`discover`](_autosummary/enlace.discover.html.md#module-enlace.discover)             | Convention-based app discovery for enlace.                                             |
-| [`doctor`](_autosummary/enlace.doctor.html.md#module-enlace.doctor)                 | Post-deploy smoke checks for a running enlace gateway.                                 |
-| [`frontend`](_autosummary/enlace.frontend.html.md#module-enlace.frontend)             | SPA-aware static file serving for enlace.                                              |
-| [`gzip_selective`](_autosummary/enlace.gzip_selective.html.md#module-enlace.gzip_selective) | Compression that knows what it must not compress.                                      |
-| [`manifest`](_autosummary/enlace.manifest.html.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".            |
-| [`proxy`](_autosummary/enlace.proxy.html.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                      |
-| [`strategies`](_autosummary/enlace.strategies.html.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                          |
-| [`supervise`](_autosummary/enlace.supervise.html.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                                |
-| [`util`](_autosummary/enlace.util.html.md#module-enlace.util)                     | Internal helpers for enlace.                                                           |
+| [`app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
+|----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`appmeta`](_autosummary/enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
+| [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
+| [`build`](_autosummary/enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
+| [`compose`](_autosummary/enlace.compose.html.md#module-enlace.compose)               | ASGI app composition for enlace.                                                     |
+| [`diagnose`](_autosummary/enlace.diagnose.html.md#module-enlace.diagnose)             | Diagnose app compatibility with enlace.                                              |
+| [`discover`](_autosummary/enlace.discover.html.md#module-enlace.discover)             | Convention-based app discovery for enlace.                                           |
+| [`doctor`](_autosummary/enlace.doctor.html.md#module-enlace.doctor)                 | Post-deploy smoke checks for a running enlace gateway.                               |
+| [`frontend`](_autosummary/enlace.frontend.html.md#module-enlace.frontend)             | SPA-aware static file serving for enlace.                                            |
+| [`gzip_selective`](_autosummary/enlace.gzip_selective.html.md#module-enlace.gzip_selective) | Compression that knows what it must not compress.                                    |
+| [`html_rewrite`](_autosummary/enlace.html_rewrite.html.md#module-enlace.html_rewrite)     | Rewrite HTML response bodies from pure-ASGI middleware.                              |
+| [`manifest`](_autosummary/enlace.manifest.html.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
+| [`proxy`](_autosummary/enlace.proxy.html.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                    |
+| [`strategies`](_autosummary/enlace.strategies.html.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                        |
+| [`supervise`](_autosummary/enlace.supervise.html.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                              |
+| [`util`](_autosummary/enlace.util.html.md#module-enlace.util)                     | Internal helpers for enlace.                                                         |
+
+
+# _autosummary/enlace.html_rewrite.html.md
+
+# enlace.html_rewrite
+
+Rewrite HTML response bodies from pure-ASGI middleware.
+
+Several platform features edit the `<head>` of the HTML an app serves (deploy
+`<meta>` tags, the app’s icon links). Each needs the same careful dance —
+hold `http.response.start` until the whole body is buffered, rewrite it, fix
+`Content-Length` — and only for `text/html`. That dance lives here once.
+
+A middleware that rewrites bodies must sit **inside** any compression
+middleware, so it sees and edits uncompressed bytes.
+
+### Functions
+
+| [`header_value`](_autosummary/enlace.html_rewrite.html.md#enlace.html_rewrite.header_value)(headers, name)                     | Return the first matching header value (case-insensitive), or None.   |
+|--------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| [`inject_into_head`](_autosummary/enlace.html_rewrite.html.md#enlace.html_rewrite.inject_into_head)(body, snippet)                 | Insert `snippet` into `body` just before `</head>`.                   |
+| [`rewrite_html_response`](_autosummary/enlace.html_rewrite.html.md#enlace.html_rewrite.rewrite_html_response)(app, scope, receive, ...) | Run `app`, passing any `text/html` response body through `rewrite`.   |
+
+### enlace.html_rewrite.header_value(headers, name)
+
+Return the first matching header value (case-insensitive), or None.
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)]
+
+### enlace.html_rewrite.inject_into_head(body, snippet)
+
+Insert `snippet` into `body` just before `</head>`.
+
+Falls back to just after an opening `<head ...>` tag, then to
+prepending — so even malformed HTML still carries the tags.
+
+* **Return type:**
+  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+
+### *async* enlace.html_rewrite.rewrite_html_response(app, scope, receive, send, rewrite)
+
+Run `app`, passing any `text/html` response body through `rewrite`.
+
+Non-HTML responses stream through untouched. For HTML, the start message is
+held until the full body is buffered (the rewrite changes its length), then
+sent with a corrected `Content-Length`.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 
 # _autosummary/enlace.manifest.html.md
@@ -2483,7 +2725,7 @@ False
 
 # About this build
 
-This documentation was built on **2026-09-22 15:46 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/41d530bb991385f6f7da329eb8fabb4d6f206935"><code>41d530b</code></a> on branch <code>main</code>, for **enlace 0.1.38** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-24 11:08 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/7c047ff0861abef13fc5716426926d6913ff431a"><code>7c047ff</code></a> on branch <code>main</code>, for **enlace 0.1.39** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -2492,7 +2734,7 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/41d530bb991385f6f7da329eb8fabb4d6f206935"><code>41d530bb991385f6f7da329eb8fabb4d6f206935</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/7c047ff0861abef13fc5716426926d6913ff431a"><code>7c047ff0861abef13fc5716426926d6913ff431a</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -2503,9 +2745,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/35749454608">35749454608</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/35991137096">35991137096</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>41d530bb991385f6f7da329eb8fabb4d6f206935</code> (in the history of the built commit) |
+| Event commit | <code>7c047ff0861abef13fc5716426926d6913ff431a</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2530,13 +2772,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.38/">0.1.38</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.39/">0.1.39</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 41d530bb991385f6f7da329eb8fabb4d6f206935
+git checkout 7c047ff0861abef13fc5716426926d6913ff431a
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
