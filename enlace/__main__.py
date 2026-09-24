@@ -221,6 +221,13 @@ def check(
     warnings: list[str] = []
     for app in config.apps:
         warnings.extend(validate_build(app))
+    from enlace.app_icons import home_screen_gaps
+
+    warnings.extend(
+        f"{name}: icon has no PNG form, so no home-screen icon "
+        "(add a PNG to [app_meta].icons_dir)"
+        for name in home_screen_gaps(config)
+    )
 
     if json:
         print(json_module.dumps({"errors": errors, "warnings": warnings}, indent=2))

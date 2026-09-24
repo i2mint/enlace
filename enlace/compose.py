@@ -248,6 +248,16 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         platform_manifest=platform_manifest,
     )
 
+    # Give every app's HTML the platform's icon wiring (favicon, apple-touch-icon,
+    # web-app manifest). Rewrites the body, so it too sits inside GZip.
+    from enlace.app_icons import AppIconLinksMiddleware
+
+    parent.add_middleware(
+        AppIconLinksMiddleware,
+        config=config,
+        is_protected=lambda app: app.access.startswith("protected"),
+    )
+
     # Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST
     # middleware — it must wrap everything downstream (meta injection, sub-app
     # responses, static files) and see final bytes.
@@ -550,19 +560,10 @@ def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
 
 
 def _overlay_entry(request: Request, name: str) -> dict:
-    """Read one app's runtime overlay record (Tier A), or ``{}`` if none.
+    """Read one app's runtime overlay record (Tier A), or ``{}`` if none."""
+    from enlace.app_icons import overlay_entry
 
-    ``app_meta_overlay`` is injected by the ``enlace_auth`` plugin; absent it
-    defaults to an empty dict, so core degrades to Tiers B/C/D with no overlay.
-    """
-    overlay = getattr(request.app.state, "app_meta_overlay", None)
-    if overlay is None:
-        return {}
-    try:
-        rec = overlay.get(name, {})
-    except Exception:  # a flaky store must never break the listing
-        return {}
-    return rec if isinstance(rec, dict) else {}
+    return overlay_entry(request.scope, name)
 
 
 def _resolved_app_meta(app: AppConfig, config: PlatformConfig, overlay: dict) -> dict:
@@ -571,12 +572,11 @@ def _resolved_app_meta(app: AppConfig, config: PlatformConfig, overlay: dict) ->
     Returns the display_name, description, keywords (+ per-tier sources), and
     icon_url for one ``/_apps`` item.
     """
-    from enlace import appmeta
+    from enlace import app_icons, appmeta
 
     tier_b = config.app_meta.apps.get(app.name)
     b_name = tier_b.display_name if tier_b else None
     b_desc = tier_b.description if tier_b else None
-    b_icon = tier_b.icon if tier_b else None
     b_keywords = tier_b.keywords if tier_b else []
 
     display_name = overlay.get("display_name") or b_name or app.display_name
@@ -588,18 +588,9 @@ def _resolved_app_meta(app: AppConfig, config: PlatformConfig, overlay: dict) ->
         overlay_keywords=overlay.get("keywords", []),
     )
 
-    icon_spec = (
-        overlay.get("icon") or b_icon or app.icon or config.app_meta.default_icon or ""
-    )
     # token_only: the listing needs only the ?v= cache token, not the icon bytes,
     # so a file-backed icon is stat'd, not read (27 apps × every /_apps hit).
-    icon = appmeta.resolve_icon(
-        icon_spec,
-        app_name=app.name,
-        display_name=display_name,
-        app_dir=appmeta.app_dir_of(app),
-        token_only=True,
-    )
+    icon = app_icons.resolve_app_icon(app, config, overlay, token_only=True)
     return {
         "display_name": display_name,
         "description": description,
@@ -676,42 +667,29 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
             "can_edit_meta": can_edit_meta,
         }
 
-    @parent.get("/_apps/{name}/icon")
-    async def app_icon(name: str, request: Request) -> Response:
-        from enlace import appmeta
+    def _visible_app(name: str, request: Request) -> Optional[AppConfig]:
+        """The named app if this caller may see it, else None.
 
+        One uniform answer for unknown-or-forbidden, so the icon routes are
+        never an oracle for apps the caller can't see.
+        """
+        app = apps_by_name.get(name)
+        if app is None or app.name == landing_name:
+            return None
         user_id = getattr(request.state, "user_id", None)
         user_email = getattr(request.state, "user_email", None)
-        app = apps_by_name.get(name)
-        # Access check FIRST, and a uniform 404 for unknown-or-forbidden — the
-        # icon endpoint must not be an oracle for apps the caller can't see.
-        if (
-            app is None
-            or app.name == landing_name
-            or not _can_access(app.access, user_id, user_email, app.allowed_users)
-        ):
-            return Response(status_code=404)
+        if not _can_access(app.access, user_id, user_email, app.allowed_users):
+            return None
+        return app
 
-        overlay = _overlay_entry(request, name)
-        tier_b = config.app_meta.apps.get(name)
-        icon_spec = (
-            overlay.get("icon")
-            or (tier_b.icon if tier_b else None)
-            or app.icon
-            or config.app_meta.default_icon
-            or ""
-        )
-        display_name = (
-            overlay.get("display_name")
-            or (tier_b.display_name if tier_b else None)
-            or app.display_name
-        )
-        icon = appmeta.resolve_icon(
-            icon_spec,
-            app_name=name,
-            display_name=display_name,
-            app_dir=appmeta.app_dir_of(app),
-        )
+    @parent.get("/_apps/{name}/icon")
+    async def app_icon(name: str, request: Request) -> Response:
+        from enlace import app_icons
+
+        app = _visible_app(name, request)
+        if app is None:
+            return Response(status_code=404)
+        icon = app_icons.resolve_app_icon(app, config, _overlay_entry(request, name))
         if icon.redirect_url:
             # We don't control the remote bytes ⇒ never mark immutable.
             return RedirectResponse(
@@ -725,17 +703,67 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
         # *document*; this CSP neutralises any embedded script if someone
         # navigates directly to the icon URL. Inert on the grid's <img> load,
         # which never executes SVG script anyway.
-        icon_csp = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
-        return Response(
-            content=icon.body,
-            media_type=icon.content_type,
-            headers={
-                "ETag": f'"{icon.token}"',
-                "X-Content-Type-Options": "nosniff",
-                "Content-Security-Policy": icon_csp,
-                "Cache-Control": cache,
-            },
+        return _icon_response(icon.body, icon.content_type, icon.token, cache)
+
+    @parent.get("/_apps/{name}/icon-{size}.png")
+    async def app_icon_png(name: str, size: int, request: Request) -> Response:
+        """A square PNG of the app's icon — favicon, apple-touch-icon, manifest."""
+        from enlace import app_icons
+
+        app = _visible_app(name, request)
+        if app is None or size not in app_icons.PNG_SIZES:
+            return Response(status_code=404)
+        icon = app_icons.resolve_app_icon(app, config, _overlay_entry(request, name))
+        png = (
+            app_icons.png_rendition(icon.body, size)
+            if app_icons.is_raster(icon) and icon.body
+            else None
         )
+        if png is None:
+            return Response(status_code=404)
+        cache = "public, max-age=31536000, immutable" if icon.immutable else "no-store"
+        return _icon_response(png, "image/png", f"{icon.token}-{size}", cache)
+
+    @parent.get("/_apps/{name}/manifest.webmanifest")
+    async def app_manifest(name: str, request: Request) -> Response:
+        """The app's web-app manifest (Android "Add to Home screen" reads it)."""
+        from enlace import app_icons
+
+        app = _visible_app(name, request)
+        if app is None:
+            return Response(status_code=404)
+        overlay = _overlay_entry(request, name)
+        resolved = _resolved_app_meta(app, config, overlay)
+        icon = app_icons.resolve_app_icon(app, config, overlay, token_only=True)
+        manifest = app_icons.web_manifest(
+            app,
+            display_name=resolved["display_name"],
+            description=resolved["description"],
+            token=icon.token,
+            has_png=app_icons.is_raster(icon),
+            display=config.app_meta.manifest_display,
+        )
+        # Not immutable: the name or icon can change live through the overlay.
+        return Response(
+            content=app_icons.manifest_json(manifest),
+            media_type="application/manifest+json",
+            headers={"Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"},
+        )
+
+
+def _icon_response(body: bytes, content_type: str, token: str, cache: str) -> Response:
+    """An icon response with the headers every icon route shares."""
+    icon_csp = "default-src 'none'; style-src 'unsafe-inline'; sandbox"
+    return Response(
+        content=body,
+        media_type=content_type,
+        headers={
+            "ETag": f'"{token}"',
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": icon_csp,
+            "Cache-Control": cache,
+        },
+    )
 
 
 def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
