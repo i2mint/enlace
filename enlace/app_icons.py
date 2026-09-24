@@ -315,7 +315,9 @@ class AppIconLinksMiddleware:
         return None
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or scope.get("method") not in ("GET", "HEAD"):
+        # GET only: a HEAD response has no body to rewrite, and "fixing" its
+        # Content-Length to the snippet's length would be a lie.
+        if scope["type"] != "http" or scope.get("method") != "GET":
             await self.app(scope, receive, send)
             return
         app = self._app_for(scope.get("path", ""))
