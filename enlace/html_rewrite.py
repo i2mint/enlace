@@ -93,4 +93,3 @@ async def rewrite_html_response(
         await send(message)
 
     await app(scope, receive, send_wrapper)
-

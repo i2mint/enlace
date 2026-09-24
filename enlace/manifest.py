@@ -310,4 +310,3 @@ class DeployMetaTagMiddleware(_PrefixManifestMiddleware):
             send,
             lambda body: inject_into_head(body, snippet),
         )
-
