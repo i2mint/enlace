@@ -335,6 +335,31 @@ never have to.
 
 Every static mount (app frontends, the landing app, `mode="static"` apps, shared assets) sends `Cache-Control: no-cache` on HTML documents — including SPA fallbacks, `304` revalidations and an `html=True` `404.html` page — so browsers revalidate a page (a cheap `304` via its `ETag`) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a `Cache-Control` already set on a response is never overridden. The class is `enlace.frontend.RevalidatingStaticFiles` (`html_cache_control=None` opts out).
 
+### App icons (tab, home screen, launcher)
+
+Every app gets one icon, served in every form a browser or phone asks for:
+`/_apps/{name}/icon` (as-is), `/_apps/{name}/icon-{32,180,192,512}.png`
+(square PNGs, needs `pip install enlace[icons]`), and a generated
+`/_apps/{name}/manifest.webmanifest`. enlace adds the matching `<link rel="icon">`,
+`<link rel="apple-touch-icon">` and `<link rel="manifest">` to each app's HTML
+wherever the app's own `<head>` lacks them, so the launcher tile, the browser tab
+and "Add to Home Screen" (iOS and Android) all show the same image.
+
+The icon is picked once per app: live launcher edit > `[app_meta.apps.<name>].icon`
+> `<name>.png` in `[app_meta].icons_dir` > the app's own icon (from its
+`<head>`, manifest or `icon.png`) > a letter monogram. An icon from the platform
+tiers replaces the page's own icon links; an app's own icon only fills gaps.
+
+```toml
+[app_meta]
+icons_dir = "static/app_icons"   # one folder of <app>.png, owned by the platform
+manifest_display = "browser"     # or "standalone"
+```
+
+Home-screen icons must be raster: an app whose icon is only an SVG, emoji or
+monogram gets a favicon but no PNG. `enlace.app_icons.home_screen_gaps(config)`
+lists those apps.
+
 ### Deploy manifest (`/_meta`)
 
 enlace answers "what is actually deployed?" via an always-on, cheap manifest

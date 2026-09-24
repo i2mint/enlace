@@ -28,10 +28,14 @@ enlace = "enlace.__main__:main"
 
 [project.optional-dependencies]
 process = ["httpx>=0.24.0"]
+# PNG renditions of app icons (apple-touch-icon, web-app manifest). Without it,
+# icons still serve as-is; only the home-screen PNG sizes are unavailable.
+icons = ["Pillow"]
 dev = [
     "pytest",
     "httpx",
     "pytest-asyncio",
+    "Pillow",
 ]
 
 [tool.pytest.ini_options]

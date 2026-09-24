@@ -84,6 +84,14 @@ class AppMetaConfig(BaseModel):
     apps: dict[str, AppMetaEntry] = Field(default_factory=dict)
     editors: list[str] = Field(default_factory=list)
     store_path: Optional[Path] = None
+    # A platform-owned folder of app icons: ``<app name>.png`` (or .webp/.jpg/.svg)
+    # is that app's icon unless the overlay or ``apps.<name>.icon`` says otherwise.
+    # One place for the artwork, instead of a copy in every app. See app_icons.
+    icons_dir: Optional[Path] = None
+    # The ``display`` of generated web-app manifests. "browser" makes "Add to
+    # Home screen" a shortcut that opens a normal tab; "standalone" would drop
+    # the browser UI, which also hides the URL bar an auth redirect relies on.
+    manifest_display: str = "browser"
 
 
 # ---------------------------------------------------------------------------
@@ -254,8 +262,8 @@ class _HeadParser(HTMLParser):
         self.description = ""
         self.og_description = ""
         self.keywords = ""
-        self.icon_href = ""
-        self.apple_icon_href = ""
+        # (href, declared sizes, is_apple_touch) for every icon <link>, in order.
+        self.icon_links: list[tuple[str, str, bool]] = []
 
     def handle_starttag(self, tag, attrs):
         if self.done:
@@ -289,10 +297,9 @@ class _HeadParser(HTMLParser):
             href = a.get("href", "").strip()
             if not href:
                 return
-            if "apple-touch-icon" in rel:
-                self.apple_icon_href = href
-            elif "icon" in rel and not self.icon_href:
-                self.icon_href = href
+            if "icon" in rel.split() or "apple-touch-icon" in rel:
+                sizes = a.get("sizes", "").lower()
+                self.icon_links.append((href, sizes, "apple-touch-icon" in rel))
 
     def handle_endtag(self, tag):
         if tag == "title":
@@ -327,11 +334,73 @@ def _from_html_head(app_dir: Path, frontend_dir: Optional[Path]) -> _Harvest:
     )
     h.description = p.description or p.og_description
     h.keywords = _norm_keywords(re.split(r"[,\n]", p.keywords)) if p.keywords else []
-    href = p.icon_href or p.apple_icon_href
-    if href and not _looks_remote(href):
-        # hrefs are relative to the html file's directory (the frontend dir).
-        h.icon = _rel_to_app(app_dir, frontend_dir / href.lstrip("./"))
+    best = _best_head_icon(p.icon_links, app_dir=app_dir, frontend_dir=frontend_dir)
+    if best is not None:
+        h.icon = _rel_to_app(app_dir, best)
     return h
+
+
+def _head_icon_path(href: str, *, app_dir: Path, frontend_dir: Path) -> Optional[Path]:
+    """Map a ``<link>`` href to the file it names, or None.
+
+    hrefs are relative to the html file's directory (the frontend dir). Two
+    forms that a browser resolves fine used to miss here: a cache-busting query
+    (``icon.png?v=3``) and a mount-absolute path (``/{app}/favicon.svg``), which
+    is how Vite writes ``base``-prefixed links.
+    """
+    if not href or _looks_remote(href) or href.startswith("data:"):
+        return None
+    href = href.split("#", 1)[0].split("?", 1)[0]
+    if href.startswith("/"):
+        mount = f"/{app_dir.name}/"
+        if not href.startswith(mount):
+            return None
+        href = href[len(mount) :]
+    while href.startswith("./"):
+        href = href[2:]
+    path = frontend_dir / href
+    return path if path.is_file() else None
+
+
+def _best_head_icon(links, *, app_dir: Path, frontend_dir: Path) -> Optional[Path]:
+    """The largest icon a page declares: SVG first, then by pixel width.
+
+    The launcher, the home screen and the Android manifest all show the icon
+    far larger than a tab does, so a page's 16px favicon must not win just by
+    being listed first. Width is read from the file (PNG header) when it can
+    be, else from ``sizes``, else 180 for an apple-touch-icon.
+    """
+    best, best_score = None, -1
+    for href, sizes, is_apple in links:
+        path = _head_icon_path(href, app_dir=app_dir, frontend_dir=frontend_dir)
+        if path is None:
+            continue
+        if path.suffix.lower() == ".svg" or sizes == "any":
+            score = 1 << 20
+        else:
+            fallback = 180 if is_apple else 1
+            score = _png_width(path) or _declared_width(sizes) or fallback
+        if score > best_score:
+            best, best_score = path, score
+    return best
+
+
+def _png_width(path: Path) -> int:
+    """Pixel width from a PNG header (0 if not a readable PNG)."""
+    try:
+        with path.open("rb") as f:
+            head = f.read(24)
+    except OSError:
+        return 0
+    if head[:8] != b"\x89PNG\r\n\x1a\n" or len(head) < 24:
+        return 0
+    return int.from_bytes(head[16:20], "big")
+
+
+def _declared_width(sizes: str) -> int:
+    """The largest width in a ``sizes="16x16 32x32"`` attribute (0 if none)."""
+    widths = [int(m) for m in re.findall(r"(\d+)x\d+", sizes)]
+    return max(widths, default=0)
 
 
 def _from_package_json(app_dir: Path, frontend_dir: Optional[Path]) -> _Harvest:

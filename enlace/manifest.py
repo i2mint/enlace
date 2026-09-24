@@ -32,11 +32,12 @@ import html
 import json
 import logging
 import os
-import re
 from pathlib import Path
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, ValidationError
+
+from enlace.html_rewrite import inject_into_head, rewrite_html_response
 
 _logger = logging.getLogger("enlace.manifest")
 
@@ -251,10 +252,6 @@ class DeployHeadersMiddleware(_PrefixManifestMiddleware):
         await self.app(scope, receive, send_with_headers)
 
 
-_HEAD_CLOSE_RE = re.compile(rb"</head\s*>", re.IGNORECASE)
-_HEAD_OPEN_RE = re.compile(rb"<head[^>]*>", re.IGNORECASE)
-
-
 def _meta_snippet(manifest: DeployManifest) -> Optional[bytes]:
     """Build the ``<meta>`` tags for a manifest, or ``None`` if nothing to add.
 
@@ -276,19 +273,8 @@ def _meta_tag(name: str, content: str) -> str:
     return f'<meta name="{name}" content="{html.escape(content, quote=True)}">'
 
 
-def _inject_meta(body: bytes, snippet: bytes) -> bytes:
-    """Insert ``snippet`` into ``body`` just before ``</head>``.
-
-    Falls back to just after an opening ``<head ...>`` tag, then to
-    prepending — so even malformed HTML still carries the tags.
-    """
-    m = _HEAD_CLOSE_RE.search(body)
-    if m:
-        return body[: m.start()] + snippet + body[m.start() :]
-    m = _HEAD_OPEN_RE.search(body)
-    if m:
-        return body[: m.end()] + snippet + body[m.end() :]
-    return snippet + body
+# Kept under its historical name: tests and callers import it from here.
+_inject_meta = inject_into_head
 
 
 class DeployMetaTagMiddleware(_PrefixManifestMiddleware):
@@ -317,59 +303,11 @@ class DeployMetaTagMiddleware(_PrefixManifestMiddleware):
             await self.app(scope, receive, send)
             return
 
-        # State shared between the start and body handlers. We delay the
-        # response.start until the full body is buffered, because injecting
-        # changes Content-Length.
-        start_message: Optional[dict] = None
-        chunks: list[bytes] = []
-        intercepting = False
+        await rewrite_html_response(
+            self.app,
+            scope,
+            receive,
+            send,
+            lambda body: inject_into_head(body, snippet),
+        )
 
-        async def send_wrapper(message):
-            nonlocal start_message, intercepting
-            mtype = message["type"]
-
-            if mtype == "http.response.start":
-                content_type = _header_value(
-                    message.get("headers", []), b"content-type"
-                )
-                if content_type and content_type.lower().startswith(b"text/html"):
-                    intercepting = True
-                    start_message = message
-                    return  # held until body is complete
-                await send(message)
-                return
-
-            if mtype == "http.response.body" and intercepting:
-                chunks.append(message.get("body", b""))
-                if message.get("more_body", False):
-                    return  # keep buffering until the last chunk
-                new_body = _inject_meta(b"".join(chunks), snippet)
-                assert start_message is not None
-                headers = [
-                    (k, v)
-                    for (k, v) in start_message.get("headers", [])
-                    if k.lower() != b"content-length"
-                ]
-                headers.append((b"content-length", str(len(new_body)).encode()))
-                await send({**start_message, "headers": headers})
-                await send(
-                    {
-                        "type": "http.response.body",
-                        "body": new_body,
-                        "more_body": False,
-                    }
-                )
-                return
-
-            await send(message)
-
-        await self.app(scope, receive, send_wrapper)
-
-
-def _header_value(headers, name: bytes) -> Optional[bytes]:
-    """Return the first matching header value (case-insensitive), or None."""
-    lname = name.lower()
-    for k, v in headers:
-        if k.lower() == lname:
-            return v
-    return None

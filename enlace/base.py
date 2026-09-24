@@ -405,12 +405,14 @@ class PlatformConfig(BaseModel):
         for key in ("shared_assets_dir", "apps_dir", "manifest_dir"):
             if key in platform_data:
                 platform_data[key] = _resolve(platform_data[key])
-        # [app_meta].store_path is path-like too; resolve it against the TOML
-        # dir for the same host-portability reason (a ~-prefixed/absolute value
-        # is left as-is by _resolve).
+        # [app_meta].store_path / icons_dir are path-like too; resolve them
+        # against the TOML dir for the same host-portability reason (a
+        # ~-prefixed/absolute value is left as-is by _resolve).
         app_meta = platform_data.get("app_meta")
-        if isinstance(app_meta, dict) and app_meta.get("store_path"):
-            app_meta["store_path"] = _resolve(app_meta["store_path"])
+        if isinstance(app_meta, dict):
+            for key in ("store_path", "icons_dir"):
+                if app_meta.get(key):
+                    app_meta[key] = _resolve(app_meta[key])
 
         # Environment variable overrides
         env_apps_dirs = os.environ.get("ENLACE_APPS_DIRS", "")
