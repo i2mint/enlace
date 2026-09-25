@@ -508,31 +508,30 @@ def _stamp_updated_at(
         app.updated_at = manifest.app_source.committed_at or manifest.deployed_at
 
 
-def _can_access(
-    access: str,
-    user_id: Optional[str],
-    user_email: Optional[str],
-    allowed_users: list[str],
-) -> bool:
-    """Whether a request can see an app of this access level in /_apps.
+def _can_access(app: AppConfig, request: Request) -> bool:
+    """Whether the caller of ``request`` may see ``app`` in /_apps.
 
-    `public` / `local` → always.
-    `protected:user`   → only if authenticated AND (no allowed_users list, or
-                         the user's email is in it).
-    `protected:shared` → visible either way (gated at open-time, not
-                         discovery-time — users should know the app exists
-                         so they can ask for the password).
+    Delegates to :func:`enlace.access.can_see_app` — the same allowlist
+    predicate the auth gate calls — with the runtime grants the auth plugin
+    injected (see :data:`enlace.access.GRANTS_STATE_ATTR`), resolved per
+    request so a grant appears, and expires, in the launcher exactly when it
+    does at the gate.
     """
-    if access in ("public", "local", "protected:shared"):
-        return True
-    if access == "protected:user":
-        if user_id is None:
-            return False
-        if allowed_users:
-            who = user_email or user_id
-            return who in allowed_users
-        return True
-    return False
+    from enlace import access
+
+    resolver = getattr(request.app.state, access.GRANTS_STATE_ATTR, None)
+    granted = (
+        access.granted_users(resolver, app.name)
+        if app.access == "protected:user"
+        else ()
+    )
+    return access.can_see_app(
+        app.access,
+        getattr(request.state, "user_id", None),
+        getattr(request.state, "user_email", None),
+        allowed_users=app.allowed_users,
+        granted=granted,
+    )
 
 
 def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
@@ -656,7 +655,7 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
         for app in apps:
             if app.name == landing_name:
                 continue
-            if not _can_access(app.access, user_id, user_email, app.allowed_users):
+            if not _can_access(app, request):
                 continue
             items.append(
                 build_launcher_item(app, config, _overlay_entry(request, app.name))
@@ -676,9 +675,7 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
         app = apps_by_name.get(name)
         if app is None or app.name == landing_name:
             return None
-        user_id = getattr(request.state, "user_id", None)
-        user_email = getattr(request.state, "user_email", None)
-        if not _can_access(app.access, user_id, user_email, app.allowed_users):
+        if not _can_access(app, request):
             return None
         return app
 

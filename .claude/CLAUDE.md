@@ -66,6 +66,7 @@ enlace/
 ├── util.py        # Pure helpers: derive_display_name, derive_route_prefix, is_skippable
 ├── discover.py    # ConventionDiscoverer: walks apps/, reads app.toml, detects types
 ├── compose.py     # build_backend(): mounts ASGI sub-apps, proxy routes, static files
+├── access.py      # can_see_app / is_user_allowed: the ONE visibility predicate (launcher + auth gate)
 ├── proxy.py       # Lightweight ASGI reverse proxy for process/external backends (httpx)
 ├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
