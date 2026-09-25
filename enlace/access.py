@@ -42,12 +42,18 @@ def granted_users(resolver: Optional[GrantsResolver], app_id: str) -> frozenset[
         return frozenset()
     try:
         return frozenset(e.lower() for e in (resolver(app_id) or ()))
-    except Exception:  # noqa: BLE001 - see the fail-closed note above
+    except Exception as exc:  # noqa: BLE001 - see the fail-closed note above
+        # One line per failure, traceback at DEBUG: the launcher resolves every
+        # protected app per /_apps call, so a broken store would otherwise emit
+        # a traceback per app per page load.
         _logger.warning(
-            "grants lookup failed for app_id=%r; using static allowed_users only",
+            "dynamic grants lookup failed for app_id=%r (%s: %s); "
+            "falling back to config allowed_users only",
             app_id,
-            exc_info=True,
+            type(exc).__name__,
+            exc,
         )
+        _logger.debug("grants lookup traceback", exc_info=True)
         return frozenset()
 
 

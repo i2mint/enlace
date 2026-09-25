@@ -764,11 +764,15 @@ def _icon_response(body: bytes, content_type: str, token: str, cache: str) -> Re
 
 
 def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
-    """Add a GET / route that lists all discovered apps as a simple HTML page."""
-    apps = config.apps
+    """Add a GET / route listing, as a simple HTML page, the apps the caller may see.
+
+    Filtered by the same predicate as ``/_apps`` (:func:`_can_access`), so the
+    built-in index never names an app the caller could not open.
+    """
 
     @parent.get("/", response_class=HTMLResponse)
-    async def index():
+    async def index(request: Request):
+        apps = [a for a in config.apps if _can_access(a, request)]
         items = []
         for app in apps:
             has_frontend = app.frontend_dir and app.frontend_dir.is_dir()

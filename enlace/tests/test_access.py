@@ -166,3 +166,17 @@ def test_is_user_allowed_truth_table(static, granted):
 def test_can_see_app_by_access_level_for_anonymous(level, expected):
     """Anonymous callers see open and shared-password apps, never user-gated ones."""
     assert access.can_see_app(level, None, None) is expected
+
+
+def test_builtin_index_lists_only_what_the_caller_may_open():
+    """The HTML index (no landing app) uses the launcher's predicate too."""
+    public = AppConfig(
+        name="open_one",
+        route_prefix="/api/open_one",
+        app_type="frontend_only",
+        access="public",
+    )
+    client = _client([public, _gated_app()], {"gated": {GRANTED}})
+    assert "Gated" not in client.get("/").text
+    assert "Open One" in client.get("/").text
+    assert "Gated" in client.get("/", headers={"x-test-user": GRANTED}).text
