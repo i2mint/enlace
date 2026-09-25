@@ -467,8 +467,9 @@ present, has a `build` command and that its working directory exists.
 
 ### Modules
 
-| [`app_icons`](enlace.app_icons.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
+| [`access`](enlace.access.md#module-enlace.access)                 | Who may reach an app: the one predicate the gate and the launcher both call.         |
 |----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`app_icons`](enlace.app_icons.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
 | [`appmeta`](enlace.appmeta.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
 | [`base`](enlace.base.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
 | [`build`](enlace.build.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |

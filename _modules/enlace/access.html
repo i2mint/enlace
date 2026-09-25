@@ -3,11 +3,11 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark">
-<link rel="alternate" type="text/markdown" href="gzip_selective.html.md">
+<link rel="alternate" type="text/markdown" href="access.html.md">
 <link rel="describedby" href="../../llms.txt" type="text/markdown"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>enlace.gzip_selective - enlace</title>
+        <title>enlace.access - enlace</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -255,202 +255,121 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for enlace.gzip_selective</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""Compression that knows what it must not compress.</span>
+          <h1>Source code for enlace.access</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""Who may reach an app: the one predicate the gate and the launcher both call.</span>
 
-<span class="sd">Starlette's ``GZipMiddleware`` compresses *every* response above ``minimum_size``</span>
-<span class="sd">when the client offers gzip. On a platform that also serves media, that is wrong in</span>
-<span class="sd">two ways, and enlace hit both.</span>
+<span class="sd">Two code paths answer "may this user reach this app": the request-time gate</span>
+<span class="sd">(``enlace_auth``'s ``PlatformAuthMiddleware``) and the ``/_apps`` launcher (which</span>
+<span class="sd">hides what the caller could not open). When each carried its own copy of the</span>
+<span class="sd">answer they drifted — the gate honoured runtime grants and the launcher did not,</span>
+<span class="sd">so a granted user could open an app they could never find</span>
+<span class="sd">(https://github.com/i2mint/enlace/issues/35). This module is the single copy;</span>
+<span class="sd">both sides call it, so they cannot disagree.</span>
 
-<span class="sd">**1. It corrupts byte-range responses.** ``GZipMiddleware`` has no exclusion for</span>
-<span class="sd">``206 Partial Content`` or ``Content-Range``. Wrapped around a ``StaticFiles`` mount</span>
-<span class="sd">serving video, it gzips the partial body while ``Content-Range`` still describes the</span>
-<span class="sd">*uncompressed* representation. Observed against a real mp4 through enlace::</span>
+<span class="sd">enlace core still enforces nothing — enforcement is ``enlace_auth``'s job. The</span>
+<span class="sd">launcher uses this module to *filter*, the gate to *deny*.</span>
 
-<span class="sd">    HTTP/2 206</span>
-<span class="sd">    content-encoding: gzip</span>
-<span class="sd">    content-range:   bytes 0-65535/112651   &lt;- offsets into the UNCOMPRESSED file</span>
-<span class="sd">    content-length:  64076                  &lt;- length of the COMPRESSED body</span>
-
-<span class="sd">Per RFC 9110 §14.4 the range describes the selected representation, so those headers</span>
-<span class="sd">now disagree. Byte ranges are the entire basis of ``&lt;video&gt;`` playback — seeking,</span>
-<span class="sd">streaming, and Safari's refusal to play media at all without them — so this quietly</span>
-<span class="sd">undermines the very thing a static media mount exists to provide.</span>
-
-<span class="sd">**2. It burns the shared event loop for nothing.** Video, audio, most images and</span>
-<span class="sd">archives are already compressed: gzipping them buys ~1% for the full CPU cost, and</span>
-<span class="sd">Starlette compresses *synchronously inside the asyncio loop* — a loop that, in</span>
-<span class="sd">enlace, is shared by every app on the platform.</span>
-
-<span class="sd">So: compress text, never compress a ranged exchange, never compress bytes that are</span>
-<span class="sd">already compressed. Pure ASGI (enlace forbids ``BaseHTTPMiddleware``).</span>
+<span class="sd">Runtime grants reach enlace core through one dependency-injection slot on the</span>
+<span class="sd">root app's state, :data:`GRANTS_STATE_ATTR`: a callable ``app_id -&gt; iterable of</span>
+<span class="sd">emails`` of currently active grants, installed by the auth plugin (the same</span>
+<span class="sd">callable its gate consults). Absent it, only the static ``allowed_users`` count.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">gzip</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"enlace.access"</span><span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.datastructures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Headers</span><span class="p">,</span> <span class="n">MutableHeaders</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">starlette.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ASGIApp</span><span class="p">,</span> <span class="n">Message</span><span class="p">,</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">Send</span>
+<span class="c1">#: The root app's ``state`` attribute an auth plugin sets to its grants resolver.</span>
+<span class="n">GRANTS_STATE_ATTR</span> <span class="o">=</span> <span class="s2">"dynamic_allowed_users"</span>
 
-<span class="c1">#: Content types whose bytes are already compressed. ``image/svg+xml`` is deliberately</span>
-<span class="c1">#: NOT here — SVG is text and compresses extremely well.</span>
-<span class="n">INCOMPRESSIBLE_PREFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"video/"</span><span class="p">,</span> <span class="s2">"audio/"</span><span class="p">,</span> <span class="s2">"image/"</span><span class="p">,</span> <span class="s2">"font/woff"</span><span class="p">)</span>
-
-<span class="n">INCOMPRESSIBLE_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
-    <span class="p">{</span>
-        <span class="s2">"application/zip"</span><span class="p">,</span>
-        <span class="s2">"application/gzip"</span><span class="p">,</span>
-        <span class="s2">"application/x-gzip"</span><span class="p">,</span>
-        <span class="s2">"application/zstd"</span><span class="p">,</span>
-        <span class="s2">"application/pdf"</span><span class="p">,</span>
-        <span class="s2">"application/wasm"</span><span class="p">,</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-
-<span class="n">COMPRESSIBLE_EXCEPTIONS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"image/svg+xml"</span><span class="p">})</span>
+<span class="n">GrantsResolver</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
 
 
-<div class="viewcode-block" id="is_compressible">
-<a class="viewcode-back" href="../../_autosummary/enlace.gzip_selective.html#enlace.gzip_selective.is_compressible">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">is_compressible</span><span class="p">(</span><span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Whether a response of this content type is worth compressing."""</span>
-    <span class="n">ctype</span> <span class="o">=</span> <span class="n">content_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">";"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">ctype</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># unknown — let the size threshold decide</span>
-    <span class="k">if</span> <span class="n">ctype</span> <span class="ow">in</span> <span class="n">COMPRESSIBLE_EXCEPTIONS</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">if</span> <span class="n">ctype</span> <span class="ow">in</span> <span class="n">INCOMPRESSIBLE_TYPES</span><span class="p">:</span>
+<div class="viewcode-block" id="granted_users">
+<a class="viewcode-back" href="../../_autosummary/enlace.access.html#enlace.access.granted_users">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">granted_users</span><span class="p">(</span><span class="n">resolver</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GrantsResolver</span><span class="p">],</span> <span class="n">app_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The lowercased emails holding an active runtime grant for ``app_id``.</span>
+
+<span class="sd">    Called per request, never cached: expiry is evaluated by the resolver at call</span>
+<span class="sd">    time, so the gate and the launcher expire a grant at the same instant.</span>
+
+<span class="sd">    A failing resolver yields no grants (fail closed for grant-based access,</span>
+<span class="sd">    static ``allowed_users`` still work): a grants-store hiccup must never break</span>
+<span class="sd">    auth or the listing. It is logged, not raised.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">resolver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="p">(</span><span class="n">resolver</span><span class="p">(</span><span class="n">app_id</span><span class="p">)</span> <span class="ow">or</span> <span class="p">()))</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - see the fail-closed note above</span>
+        <span class="c1"># One line per failure, traceback at DEBUG: the launcher resolves every</span>
+        <span class="c1"># protected app per /_apps call, so a broken store would otherwise emit</span>
+        <span class="c1"># a traceback per app per page load.</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">"dynamic grants lookup failed for app_id=</span><span class="si">%r</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">); "</span>
+            <span class="s2">"falling back to config allowed_users only"</span><span class="p">,</span>
+            <span class="n">app_id</span><span class="p">,</span>
+            <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="n">exc</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">_logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"grants lookup traceback"</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="is_user_allowed">
+<a class="viewcode-back" href="../../_autosummary/enlace.access.html#enlace.access.is_user_allowed">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_user_allowed</span><span class="p">(</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">user_email</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">allowed_users</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">granted</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether an authenticated user passes a ``protected:user`` app's allowlist.</span>
+
+<span class="sd">    The allowlist is the static ``allowed_users`` ∪ the active runtime</span>
+<span class="sd">    ``granted`` emails, compared case-insensitively. An empty union means the</span>
+<span class="sd">    app is open to any authenticated user. An unauthenticated caller</span>
+<span class="sd">    (``user_id is None``) never passes.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">return</span> <span class="ow">not</span> <span class="n">ctype</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">INCOMPRESSIBLE_PREFIXES</span><span class="p">)</span></div>
+    <span class="n">allowed</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">allowed_users</span><span class="p">}</span> <span class="o">|</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">granted</span><span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">allowed</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">user_email</span> <span class="ow">or</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">allowed</span></div>
 
 
 
-<div class="viewcode-block" id="SelectiveGZipMiddleware">
-<a class="viewcode-back" href="../../_autosummary/enlace.gzip_selective.html#enlace.gzip_selective.SelectiveGZipMiddleware">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SelectiveGZipMiddleware</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Gzip, minus the responses that must not be compressed.</span>
+<div class="viewcode-block" id="can_see_app">
+<a class="viewcode-back" href="../../_autosummary/enlace.access.html#enlace.access.can_see_app">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">can_see_app</span><span class="p">(</span>
+    <span class="n">access</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">user_email</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">allowed_users</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">granted</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether the ``/_apps`` launcher shows an app of this access level.</span>
 
-<span class="sd">    Drop-in replacement for ``starlette.middleware.gzip.GZipMiddleware``.</span>
+<span class="sd">    - ``public`` / ``local`` → always.</span>
+<span class="sd">    - ``protected:shared`` → always: it is gated when opened, not when listed,</span>
+<span class="sd">      so users know the app exists and can ask for the password.</span>
+<span class="sd">    - ``protected:user`` → exactly when :func:`is_user_allowed` — the gate's own</span>
+<span class="sd">      predicate, so a user sees precisely the apps they can open.</span>
+<span class="sd">    - anything else → never (deny by default).</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">access</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"public"</span><span class="p">,</span> <span class="s2">"local"</span><span class="p">,</span> <span class="s2">"protected:shared"</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">access</span> <span class="o">==</span> <span class="s2">"protected:user"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">is_user_allowed</span><span class="p">(</span>
+            <span class="n">user_id</span><span class="p">,</span> <span class="n">user_email</span><span class="p">,</span> <span class="n">allowed_users</span><span class="o">=</span><span class="n">allowed_users</span><span class="p">,</span> <span class="n">granted</span><span class="o">=</span><span class="n">granted</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">ASGIApp</span><span class="p">,</span> <span class="n">minimum_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span> <span class="n">compresslevel</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">9</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">minimum_size</span> <span class="o">=</span> <span class="n">minimum_size</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span> <span class="o">=</span> <span class="n">compresslevel</span>
-
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">:</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">send</span><span class="p">:</span> <span class="n">Send</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http"</span><span class="p">:</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="n">request_headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="n">scope</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s2">"gzip"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"accept-encoding"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="c1"># A ranged request can never be safely compressed here: the body we would encode</span>
-        <span class="c1"># is a slice, but Content-Range describes the whole representation. This is a</span>
-        <span class="c1"># property of the REQUEST, so we can settle it before the response exists — and</span>
-        <span class="c1"># it is the case that matters, because every `&lt;video&gt;` fetch is a ranged fetch.</span>
-        <span class="k">if</span> <span class="s2">"range"</span> <span class="ow">in</span> <span class="n">request_headers</span><span class="p">:</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="n">responder</span> <span class="o">=</span> <span class="n">_Responder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimum_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span><span class="p">)</span>
-        <span class="k">await</span> <span class="n">responder</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span></div>
-
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">_Responder</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Compresses a response, deciding from its ``http.response.start`` message.</span>
-
-<span class="sd">    The body is streamed, never buffered whole; only the start message is held, just</span>
-<span class="sd">    long enough to read status and ``Content-Type``.</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">:</span> <span class="n">ASGIApp</span><span class="p">,</span> <span class="n">minimum_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">compresslevel</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">minimum_size</span> <span class="o">=</span> <span class="n">minimum_size</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span> <span class="o">=</span> <span class="n">compresslevel</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">:</span> <span class="n">Send</span> <span class="o">=</span> <span class="n">_unattached_send</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">:</span> <span class="n">Message</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">started</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="p">:</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">:</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">:</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">send</span><span class="p">:</span> <span class="n">Send</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">send</span> <span class="o">=</span> <span class="n">send</span>
-        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_should_compress</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="n">headers</span> <span class="o">=</span> <span class="n">Headers</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">"headers"</span><span class="p">])</span>
-        <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">"status"</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="mi">206</span> <span class="ow">or</span> <span class="s2">"content-range"</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># a ranged response: see the class docstring</span>
-        <span class="k">if</span> <span class="s2">"content-encoding"</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># already encoded — never double-encode</span>
-        <span class="k">return</span> <span class="n">is_compressible</span><span class="p">(</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"content-type"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span>
-
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"http.response.start"</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span> <span class="o">=</span> <span class="n">message</span>  <span class="c1"># hold it: we need the body to decide</span>
-            <span class="k">return</span>
-
-        <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http.response.body"</span><span class="p">:</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"body"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
-        <span class="n">more_body</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"more_body"</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">started</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">started</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="n">small_and_complete</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">more_body</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">body</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimum_size</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_compress</span><span class="p">()</span> <span class="ow">or</span> <span class="n">small_and_complete</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">)</span>
-                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-                <span class="k">return</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span>
-                <span class="n">mode</span><span class="o">=</span><span class="s2">"wb"</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span> <span class="n">compresslevel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">compresslevel</span>
-            <span class="p">)</span>
-            <span class="n">headers</span> <span class="o">=</span> <span class="n">MutableHeaders</span><span class="p">(</span><span class="n">raw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">[</span><span class="s2">"headers"</span><span class="p">])</span>
-            <span class="n">headers</span><span class="p">[</span><span class="s2">"Content-Encoding"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"gzip"</span>
-            <span class="n">headers</span><span class="o">.</span><span class="n">add_vary_header</span><span class="p">(</span><span class="s2">"Accept-Encoding"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">more_body</span><span class="p">:</span>
-                <span class="c1"># Whole body in one message: we know the compressed length exactly.</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-                <span class="n">compressed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
-                <span class="n">headers</span><span class="p">[</span><span class="s2">"Content-Length"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">compressed</span><span class="p">))</span>
-                <span class="n">message</span><span class="p">[</span><span class="s2">"body"</span><span class="p">]</span> <span class="o">=</span> <span class="n">compressed</span>
-                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">)</span>
-                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-                <span class="k">return</span>
-            <span class="c1"># Streaming: the final length is unknown, so it must not be advertised.</span>
-            <span class="k">del</span> <span class="n">headers</span><span class="p">[</span><span class="s2">"Content-Length"</span><span class="p">]</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_message</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">passthrough</span><span class="p">:</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">more_body</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">gzip_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-        <span class="n">message</span><span class="p">[</span><span class="s2">"body"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">truncate</span><span class="p">()</span>
-        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-
-
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_unattached_send</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="n">Message</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"send awaitable not set"</span><span class="p">)</span>
 </pre></div>
         </article>
       </div>

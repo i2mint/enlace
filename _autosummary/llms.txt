@@ -6,6 +6,7 @@
 ## Pages in this subsection
 
 - [enlace](enlace.html.md): enlace – Compose, serve, and deploy multiple web apps from a single codebase.
+- [enlace.access](enlace.access.html.md): Who may reach an app: the one predicate the gate and the launcher both call.
 - [enlace.app_icons](enlace.app_icons.html.md): One icon per app, served in every form a browser or phone asks for.
 - [enlace.appmeta](enlace.appmeta.html.md): App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.
 - [enlace.base](enlace.base.html.md): Core data structures for enlace platform configuration.

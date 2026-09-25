@@ -1,0 +1,20 @@
+enlace.access
+=============
+
+.. automodule:: enlace.access
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      GRANTS_STATE_ATTR
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      can_see_app
+      granted_users
+      is_user_allowed
+   

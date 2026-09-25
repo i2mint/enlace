@@ -8,7 +8,7 @@ narrow purpose: filtering the `/_apps` listing so authenticated users
 don’t see entries they couldn’t open anyway. That makes the access string
 vocabulary part of enlace’s contract — the values
 `"public" | "local" | "protected:shared" | "protected:user"` are the
-ones `compose._can_access` understands; anything else is treated as
+ones `enlace.access.can_see_app` understands; anything else is treated as
 deny-by-default.
 
 The fields are otherwise opaque to enlace: enforcement, session lookup,

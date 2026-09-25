@@ -204,6 +204,7 @@
   <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">API reference</a><input aria-label="Toggle navigation of API reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="enlace.access.html">enlace.access</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3 current current-page"><a class="current reference internal" href="#">enlace.base</a></li>
@@ -272,7 +273,7 @@ narrow purpose: filtering the <code class="docutils literal notranslate"><span c
 don’t see entries they couldn’t open anyway. That makes the access string
 vocabulary part of enlace’s contract — the values
 <code class="docutils literal notranslate"><span class="pre">&quot;public&quot;</span> <span class="pre">|</span> <span class="pre">&quot;local&quot;</span> <span class="pre">|</span> <span class="pre">&quot;protected:shared&quot;</span> <span class="pre">|</span> <span class="pre">&quot;protected:user&quot;</span></code> are the
-ones <code class="docutils literal notranslate"><span class="pre">compose._can_access</span></code> understands; anything else is treated as
+ones <code class="docutils literal notranslate"><span class="pre">enlace.access.can_see_app</span></code> understands; anything else is treated as
 deny-by-default.</p>
 <p>The fields are otherwise opaque to enlace: enforcement, session lookup,
 allowlist matching at request time, and CSRF all live in the
@@ -546,7 +547,7 @@ a PlatformConfig with all default values.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=4af9b32f"></script>
+</div><script src="../_static/documentation_options.js?v=6264e773"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

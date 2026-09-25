@@ -1,4 +1,4 @@
-> built 2026-09-24 11:08 UTC from 7c047ff (main) · enlace 0.1.39. Details: build_info.json
+> built 2026-09-25 10:49 UTC from 5bf1866 (main) · enlace 0.1.40. Details: build_info.json
 
 # index.html.md
 
@@ -372,6 +372,85 @@ browser rendered the current build or a stale cache.
 <p class="epythet-aggregates">This documentation as a single file: <a href="enlace.md">enlace.md</a> (Markdown, for agents).</p>
 
 
+# _autosummary/enlace.access.html.md
+
+# enlace.access
+
+Who may reach an app: the one predicate the gate and the launcher both call.
+
+Two code paths answer “may this user reach this app”: the request-time gate
+(`enlace_auth`’s `PlatformAuthMiddleware`) and the `/_apps` launcher (which
+hides what the caller could not open). When each carried its own copy of the
+answer they drifted — the gate honoured runtime grants and the launcher did not,
+so a granted user could open an app they could never find
+([https://github.com/i2mint/enlace/issues/35](https://github.com/i2mint/enlace/issues/35)). This module is the single copy;
+both sides call it, so they cannot disagree.
+
+enlace core still enforces nothing — enforcement is `enlace_auth`’s job. The
+launcher uses this module to *filter*, the gate to *deny*.
+
+Runtime grants reach enlace core through one dependency-injection slot on the
+root app’s state, [`GRANTS_STATE_ATTR`](_autosummary/enlace.access.html.md#enlace.access.GRANTS_STATE_ATTR): a callable `app_id -> iterable of
+emails` of currently active grants, installed by the auth plugin (the same
+callable its gate consults). Absent it, only the static `allowed_users` count.
+
+### Module Attributes
+
+| [`GRANTS_STATE_ATTR`](_autosummary/enlace.access.html.md#enlace.access.GRANTS_STATE_ATTR)   | The root app's `state` attribute an auth plugin sets to its grants resolver.   |
+|----------------------------------------------------------------------|--------------------------------------------------------------------------------|
+
+### Functions
+
+| [`can_see_app`](_autosummary/enlace.access.html.md#enlace.access.can_see_app)(access, user_id, user_email, \*)    | Whether the `/_apps` launcher shows an app of this access level.         |
+|--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| [`granted_users`](_autosummary/enlace.access.html.md#enlace.access.granted_users)(resolver, app_id)                 | The lowercased emails holding an active runtime grant for `app_id`.      |
+| [`is_user_allowed`](_autosummary/enlace.access.html.md#enlace.access.is_user_allowed)(user_id, user_email, \*[, ...]) | Whether an authenticated user passes a `protected:user` app's allowlist. |
+
+### enlace.access.GRANTS_STATE_ATTR *= 'dynamic_allowed_users'*
+
+The root app’s `state` attribute an auth plugin sets to its grants resolver.
+
+### enlace.access.can_see_app(access, user_id, user_email, , allowed_users=(), granted=())
+
+Whether the `/_apps` launcher shows an app of this access level.
+
+- `public` / `local` → always.
+- `protected:shared` → always: it is gated when opened, not when listed,
+  so users know the app exists and can ask for the password.
+- `protected:user` → exactly when [`is_user_allowed()`](_autosummary/enlace.access.html.md#enlace.access.is_user_allowed) — the gate’s own
+  predicate, so a user sees precisely the apps they can open.
+- anything else → never (deny by default).
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.access.granted_users(resolver, app_id)
+
+The lowercased emails holding an active runtime grant for `app_id`.
+
+Called per request, never cached: expiry is evaluated by the resolver at call
+time, so the gate and the launcher expire a grant at the same instant.
+
+A failing resolver yields no grants (fail closed for grant-based access,
+static `allowed_users` still work): a grants-store hiccup must never break
+auth or the listing. It is logged, not raised.
+
+* **Return type:**
+  [`frozenset`](https://docs.python.org/3/builtins/stdtypes.html#frozenset)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.access.is_user_allowed(user_id, user_email, , allowed_users=(), granted=())
+
+Whether an authenticated user passes a `protected:user` app’s allowlist.
+
+The allowlist is the static `allowed_users` ∪ the active runtime
+`granted` emails, compared case-insensitively. An empty union means the
+app is open to any authenticated user. An unauthenticated caller
+(`user_id is None`) never passes.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+
 # _autosummary/enlace.app_icons.html.md
 
 # enlace.app_icons
@@ -709,7 +788,7 @@ narrow purpose: filtering the `/_apps` listing so authenticated users
 don’t see entries they couldn’t open anyway. That makes the access string
 vocabulary part of enlace’s contract — the values
 `"public" | "local" | "protected:shared" | "protected:user"` are the
-ones `compose._can_access` understands; anything else is treated as
+ones `enlace.access.can_see_app` understands; anything else is treated as
 deny-by-default.
 
 The fields are otherwise opaque to enlace: enforcement, session lookup,
@@ -1998,8 +2077,9 @@ present, has a `build` command and that its working directory exists.
 
 ### Modules
 
-| [`app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
+| [`access`](_autosummary/enlace.access.html.md#module-enlace.access)                 | Who may reach an app: the one predicate the gate and the launcher both call.         |
 |----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
 | [`appmeta`](_autosummary/enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
 | [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
 | [`build`](_autosummary/enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
@@ -2725,16 +2805,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-09-24 11:08 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/7c047ff0861abef13fc5716426926d6913ff431a"><code>7c047ff</code></a> on branch <code>main</code>, for **enlace 0.1.39** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-25 10:49 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/5bf1866d7d11d5d430d289d41406d1f57d67e5bf"><code>5bf1866</code></a> on branch <code>main</code>, for **enlace 0.1.40** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.40) is behind the latest release on PyPI (0.1.41): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/7c047ff0861abef13fc5716426926d6913ff431a"><code>7c047ff0861abef13fc5716426926d6913ff431a</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/5bf1866d7d11d5d430d289d41406d1f57d67e5bf"><code>5bf1866d7d11d5d430d289d41406d1f57d67e5bf</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -2745,9 +2827,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/35991137096">35991137096</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/36125888689">36125888689</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>7c047ff0861abef13fc5716426926d6913ff431a</code> (in the history of the built commit) |
+| Event commit | <code>5bf1866d7d11d5d430d289d41406d1f57d67e5bf</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2772,13 +2854,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.39/">0.1.39</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.41/">0.1.41</a>, newer than the documented version (0.1.40).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 7c047ff0861abef13fc5716426926d6913ff431a
+git checkout 5bf1866d7d11d5d430d289d41406d1f57d67e5bf
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

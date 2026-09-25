@@ -50,6 +50,7 @@
    :toctree:
    :recursive:
 
+   access
    app_icons
    appmeta
    base
