@@ -26,6 +26,7 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from enlace.analytics import AppAnalyticsConfig, PlatformAnalyticsConfig
 from enlace.appmeta import AppMetaConfig
 
 if sys.version_info >= (3, 11):
@@ -154,6 +155,10 @@ class AppConfig(BaseModel):
     )
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
+
+    # Privacy-first page-view analytics (app.toml's [analytics] table). Off
+    # unless the app opts in with mode = "privacy". See enlace.analytics.
+    analytics: AppAnalyticsConfig = Field(default_factory=AppAnalyticsConfig)
 
     # Set only when discovery ran with ``on_import_error="record"`` and this
     # app's entry module raised on import. ``None`` on every healthy app, and
@@ -326,6 +331,9 @@ class PlatformConfig(BaseModel):
     # and `store_path` are carried for the enlace_auth plugin (the editable
     # overlay's authz + persistence), which enlace core never interprets.
     app_meta: AppMetaConfig = Field(default_factory=AppMetaConfig)
+    # Platform-wide analytics settings (platform.toml [analytics]): storage,
+    # retention, timezone. Apps opt in individually; see enlace.analytics.
+    analytics: PlatformAnalyticsConfig = Field(default_factory=PlatformAnalyticsConfig)
 
     @model_validator(mode="after")
     def _normalize_dirs(self):
@@ -389,6 +397,10 @@ class PlatformConfig(BaseModel):
         app_meta_data = data.get("app_meta")
         if app_meta_data is not None:
             platform_data["app_meta"] = app_meta_data
+        # [analytics] table — storage/retention for per-app analytics.
+        analytics_data = data.get("analytics")
+        if analytics_data is not None:
+            platform_data["analytics"] = analytics_data
 
         # Resolve relative path-like fields against the TOML file's own
         # directory (not the CWD), so the config is host-portable. Done
@@ -413,6 +425,10 @@ class PlatformConfig(BaseModel):
             for key in ("store_path", "icons_dir"):
                 if app_meta.get(key):
                     app_meta[key] = _resolve(app_meta[key])
+
+        analytics = platform_data.get("analytics")
+        if isinstance(analytics, dict) and analytics.get("store_path"):
+            analytics["store_path"] = _resolve(analytics["store_path"])
 
         # Environment variable overrides
         env_apps_dirs = os.environ.get("ENLACE_APPS_DIRS", "")

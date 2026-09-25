@@ -433,6 +433,14 @@ def _overlay_toml_fields(
         fields["build"] = _parse_build_config(build_table, app_dir)
         provenance["build"] = "override: app.toml [build]"
 
+    # [analytics] — strict: a typo'd key or mode fails discovery loudly.
+    analytics_table = toml_data.get("analytics")
+    if analytics_table is not None:
+        from enlace.analytics import AppAnalyticsConfig
+
+        fields["analytics"] = AppAnalyticsConfig.model_validate(analytics_table)
+        provenance["analytics"] = "override: app.toml [analytics]"
+
     return fields, provenance
 
 

@@ -8,6 +8,13 @@ from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
 from pathlib import Path
 
+from enlace.analytics import (
+    AppAnalyticsConfig,
+    JsonFileStore,
+    PlatformAnalyticsConfig,
+    analytics_report,
+    daily_counts,
+)
 from enlace.base import (
     AppConfig,
     AppImportError,
@@ -37,6 +44,7 @@ except PackageNotFoundError:  # editable install with no metadata, etc.
     __version__ = "0.0.0+local"
 
 __all__ = [
+    "AppAnalyticsConfig",
     "AppConfig",
     "AppImportError",
     "BuildConfig",
@@ -48,14 +56,18 @@ __all__ = [
     "DiagnosticReport",
     "ExternalRef",
     "Issue",
+    "JsonFileStore",
     "MANIFEST_SCHEMA_VERSION",
+    "PlatformAnalyticsConfig",
     "PlatformConfig",
     "Plugin",
     "ConventionDiscoverer",
     "EnlaceConfigError",
     "SourceRef",
+    "analytics_report",
     "build_backend",
     "create_app",
+    "daily_counts",
     "diagnose_app",
     "discover_apps",
     "load_manifest",
