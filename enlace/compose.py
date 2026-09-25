@@ -21,7 +21,7 @@ import sys
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Optional, Sequence
+from typing import Callable, MutableMapping, Optional, Sequence
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -59,7 +59,12 @@ class EnlaceConfigError(RuntimeError):
     """
 
 
-def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> FastAPI:
+def build_backend(
+    config: PlatformConfig,
+    *,
+    plugins: Sequence[Plugin] = (),
+    analytics_store: Optional[MutableMapping] = None,
+) -> FastAPI:
     """Compose all app backends into a single ASGI application.
 
     For each discovered app:
@@ -71,6 +76,10 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
 
     Args:
         config: Platform configuration with apps already discovered.
+        plugins: Compose-time plugins, e.g. ``enlace_auth.plugin``.
+        analytics_store: Where page-view analytics go, for apps that opted in
+            (any ``MutableMapping[str, dict]``, e.g. a ``dol`` store). Default:
+            JSON files under ``[analytics].store_path``. See enlace.analytics.
 
     Returns:
         A FastAPI application with all sub-apps mounted.
@@ -128,6 +137,15 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
     # JSON listing is always on (cheap, useful for frontends even when the
     # HTML index_page is disabled).
     _add_apps_listing_route(parent, config)
+
+    # Privacy-first analytics, only when some app opted in. Its routes (the
+    # opt-out page) go in now, before any catch-all "/" mount can shadow them;
+    # its middleware goes in with the others below.
+    from enlace.analytics import make_analytics
+
+    analytics = make_analytics(config, store=analytics_store)
+    if analytics is not None:
+        analytics.add_routes(parent)
 
     # Deploy manifest endpoints + response headers. Built once at startup;
     # cheap (one HTTP route per app + a small middleware). Endpoints are
@@ -257,6 +275,12 @@ def build_backend(config: PlatformConfig, *, plugins: Sequence[Plugin] = ()) -> 
         config=config,
         is_protected=lambda app: app.access.startswith("protected"),
     )
+
+    # Count page views of the apps that opted in. It only observes status and
+    # content type (nothing in the body), so its position is not load-bearing;
+    # it sits inside GZip only so it sees the same responses the others do.
+    if analytics is not None:
+        analytics.add_middleware(parent)
 
     # Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST
     # middleware — it must wrap everything downstream (meta injection, sub-app

@@ -6,6 +6,7 @@ Usage::
     enlace show-config        # Show resolved configuration
     enlace check              # Validate configuration
     enlace list-apps          # List discovered apps
+    enlace analytics          # Page-view counts for apps that opted in
 """
 
 import json as json_module
@@ -603,6 +604,60 @@ def app_meta(
         print()
 
 
+def analytics(
+    app_name: str = "",
+    *,
+    days: int = 30,
+    json: bool = False,
+):
+    """Show privacy-first page-view counts: per day and per path, for each app.
+
+    Reads the analytics store named by ``platform.toml``'s ``[analytics]`` table
+    in the current directory (default ``~/.local/share/enlace/analytics``) —
+    run it on the host that serves the apps. Only apps whose ``app.toml`` has
+    ``[analytics] mode = "privacy"`` record anything.
+
+    Args:
+        app_name: Report this app only (default: every app with data).
+        days: How many days back, today included.
+        json: Output the full report (daily series + totals) as JSON.
+    """
+    from enlace.analytics import analytics_report, default_analytics_store
+
+    config = PlatformConfig.from_toml()
+    store = default_analytics_store(config)
+    report = analytics_report(app_name, days=days, config=config, store=store)
+    if json:
+        print(json_module.dumps(report, indent=2, ensure_ascii=False))
+        return
+
+    def shown(value) -> str:
+        # Stored values are sanitized on write; this also covers older data.
+        return "".join(ch for ch in str(value) if ch.isprintable())
+
+    where = "platform.toml" if Path("platform.toml").exists() else "defaults"
+    print(f"store: {store.root}  (from {where})", file=sys.stderr)
+    if not report:
+        print("No analytics recorded yet.")
+        return
+    for name, data in report.items():
+        totals = data["totals"]
+        views = totals["pageviews"]
+        print(f"{shown(name)}: {views} page views in the last {days} days")
+        for day in reversed(data["days"]):
+            if not day["pageviews"]:
+                continue
+            print(f"  {day['date']}  {day['pageviews']:>6}")
+            for path, n in sorted(day["paths"].items(), key=lambda kv: -kv[1]):
+                print(f"      {n:>6}  {shown(path)}")
+        for dim in ("referrers", "languages", "devices"):
+            top = ", ".join(f"{shown(k)} {v}" for k, v in list(totals[dim].items())[:8])
+            print(f"  {dim}: {top or '(none)'}")
+        if totals["bot_hits"]:
+            print(f"  bot and scanner hits (not counted above): {totals['bot_hits']}")
+        print()
+
+
 #: The SSOT for the CLI surface: a verb that is not in this list does not exist.
 COMMANDS = [
     serve,
@@ -613,6 +668,7 @@ COMMANDS = [
     build,
     diagnose,
     doctor,
+    analytics,
 ]
 
 

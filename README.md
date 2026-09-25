@@ -157,6 +157,9 @@ enlace diagnose <dir>     # Analyze an app for enlace compatibility
 enlace doctor --base-url http://127.0.0.1:8000
                           # Post-deploy smoke: probe /auth/csrf and every
                           # mounted app; exit nonzero on any failure.
+enlace analytics [--app-name kids] [--days 30] [--json]
+                          # Page views per day and per path, for apps that
+                          # opted in to privacy-first analytics.
 ```
 
 ### Python API
@@ -359,6 +362,28 @@ manifest_display = "browser"     # or "standalone"
 Home-screen icons must be raster: an app whose icon is only an SVG, emoji or
 monogram gets a favicon but no PNG. `enlace.app_icons.home_screen_gaps(config)`
 lists those apps.
+
+### Privacy-first analytics
+
+An app can have page views counted with no cookie, no JavaScript and no third party. It opts in from its own `app.toml`:
+
+```toml
+[analytics]
+mode = "privacy"
+```
+
+The enlace server counts the app's HTML page views as it serves them, and the pages are not changed at all. It stores only daily aggregates per app: views per path (query strings dropped), referrer domain, primary language and device class (mobile/tablet/desktop). Each is kept as a separate count, never crossed with the others. No IP address is read and no visitor identifier is kept. Bots are counted separately. `DNT: 1` and `Sec-GPC: 1` are honoured, and `/_analytics/opt-out` is a page a privacy notice can link to. An app without the table records nothing.
+
+Read the counts on the serving host with `enlace analytics`, or from Python with `enlace.analytics_report()`. Storage defaults to JSON files under `~/.local/share/enlace/analytics`. It is configured in `platform.toml`, and `build_backend(config, analytics_store=...)` takes any `MutableMapping` (e.g. a `dol` store):
+
+```toml
+[analytics]
+store_path = "~/.local/share/enlace/analytics"
+retention_days = 395        # at most 750 (under 25 months)
+timezone = "Europe/Paris"   # whose midnight starts a new day
+```
+
+The design and how it maps onto the CNIL's consent exemption for audience measurement are in [`misc/docs/privacy_analytics.md`](misc/docs/privacy_analytics.md). That doc also lists what a site operator still has to do: a privacy-notice entry, and handling their own access logs.
 
 ### Deploy manifest (`/_meta`)
 

@@ -68,6 +68,7 @@ enlace show-config --json             # Machine-readable
 enlace show-config --verbose          # Show where each value came from
 enlace check                          # Validate config, check route conflicts
 enlace list-apps                      # Table: name, route, type, access
+enlace analytics                      # Page views per day/path (opted-in apps)
 ```
 
 ## Creating an App
@@ -197,7 +198,12 @@ access = "public"
 display_name = "My Custom App"
 entry_point = "application.py"
 app_attr = "my_app"
+
+[analytics]          # optional: cookie-free, server-side page-view counts
+mode = "privacy"     # absent / "none" = nothing recorded
 ```
+
+Read analytics with `enlace analytics [--app-name X] [--days 30] [--json]`. Storage, retention and timezone live in `platform.toml`'s `[analytics]` table; see `misc/docs/privacy_analytics.md` in the enlace repo.
 
 For process-mode apps (non-Python or separate process):
 ```toml

@@ -71,6 +71,7 @@ enlace/
 ├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
 ├── manifest.py    # DeployManifest schema + /_meta endpoint + X-Deploy-* headers
+├── analytics.py   # Opt-in, cookie-free page-view counts: PageViewMiddleware, store, report
 ├── serve.py       # Orchestrates gateway Uvicorn + supervised process-mode children
 ├── __main__.py    # CLI via argh.dispatch_commands
 ├── __init__.py    # Public API facade
