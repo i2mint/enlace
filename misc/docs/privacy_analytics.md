@@ -22,18 +22,21 @@ For an SPA, a navigation to any unknown path is a view, because the SPA fallback
 
 Attribution goes to the longest matching app mount (`/{name}/` or the app's route prefix). Any other path goes to the landing app, if the landing app opted in. Platform paths (`/_…`, `/auth/…`) are never attributed. A page of an app that did not opt in never falls through to an app that did.
 
-Bots (by User-Agent, including an empty one and `HeadlessChrome`) are counted only as `bot_hits`, never in the dimensions.
+Bots (by User-Agent, including an empty one and `HeadlessChrome`) are counted only as `bot_hits`, never in the dimensions. So are scanner probes: a path with a dot-segment (`/.env`, `/.git/…`) or a non-HTML file name (`/wp-admin/setup.php`), which an SPA would otherwise answer with its `index.html` like a real page.
+
+Stored values are sanitized, best effort. In paths, non-printable characters are dropped, and segments that look like an email, a UUID or a long token become `:id`. Referrers are reduced to a plain host name: `(ip)` for an address, since it may be a person's own machine, and `(unknown)` for anything that isn't a host name. An app that puts personal data in its URL paths should still not turn analytics on.
 
 ## What is stored, and where
 
-Key `{app}/{YYYY-MM-DD}/{writer}` → `{"pageviews", "bot_hits", "paths", "referrers", "languages", "devices"}`.
+Key `{app}/{YYYY-MM-DD}/{writer}` → `{"pageviews", "bot_hits", "paths", "referrers", "languages", "devices"}`. The app name is percent-encoded in the key, so any directory name works.
 
-- **One writer per worker process.** Production runs several workers, so each writes only its own record for the day, overwriting its own cumulative totals. No worker ever read-modify-writes a shared record. Readers sum the writers.
-- **Buffered.** A worker flushes at most every `flush_interval_seconds` (default 10), and always at server shutdown. A crash can lose up to that interval of counts.
-- **Bounded.** Each dimension keeps at most `max_values_per_dimension` distinct values per day and writer; the rest go under `(other)`. This caps the damage from a flood of junk URLs against an SPA fallback. Paths are also truncated to 200 characters.
-- **Retention.** Records older than `retention_days` (default 395, hard cap 25 months) are purged by each worker once a day.
+- **One writer per worker process.** Production runs several workers, so each writes only its own record for the day, overwriting its own cumulative totals. No worker ever read-modify-writes a shared record. Readers sum the writers. The writer id is derived from the process id at first use, so workers forked from one preloaded app (gunicorn `--preload`) still get distinct ids.
+- **Written off the event loop.** A background task, started with the server's lifespan, flushes each worker's buffer every `flush_interval_seconds` (default 10) in a thread, and flushes again at shutdown. A lone view is saved on the timer, without waiting for another view. A crash can lose up to one interval of counts. Where no lifespan runs, the flush happens inline on the next view.
+- **Bounded.** Each dimension keeps at most `max_values_per_dimension` distinct values per day and writer; the rest go under `(other)`. Paths are also truncated to 200 characters.
+- **Compacted.** Every worker start opens a new writer record, so a finished day can accumulate many small files, which matters on a host where disk is short. Once a day, one worker (holding the store's `exclusive()` lock) folds each day that is at least two days old into a single `{app}/{day}/merged` record. The merged record lists its `sources`, so neither an interrupted compaction nor a reader running during one counts anything twice. Stale temp files from killed writes are swept at the same time.
+- **Retention.** Records older than `retention_days` (default 395, at most 750, which is under the CNIL's 25 months) are purged daily by the same background task, whether or not anything was viewed. The purge continues after every app has turned analytics off: if the store still holds data, enlace keeps running the maintenance until the data has aged out.
 - **Location.** The default is `$XDG_DATA_HOME/enlace/analytics`, i.e. `~/.local/share/enlace/analytics`: outside any app directory, as the "an app dir contains only code + build output" rule requires. Set it with `[analytics] store_path` in `platform.toml`.
-- **Day boundary.** `[analytics] timezone` (default `UTC`) sets whose midnight starts a new day.
+- **Day boundary.** `[analytics] timezone` (default `UTC`) sets whose midnight starts a new day. An unknown zone is a config error, caught by `enlace check`, not a crash at boot.
 
 ## Deliberately not counted: unique visitors
 
@@ -56,11 +59,11 @@ Researched 2026-09-25 against the texts in the references. This maps the design 
 | Produces anonymous statistics only; no combination of criteria may isolate one user | Met: dimensions stored as separate marginal counts, never crossed; no identifiers |
 | No tracking across sites or apps; no cross-site identifier | Met: no identifier at all |
 | Data minimised; headers reduced | Met: device class and primary language subtag only; referrer reduced to its host |
-| No campaign/CRM identifiers imported from URLs | Met: query string and fragment dropped from the stored path |
-| IP used at most for city-level location, then truncated | Met: IP never read or stored |
+| No campaign/CRM identifiers imported from URLs | Met: query string and fragment dropped from the stored path; identifier-like path segments redacted (best effort) |
+| IP used at most for city-level location, then truncated | Met: the client IP is never read; an IP-literal referrer is stored as `(ip)` |
 | No session replay, no following one user's navigation | Met |
 | Tracker lifetime ≤ 13 months | Met (not applicable): nothing placed on the device; the opt-out cookie lasts 13 months |
-| Data retention ≤ 25 months | Met: `retention_days` validated ≤ 25 months, default 13 |
+| Data retention ≤ 25 months | Met: `retention_days` validated ≤ 750 days, default 395 (13 months); purged daily regardless of traffic |
 | No transfer to third parties; processor terms if a vendor is used | Met: no vendor. The hosting provider's own Art. 28 terms are the operator's |
 | Users informed, and able to object | Met by enlace + operator: DNT/GPC honoured and `/_analytics/opt-out` exists; the operator must mention the processing in the privacy notice and link that page |
 | No cross-referencing with other processing | Operator: do not join analytics with account/auth data or with access logs |

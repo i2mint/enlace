@@ -379,7 +379,7 @@ Read the counts on the serving host with `enlace analytics`, or from Python with
 ```toml
 [analytics]
 store_path = "~/.local/share/enlace/analytics"
-retention_days = 395        # capped at 25 months
+retention_days = 395        # at most 750 (under 25 months)
 timezone = "Europe/Paris"   # whose midnight starts a new day
 ```
 

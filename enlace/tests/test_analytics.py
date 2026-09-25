@@ -6,14 +6,17 @@ The acceptance line, piece by piece:
 - an app without the key records nothing;
 - the page is unchanged and sets no cookie (the browser-level half of that
   check — no request to another origin, nothing in storage — is
-  ``misc/analytics_browser_check.py``, run in a headless browser);
+  ``tests/test_analytics_browser.py``, run in a headless browser);
 - the owner can read per-path daily counts for the last 30 days.
 """
 
 import json
+import logging
+import os
 import subprocess
 import sys
 import textwrap
+import time
 from pathlib import Path
 
 import pytest
@@ -358,14 +361,15 @@ def test_day_rollover_starts_a_new_record():
     assert store[f"kids/{c.today()}/w"]["pageviews"] == 1
 
 
-def test_records_past_retention_are_purged():
-    clock = _Clock(T0)
-    old = an.PageViewCounter({}, clock=_Clock(T0 - 40 * DAY)).today()
-    recent = an.PageViewCounter({}, clock=_Clock(T0 - 5 * DAY)).today()
-    store = {f"kids/{old}/w": {}, f"kids/{recent}/w": {}}
-    c = an.PageViewCounter(store, retention_days=30, clock=clock)
+def _day(offset_days):
+    return an.PageViewCounter({}, clock=_Clock(T0 + offset_days * DAY)).today()
+
+
+def test_retention_window_is_exactly_retention_days():
+    store = {f"kids/{_day(-30)}/w": {}, f"kids/{_day(-29)}/w": {}}
+    c = an.PageViewCounter(store, retention_days=30, clock=_Clock(T0))
     assert c.purge_expired() == 1
-    assert list(store) == [f"kids/{recent}/w"]
+    assert list(store) == [f"kids/{_day(-29)}/w"]
 
 
 def test_timezone_decides_the_day():
@@ -486,3 +490,163 @@ def test_cli_reports_per_path_daily_counts(tmp_path):
     ).stdout
     assert "kids: 2 page views in the last 30 days" in text
     assert "/lesson/1" in text
+
+
+# ---------------------------------------------------------------------------
+# Review findings: background writes, maintenance, compaction, sanitizing
+# ---------------------------------------------------------------------------
+
+
+def test_background_task_writes_a_lone_view_without_waiting_for_another(platform):
+    """A single view reaches the store on the timer, not on the next view."""
+    config, store = platform
+    config.analytics.flush_interval_seconds = 0.05
+    with _client(config, store) as client:
+        client.get("/kids/", headers=BROWSER)
+        deadline = time.time() + 5
+        while not list(store) and time.time() < deadline:
+            time.sleep(0.02)
+        assert _report(store, "kids")["pageviews"] == 1
+
+
+def test_retention_is_enforced_with_no_traffic_and_no_app_opted_in(tmp_path):
+    """Old data is purged even after every app turned analytics off."""
+    _frontend_app(tmp_path / "apps", "plain")
+    store = an.JsonFileStore(tmp_path / "analytics")
+    store["kids/2020-01-01/w"] = {"pageviews": 3}
+    config = discover_apps(PlatformConfig(apps_dirs=[tmp_path / "apps"]))
+    backend = build_backend(config, analytics_store=store)
+    assert backend.state.analytics.collecting is False
+    with TestClient(backend) as client:
+        assert client.get("/_analytics/opt-out").status_code == 404
+        deadline = time.time() + 5
+        while list(store) and time.time() < deadline:
+            time.sleep(0.02)
+    assert list(store) == []
+
+
+def test_compaction_folds_writers_once_and_survives_an_interrupted_run(tmp_path):
+    store = an.JsonFileStore(tmp_path)
+    old = _day(-3)
+    store[f"kids/{old}/a"] = {"pageviews": 2, "paths": {"/": 2}}
+    store[f"kids/{old}/b"] = {"pageviews": 1, "paths": {"/x": 1}}
+    store[f"kids/{_day(-1)}/a"] = {"pageviews": 5}  # too recent to compact
+    c = an.PageViewCounter(store, clock=_Clock(T0))
+    assert c.compact(before=_day(-1)) == 2
+    assert sorted(store) == sorted([f"kids/{old}/merged", f"kids/{_day(-1)}/a"])
+
+    # A crash between writing the merged record and deleting a source must not
+    # count that source twice, for readers or for the next compaction.
+    store[f"kids/{old}/a"] = {"pageviews": 2, "paths": {"/": 2}}
+    [day] = an.daily_counts(store, "kids", days=1, today=old)
+    assert day["pageviews"] == 3
+    c.compact(before=_day(-1))
+    [day] = an.daily_counts(store, "kids", days=1, today=old)
+    assert day["pageviews"] == 3
+    assert day["paths"] == {"/": 2, "/x": 1}
+
+
+def test_maintenance_lock_lets_one_worker_compact(tmp_path):
+    store = an.JsonFileStore(tmp_path)
+    with store.exclusive() as first:
+        with an.JsonFileStore(tmp_path).exclusive() as second:
+            assert (first, second) == (True, False)
+
+
+def test_stale_temp_files_are_swept(tmp_path):
+    store = an.JsonFileStore(tmp_path)
+    (tmp_path / "kids").mkdir()
+    stale = tmp_path / "kids" / ".tmp-abc.json"
+    stale.write_text("{")
+    os.utime(stale, (0, 0))
+    assert list(store) == []  # never read as a record
+    assert store.sweep_temp_files() == 1
+    assert not stale.exists()
+
+
+def test_app_names_outside_the_key_charset_are_stored_and_read(tmp_path):
+    apps_dir = tmp_path / "apps"
+    _frontend_app(apps_dir, "my app", "privacy")
+    config = discover_apps(
+        PlatformConfig(apps_dirs=[apps_dir], analytics={"flush_interval_seconds": 0})
+    )
+    store = an.JsonFileStore(tmp_path / "analytics")
+    _client(config, store).get("/my app/", headers=BROWSER)
+    assert an.apps_with_data(store) == ["my app"]
+    assert _report(store, "my app")["pageviews"] == 1
+
+
+def test_scanner_probes_count_as_bot_hits_not_paths(platform):
+    config, store = platform
+    client = _client(config, store)
+    for probe in ("/kids/wp-admin/setup.php", "/kids/.env", "/kids/.git/config"):
+        client.get(probe, headers=BROWSER)
+    client.get("/kids/lesson/1", headers=BROWSER)
+    client.get("/kids/index.html", headers=BROWSER)
+    totals = _report(store, "kids")
+    assert totals["bot_hits"] == 3
+    assert totals["paths"] == {"/lesson/1": 1, "/": 1}
+
+
+@pytest.mark.parametrize(
+    "raw, stored",
+    [
+        ("/u/alice@example.com/reset", "/u/:id/reset"),
+        ("/doc/3f2b8c1e-9a4d-4e21-b7c3-0d5e6f7a8b9c", "/doc/:id"),
+        ("/share/aZ9kQ2xLm8Rt4Vb7Np", "/share/:id"),
+        ("/lesson/12/fractions-intro", "/lesson/12/fractions-intro"),
+        ("/\x1b[31mRED\x1b[0m", "/[31mRED[0m"),
+    ],
+)
+def test_stored_paths_are_redacted_and_printable(raw, stored):
+    assert an.normalize_path(raw) == stored
+
+
+@pytest.mark.parametrize(
+    "referer, expected",
+    [
+        ("http://203.0.113.7/x", an.IP),
+        ("http://[2001:db8::1]/x", an.IP),
+        ("https://<img src=x onerror=alert(1)>/", an.UNKNOWN),
+        ("https://École.fr/", "xn--cole-9oa.fr"),
+    ],
+)
+def test_referrer_hosts_are_plain_names_or_placeholders(referer, expected):
+    assert an.referrer_domain(referer, host="kids.example") == expected
+
+
+def test_unknown_timezone_is_a_config_error_not_a_boot_crash():
+    with pytest.raises(ValidationError, match="timezone"):
+        PlatformConfig(analytics={"timezone": "Europe/Pariss"})
+
+
+def test_platform_paths_never_count_even_under_an_app_mounted_at_root(tmp_path):
+    apps_dir = tmp_path / "apps"
+    d = _frontend_app(apps_dir, "site")
+    (d / "app.toml").write_text('route = "/"\n[analytics]\nmode = "privacy"\n')
+    config = discover_apps(PlatformConfig(apps_dirs=[apps_dir]))
+    attribute = an.PageAttribution(
+        config.apps, exclude_prefixes=config.analytics.exclude_prefixes
+    )
+    assert attribute("/_analytics/opt-out") is None
+    assert attribute("/auth/login") is None
+    assert attribute("/about") == ("site", "/about")
+
+
+def test_writer_id_follows_the_process():
+    """Workers forked from one preloaded app must not share a writer id."""
+    c = an.PageViewCounter({})
+    assert c.writer.startswith(f"{os.getpid()}-")
+    assert c.writer == c.writer
+
+
+def test_a_broken_store_logs_once_not_on_every_flush(caplog):
+    class Broken(dict):
+        def __setitem__(self, key, value):
+            raise OSError("disk full")
+
+    c = an.PageViewCounter(Broken(), writer="w", flush_interval_seconds=0)
+    with caplog.at_level(logging.WARNING, logger="enlace.analytics"):
+        for _ in range(5):
+            _view(c)
+    assert len([r for r in caplog.records if "could not write" in r.message]) == 1
