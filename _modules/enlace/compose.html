@@ -202,6 +202,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.access.html">enlace.access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.analytics.html">enlace.analytics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.base.html">enlace.base</a></li>
@@ -279,7 +280,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span><span class="p">,</span> <span class="n">Response</span>
@@ -322,7 +323,12 @@
 
 <div class="viewcode-block" id="build_backend">
 <a class="viewcode-back" href="../../_autosummary/enlace.compose.html#enlace.build_backend">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_backend</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">plugins</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Plugin</span><span class="p">]</span> <span class="o">=</span> <span class="p">())</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_backend</span><span class="p">(</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">plugins</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Plugin</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="n">analytics_store</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MutableMapping</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FastAPI</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Compose all app backends into a single ASGI application.</span>
 
 <span class="sd">    For each discovered app:</span>
@@ -334,6 +340,10 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        config: Platform configuration with apps already discovered.</span>
+<span class="sd">        plugins: Compose-time plugins, e.g. ``enlace_auth.plugin``.</span>
+<span class="sd">        analytics_store: Where page-view analytics go, for apps that opted in</span>
+<span class="sd">            (any ``MutableMapping[str, dict]``, e.g. a ``dol`` store). Default:</span>
+<span class="sd">            JSON files under ``[analytics].store_path``. See enlace.analytics.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A FastAPI application with all sub-apps mounted.</span>
@@ -391,6 +401,15 @@
     <span class="c1"># JSON listing is always on (cheap, useful for frontends even when the</span>
     <span class="c1"># HTML index_page is disabled).</span>
     <span class="n">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Privacy-first analytics, only when some app opted in. Its routes (the</span>
+    <span class="c1"># opt-out page) go in now, before any catch-all "/" mount can shadow them;</span>
+    <span class="c1"># its middleware goes in with the others below.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.analytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_analytics</span>
+
+    <span class="n">analytics</span> <span class="o">=</span> <span class="n">make_analytics</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="n">analytics_store</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">analytics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">analytics</span><span class="o">.</span><span class="n">add_routes</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
 
     <span class="c1"># Deploy manifest endpoints + response headers. Built once at startup;</span>
     <span class="c1"># cheap (one HTTP route per app + a small middleware). Endpoints are</span>
@@ -520,6 +539,12 @@
         <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
         <span class="n">is_protected</span><span class="o">=</span><span class="k">lambda</span> <span class="n">app</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">access</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"protected"</span><span class="p">),</span>
     <span class="p">)</span>
+
+    <span class="c1"># Count page views of the apps that opted in. It only observes status and</span>
+    <span class="c1"># content type (nothing in the body), so its position is not load-bearing;</span>
+    <span class="c1"># it sits inside GZip only so it sees the same responses the others do.</span>
+    <span class="k">if</span> <span class="n">analytics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">analytics</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
 
     <span class="c1"># Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST</span>
     <span class="c1"># middleware — it must wrap everything downstream (meta injection, sub-app</span>
@@ -1264,7 +1289,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=6264e773"></script>
+</div><script src="../../_static/documentation_options.js?v=cb249315"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

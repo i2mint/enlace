@@ -1,4 +1,4 @@
-> built 2026-09-25 10:49 UTC from 5bf1866 (main) · enlace 0.1.40. Details: build_info.json
+> built 2026-09-25 11:07 UTC from a670937 (main) · enlace 0.1.41. Details: build_info.json
 
 # index.html.md
 
@@ -156,6 +156,9 @@ enlace diagnose <dir>     # Analyze an app for enlace compatibility
 enlace doctor --base-url http://127.0.0.1:8000
                           # Post-deploy smoke: probe /auth/csrf and every
                           # mounted app; exit nonzero on any failure.
+enlace analytics [--app-name kids] [--days 30] [--json]
+                          # Page views per day and per path, for apps that
+                          # opted in to privacy-first analytics.
 ```
 
 ### Python API
@@ -359,6 +362,28 @@ Home-screen icons must be raster: an app whose icon is only an SVG, emoji or
 monogram gets a favicon but no PNG. `enlace.app_icons.home_screen_gaps(config)`
 lists those apps.
 
+### Privacy-first analytics
+
+An app can have page views counted with no cookie, no JavaScript and no third party. It opts in from its own `app.toml`:
+
+```toml
+[analytics]
+mode = "privacy"
+```
+
+The enlace server counts the app’s HTML page views as it serves them, and the pages are not changed at all. It stores only daily aggregates per app: views per path (query strings dropped), referrer domain, primary language and device class (mobile/tablet/desktop). Each is kept as a separate count, never crossed with the others. No IP address is read and no visitor identifier is kept. Bots are counted separately. `DNT: 1` and `Sec-GPC: 1` are honoured, and `/_analytics/opt-out` is a page a privacy notice can link to. An app without the table records nothing.
+
+Read the counts on the serving host with `enlace analytics`, or from Python with `enlace.analytics_report()`. Storage defaults to JSON files under `~/.local/share/enlace/analytics`. It is configured in `platform.toml`, and `build_backend(config, analytics_store=...)` takes any `MutableMapping` (e.g. a `dol` store):
+
+```toml
+[analytics]
+store_path = "~/.local/share/enlace/analytics"
+retention_days = 395        # at most 750 (under 25 months)
+timezone = "Europe/Paris"   # whose midnight starts a new day
+```
+
+The design and how it maps onto the CNIL’s consent exemption for audience measurement are in [`misc/docs/privacy_analytics.md`](). That doc also lists what a site operator still has to do: a privacy-notice entry, and handling their own access logs.
+
 ### Deploy manifest (`/_meta`)
 
 enlace answers “what is actually deployed?” via an always-on, cheap manifest
@@ -449,6 +474,458 @@ app is open to any authenticated user. An unauthenticated caller
 
 * **Return type:**
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+
+# _autosummary/enlace.analytics.html.md
+
+# enlace.analytics
+
+Privacy-first page-view analytics, turned on per app.
+
+An app opts in from its own `app.toml`:
+
+```default
+[analytics]
+mode = "privacy"
+```
+
+Without that table the app records nothing. With it, the enlace server that
+already serves the app counts its page views \*\*on the server, from its own
+request handling\*\*: no JavaScript, no beacon, no third-party request, and
+nothing written to the visitor’s device. The page a visitor receives is
+byte-for-byte what it would be without analytics.
+
+What is kept: daily aggregates per app, one counter set per dimension:
+
+- `pageviews`: total HTML page views;
+- `paths`: views per page path, relative to the app, with query string and
+  fragment dropped, and segments that look like an email, a UUID or a token
+  replaced by `:id` (best effort — see [`normalize_path()`](_autosummary/enlace.analytics.html.md#enlace.analytics.normalize_path));
+- `referrers`: the referring *host name* only, or `(direct)` /
+  `(internal)` / `(ip)`;
+- `languages`: the primary subtag of `Accept-Language` (`fr`, `en`);
+- `devices`: `mobile` / `tablet` / `desktop`;
+- `bot_hits`: page requests from crawlers and vulnerability scanners,
+  counted apart and nowhere else.
+
+Dimensions are stored as separate marginal counts and are **never crossed**
+(no “path × language × device” table), so a rare combination cannot single
+out one visitor on a low-traffic page. No IP address is read, and no
+identifier of any kind is stored. Unique visitors are deliberately not
+counted: see `misc/docs/privacy_analytics.md` for why, and for how this
+design maps onto the CNIL’s audience-measurement exemption.
+
+Visitors can object: `DNT: 1` and `Sec-GPC: 1` are honoured, and
+`/_analytics/opt-out` is a page a privacy notice can link to. It sets a
+single first-party opt-out cookie when (and only when) the visitor asks.
+
+Storage is any `MutableMapping[str, dict]` (the `store` seam — a `dol`
+store drops in unchanged); the default is [`JsonFileStore`](_autosummary/enlace.analytics.html.md#enlace.analytics.JsonFileStore) under
+`~/.local/share/enlace/analytics`. Each worker process writes only its own
+records (`{app}/{day}/{writer}`), so workers never race on a record, and
+readers sum the writers. Writes happen off the event loop, in a background
+task started with the server; so does the daily maintenance, which purges
+records past `retention_days` (whether or not anything was viewed that day)
+and compacts each finished day’s writer records into one.
+
+### Module Attributes
+
+| [`MAX_RETENTION_DAYS`](_autosummary/enlace.analytics.html.md#enlace.analytics.MAX_RETENTION_DAYS)     | The CNIL's ceiling for keeping audience-measurement data is 25 months; 750 days stays under it for any 25 consecutive months.   |
+|-------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| [`ANALYTICS_ROUTE_PREFIX`](_autosummary/enlace.analytics.html.md#enlace.analytics.ANALYTICS_ROUTE_PREFIX) | Where the platform's analytics routes live (the opt-out page).                                                                  |
+| [`MERGED`](_autosummary/enlace.analytics.html.md#enlace.analytics.MERGED)                 | The writer id of a finished day's compacted record.                                                                             |
+
+### Functions
+
+| [`analytics_report`](_autosummary/enlace.analytics.html.md#enlace.analytics.analytics_report)([app, days, config, store])       | Per-app report for the last `days` days: daily series + totals.                                                     |
+|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| [`apps_with_data`](_autosummary/enlace.analytics.html.md#enlace.analytics.apps_with_data)(store)                              | Names of the apps that have any analytics records.                                                                  |
+| [`daily_counts`](_autosummary/enlace.analytics.html.md#enlace.analytics.daily_counts)(store, app, \*[, days, today, ...])   | One merged record per day for the last `days` days, oldest first.                                                   |
+| [`default_analytics_store`](_autosummary/enlace.analytics.html.md#enlace.analytics.default_analytics_store)([config])                  | The default store a platform config points at.                                                                      |
+| [`default_store_path`](_autosummary/enlace.analytics.html.md#enlace.analytics.default_store_path)()                               | `$XDG_DATA_HOME/enlace/analytics`, else `~/.local/share/enlace/analytics`.                                          |
+| [`device_class`](_autosummary/enlace.analytics.html.md#enlace.analytics.device_class)(user_agent, \*[, client_hint_mobile]) | `bot`, `tablet`, `mobile` or `desktop`, from the User-Agent alone.                                                  |
+| [`has_opted_out`](_autosummary/enlace.analytics.html.md#enlace.analytics.has_opted_out)(headers, \*, cookie_name)            | `DNT: 1`, `Sec-GPC: 1`, or the platform's opt-out cookie.                                                           |
+| [`is_page_request`](_autosummary/enlace.analytics.html.md#enlace.analytics.is_page_request)(method, headers)                   | Whether a request is a browser loading a page (not an asset, API or prefetch).                                      |
+| [`is_page_response`](_autosummary/enlace.analytics.html.md#enlace.analytics.is_page_response)(status, headers)                  | Whether a response delivered a page: a 200 HTML body, or a 304 revalidation.                                        |
+| [`looks_like_probe`](_autosummary/enlace.analytics.html.md#enlace.analytics.looks_like_probe)(path)                             | A scanner's request, not a page: a dot-segment or a non-HTML file name.                                             |
+| [`make_analytics`](_autosummary/enlace.analytics.html.md#enlace.analytics.make_analytics)(config, \*[, store])                | The platform's analytics, or `None` when there is nothing to do.                                                    |
+| [`normalize_path`](_autosummary/enlace.analytics.html.md#enlace.analytics.normalize_path)(path)                               | A page path fit to store and to print.                                                                              |
+| [`primary_language`](_autosummary/enlace.analytics.html.md#enlace.analytics.primary_language)(accept_language)                  | Primary subtag of the first `Accept-Language` entry (`fr-FR` → `fr`).                                               |
+| [`referrer_domain`](_autosummary/enlace.analytics.html.md#enlace.analytics.referrer_domain)(referer, \*, host)                 | The referring host name only.                                                                                       |
+| [`summarize`](_autosummary/enlace.analytics.html.md#enlace.analytics.summarize)(daily)                                   | Totals over a [`daily_counts()`](_autosummary/enlace.analytics.html.md#enlace.analytics.daily_counts) series: pageviews and each dimension. |
+
+### Classes
+
+| [`Analytics`](_autosummary/enlace.analytics.html.md#enlace.analytics.Analytics)(config, counter, \*[, collecting])      | The analytics feature for one platform: counter, attribution, routes.   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [`AppAnalyticsConfig`](_autosummary/enlace.analytics.html.md#enlace.analytics.AppAnalyticsConfig)(\*\*data)                      | An app's `[analytics]` table in `app.toml`.                             |
+| [`JsonFileStore`](_autosummary/enlace.analytics.html.md#enlace.analytics.JsonFileStore)(root)                               | `key -> dict`, one JSON file per key at `{root}/{key}.json`.            |
+| [`PageAttribution`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageAttribution)(apps, \*[, landing_app, ...])     | Maps a request path to `(app, app-relative path)`, or `None`.           |
+| [`PageViewCounter`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewCounter)(store, \*[, retention_days, ...]) | Buffers one worker's daily aggregates and maintains the `store`.        |
+| [`PageViewMiddleware`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewMiddleware)(app, \*, counter, attribute)   | Pure-ASGI middleware counting page views of the apps that opted in.     |
+| [`PlatformAnalyticsConfig`](_autosummary/enlace.analytics.html.md#enlace.analytics.PlatformAnalyticsConfig)(\*\*data)                 | The platform's `[analytics]` table in `platform.toml`.                  |
+
+### enlace.analytics.ANALYTICS_ROUTE_PREFIX *= '/_analytics'*
+
+Where the platform’s analytics routes live (the opt-out page).
+
+### *class* enlace.analytics.Analytics(config, counter, , collecting=True)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+The analytics feature for one platform: counter, attribution, routes.
+
+`collecting` is False when no app opted in but old data exists: then only
+the daily maintenance runs, so retention keeps being enforced after every
+app has turned analytics off.
+
+#### add_middleware(parent)
+
+Install the counting (and lifespan-owning) middleware.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### add_routes(parent)
+
+Register the opt-out page. Call before any catch-all `/` mount.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+### *class* enlace.analytics.AppAnalyticsConfig(\*\*data)
+
+Bases: `BaseModel`
+
+An app’s `[analytics]` table in `app.toml`. Absent means `none`.
+
+Strict (unknown keys and modes are errors), so a typo fails at discovery
+instead of silently collecting nothing — or something else.
+
+#### *property* enabled *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Whether this app’s page views are counted.
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+### *class* enlace.analytics.JsonFileStore(root)
+
+Bases: [`MutableMapping`](https://docs.python.org/3/library/collections.abc.html#collections.abc.MutableMapping)
+
+`key -> dict`, one JSON file per key at `{root}/{key}.json`.
+
+Keys are `/`-separated relative paths of URL-safe segments. Writes are
+atomic (temp file + `os.replace`), so a reader never sees half a record.
+Stdlib only; swap in any `MutableMapping` (e.g. a `dol` store over S3)
+through the `store` argument of [`make_analytics()`](_autosummary/enlace.analytics.html.md#enlace.analytics.make_analytics) or
+`build_backend`. Two optional extras the maintenance uses when present:
+[`exclusive()`](_autosummary/enlace.analytics.html.md#enlace.analytics.JsonFileStore.exclusive) (a cross-process lock) and [`sweep_temp_files()`](_autosummary/enlace.analytics.html.md#enlace.analytics.JsonFileStore.sweep_temp_files).
+
+#### exclusive()
+
+Try to take the store-wide maintenance lock; yield whether we got it.
+
+Non-blocking: a worker that loses the race skips this round of
+maintenance, it does not wait. `False` where `fcntl` is unavailable.
+
+* **Return type:**
+  [`Iterator`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterator)[[`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
+
+#### sweep_temp_files(, older_than=3600)
+
+Delete temp files a killed write left behind; return how many.
+
+* **Return type:**
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+
+### enlace.analytics.MAX_RETENTION_DAYS *= 750*
+
+The CNIL’s ceiling for keeping audience-measurement data is 25 months;
+750 days stays under it for any 25 consecutive months.
+
+### enlace.analytics.MERGED *= 'merged'*
+
+The writer id of a finished day’s compacted record.
+
+### *class* enlace.analytics.PageAttribution(apps, , landing_app=None, exclude_prefixes=())
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Maps a request path to `(app, app-relative path)`, or `None`.
+
+Platform paths (`exclude_prefixes`) never count. Otherwise the longest
+matching app mount (`/{name}/` or its route prefix) wins, whether or not
+that app opted in — a page of an app that did not must never fall through
+to one that did. Anything else goes to the landing app, if it opted in.
+
+### *class* enlace.analytics.PageViewCounter(store, \*, retention_days=395, timezone='UTC', flush_interval_seconds=10.0, max_values_per_dimension=500, writer=None, clock=<built-in function time>)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Buffers one worker’s daily aggregates and maintains the `store`.
+
+Each worker writes only under its own `writer` id (derived from its
+process id at first use, so workers forked from one preloaded app still
+differ), overwriting its own cumulative record for the day: no worker ever
+read-modify-writes a record another is writing.
+
+Two schedules. [`tick()`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewCounter.tick) — run by the server’s background task, in a
+thread — flushes every `flush_interval_seconds` and runs [`maintain()`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewCounter.maintain)
+once per day. Without that task (`background=False`: a bare ASGI host, a
+test client outside `with`), [`record_view()`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewCounter.record_view) flushes inline instead.
+
+#### compact(, before)
+
+Fold each day’s writer records (days before `before`) into one.
+
+Every worker restart starts a new writer record, so a finished day can
+hold dozens of small files; this leaves one per app per day. Crash-safe:
+the merged record lists its `sources`, so a source that survived an
+interrupted run is deleted without being counted twice. Call only under
+the store’s exclusive lock. Returns how many records were folded.
+
+* **Return type:**
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+
+#### flush()
+
+Write every changed record, and forget days that are over.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### maintain(, today=None)
+
+Purge expired records; compact finished days; sweep stale temp files.
+
+Purging is idempotent, so every worker may do it. Compaction is not, so
+it runs only under the store’s `exclusive()` lock, and only on days at
+least two days old, which no writer touches any more.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### maybe_flush()
+
+Flush if the flush interval has elapsed since the last one.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### purge_expired(, today=None)
+
+Delete records older than the retention window; return how many.
+
+The window is `retention_days` days, today included.
+
+* **Return type:**
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+
+#### record_bot_hit(app)
+
+Count a request from a crawler or scanner, and nothing else about it.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### record_view(app, , path, referrer, language, device)
+
+Count one page view of `app` (a `bot` device counts as a bot hit).
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### *async* run_background()
+
+The server-lifetime loop: [`tick()`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewCounter.tick) in a thread, forever.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### tick()
+
+One background round: flush when due, maintain once per day.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### today()
+
+The current day, ISO format, in the configured timezone.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+#### *property* writer *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+
+fixed if given, else `{pid}-{random}`.
+
+* **Type:**
+  This process’s writer id
+
+### *class* enlace.analytics.PageViewMiddleware(app, , counter, attribute, settings=None)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Pure-ASGI middleware counting page views of the apps that opted in.
+
+It only observes: the request and response pass through unchanged, and
+nothing is added to the page. It also owns the counter’s lifetime: the
+background flush/maintenance task starts with the server’s lifespan and
+the last flush happens at shutdown.
+
+### *class* enlace.analytics.PlatformAnalyticsConfig(\*\*data)
+
+Bases: `BaseModel`
+
+The platform’s `[analytics]` table in `platform.toml`.
+
+Every field has a working default; the table is only needed to change one.
+Validated at config load, so `enlace check` catches a bad value before a
+boot does.
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+### enlace.analytics.analytics_report(app='', , days=30, config=None, store=None)
+
+Per-app report for the last `days` days: daily series + totals.
+
+With no `app`, reports every app that has data. `config` defaults to
+`platform.toml` in the current directory (only its `[analytics]` table
+is used; no app is imported).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### enlace.analytics.apps_with_data(store)
+
+Names of the apps that have any analytics records.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.analytics.daily_counts(store, app, , days=30, today=None, timezone='UTC', index=None)
+
+One merged record per day for the last `days` days, oldest first.
+
+Days with no data are included, with zero counts, so the series has no
+gaps. Each item is `{"date": ..., "pageviews": ..., "bot_hits": ...,
+"paths": {...}, "referrers": {...}, "languages": {...}, "devices": {...}}`.
+Pass `index` (from one scan) when reading several apps.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
+
+### enlace.analytics.default_analytics_store(config=None)
+
+The default store a platform config points at.
+
+* **Return type:**
+  [`JsonFileStore`](_autosummary/enlace.analytics.html.md#enlace.analytics.JsonFileStore)
+
+### enlace.analytics.default_store_path()
+
+`$XDG_DATA_HOME/enlace/analytics`, else `~/.local/share/enlace/analytics`.
+
+* **Return type:**
+  [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)
+
+### enlace.analytics.device_class(user_agent, , client_hint_mobile='')
+
+`bot`, `tablet`, `mobile` or `desktop`, from the User-Agent alone.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.analytics.has_opted_out(headers, , cookie_name)
+
+`DNT: 1`, `Sec-GPC: 1`, or the platform’s opt-out cookie.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.analytics.is_page_request(method, headers)
+
+Whether a request is a browser loading a page (not an asset, API or prefetch).
+
+Modern browsers say so directly (`Sec-Fetch-Dest: document`); older ones
+are recognised by `Accept: text/html`. Prefetches and prerenders are not
+views.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.analytics.is_page_response(status, headers)
+
+Whether a response delivered a page: a 200 HTML body, or a 304 revalidation.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.analytics.looks_like_probe(path)
+
+A scanner’s request, not a page: a dot-segment or a non-HTML file name.
+
+An SPA answers `/app/wp-admin/setup.php` or `/app/.env` with its
+`index.html`, so a browser-like scanner would otherwise pass as a reader.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.analytics.make_analytics(config, , store=None)
+
+The platform’s analytics, or `None` when there is nothing to do.
+
+Nothing to do means no app opted in *and* the store holds no data. If data
+remains after every app opted out, maintenance alone still runs, so it is
+purged on schedule. `store` is the storage seam: any
+`MutableMapping[str, dict]`. Default: a [`JsonFileStore`](_autosummary/enlace.analytics.html.md#enlace.analytics.JsonFileStore) at
+`[analytics].store_path` (or [`default_store_path()`](_autosummary/enlace.analytics.html.md#enlace.analytics.default_store_path)).
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Analytics`](_autosummary/enlace.analytics.html.md#enlace.analytics.Analytics)]
+
+### enlace.analytics.normalize_path(path)
+
+A page path fit to store and to print.
+
+`index.html` folds into its directory; non-printable characters (terminal
+escapes) are dropped; segments that look like an email, a UUID or a long
+token become `:id`; the result is capped at 200 characters. Redaction is
+best effort: an app that puts personal data in its URL paths should not
+turn analytics on.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.analytics.primary_language(accept_language)
+
+Primary subtag of the first `Accept-Language` entry (`fr-FR` → `fr`).
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.analytics.referrer_domain(referer, , host)
+
+The referring host name only.
+
+`(direct)` if none, `(internal)` if this site, `(ip)` for an address
+(it may be a person’s own machine), `(unknown)` for anything that is not
+a plain host name.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.analytics.summarize(daily)
+
+Totals over a [`daily_counts()`](_autosummary/enlace.analytics.html.md#enlace.analytics.daily_counts) series: pageviews and each dimension.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 
 # _autosummary/enlace.app_icons.html.md
@@ -1038,10 +1515,10 @@ Plugins:
 
 ### Functions
 
-| [`build_backend`](_autosummary/enlace.compose.html.md#enlace.compose.build_backend)(config, \*[, plugins])      | Compose all app backends into a single ASGI application.                |
-|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| [`build_launcher_item`](_autosummary/enlace.compose.html.md#enlace.compose.build_launcher_item)(app, config, overlay) | Build one `/_apps` item: resolved metadata + launchability, for an app. |
-| [`create_app`](_autosummary/enlace.compose.html.md#enlace.compose.create_app)()                              | App factory for Uvicorn's --factory flag.                               |
+| [`build_backend`](_autosummary/enlace.compose.html.md#enlace.compose.build_backend)(config, \*[, plugins, ...])   | Compose all app backends into a single ASGI application.                |
+|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [`build_launcher_item`](_autosummary/enlace.compose.html.md#enlace.compose.build_launcher_item)(app, config, overlay)   | Build one `/_apps` item: resolved metadata + launchability, for an app. |
+| [`create_app`](_autosummary/enlace.compose.html.md#enlace.compose.create_app)()                                | App factory for Uvicorn's --factory flag.                               |
 
 ### Exceptions
 
@@ -1057,7 +1534,7 @@ Raised when platform configuration is unusable at startup.
 Distinct from `ValueError` / `RuntimeError` so callers and tests can
 target this specific class.
 
-### enlace.compose.build_backend(config, , plugins=())
+### enlace.compose.build_backend(config, , plugins=(), analytics_store=None)
 
 Compose all app backends into a single ASGI application.
 
@@ -1070,7 +1547,11 @@ For each discovered app:
 - frontend_only (mode=asgi): skip (no backend to mount)
 
 * **Parameters:**
-  **config** ([`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **config** ([`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **plugins** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`FastAPI`, [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – Compose-time plugins, e.g. `enlace_auth.plugin`.
+  * **analytics_store** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`MutableMapping`](https://docs.python.org/3/library/typing.html#typing.MutableMapping)]) – Where page-view analytics go, for apps that opted in
+    (any `MutableMapping[str, dict]`, e.g. a `dol` store). Default:
+    JSON files under `[analytics].store_path`. See enlace.analytics.
 * **Return type:**
   `FastAPI`
 * **Returns:**
@@ -1617,9 +2098,11 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 ### Functions
 
-| [`build_backend`](_autosummary/enlace.html.md#enlace.build_backend)(config, \*[, plugins])             | Compose all app backends into a single ASGI application.           |
+| [`analytics_report`](_autosummary/enlace.html.md#enlace.analytics_report)([app, days, config, store])     | Per-app report for the last `days` days: daily series + totals.    |
 |---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| [`build_backend`](_autosummary/enlace.html.md#enlace.build_backend)(config, \*[, plugins, ...])        | Compose all app backends into a single ASGI application.           |
 | [`create_app`](_autosummary/enlace.html.md#enlace.create_app)()                                     | App factory for Uvicorn's --factory flag.                          |
+| [`daily_counts`](_autosummary/enlace.html.md#enlace.daily_counts)(store, app, \*[, days, today, ...]) | One merged record per day for the last `days` days, oldest first.  |
 | [`diagnose_app`](_autosummary/enlace.html.md#enlace.diagnose_app)(app_dir, \*[, app_name])            | Diagnose an app directory for enlace compatibility.                |
 | [`discover_apps`](_autosummary/enlace.html.md#enlace.discover_apps)([config, on_import_error])         | High-level discovery: load config, discover apps, check conflicts. |
 | [`load_manifest`](_autosummary/enlace.html.md#enlace.load_manifest)(app_name, manifest_dir, \*[, ...]) | Load the deploy manifest for one app, or return a minimal stub.    |
@@ -1631,8 +2114,9 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 ### Classes
 
-| [`AppConfig`](_autosummary/enlace.html.md#enlace.AppConfig)(\*\*data)                          | Resolved configuration for a single discovered app.                         |
+| [`AppAnalyticsConfig`](_autosummary/enlace.html.md#enlace.AppAnalyticsConfig)(\*\*data)                 | An app's `[analytics]` table in `app.toml`.                                 |
 |-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`AppConfig`](_autosummary/enlace.html.md#enlace.AppConfig)(\*\*data)                          | Resolved configuration for a single discovered app.                         |
 | [`AppImportError`](_autosummary/enlace.html.md#enlace.AppImportError)(\*\*data)                     | Why an app's entry module could not be imported at discovery time.          |
 | [`BuildConfig`](_autosummary/enlace.html.md#enlace.BuildConfig)(\*\*data)                        | Declarative build instructions for an app's compiled frontend.              |
 | [`BuildResult`](_autosummary/enlace.html.md#enlace.BuildResult)(app, cwd[, commands, ran, ...])  | Outcome of building one app.                                                |
@@ -1643,6 +2127,8 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 | [`DiagnosticReport`](_autosummary/enlace.html.md#enlace.DiagnosticReport)(app_dir, app_name[, ...])   | Full diagnostic report for an app directory.                                |
 | [`ExternalRef`](_autosummary/enlace.html.md#enlace.ExternalRef)(\*\*data)                        | Identity for an externally-installed dependency (e.g. an editable sibling). |
 | [`Issue`](_autosummary/enlace.html.md#enlace.Issue)(severity, category, summary[, ...])    | A single compatibility issue found during diagnosis.                        |
+| [`JsonFileStore`](_autosummary/enlace.html.md#enlace.JsonFileStore)(root)                          | `key -> dict`, one JSON file per key at `{root}/{key}.json`.                |
+| [`PlatformAnalyticsConfig`](_autosummary/enlace.html.md#enlace.PlatformAnalyticsConfig)(\*\*data)            | The platform's `[analytics]` table in `platform.toml`.                      |
 | [`PlatformConfig`](_autosummary/enlace.html.md#enlace.PlatformConfig)(\*\*data)                     | Resolved configuration for the entire platform.                             |
 | [`ConventionDiscoverer`](_autosummary/enlace.html.md#enlace.ConventionDiscoverer)([conventions, ...])     | Discovers apps by filesystem conventions.                                   |
 | [`SourceRef`](_autosummary/enlace.html.md#enlace.SourceRef)(\*\*data)                          | Git identity for a single source tree (app or platform).                    |
@@ -1651,6 +2137,23 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 | [`EnlaceConfigError`](_autosummary/enlace.html.md#enlace.EnlaceConfigError)   | Raised when platform configuration is unusable at startup.   |
 |----------------------------------------------------------------------|--------------------------------------------------------------|
+
+### *class* enlace.AppAnalyticsConfig(\*\*data)
+
+Bases: `BaseModel`
+
+An app’s `[analytics]` table in `app.toml`. Absent means `none`.
+
+Strict (unknown keys and modes are errors), so a typo fails at discovery
+instead of silently collecting nothing — or something else.
+
+#### *property* enabled *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Whether this app’s page views are counted.
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
 ### *class* enlace.AppConfig(\*\*data)
 
@@ -1861,6 +2364,50 @@ A single compatibility issue found during diagnosis.
 (registered via the `enlace.diagnosers` entry-point group) may pass a
 plain string category — the report renders both.
 
+### *class* enlace.JsonFileStore(root)
+
+Bases: [`MutableMapping`](https://docs.python.org/3/library/collections.abc.html#collections.abc.MutableMapping)
+
+`key -> dict`, one JSON file per key at `{root}/{key}.json`.
+
+Keys are `/`-separated relative paths of URL-safe segments. Writes are
+atomic (temp file + `os.replace`), so a reader never sees half a record.
+Stdlib only; swap in any `MutableMapping` (e.g. a `dol` store over S3)
+through the `store` argument of `make_analytics()` or
+`build_backend`. Two optional extras the maintenance uses when present:
+[`exclusive()`](_autosummary/enlace.html.md#enlace.JsonFileStore.exclusive) (a cross-process lock) and [`sweep_temp_files()`](_autosummary/enlace.html.md#enlace.JsonFileStore.sweep_temp_files).
+
+#### exclusive()
+
+Try to take the store-wide maintenance lock; yield whether we got it.
+
+Non-blocking: a worker that loses the race skips this round of
+maintenance, it does not wait. `False` where `fcntl` is unavailable.
+
+* **Return type:**
+  [`Iterator`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterator)[[`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
+
+#### sweep_temp_files(, older_than=3600)
+
+Delete temp files a killed write left behind; return how many.
+
+* **Return type:**
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+
+### *class* enlace.PlatformAnalyticsConfig(\*\*data)
+
+Bases: `BaseModel`
+
+The platform’s `[analytics]` table in `platform.toml`.
+
+Every field has a working default; the table is only needed to change one.
+Validated at config load, so `enlace check` catches a bad value before a
+boot does.
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
 ### *class* enlace.PlatformConfig(\*\*data)
 
 Bases: `BaseModel`
@@ -1920,7 +2467,18 @@ Git identity for a single source tree (app or platform).
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### enlace.build_backend(config, , plugins=())
+### enlace.analytics_report(app='', , days=30, config=None, store=None)
+
+Per-app report for the last `days` days: daily series + totals.
+
+With no `app`, reports every app that has data. `config` defaults to
+`platform.toml` in the current directory (only its `[analytics]` table
+is used; no app is imported).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### enlace.build_backend(config, , plugins=(), analytics_store=None)
 
 Compose all app backends into a single ASGI application.
 
@@ -1933,7 +2491,11 @@ For each discovered app:
 - frontend_only (mode=asgi): skip (no backend to mount)
 
 * **Parameters:**
-  **config** ([`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **config** ([`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **plugins** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`FastAPI`, [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – Compose-time plugins, e.g. `enlace_auth.plugin`.
+  * **analytics_store** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`MutableMapping`](https://docs.python.org/3/library/typing.html#typing.MutableMapping)]) – Where page-view analytics go, for apps that opted in
+    (any `MutableMapping[str, dict]`, e.g. a `dol` store). Default:
+    JSON files under `[analytics].store_path`. See enlace.analytics.
 * **Return type:**
   `FastAPI`
 * **Returns:**
@@ -1958,6 +2520,18 @@ Each resolved object must be a callable
 
 * **Return type:**
   `FastAPI`
+
+### enlace.daily_counts(store, app, , days=30, today=None, timezone='UTC', index=None)
+
+One merged record per day for the last `days` days, oldest first.
+
+Days with no data are included, with zero counts, so the series has no
+gaps. Each item is `{"date": ..., "pageviews": ..., "bot_hits": ...,
+"paths": {...}, "referrers": {...}, "languages": {...}, "devices": {...}}`.
+Pass `index` (from one scan) when reading several apps.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 ### enlace.diagnose_app(app_dir, , app_name='')
 
@@ -2079,6 +2653,7 @@ present, has a `build` command and that its working directory exists.
 
 | [`access`](_autosummary/enlace.access.html.md#module-enlace.access)                 | Who may reach an app: the one predicate the gate and the launcher both call.         |
 |----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`analytics`](_autosummary/enlace.analytics.html.md#module-enlace.analytics)           | Privacy-first page-view analytics, turned on per app.                                |
 | [`app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
 | [`appmeta`](_autosummary/enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
 | [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
@@ -2805,18 +3380,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-09-25 10:49 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/5bf1866d7d11d5d430d289d41406d1f57d67e5bf"><code>5bf1866</code></a> on branch <code>main</code>, for **enlace 0.1.40** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-25 11:07 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/a670937735e7fe7d66873227911f95bb041e97dc"><code>a670937</code></a> on branch <code>main</code>, for **enlace 0.1.41** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.40) is behind the latest release on PyPI (0.1.41): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.41) is behind the latest release on PyPI (0.1.42): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/5bf1866d7d11d5d430d289d41406d1f57d67e5bf"><code>5bf1866d7d11d5d430d289d41406d1f57d67e5bf</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/a670937735e7fe7d66873227911f95bb041e97dc"><code>a670937735e7fe7d66873227911f95bb041e97dc</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -2827,9 +3402,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/36125888689">36125888689</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/36127491600">36127491600</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>5bf1866d7d11d5d430d289d41406d1f57d67e5bf</code> (in the history of the built commit) |
+| Event commit | <code>a670937735e7fe7d66873227911f95bb041e97dc</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -2854,13 +3429,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.41/">0.1.41</a>, newer than the documented version (0.1.40).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.42/">0.1.42</a>, newer than the documented version (0.1.41).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 5bf1866d7d11d5d430d289d41406d1f57d67e5bf
+git checkout a670937735e7fe7d66873227911f95bb041e97dc
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

@@ -7,9 +7,11 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 ### Functions
 
-| [`build_backend`](#enlace.build_backend)(config, \*[, plugins])             | Compose all app backends into a single ASGI application.           |
+| [`analytics_report`](#enlace.analytics_report)([app, days, config, store])     | Per-app report for the last `days` days: daily series + totals.    |
 |---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| [`build_backend`](#enlace.build_backend)(config, \*[, plugins, ...])        | Compose all app backends into a single ASGI application.           |
 | [`create_app`](#enlace.create_app)()                                     | App factory for Uvicorn's --factory flag.                          |
+| [`daily_counts`](#enlace.daily_counts)(store, app, \*[, days, today, ...]) | One merged record per day for the last `days` days, oldest first.  |
 | [`diagnose_app`](#enlace.diagnose_app)(app_dir, \*[, app_name])            | Diagnose an app directory for enlace compatibility.                |
 | [`discover_apps`](#enlace.discover_apps)([config, on_import_error])         | High-level discovery: load config, discover apps, check conflicts. |
 | [`load_manifest`](#enlace.load_manifest)(app_name, manifest_dir, \*[, ...]) | Load the deploy manifest for one app, or return a minimal stub.    |
@@ -21,8 +23,9 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 ### Classes
 
-| [`AppConfig`](#enlace.AppConfig)(\*\*data)                          | Resolved configuration for a single discovered app.                         |
+| [`AppAnalyticsConfig`](#enlace.AppAnalyticsConfig)(\*\*data)                 | An app's `[analytics]` table in `app.toml`.                                 |
 |-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`AppConfig`](#enlace.AppConfig)(\*\*data)                          | Resolved configuration for a single discovered app.                         |
 | [`AppImportError`](#enlace.AppImportError)(\*\*data)                     | Why an app's entry module could not be imported at discovery time.          |
 | [`BuildConfig`](#enlace.BuildConfig)(\*\*data)                        | Declarative build instructions for an app's compiled frontend.              |
 | [`BuildResult`](#enlace.BuildResult)(app, cwd[, commands, ran, ...])  | Outcome of building one app.                                                |
@@ -33,6 +36,8 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 | [`DiagnosticReport`](#enlace.DiagnosticReport)(app_dir, app_name[, ...])   | Full diagnostic report for an app directory.                                |
 | [`ExternalRef`](#enlace.ExternalRef)(\*\*data)                        | Identity for an externally-installed dependency (e.g. an editable sibling). |
 | [`Issue`](#enlace.Issue)(severity, category, summary[, ...])    | A single compatibility issue found during diagnosis.                        |
+| [`JsonFileStore`](#enlace.JsonFileStore)(root)                          | `key -> dict`, one JSON file per key at `{root}/{key}.json`.                |
+| [`PlatformAnalyticsConfig`](#enlace.PlatformAnalyticsConfig)(\*\*data)            | The platform's `[analytics]` table in `platform.toml`.                      |
 | [`PlatformConfig`](#enlace.PlatformConfig)(\*\*data)                     | Resolved configuration for the entire platform.                             |
 | [`ConventionDiscoverer`](#enlace.ConventionDiscoverer)([conventions, ...])     | Discovers apps by filesystem conventions.                                   |
 | [`SourceRef`](#enlace.SourceRef)(\*\*data)                          | Git identity for a single source tree (app or platform).                    |
@@ -41,6 +46,23 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 | [`EnlaceConfigError`](#enlace.EnlaceConfigError)   | Raised when platform configuration is unusable at startup.   |
 |----------------------------------------------------------------------|--------------------------------------------------------------|
+
+### *class* enlace.AppAnalyticsConfig(\*\*data)
+
+Bases: `BaseModel`
+
+An app’s `[analytics]` table in `app.toml`. Absent means `none`.
+
+Strict (unknown keys and modes are errors), so a typo fails at discovery
+instead of silently collecting nothing — or something else.
+
+#### *property* enabled *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Whether this app’s page views are counted.
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
 ### *class* enlace.AppConfig(\*\*data)
 
@@ -251,6 +273,50 @@ A single compatibility issue found during diagnosis.
 (registered via the `enlace.diagnosers` entry-point group) may pass a
 plain string category — the report renders both.
 
+### *class* enlace.JsonFileStore(root)
+
+Bases: [`MutableMapping`](https://docs.python.org/3/library/collections.abc.html#collections.abc.MutableMapping)
+
+`key -> dict`, one JSON file per key at `{root}/{key}.json`.
+
+Keys are `/`-separated relative paths of URL-safe segments. Writes are
+atomic (temp file + `os.replace`), so a reader never sees half a record.
+Stdlib only; swap in any `MutableMapping` (e.g. a `dol` store over S3)
+through the `store` argument of `make_analytics()` or
+`build_backend`. Two optional extras the maintenance uses when present:
+[`exclusive()`](#enlace.JsonFileStore.exclusive) (a cross-process lock) and [`sweep_temp_files()`](#enlace.JsonFileStore.sweep_temp_files).
+
+#### exclusive()
+
+Try to take the store-wide maintenance lock; yield whether we got it.
+
+Non-blocking: a worker that loses the race skips this round of
+maintenance, it does not wait. `False` where `fcntl` is unavailable.
+
+* **Return type:**
+  [`Iterator`](https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterator)[[`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
+
+#### sweep_temp_files(, older_than=3600)
+
+Delete temp files a killed write left behind; return how many.
+
+* **Return type:**
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
+
+### *class* enlace.PlatformAnalyticsConfig(\*\*data)
+
+Bases: `BaseModel`
+
+The platform’s `[analytics]` table in `platform.toml`.
+
+Every field has a working default; the table is only needed to change one.
+Validated at config load, so `enlace check` catches a bad value before a
+boot does.
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
 ### *class* enlace.PlatformConfig(\*\*data)
 
 Bases: `BaseModel`
@@ -310,7 +376,18 @@ Git identity for a single source tree (app or platform).
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### enlace.build_backend(config, , plugins=())
+### enlace.analytics_report(app='', , days=30, config=None, store=None)
+
+Per-app report for the last `days` days: daily series + totals.
+
+With no `app`, reports every app that has data. `config` defaults to
+`platform.toml` in the current directory (only its `[analytics]` table
+is used; no app is imported).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+### enlace.build_backend(config, , plugins=(), analytics_store=None)
 
 Compose all app backends into a single ASGI application.
 
@@ -323,7 +400,11 @@ For each discovered app:
 - frontend_only (mode=asgi): skip (no backend to mount)
 
 * **Parameters:**
-  **config** ([`PlatformConfig`](enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **config** ([`PlatformConfig`](enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **plugins** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`FastAPI`, [`PlatformConfig`](enlace.base.html.md#enlace.base.PlatformConfig)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – Compose-time plugins, e.g. `enlace_auth.plugin`.
+  * **analytics_store** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`MutableMapping`](https://docs.python.org/3/library/typing.html#typing.MutableMapping)]) – Where page-view analytics go, for apps that opted in
+    (any `MutableMapping[str, dict]`, e.g. a `dol` store). Default:
+    JSON files under `[analytics].store_path`. See enlace.analytics.
 * **Return type:**
   `FastAPI`
 * **Returns:**
@@ -348,6 +429,18 @@ Each resolved object must be a callable
 
 * **Return type:**
   `FastAPI`
+
+### enlace.daily_counts(store, app, , days=30, today=None, timezone='UTC', index=None)
+
+One merged record per day for the last `days` days, oldest first.
+
+Days with no data are included, with zero counts, so the series has no
+gaps. Each item is `{"date": ..., "pageviews": ..., "bot_hits": ...,
+"paths": {...}, "referrers": {...}, "languages": {...}, "devices": {...}}`.
+Pass `index` (from one scan) when reading several apps.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 ### enlace.diagnose_app(app_dir, , app_name='')
 
@@ -469,6 +562,7 @@ present, has a `build` command and that its working directory exists.
 
 | [`access`](enlace.access.html.md#module-enlace.access)                 | Who may reach an app: the one predicate the gate and the launcher both call.         |
 |----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`analytics`](enlace.analytics.html.md#module-enlace.analytics)           | Privacy-first page-view analytics, turned on per app.                                |
 | [`app_icons`](enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
 | [`appmeta`](enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
 | [`base`](enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |

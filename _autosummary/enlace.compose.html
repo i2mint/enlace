@@ -205,6 +205,7 @@
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">API reference</a><input aria-label="Toggle navigation of API reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children"><a class="reference internal" href="enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="enlace.access.html">enlace.access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.analytics.html">enlace.analytics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.base.html">enlace.base</a></li>
@@ -282,7 +283,7 @@ stores. enlace itself is auth-agnostic.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.compose.build_backend" title="enlace.compose.build_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_backend</span></code></a>(config, *[, plugins])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.compose.build_backend" title="enlace.compose.build_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_backend</span></code></a>(config, *[, plugins, ...])</p></td>
 <td><p>Compose all app backends into a single ASGI application.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.compose.build_launcher_item" title="enlace.compose.build_launcher_item"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_launcher_item</span></code></a>(app, config, overlay)</p></td>
@@ -315,7 +316,7 @@ target this specific class.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.compose.build_backend">
-<span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">build_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#build_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.build_backend" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">build_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analytics_store</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#build_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.build_backend" title="Link to this definition">¶</a></dt>
 <dd><p>Compose all app backends into a single ASGI application.</p>
 <p>For each discovered app:</p>
 <ul class="simple">
@@ -327,7 +328,13 @@ target this specific class.</p>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></span>) – Platform configuration with apps already discovered.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></span>) – Platform configuration with apps already discovered.</p></li>
+<li><p><strong>plugins</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code>, <a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a>], <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]]</span>) – Compose-time plugins, e.g. <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code>.</p></li>
+<li><p><strong>analytics_store</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.MutableMapping" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MutableMapping</span></code></a>]</span>) – Where page-view analytics go, for apps that opted in
+(any <code class="docutils literal notranslate"><span class="pre">MutableMapping[str,</span> <span class="pre">dict]</span></code>, e.g. a <code class="docutils literal notranslate"><span class="pre">dol</span></code> store). Default:
+JSON files under <code class="docutils literal notranslate"><span class="pre">[analytics].store_path</span></code>. See enlace.analytics.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code></span></p>
@@ -442,7 +449,7 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=6264e773"></script>
+</div><script src="../_static/documentation_options.js?v=cb249315"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

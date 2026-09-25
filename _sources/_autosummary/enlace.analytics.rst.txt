@@ -1,0 +1,46 @@
+enlace.analytics
+================
+
+.. automodule:: enlace.analytics
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      MAX_RETENTION_DAYS
+      ANALYTICS_ROUTE_PREFIX
+      MERGED
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      analytics_report
+      apps_with_data
+      daily_counts
+      default_analytics_store
+      default_store_path
+      device_class
+      has_opted_out
+      is_page_request
+      is_page_response
+      looks_like_probe
+      make_analytics
+      normalize_path
+      primary_language
+      referrer_domain
+      summarize
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Analytics
+      AppAnalyticsConfig
+      JsonFileStore
+      PageAttribution
+      PageViewCounter
+      PageViewMiddleware
+      PlatformAnalyticsConfig
+   

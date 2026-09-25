@@ -205,6 +205,7 @@
 <li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">API reference</a><input aria-label="Toggle navigation of API reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
 <li class="toctree-l2 current has-children current-page"><a class="current reference internal" href="#">enlace</a><input aria-label="Toggle navigation of enlace" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="enlace.access.html">enlace.access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.analytics.html">enlace.analytics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.base.html">enlace.base</a></li>
@@ -273,11 +274,17 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.build_backend" title="enlace.build_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_backend</span></code></a>(config, *[, plugins])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.analytics_report" title="enlace.analytics_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analytics_report</span></code></a>([app, days, config, store])</p></td>
+<td><p>Per-app report for the last <code class="docutils literal notranslate"><span class="pre">days</span></code> days: daily series + totals.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.build_backend" title="enlace.build_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_backend</span></code></a>(config, *[, plugins, ...])</p></td>
 <td><p>Compose all app backends into a single ASGI application.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.create_app" title="enlace.create_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_app</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.create_app" title="enlace.create_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_app</span></code></a>()</p></td>
 <td><p>App factory for Uvicorn's --factory flag.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.daily_counts" title="enlace.daily_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">daily_counts</span></code></a>(store, app, *[, days, today, ...])</p></td>
+<td><p>One merged record per day for the last <code class="docutils literal notranslate"><span class="pre">days</span></code> days, oldest first.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.diagnose_app" title="enlace.diagnose_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diagnose_app</span></code></a>(app_dir, *[, app_name])</p></td>
 <td><p>Diagnose an app directory for enlace compatibility.</p></td>
@@ -310,46 +317,55 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.AppConfig" title="enlace.AppConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppConfig</span></code></a>(**data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.AppAnalyticsConfig" title="enlace.AppAnalyticsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppAnalyticsConfig</span></code></a>(**data)</p></td>
+<td><p>An app's <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">app.toml</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.AppConfig" title="enlace.AppConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppConfig</span></code></a>(**data)</p></td>
 <td><p>Resolved configuration for a single discovered app.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.AppImportError" title="enlace.AppImportError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppImportError</span></code></a>(**data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.AppImportError" title="enlace.AppImportError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppImportError</span></code></a>(**data)</p></td>
 <td><p>Why an app's entry module could not be imported at discovery time.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.BuildConfig" title="enlace.BuildConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildConfig</span></code></a>(**data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.BuildConfig" title="enlace.BuildConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildConfig</span></code></a>(**data)</p></td>
 <td><p>Declarative build instructions for an app's compiled frontend.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.BuildResult" title="enlace.BuildResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildResult</span></code></a>(app, cwd[, commands, ran, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.BuildResult" title="enlace.BuildResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildResult</span></code></a>(app, cwd[, commands, ran, ...])</p></td>
 <td><p>Outcome of building one app.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ConventionsConfig" title="enlace.ConventionsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConventionsConfig</span></code></a>(**data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.ConventionsConfig" title="enlace.ConventionsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConventionsConfig</span></code></a>(**data)</p></td>
 <td><p>Meta-conventions controlling how apps are discovered.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.DeployHeadersMiddleware" title="enlace.DeployHeadersMiddleware"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeployHeadersMiddleware</span></code></a>(app, *, ...[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.DeployHeadersMiddleware" title="enlace.DeployHeadersMiddleware"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeployHeadersMiddleware</span></code></a>(app, *, ...[, ...])</p></td>
 <td><p>Pure-ASGI middleware that adds X-Deploy-* headers on every response.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.DeployManifest" title="enlace.DeployManifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeployManifest</span></code></a>(**data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.DeployManifest" title="enlace.DeployManifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeployManifest</span></code></a>(**data)</p></td>
 <td><p>What was deployed for one app (or the platform itself).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.DeployMetaTagMiddleware" title="enlace.DeployMetaTagMiddleware"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeployMetaTagMiddleware</span></code></a>(app, *, ...[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.DeployMetaTagMiddleware" title="enlace.DeployMetaTagMiddleware"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeployMetaTagMiddleware</span></code></a>(app, *, ...[, ...])</p></td>
 <td><p>Pure-ASGI middleware that injects deploy <code class="docutils literal notranslate"><span class="pre">&lt;meta&gt;</span></code> tags into HTML.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.DiagnosticReport" title="enlace.DiagnosticReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiagnosticReport</span></code></a>(app_dir, app_name[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.DiagnosticReport" title="enlace.DiagnosticReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiagnosticReport</span></code></a>(app_dir, app_name[, ...])</p></td>
 <td><p>Full diagnostic report for an app directory.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.ExternalRef" title="enlace.ExternalRef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExternalRef</span></code></a>(**data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ExternalRef" title="enlace.ExternalRef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ExternalRef</span></code></a>(**data)</p></td>
 <td><p>Identity for an externally-installed dependency (e.g. an editable sibling).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.Issue" title="enlace.Issue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Issue</span></code></a>(severity, category, summary[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.Issue" title="enlace.Issue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Issue</span></code></a>(severity, category, summary[, ...])</p></td>
 <td><p>A single compatibility issue found during diagnosis.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.PlatformConfig" title="enlace.PlatformConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a>(**data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.JsonFileStore" title="enlace.JsonFileStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JsonFileStore</span></code></a>(root)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">dict</span></code>, one JSON file per key at <code class="docutils literal notranslate"><span class="pre">{root}/{key}.json</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.PlatformAnalyticsConfig" title="enlace.PlatformAnalyticsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlatformAnalyticsConfig</span></code></a>(**data)</p></td>
+<td><p>The platform's <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.PlatformConfig" title="enlace.PlatformConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a>(**data)</p></td>
 <td><p>Resolved configuration for the entire platform.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ConventionDiscoverer" title="enlace.ConventionDiscoverer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConventionDiscoverer</span></code></a>([conventions, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.ConventionDiscoverer" title="enlace.ConventionDiscoverer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConventionDiscoverer</span></code></a>([conventions, ...])</p></td>
 <td><p>Discovers apps by filesystem conventions.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.SourceRef" title="enlace.SourceRef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SourceRef</span></code></a>(**data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.SourceRef" title="enlace.SourceRef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SourceRef</span></code></a>(**data)</p></td>
 <td><p>Git identity for a single source tree (app or platform).</p></td>
 </tr>
 </tbody>
@@ -365,6 +381,29 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 </tbody>
 </table>
 </div>
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.AppAnalyticsConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">AppAnalyticsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#AppAnalyticsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.AppAnalyticsConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>An app’s <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">app.toml</span></code>. Absent means <code class="docutils literal notranslate"><span class="pre">none</span></code>.</p>
+<p>Strict (unknown keys and modes are errors), so a typo fails at discovery
+instead of silently collecting nothing — or something else.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="enlace.AppAnalyticsConfig.enabled">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">enabled</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><a class="headerlink" href="#enlace.AppAnalyticsConfig.enabled" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this app’s page views are counted.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.AppAnalyticsConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'forbid'}</span></span><a class="headerlink" href="#enlace.AppAnalyticsConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<code class="code docutils literal notranslate"><span class="pre">ConfigDict</span></code>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.AppConfig">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">AppConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#AppConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.AppConfig" title="Link to this definition">¶</a></dt>
@@ -636,6 +675,63 @@ plain string category — the report renders both.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="enlace.JsonFileStore">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">JsonFileStore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#JsonFileStore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.JsonFileStore" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.MutableMapping" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MutableMapping</span></code></a></p>
+<p><code class="docutils literal notranslate"><span class="pre">key</span> <span class="pre">-&gt;</span> <span class="pre">dict</span></code>, one JSON file per key at <code class="docutils literal notranslate"><span class="pre">{root}/{key}.json</span></code>.</p>
+<p>Keys are <code class="docutils literal notranslate"><span class="pre">/</span></code>-separated relative paths of URL-safe segments. Writes are
+atomic (temp file + <code class="docutils literal notranslate"><span class="pre">os.replace</span></code>), so a reader never sees half a record.
+Stdlib only; swap in any <code class="docutils literal notranslate"><span class="pre">MutableMapping</span></code> (e.g. a <code class="docutils literal notranslate"><span class="pre">dol</span></code> store over S3)
+through the <code class="docutils literal notranslate"><span class="pre">store</span></code> argument of <code class="xref py py-func docutils literal notranslate"><span class="pre">make_analytics()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">build_backend</span></code>. Two optional extras the maintenance uses when present:
+<a class="reference internal" href="#enlace.JsonFileStore.exclusive" title="enlace.JsonFileStore.exclusive"><code class="xref py py-meth docutils literal notranslate"><span class="pre">exclusive()</span></code></a> (a cross-process lock) and <a class="reference internal" href="#enlace.JsonFileStore.sweep_temp_files" title="enlace.JsonFileStore.sweep_temp_files"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sweep_temp_files()</span></code></a>.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.JsonFileStore.exclusive">
+<span class="sig-name descname"><span class="pre">exclusive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#JsonFileStore.exclusive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.JsonFileStore.exclusive" title="Link to this definition">¶</a></dt>
+<dd><p>Try to take the store-wide maintenance lock; yield whether we got it.</p>
+<p>Non-blocking: a worker that loses the race skips this round of
+maintenance, it does not wait. <code class="docutils literal notranslate"><span class="pre">False</span></code> where <code class="docutils literal notranslate"><span class="pre">fcntl</span></code> is unavailable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterator" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.JsonFileStore.sweep_temp_files">
+<span class="sig-name descname"><span class="pre">sweep_temp_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">older_than</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3600</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#JsonFileStore.sweep_temp_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.JsonFileStore.sweep_temp_files" title="Link to this definition">¶</a></dt>
+<dd><p>Delete temp files a killed write left behind; return how many.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.PlatformAnalyticsConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">PlatformAnalyticsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#PlatformAnalyticsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.PlatformAnalyticsConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
+<p>The platform’s <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>.</p>
+<p>Every field has a working default; the table is only needed to change one.
+Validated at config load, so <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">check</span></code> catches a bad value before a
+boot does.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.PlatformAnalyticsConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'forbid'}</span></span><a class="headerlink" href="#enlace.PlatformAnalyticsConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<code class="code docutils literal notranslate"><span class="pre">ConfigDict</span></code>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="enlace.PlatformConfig">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">PlatformConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#PlatformConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.PlatformConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
@@ -714,8 +810,22 @@ a PlatformConfig with all default values.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="enlace.analytics_report">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">analytics_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#analytics_report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.analytics_report" title="Link to this definition">¶</a></dt>
+<dd><p>Per-app report for the last <code class="docutils literal notranslate"><span class="pre">days</span></code> days: daily series + totals.</p>
+<p>With no <code class="docutils literal notranslate"><span class="pre">app</span></code>, reports every app that has data. <code class="docutils literal notranslate"><span class="pre">config</span></code> defaults to
+<code class="docutils literal notranslate"><span class="pre">platform.toml</span></code> in the current directory (only its <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table
+is used; no app is imported).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="enlace.build_backend">
-<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">build_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#build_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build_backend" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">build_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">plugins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analytics_store</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#build_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.build_backend" title="Link to this definition">¶</a></dt>
 <dd><p>Compose all app backends into a single ASGI application.</p>
 <p>For each discovered app:</p>
 <ul class="simple">
@@ -727,7 +837,13 @@ a PlatformConfig with all default values.</p>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></span>) – Platform configuration with apps already discovered.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></span>) – Platform configuration with apps already discovered.</p></li>
+<li><p><strong>plugins</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code>, <a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a>], <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]]</span>) – Compose-time plugins, e.g. <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code>.</p></li>
+<li><p><strong>analytics_store</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.MutableMapping" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MutableMapping</span></code></a>]</span>) – Where page-view analytics go, for apps that opted in
+(any <code class="docutils literal notranslate"><span class="pre">MutableMapping[str,</span> <span class="pre">dict]</span></code>, e.g. a <code class="docutils literal notranslate"><span class="pre">dol</span></code> store). Default:
+JSON files under <code class="docutils literal notranslate"><span class="pre">[analytics].store_path</span></code>. See enlace.analytics.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code></span></p>
@@ -754,6 +870,21 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.daily_counts">
+<span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">daily_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">today</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timezone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UTC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#daily_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.daily_counts" title="Link to this definition">¶</a></dt>
+<dd><p>One merged record per day for the last <code class="docutils literal notranslate"><span class="pre">days</span></code> days, oldest first.</p>
+<p>Days with no data are included, with zero counts, so the series has no
+gaps. Each item is <code class="docutils literal notranslate"><span class="pre">{&quot;date&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;pageviews&quot;:</span> <span class="pre">...,</span> <span class="pre">&quot;bot_hits&quot;:</span> <span class="pre">...,</span>
+<span class="pre">&quot;paths&quot;:</span> <span class="pre">{...},</span> <span class="pre">&quot;referrers&quot;:</span> <span class="pre">{...},</span> <span class="pre">&quot;languages&quot;:</span> <span class="pre">{...},</span> <span class="pre">&quot;devices&quot;:</span> <span class="pre">{...}}</span></code>.
+Pass <code class="docutils literal notranslate"><span class="pre">index</span></code> (from one scan) when reading several apps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -923,52 +1054,55 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
 <tr class="row-odd"><td><p><a class="reference internal" href="enlace.access.html#module-enlace.access" title="enlace.access"><code class="xref py py-obj docutils literal notranslate"><span class="pre">access</span></code></a></p></td>
 <td><p>Who may reach an app: the one predicate the gate and the launcher both call.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.app_icons.html#module-enlace.app_icons" title="enlace.app_icons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">app_icons</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.analytics.html#module-enlace.analytics" title="enlace.analytics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analytics</span></code></a></p></td>
+<td><p>Privacy-first page-view analytics, turned on per app.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.app_icons.html#module-enlace.app_icons" title="enlace.app_icons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">app_icons</span></code></a></p></td>
 <td><p>One icon per app, served in every form a browser or phone asks for.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.appmeta.html#module-enlace.appmeta" title="enlace.appmeta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">appmeta</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.appmeta.html#module-enlace.appmeta" title="enlace.appmeta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">appmeta</span></code></a></p></td>
 <td><p>App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.base.html#module-enlace.base" title="enlace.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.base.html#module-enlace.base" title="enlace.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a></p></td>
 <td><p>Core data structures for enlace platform configuration.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.build.html#module-enlace.build" title="enlace.build"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.build.html#module-enlace.build" title="enlace.build"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build</span></code></a></p></td>
 <td><p>Run and validate declarative app builds from <code class="docutils literal notranslate"><span class="pre">app.toml</span></code> <code class="docutils literal notranslate"><span class="pre">[build]</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.compose.html#module-enlace.compose" title="enlace.compose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compose</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.compose.html#module-enlace.compose" title="enlace.compose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compose</span></code></a></p></td>
 <td><p>ASGI app composition for enlace.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.diagnose.html#module-enlace.diagnose" title="enlace.diagnose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diagnose</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.diagnose.html#module-enlace.diagnose" title="enlace.diagnose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diagnose</span></code></a></p></td>
 <td><p>Diagnose app compatibility with enlace.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.discover.html#module-enlace.discover" title="enlace.discover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.discover.html#module-enlace.discover" title="enlace.discover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover</span></code></a></p></td>
 <td><p>Convention-based app discovery for enlace.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.doctor.html#module-enlace.doctor" title="enlace.doctor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">doctor</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.doctor.html#module-enlace.doctor" title="enlace.doctor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">doctor</span></code></a></p></td>
 <td><p>Post-deploy smoke checks for a running enlace gateway.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.frontend.html#module-enlace.frontend" title="enlace.frontend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frontend</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.frontend.html#module-enlace.frontend" title="enlace.frontend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frontend</span></code></a></p></td>
 <td><p>SPA-aware static file serving for enlace.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.gzip_selective.html#module-enlace.gzip_selective" title="enlace.gzip_selective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gzip_selective</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.gzip_selective.html#module-enlace.gzip_selective" title="enlace.gzip_selective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gzip_selective</span></code></a></p></td>
 <td><p>Compression that knows what it must not compress.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.html_rewrite.html#module-enlace.html_rewrite" title="enlace.html_rewrite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_rewrite</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.html_rewrite.html#module-enlace.html_rewrite" title="enlace.html_rewrite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_rewrite</span></code></a></p></td>
 <td><p>Rewrite HTML response bodies from pure-ASGI middleware.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.manifest.html#module-enlace.manifest" title="enlace.manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manifest</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.manifest.html#module-enlace.manifest" title="enlace.manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manifest</span></code></a></p></td>
 <td><p>Deploy manifest: build-identity for diagnosing &quot;what is actually deployed&quot;.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.proxy.html#module-enlace.proxy" title="enlace.proxy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proxy</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.proxy.html#module-enlace.proxy" title="enlace.proxy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proxy</span></code></a></p></td>
 <td><p>Lightweight ASGI reverse proxy for process and external backends.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.strategies.html#module-enlace.strategies" title="enlace.strategies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strategies</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.strategies.html#module-enlace.strategies" title="enlace.strategies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strategies</span></code></a></p></td>
 <td><p>Backend-strategy registry and built-in strategies for enlace.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.supervise.html#module-enlace.supervise" title="enlace.supervise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supervise</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.supervise.html#module-enlace.supervise" title="enlace.supervise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supervise</span></code></a></p></td>
 <td><p>Dev-mode process supervisor for enlace.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.util.html#module-enlace.util" title="enlace.util"><code class="xref py py-obj docutils literal notranslate"><span class="pre">util</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.util.html#module-enlace.util" title="enlace.util"><code class="xref py py-obj docutils literal notranslate"><span class="pre">util</span></code></a></p></td>
 <td><p>Internal helpers for enlace.</p></td>
 </tr>
 </tbody>
@@ -1028,6 +1162,11 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">enlace</a><ul>
+<li><a class="reference internal" href="#enlace.AppAnalyticsConfig"><code class="docutils literal notranslate"><span class="pre">AppAnalyticsConfig</span></code></a><ul>
+<li><a class="reference internal" href="#enlace.AppAnalyticsConfig.enabled"><code class="docutils literal notranslate"><span class="pre">AppAnalyticsConfig.enabled</span></code></a></li>
+<li><a class="reference internal" href="#enlace.AppAnalyticsConfig.model_config"><code class="docutils literal notranslate"><span class="pre">AppAnalyticsConfig.model_config</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#enlace.AppConfig"><code class="docutils literal notranslate"><span class="pre">AppConfig</span></code></a><ul>
 <li><a class="reference internal" href="#enlace.AppConfig.model_config"><code class="docutils literal notranslate"><span class="pre">AppConfig.model_config</span></code></a></li>
 </ul>
@@ -1068,6 +1207,15 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
 </ul>
 </li>
 <li><a class="reference internal" href="#enlace.Issue"><code class="docutils literal notranslate"><span class="pre">Issue</span></code></a></li>
+<li><a class="reference internal" href="#enlace.JsonFileStore"><code class="docutils literal notranslate"><span class="pre">JsonFileStore</span></code></a><ul>
+<li><a class="reference internal" href="#enlace.JsonFileStore.exclusive"><code class="docutils literal notranslate"><span class="pre">JsonFileStore.exclusive()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.JsonFileStore.sweep_temp_files"><code class="docutils literal notranslate"><span class="pre">JsonFileStore.sweep_temp_files()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#enlace.PlatformAnalyticsConfig"><code class="docutils literal notranslate"><span class="pre">PlatformAnalyticsConfig</span></code></a><ul>
+<li><a class="reference internal" href="#enlace.PlatformAnalyticsConfig.model_config"><code class="docutils literal notranslate"><span class="pre">PlatformAnalyticsConfig.model_config</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#enlace.PlatformConfig"><code class="docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a><ul>
 <li><a class="reference internal" href="#enlace.PlatformConfig.all_source_dirs"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.all_source_dirs</span></code></a></li>
 <li><a class="reference internal" href="#enlace.PlatformConfig.check_conflicts"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.check_conflicts()</span></code></a></li>
@@ -1079,8 +1227,10 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
 <li><a class="reference internal" href="#enlace.SourceRef.model_config"><code class="docutils literal notranslate"><span class="pre">SourceRef.model_config</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#enlace.analytics_report"><code class="docutils literal notranslate"><span class="pre">analytics_report()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.build_backend"><code class="docutils literal notranslate"><span class="pre">build_backend()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.daily_counts"><code class="docutils literal notranslate"><span class="pre">daily_counts()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.diagnose_app"><code class="docutils literal notranslate"><span class="pre">diagnose_app()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.discover_apps"><code class="docutils literal notranslate"><span class="pre">discover_apps()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
@@ -1100,7 +1250,7 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=6264e773"></script>
+</div><script src="../_static/documentation_options.js?v=cb249315"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

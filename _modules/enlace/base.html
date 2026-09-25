@@ -202,6 +202,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.access.html">enlace.access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.analytics.html">enlace.analytics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.base.html">enlace.base</a></li>
@@ -284,6 +285,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_validator</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.analytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppAnalyticsConfig</span><span class="p">,</span> <span class="n">PlatformAnalyticsConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.appmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppMetaConfig</span>
 
 <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
@@ -426,6 +428,10 @@
     <span class="p">)</span>
     <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="c1"># Privacy-first page-view analytics (app.toml's [analytics] table). Off</span>
+    <span class="c1"># unless the app opts in with mode = "privacy". See enlace.analytics.</span>
+    <span class="n">analytics</span><span class="p">:</span> <span class="n">AppAnalyticsConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">AppAnalyticsConfig</span><span class="p">)</span>
 
     <span class="c1"># Set only when discovery ran with ``on_import_error="record"`` and this</span>
     <span class="c1"># app's entry module raised on import. ``None`` on every healthy app, and</span>
@@ -601,6 +607,9 @@
     <span class="c1"># and `store_path` are carried for the enlace_auth plugin (the editable</span>
     <span class="c1"># overlay's authz + persistence), which enlace core never interprets.</span>
     <span class="n">app_meta</span><span class="p">:</span> <span class="n">AppMetaConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">AppMetaConfig</span><span class="p">)</span>
+    <span class="c1"># Platform-wide analytics settings (platform.toml [analytics]): storage,</span>
+    <span class="c1"># retention, timezone. Apps opt in individually; see enlace.analytics.</span>
+    <span class="n">analytics</span><span class="p">:</span> <span class="n">PlatformAnalyticsConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">PlatformAnalyticsConfig</span><span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -666,6 +675,10 @@
         <span class="n">app_meta_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"app_meta"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">app_meta_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">platform_data</span><span class="p">[</span><span class="s2">"app_meta"</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta_data</span>
+        <span class="c1"># [analytics] table — storage/retention for per-app analytics.</span>
+        <span class="n">analytics_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"analytics"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">analytics_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">platform_data</span><span class="p">[</span><span class="s2">"analytics"</span><span class="p">]</span> <span class="o">=</span> <span class="n">analytics_data</span>
 
         <span class="c1"># Resolve relative path-like fields against the TOML file's own</span>
         <span class="c1"># directory (not the CWD), so the config is host-portable. Done</span>
@@ -690,6 +703,10 @@
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"store_path"</span><span class="p">,</span> <span class="s2">"icons_dir"</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
                     <span class="n">app_meta</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">app_meta</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+        <span class="n">analytics</span> <span class="o">=</span> <span class="n">platform_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"analytics"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">analytics</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">analytics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"store_path"</span><span class="p">):</span>
+            <span class="n">analytics</span><span class="p">[</span><span class="s2">"store_path"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_resolve</span><span class="p">(</span><span class="n">analytics</span><span class="p">[</span><span class="s2">"store_path"</span><span class="p">])</span>
 
         <span class="c1"># Environment variable overrides</span>
         <span class="n">env_apps_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ENLACE_APPS_DIRS"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
@@ -783,7 +800,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=6264e773"></script>
+</div><script src="../../_static/documentation_options.js?v=cb249315"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

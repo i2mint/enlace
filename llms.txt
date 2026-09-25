@@ -9,6 +9,7 @@
 - [API reference](api.html.md): | &#96;enlace&#96;   | enlace -- Compose, serve, and deploy multiple web apps from a single codebase.   |
 - [enlace](_autosummary/enlace.html.md): enlace – Compose, serve, and deploy multiple web apps from a single codebase.
 - [enlace.access](_autosummary/enlace.access.html.md): Who may reach an app: the one predicate the gate and the launcher both call.
+- [enlace.analytics](_autosummary/enlace.analytics.html.md): Privacy-first page-view analytics, turned on per app.
 - [enlace.app_icons](_autosummary/enlace.app_icons.html.md): One icon per app, served in every form a browser or phone asks for.
 - [enlace.appmeta](_autosummary/enlace.appmeta.html.md): App metadata: harvest, resolve, and render titles / descriptions / keywords / icons.
 - [enlace.base](_autosummary/enlace.base.html.md): Core data structures for enlace platform configuration.
@@ -26,7 +27,7 @@
 - [enlace.supervise](_autosummary/enlace.supervise.html.md): Dev-mode process supervisor for enlace.
 - [enlace.util](_autosummary/enlace.util.html.md): Internal helpers for enlace.
 - [For AI agents](ai-agents.html.md): &#96;enlace&#96; ships artifacts for coding agents alongside its code. This page lists
-- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-25 10:49 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-25 11:07 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
 
 ## Optional
 

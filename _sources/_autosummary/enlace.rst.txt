@@ -8,8 +8,10 @@
 
    .. autosummary::
    
+      analytics_report
       build_backend
       create_app
+      daily_counts
       diagnose_app
       discover_apps
       load_manifest
@@ -23,6 +25,7 @@
 
    .. autosummary::
    
+      AppAnalyticsConfig
       AppConfig
       AppImportError
       BuildConfig
@@ -34,6 +37,8 @@
       DiagnosticReport
       ExternalRef
       Issue
+      JsonFileStore
+      PlatformAnalyticsConfig
       PlatformConfig
       ConventionDiscoverer
       SourceRef
@@ -51,6 +56,7 @@
    :recursive:
 
    access
+   analytics
    app_icons
    appmeta
    base

@@ -205,6 +205,7 @@
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API reference</a><input aria-label="Toggle navigation of API reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/enlace.html">enlace</a><input aria-label="Toggle navigation of enlace" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.access.html">enlace.access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.analytics.html">enlace.analytics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.app_icons.html">enlace.app_icons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.base.html">enlace.base</a></li>
@@ -424,6 +425,9 @@ enlace<span class="w"> </span>diagnose<span class="w"> </span>&lt;dir&gt;<span c
 enlace<span class="w"> </span>doctor<span class="w"> </span>--base-url<span class="w"> </span>http://127.0.0.1:8000
 <span class="w">                          </span><span class="c1"># Post-deploy smoke: probe /auth/csrf and every</span>
 <span class="w">                          </span><span class="c1"># mounted app; exit nonzero on any failure.</span>
+enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[</span>--app-name<span class="w"> </span>kids<span class="o">]</span><span class="w"> </span><span class="o">[</span>--days<span class="w"> </span><span class="m">30</span><span class="o">]</span><span class="w"> </span><span class="o">[</span>--json<span class="o">]</span>
+<span class="w">                          </span><span class="c1"># Page views per day and per path, for apps that</span>
+<span class="w">                          </span><span class="c1"># opted in to privacy-first analytics.</span>
 </pre></div>
 </div>
 </section>
@@ -674,6 +678,23 @@ tiers replaces the page’s own icon links; an app’s own icon only fills gaps.
 monogram gets a favicon but no PNG. <code class="docutils literal notranslate"><span class="pre">enlace.app_icons.home_screen_gaps(config)</span></code>
 lists those apps.</p>
 </section>
+<section id="privacy-first-analytics">
+<h3>Privacy-first analytics<a class="headerlink" href="#privacy-first-analytics" title="Link to this heading">¶</a></h3>
+<p>An app can have page views counted with no cookie, no JavaScript and no third party. It opts in from its own <code class="docutils literal notranslate"><span class="pre">app.toml</span></code>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[analytics]</span>
+<span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"privacy"</span>
+</pre></div>
+</div>
+<p>The enlace server counts the app’s HTML page views as it serves them, and the pages are not changed at all. It stores only daily aggregates per app: views per path (query strings dropped), referrer domain, primary language and device class (mobile/tablet/desktop). Each is kept as a separate count, never crossed with the others. No IP address is read and no visitor identifier is kept. Bots are counted separately. <code class="docutils literal notranslate"><span class="pre">DNT:</span> <span class="pre">1</span></code> and <code class="docutils literal notranslate"><span class="pre">Sec-GPC:</span> <span class="pre">1</span></code> are honoured, and <code class="docutils literal notranslate"><span class="pre">/_analytics/opt-out</span></code> is a page a privacy notice can link to. An app without the table records nothing.</p>
+<p>Read the counts on the serving host with <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">analytics</span></code>, or from Python with <code class="docutils literal notranslate"><span class="pre">enlace.analytics_report()</span></code>. Storage defaults to JSON files under <code class="docutils literal notranslate"><span class="pre">~/.local/share/enlace/analytics</span></code>. It is configured in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>, and <code class="docutils literal notranslate"><span class="pre">build_backend(config,</span> <span class="pre">analytics_store=...)</span></code> takes any <code class="docutils literal notranslate"><span class="pre">MutableMapping</span></code> (e.g. a <code class="docutils literal notranslate"><span class="pre">dol</span></code> store):</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[analytics]</span>
+<span class="n">store_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"~/.local/share/enlace/analytics"</span>
+<span class="n">retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">395</span><span class="w">        </span><span class="c1"># at most 750 (under 25 months)</span>
+<span class="n">timezone</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Europe/Paris"</span><span class="w">   </span><span class="c1"># whose midnight starts a new day</span>
+</pre></div>
+</div>
+<p>The design and how it maps onto the CNIL’s consent exemption for audience measurement are in <a class="reference internal" href="#misc/docs/privacy_analytics.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/privacy_analytics.md</span></code></span></a>. That doc also lists what a site operator still has to do: a privacy-notice entry, and handling their own access logs.</p>
+</section>
 <section id="deploy-manifest-meta">
 <h3>Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)<a class="headerlink" href="#deploy-manifest-meta" title="Link to this heading">¶</a></h3>
 <p>enlace answers “what is actually deployed?” via an always-on, cheap manifest
@@ -690,7 +711,7 @@ browser rendered the current build or a stale cache.</p>
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-25 10:49 UTC from <a href="https://github.com/i2mint/enlace/commit/5bf1866d7d11d5d430d289d41406d1f57d67e5bf">5bf1866</a> (main) · enlace 0.1.40 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-25 11:07 UTC from <a href="https://github.com/i2mint/enlace/commit/a670937735e7fe7d66873227911f95bb041e97dc">a670937</a> (main) · enlace 0.1.41 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -754,6 +775,7 @@ browser rendered the current build or a stale cache.</p>
 <li><a class="reference internal" href="#auth-sessions-plugins">Auth, sessions &amp; plugins</a></li>
 <li><a class="reference internal" href="#html-caching">HTML caching</a></li>
 <li><a class="reference internal" href="#app-icons-tab-home-screen-launcher">App icons (tab, home screen, launcher)</a></li>
+<li><a class="reference internal" href="#privacy-first-analytics">Privacy-first analytics</a></li>
 <li><a class="reference internal" href="#deploy-manifest-meta">Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)</a></li>
 </ul>
 </li>
@@ -768,7 +790,7 @@ browser rendered the current build or a stale cache.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=6264e773"></script>
+</div><script src="_static/documentation_options.js?v=cb249315"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

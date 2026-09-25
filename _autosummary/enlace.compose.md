@@ -15,10 +15,10 @@ Plugins:
 
 ### Functions
 
-| [`build_backend`](#enlace.compose.build_backend)(config, \*[, plugins])      | Compose all app backends into a single ASGI application.                |
-|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| [`build_launcher_item`](#enlace.compose.build_launcher_item)(app, config, overlay) | Build one `/_apps` item: resolved metadata + launchability, for an app. |
-| [`create_app`](#enlace.compose.create_app)()                              | App factory for Uvicorn's --factory flag.                               |
+| [`build_backend`](#enlace.compose.build_backend)(config, \*[, plugins, ...])   | Compose all app backends into a single ASGI application.                |
+|----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [`build_launcher_item`](#enlace.compose.build_launcher_item)(app, config, overlay)   | Build one `/_apps` item: resolved metadata + launchability, for an app. |
+| [`create_app`](#enlace.compose.create_app)()                                | App factory for Uvicorn's --factory flag.                               |
 
 ### Exceptions
 
@@ -34,7 +34,7 @@ Raised when platform configuration is unusable at startup.
 Distinct from `ValueError` / `RuntimeError` so callers and tests can
 target this specific class.
 
-### enlace.compose.build_backend(config, , plugins=())
+### enlace.compose.build_backend(config, , plugins=(), analytics_store=None)
 
 Compose all app backends into a single ASGI application.
 
@@ -47,7 +47,11 @@ For each discovered app:
 - frontend_only (mode=asgi): skip (no backend to mount)
 
 * **Parameters:**
-  **config** ([`PlatformConfig`](enlace.base.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **config** ([`PlatformConfig`](enlace.base.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
+  * **plugins** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`FastAPI`, [`PlatformConfig`](enlace.base.md#enlace.base.PlatformConfig)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – Compose-time plugins, e.g. `enlace_auth.plugin`.
+  * **analytics_store** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`MutableMapping`](https://docs.python.org/3/library/typing.html#typing.MutableMapping)]) – Where page-view analytics go, for apps that opted in
+    (any `MutableMapping[str, dict]`, e.g. a `dol` store). Default:
+    JSON files under `[analytics].store_path`. See enlace.analytics.
 * **Return type:**
   `FastAPI`
 * **Returns:**
