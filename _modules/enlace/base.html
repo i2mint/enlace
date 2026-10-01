@@ -426,6 +426,15 @@
             <span class="s2">"Empty list means any authenticated user allowed."</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">user_store</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Offer this app a per-user store to signed-in visitors even when its "</span>
+            <span class="s2">"access is not protected:user (e.g. a public app with optional sign-in). "</span>
+            <span class="s2">"Consumed by enlace_auth, like ``access``; enlace itself does not "</span>
+            <span class="s2">"interpret it."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
@@ -800,7 +809,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=cb249315"></script>
+</div><script src="../../_static/documentation_options.js?v=eb9509fe"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
