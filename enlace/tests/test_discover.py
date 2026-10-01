@@ -111,11 +111,12 @@ def test_discover_user_store_flag(single_app_dir, tmp_apps_dir):
     """``user_store = true`` reaches the AppConfig (asgi and frontend-only apps); default off."""
     discoverer = _make_discoverer()
     assert discoverer.discover(single_app_dir)[0].user_store is False
-    (single_app_dir / "foo" / "app.toml").write_text('access = "public"\nuser_store = true\n')
+    toml = 'access = "public"\nuser_store = true\n'
+    (single_app_dir / "foo" / "app.toml").write_text(toml)
     static = tmp_apps_dir / "site"
     (static / "frontend").mkdir(parents=True)
     (static / "frontend" / "index.html").write_text("<p>hi</p>")
-    (static / "app.toml").write_text('access = "public"\nuser_store = true\nfrontend_dir = "frontend"\n')
+    (static / "app.toml").write_text(toml + 'frontend_dir = "frontend"\n')
     apps = {a.name: a for a in discoverer.discover(tmp_apps_dir)}
     assert apps["foo"].user_store is True
     assert apps["site"].user_store is True
