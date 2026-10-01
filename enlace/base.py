@@ -153,6 +153,15 @@ class AppConfig(BaseModel):
             "Empty list means any authenticated user allowed."
         ),
     )
+    user_store: bool = Field(
+        default=False,
+        description=(
+            "Offer this app a per-user store to signed-in visitors even when its "
+            "access is not protected:user (e.g. a public app with optional sign-in). "
+            "Consumed by enlace_auth, like ``access``; enlace itself does not "
+            "interpret it."
+        ),
+    )
     display_name: str = ""
     provenance: dict[str, str] = Field(default_factory=dict)
 
