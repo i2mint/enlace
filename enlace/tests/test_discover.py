@@ -108,7 +108,7 @@ def test_discover_app_toml_override(single_app_dir):
 
 
 def test_discover_user_store_flag(single_app_dir, tmp_apps_dir):
-    """``user_store = true`` reaches the AppConfig (asgi and frontend-only apps); default off."""
+    """``user_store = true`` reaches AppConfig (asgi and frontend-only); default off."""
     discoverer = _make_discoverer()
     assert discoverer.discover(single_app_dir)[0].user_store is False
     toml = 'access = "public"\nuser_store = true\n'
