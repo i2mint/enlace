@@ -107,6 +107,21 @@ def test_discover_app_toml_override(single_app_dir):
     assert app.provenance["route_prefix"] == "override: app.toml"
 
 
+def test_discover_user_store_flag(single_app_dir, tmp_apps_dir):
+    """``user_store = true`` reaches AppConfig (asgi and frontend-only); default off."""
+    discoverer = _make_discoverer()
+    assert discoverer.discover(single_app_dir)[0].user_store is False
+    toml = 'access = "public"\nuser_store = true\n'
+    (single_app_dir / "foo" / "app.toml").write_text(toml)
+    static = tmp_apps_dir / "site"
+    (static / "frontend").mkdir(parents=True)
+    (static / "frontend" / "index.html").write_text("<p>hi</p>")
+    (static / "app.toml").write_text(toml + 'frontend_dir = "frontend"\n')
+    apps = {a.name: a for a in discoverer.discover(tmp_apps_dir)}
+    assert apps["foo"].user_store is True
+    assert apps["site"].user_store is True
+
+
 def test_discover_conflict_detection(tmp_apps_dir):
     """Two apps resolving to the same route trigger a conflict."""
     for name in ["app_a", "app_b"]:
