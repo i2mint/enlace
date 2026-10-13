@@ -21,7 +21,9 @@ thing. So the platform's GET routes must be safe to navigate to on their own
 boundary.
 """
 
+import re
 from typing import Callable, Iterable, Optional
+from urllib.parse import quote, unquote
 
 #: Cookies the platform itself sets on its own origin -- enlace_auth's defaults
 #: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, the
@@ -147,6 +149,70 @@ def _set_cookie_allowed(value: str, keep: CookieFilter) -> bool:
     return bool(name) and keep(name)
 
 
+#: A path as it may travel on the wire: RFC 3986 ``pchar`` and ``/``, with every
+#: ``%`` starting a two-digit escape. Anything else is not forwarded verbatim.
+_WIRE_PATH = re.compile(r"(?:[A-Za-z0-9\-._~!$&'()*+,;=:@/]|%[0-9A-Fa-f]{2})*")
+
+#: Characters :func:`quote` leaves alone when re-encoding a decoded path:
+#: ``pchar`` minus ``%``, so ``%``, ``?``, ``#`` and spaces are escaped.
+_PATH_SAFE = "/!$&'()*+,;=:@-._~"
+
+
+def _upstream_path(scope, strip_prefix: str = "") -> str:
+    """The path to forward, percent-encoded as the client sent it (enlace#74).
+
+    ASGI servers hand ``scope["path"]`` over *decoded*, so building the upstream
+    URL from it changes the request: ``a%2Fb`` arrives as ``a/b``, ``a%3Fb``
+    moves ``b`` into the query, and ``100%25`` becomes a bare ``%``. The bytes
+    the client sent are in ``scope["raw_path"]``, so the remainder after the
+    mount prefix is taken from there. That happens only when the raw path
+    provably *is* the decoded one: its leading segments decode to exactly
+    ``strip_prefix``, the rest decodes to exactly the decoded remainder, and it
+    is well-formed on the wire. Otherwise the decoded remainder is re-quoted,
+    which keeps ``%``, ``?`` and ``#`` inside the path.
+
+    A remainder with a ``.`` or ``..`` segment (decoded, so ``%2E%2E`` counts)
+    is also re-quoted. httpx then resolves the dot segments, as it always
+    did, rather than handing an escaped ``..`` to the upstream to decode.
+
+    The result always starts with ``/``. Concatenated onto the upstream's base
+    URL it can only name a path on that host, never a different authority
+    (``/api/x@evil`` must not become ``http://127.0.0.1:9100@evil``).
+
+    >>> scope = {"path": "/api/x/a/b", "raw_path": b"/api/x/a%2Fb"}
+    >>> _upstream_path(scope, "/api/x")
+    '/a%2Fb'
+    >>> _upstream_path({"path": "/api/x/100%"}, "/api/x")
+    '/100%25'
+    >>> _upstream_path({"path": "/api/x/../y", "raw_path": b"/api/x/%2E%2E/y"}, "/api/x")
+    '/../y'
+    """
+    path = scope.get("path") or "/"
+    prefix = strip_prefix.rstrip("/")
+    if prefix and (path == prefix or path.startswith(prefix + "/")):
+        remainder = path[len(prefix) :]
+    else:  # not under the prefix segment-wise (no Mount routes this): forward as is
+        remainder, prefix = path, ""
+    if not remainder.startswith("/"):
+        remainder = "/" + remainder
+
+    if any(seg in (".", "..") for seg in remainder.split("/")):
+        return quote(remainder, safe=_PATH_SAFE)
+
+    raw = scope.get("raw_path")
+    if isinstance(raw, (bytes, bytearray)):
+        raw_s = bytes(raw).decode("latin-1")
+        n = len(prefix.split("/")) if prefix else 1
+        parts = raw_s.split("/")
+        if [unquote(p) for p in parts[:n]] == (prefix.split("/") if prefix else [""]):
+            raw_rest = "/" + "/".join(parts[n:])
+            # unquote's default errors="replace" is how uvicorn decodes too, so
+            # an escape that is not UTF-8 (%FF) still matches and travels as is.
+            if _WIRE_PATH.fullmatch(raw_rest) and unquote(raw_rest) == remainder:
+                return raw_rest
+    return quote(remainder, safe=_PATH_SAFE)
+
+
 # Default per-request timeout (seconds) for proxied requests. Bounds a hung
 # upstream so a stuck app can't tie up the gateway indefinitely.
 _DEFAULT_TIMEOUT_S = 60.0
@@ -265,10 +331,8 @@ class _HttpxProxy:
 
         client = await self._get_client()
 
-        # Build the upstream path
-        path = scope.get("path", "/")
-        if self.strip_prefix and path.startswith(self.strip_prefix):
-            path = path[len(self.strip_prefix) :] or "/"
+        # The upstream path, as the client encoded it (see _upstream_path).
+        path = _upstream_path(scope, self.strip_prefix)
 
         query = scope.get("query_string", b"")
         # httpx.Request(url=...) does not apply AsyncClient.base_url (only the
