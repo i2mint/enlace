@@ -40,6 +40,15 @@ their own typed fields — `dockerfile`, `image`, `compose_file`,
 plugin’s `BackendStrategy` reads them via attribute access
 (`app.dockerfile`); enlace itself ignores them.
 
+#### forward_platform_credentials *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Forward the visitor’s platform session and CSRF credentials (cookies and
+the `X-CSRF-Token` header) to the process. Off by default: a process app
+is a separate program with its own dependencies, and bearer-token apps
+such as MCP connectors never need them. Response filtering (no platform
+`Set-Cookie`, `Clear-Site-Data` or `Service-Worker-Allowed`) applies
+either way.
+
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'allow'}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].

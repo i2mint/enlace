@@ -1,4 +1,4 @@
-> built 2026-10-01 16:22 UTC from fa62ef5 (main) · enlace 0.1.42. Details: build_info.json
+> built 2026-10-13 03:30 UTC from b3f0472 (main) · enlace 0.1.43. Details: build_info.json
 
 # index.html.md
 
@@ -1297,6 +1297,15 @@ their own typed fields — `dockerfile`, `image`, `compose_file`,
 plugin’s `BackendStrategy` reads them via attribute access
 (`app.dockerfile`); enlace itself ignores them.
 
+#### forward_platform_credentials *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Forward the visitor’s platform session and CSRF credentials (cookies and
+the `X-CSRF-Token` header) to the process. Off by default: a process app
+is a separate program with its own dependencies, and bearer-token apps
+such as MCP connectors never need them. Response filtering (no platform
+`Set-Cookie`, `Clear-Site-Data` or `Service-Worker-Allowed`) applies
+either way.
+
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'allow'}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
@@ -2167,6 +2176,15 @@ their own typed fields — `dockerfile`, `image`, `compose_file`,
 plugin’s `BackendStrategy` reads them via attribute access
 (`app.dockerfile`); enlace itself ignores them.
 
+#### forward_platform_credentials *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Forward the visitor’s platform session and CSRF credentials (cookies and
+the `X-CSRF-Token` header) to the process. Off by default: a process app
+is a separate program with its own dependencies, and bearer-token apps
+such as MCP connectors never need them. Response filtering (no platform
+`Set-Cookie`, `Clear-Site-Data` or `Service-Worker-Allowed`) applies
+either way.
+
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'allow'}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
@@ -2895,10 +2913,10 @@ app is actually instantiated, so the dependency remains optional.
 
 ### Module Attributes
 
-| [`PLATFORM_COOKIE_NAMES`](_autosummary/enlace.proxy.html.md#enlace.proxy.PLATFORM_COOKIE_NAMES)          | Cookies the platform itself sets on its own origin -- enlace_auth's defaults (`AuthConfig.session_cookie_name`, `CSRFMiddleware` cookie name, and the per-app `shared_auth_<app>` cookies).                                                                            |
-|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`EXTERNAL_DROP_REQUEST_HEADERS`](_autosummary/enlace.proxy.html.md#enlace.proxy.EXTERNAL_DROP_REQUEST_HEADERS)  | Request headers carrying platform credentials, withheld from external upstreams (the CSRF double-submit token pairs with `enlace_csrf`).                                                                                                                               |
-| [`EXTERNAL_DROP_RESPONSE_HEADERS`](_autosummary/enlace.proxy.html.md#enlace.proxy.EXTERNAL_DROP_RESPONSE_HEADERS) | Response headers an external upstream may not send on the platform origin: `Clear-Site-Data` could wipe the platform's cookies/storage, and `Service-Worker-Allowed` could let a script under the app's prefix register a service worker controlling the whole origin. |
+| [`PLATFORM_COOKIE_NAMES`](_autosummary/enlace.proxy.html.md#enlace.proxy.PLATFORM_COOKIE_NAMES)               | Cookies the platform itself sets on its own origin -- enlace_auth's defaults (`AuthConfig.session_cookie_name`, `CSRFMiddleware` cookie name, the social-login `enlace_oauth_state` cookie, and the per-app `shared_auth_<app>` cookies).                            |
+|--------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`PLATFORM_CREDENTIAL_REQUEST_HEADERS`](_autosummary/enlace.proxy.html.md#enlace.proxy.PLATFORM_CREDENTIAL_REQUEST_HEADERS) | Request headers carrying platform credentials, withheld from proxied upstreams (the CSRF double-submit token pairs with `enlace_csrf`).                                                                                                                              |
+| [`PLATFORM_UNSAFE_RESPONSE_HEADERS`](_autosummary/enlace.proxy.html.md#enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS)    | Response headers a proxied upstream may not send on the platform origin: `Clear-Site-Data` could wipe the platform's cookies/storage, and `Service-Worker-Allowed` could let a script under the app's prefix register a service worker controlling the whole origin. |
 
 ### Functions
 
@@ -2906,27 +2924,28 @@ app is actually instantiated, so the dependency remains optional.
 |------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
 | [`platform_cookie_filter`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_cookie_filter)(\*[, names, prefixes])       | Return a filter that keeps every cookie except the platform's own. |
 
-### enlace.proxy.EXTERNAL_DROP_REQUEST_HEADERS *= ('x-csrf-token',)*
+### enlace.proxy.PLATFORM_COOKIE_NAMES *= ('enlace_session', 'enlace_csrf', 'enlace_oauth_state')*
 
-Request headers carrying platform credentials, withheld from external
+Cookies the platform itself sets on its own origin – enlace_auth’s defaults
+(`AuthConfig.session_cookie_name`, `CSRFMiddleware` cookie name, the
+social-login `enlace_oauth_state` cookie, and the per-app
+`shared_auth_<app>` cookies). Keep in sync with enlace_auth. They
+are credentials for *this* platform and must never reach an upstream that
+is not part of it.
+
+### enlace.proxy.PLATFORM_CREDENTIAL_REQUEST_HEADERS *= ('x-csrf-token',)*
+
+Request headers carrying platform credentials, withheld from proxied
 upstreams (the CSRF double-submit token pairs with `enlace_csrf`).
 
-### enlace.proxy.EXTERNAL_DROP_RESPONSE_HEADERS *= ('clear-site-data', 'service-worker-allowed')*
+### enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS *= ('clear-site-data', 'service-worker-allowed')*
 
-Response headers an external upstream may not send on the platform origin:
+Response headers a proxied upstream may not send on the platform origin:
 `Clear-Site-Data` could wipe the platform’s cookies/storage, and
 `Service-Worker-Allowed` could let a script under the app’s prefix
 register a service worker controlling the whole origin.
 
-### enlace.proxy.PLATFORM_COOKIE_NAMES *= ('enlace_session', 'enlace_csrf')*
-
-Cookies the platform itself sets on its own origin – enlace_auth’s defaults
-(`AuthConfig.session_cookie_name`, `CSRFMiddleware` cookie name, and the
-per-app `shared_auth_<app>` cookies). Keep in sync with enlace_auth. They
-are credentials for *this* platform and must never reach an upstream that
-is not part of it.
-
-### enlace.proxy.make_proxy_app(, upstream, strip_prefix='', cookie_filter=None, drop_request_headers=(), drop_response_headers=())
+### enlace.proxy.make_proxy_app(, upstream, strip_prefix='', cookie_filter=None, set_cookie_filter=None, drop_request_headers=(), drop_response_headers=())
 
 Create an ASGI app that proxies requests to *upstream*.
 
@@ -2937,21 +2956,24 @@ Create an ASGI app that proxies requests to *upstream*.
   * **cookie_filter** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]]) – `name -> bool`; when given, request cookies it
     rejects are not forwarded and upstream `Set-Cookie` headers
     naming them are dropped. `None` (the default) forwards all
-    cookies, which suits a local process app that is part of the
-    platform. See [`platform_cookie_filter()`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_cookie_filter).
+    cookies. See [`platform_cookie_filter()`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_cookie_filter).
+  * **set_cookie_filter** ([`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]]) – the filter for upstream `Set-Cookie` alone, when
+    it must differ from *cookie_filter* (an app trusted to read the
+    platform session is still not allowed to set it). Defaults to
+    *cookie_filter*.
   * **drop_response_headers** ([`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – header names
     (case-insensitive) never forwarded upstream / never passed back
     to the client. See `EXTERNAL_DROP_*` for what external apps use.
 * **Returns:**
   An ASGI callable.
 
-### enlace.proxy.platform_cookie_filter(, names=('enlace_session', 'enlace_csrf'), prefixes=('shared_auth_',))
+### enlace.proxy.platform_cookie_filter(, names=('enlace_session', 'enlace_csrf', 'enlace_oauth_state'), prefixes=('shared_auth_',))
 
 Return a filter that keeps every cookie except the platform’s own.
 
-Used for `mode="external"` apps: an upstream on another host has no
-business seeing a visitor’s platform session, and must not be able to set
-(overwrite) one on the platform’s origin either.
+Used for every proxied app (`mode="external"` and `mode="process"`): an
+upstream has no business seeing a visitor’s platform session, and must not
+be able to set (overwrite) one on the platform’s origin either.
 
 * **Return type:**
   [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
@@ -3380,18 +3402,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-01 16:22 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/fa62ef5faf9b6af2089945d42ff5080286f78a94"><code>fa62ef5</code></a> on branch <code>main</code>, for **enlace 0.1.42** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 03:30 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/b3f0472b69eafb2522748b04fcef5d694be8d350"><code>b3f0472</code></a> on branch <code>main</code>, for **enlace 0.1.43** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.42) is behind the latest release on PyPI (0.1.43): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.43) is behind the latest release on PyPI (0.1.44): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/fa62ef5faf9b6af2089945d42ff5080286f78a94"><code>fa62ef5faf9b6af2089945d42ff5080286f78a94</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/b3f0472b69eafb2522748b04fcef5d694be8d350"><code>b3f0472b69eafb2522748b04fcef5d694be8d350</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3402,18 +3424,18 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/36891192782">36891192782</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38341921430">38341921430</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>fa62ef5faf9b6af2089945d42ff5080286f78a94</code> (in the history of the built commit) |
+| Event commit | <code>b3f0472b69eafb2522748b04fcef5d694be8d350</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.12  |
+| epythet  | 0.2.13  |
 | Sphinx   | 9.1.0   |
 | docutils | 0.22.4  |
-| Python   | 3.12.14 |
+| Python   | 3.12.15 |
 
 ## Configuration as resolved
 
@@ -3429,14 +3451,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.43/">0.1.43</a>, newer than the documented version (0.1.42).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.44/">0.1.44</a>, newer than the documented version (0.1.43).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout fa62ef5faf9b6af2089945d42ff5080286f78a94
-pip install "epythet==0.2.12"
+git checkout b3f0472b69eafb2522748b04fcef5d694be8d350
+pip install "epythet==0.2.13"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

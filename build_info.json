@@ -1,39 +1,39 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-01T16:22:19Z",
+  "built_at": "2026-10-13T03:30:53Z",
   "package": {
     "name": "enlace",
-    "version": "0.1.42",
+    "version": "0.1.43",
     "display_name": "enlace",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "fa62ef5faf9b6af2089945d42ff5080286f78a94",
-    "short_commit": "fa62ef5",
+    "commit": "b3f0472b69eafb2522748b04fcef5d694be8d350",
+    "short_commit": "b3f0472",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/i2mint/enlace",
-    "commit_url": "https://github.com/i2mint/enlace/commit/fa62ef5faf9b6af2089945d42ff5080286f78a94",
+    "commit_url": "https://github.com/i2mint/enlace/commit/b3f0472b69eafb2522748b04fcef5d694be8d350",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "i2mint/enlace",
-    "sha": "fa62ef5faf9b6af2089945d42ff5080286f78a94",
+    "sha": "b3f0472b69eafb2522748b04fcef5d694be8d350",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "36891192782",
-    "run_url": "https://github.com/i2mint/enlace/actions/runs/36891192782",
+    "run_id": "38341921430",
+    "run_url": "https://github.com/i2mint/enlace/actions/runs/38341921430",
     "server_url": "https://github.com"
   },
   "tools": {
-    "epythet": "0.2.12",
+    "epythet": "0.2.13",
     "sphinx": "9.1.0",
     "docutils": "0.22.4",
-    "python": "3.12.14"
+    "python": "3.12.15"
   },
   "config": {
     "theme": "auto",
@@ -56,20 +56,20 @@
   },
   "site": {
     "modules_documented": 19,
-    "objects_documented": 231
+    "objects_documented": 233
   },
   "pypi": {
     "checked": true,
-    "latest": "0.1.43",
+    "latest": "0.1.44",
     "relation": "behind",
     "error": null
   },
-  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout fa62ef5faf9b6af2089945d42ff5080286f78a94\npip install \"epythet==0.2.12\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout b3f0472b69eafb2522748b04fcef5d694be8d350\npip install \"epythet==0.2.13\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
     "aligned": false,
     "notes": [
-      "The documented version (0.1.42) is behind the latest release on PyPI (0.1.43): `pip install enlace` gives newer code than these docs describe."
+      "The documented version (0.1.43) is behind the latest release on PyPI (0.1.44): `pip install enlace` gives newer code than these docs describe."
     ]
   }
 }

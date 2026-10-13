@@ -481,6 +481,13 @@
     <span class="n">restart_policy</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"always"</span><span class="p">,</span> <span class="s2">"on-failure"</span><span class="p">,</span> <span class="s2">"never"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"on-failure"</span>
     <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
     <span class="n">restart_delay_ms</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="c1">#: Forward the visitor's platform session and CSRF credentials (cookies and</span>
+    <span class="c1">#: the ``X-CSRF-Token`` header) to the process. Off by default: a process app</span>
+    <span class="c1">#: is a separate program with its own dependencies, and bearer-token apps</span>
+    <span class="c1">#: such as MCP connectors never need them. Response filtering (no platform</span>
+    <span class="c1">#: ``Set-Cookie``, ``Clear-Site-Data`` or ``Service-Worker-Allowed``) applies</span>
+    <span class="c1">#: either way.</span>
+    <span class="n">forward_platform_credentials</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># External-mode fields</span>
     <span class="n">upstream_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -809,7 +816,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=eb9509fe"></script>
+</div><script src="../../_static/documentation_options.js?v=42d57d98"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
