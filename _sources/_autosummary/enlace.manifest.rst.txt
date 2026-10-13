@@ -9,6 +9,7 @@ enlace.manifest
    .. autosummary::
    
       MANIFEST_ERROR_KEY
+      RUNTIME_VERSION_KEY
    
    .. rubric:: Functions
 

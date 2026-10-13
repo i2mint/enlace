@@ -297,6 +297,9 @@ hidden from end users by default — apps can opt to surface the data visibly
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.manifest.MANIFEST_ERROR_KEY" title="enlace.manifest.MANIFEST_ERROR_KEY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MANIFEST_ERROR_KEY</span></code></a></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">extra</span></code> key naming why an on-disk manifest was not used.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.manifest.RUNTIME_VERSION_KEY" title="enlace.manifest.RUNTIME_VERSION_KEY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RUNTIME_VERSION_KEY</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/_meta</span></code> key carrying the enlace version the gateway is <em>running</em>, added at serve time.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -414,6 +417,17 @@ rewrites the body it must run <strong>inside</strong> any compression middleware
 <dd><p><code class="docutils literal notranslate"><span class="pre">extra</span></code> key naming why an on-disk manifest was not used. It exists only
 when something is wrong, so a healthy <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> is quiet and a degraded
 one cannot be mistaken for “no manifest was ever written”.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.manifest.RUNTIME_VERSION_KEY">
+<span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">RUNTIME_VERSION_KEY</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'enlace_runtime_version'</span></span><a class="headerlink" href="#enlace.manifest.RUNTIME_VERSION_KEY" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">/_meta</span></code> key carrying the enlace version the gateway is <em>running</em>, added at
+serve time. <code class="docutils literal notranslate"><span class="pre">enlace_version</span></code> is what the deploy recorded in the manifest and
+wins over the runtime when present, so after an engine-only upgrade (a new
+wheel and a restart, no redeploy) it names the old version. This key never
+does. <code class="docutils literal notranslate"><span class="pre">None</span></code> when enlace’s distribution metadata is unavailable.
+See <a class="reference external" href="https://github.com/i2mint/enlace/issues/78">https://github.com/i2mint/enlace/issues/78</a>.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -558,6 +572,7 @@ available; serve minimal stubs”.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#enlace.manifest.MANIFEST_ERROR_KEY"><code class="docutils literal notranslate"><span class="pre">MANIFEST_ERROR_KEY</span></code></a></li>
+<li><a class="reference internal" href="#enlace.manifest.RUNTIME_VERSION_KEY"><code class="docutils literal notranslate"><span class="pre">RUNTIME_VERSION_KEY</span></code></a></li>
 <li><a class="reference internal" href="#enlace.manifest.SourceRef"><code class="docutils literal notranslate"><span class="pre">SourceRef</span></code></a><ul>
 <li><a class="reference internal" href="#enlace.manifest.SourceRef.model_config"><code class="docutils literal notranslate"><span class="pre">SourceRef.model_config</span></code></a></li>
 </ul>
@@ -577,7 +592,7 @@ available; serve minimal stubs”.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=817023e2"></script>
+</div><script src="../_static/documentation_options.js?v=c61c636a"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -381,6 +381,14 @@
 <span class="c1">#: one cannot be mistaken for "no manifest was ever written".</span>
 <span class="n">MANIFEST_ERROR_KEY</span> <span class="o">=</span> <span class="s2">"manifest_error"</span>
 
+<span class="c1">#: ``/_meta`` key carrying the enlace version the gateway is *running*, added at</span>
+<span class="c1">#: serve time. ``enlace_version`` is what the deploy recorded in the manifest and</span>
+<span class="c1">#: wins over the runtime when present, so after an engine-only upgrade (a new</span>
+<span class="c1">#: wheel and a restart, no redeploy) it names the old version. This key never</span>
+<span class="c1">#: does. ``None`` when enlace's distribution metadata is unavailable.</span>
+<span class="c1">#: See https://github.com/i2mint/enlace/issues/78.</span>
+<span class="n">RUNTIME_VERSION_KEY</span> <span class="o">=</span> <span class="s2">"enlace_runtime_version"</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_manifest_error_summary</span><span class="p">(</span><span class="n">error</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""A short, path-free description of why a manifest file was rejected.</span>
@@ -646,7 +654,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=817023e2"></script>
+</div><script src="../../_static/documentation_options.js?v=c61c636a"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

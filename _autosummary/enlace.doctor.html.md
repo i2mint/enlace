@@ -22,7 +22,7 @@ Design:
   `on_import_error`. A health tool that dies on the failure it exists to
   detect reports nothing about the thirty apps that are fine.
 - An app the *running* gateway could not load is serving a 500 stub
-  ([`enlace.degraded`](enlace.degraded.html.md#module-enlace.degraded)); `_check_live_degraded` reads the live
+  ([`enlace.degraded`](enlace.degraded.html.md#module-enlace.degraded)); `_check_live_meta` reads the live
   `/_meta` and FAILs once per stubbed app. That is the gateway’s own
   answer, so it also catches a failure only the server’s identity hits
   (a file the service user cannot read) that the doctor’s local discovery

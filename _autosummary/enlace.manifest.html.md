@@ -29,8 +29,9 @@ See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlac
 
 ### Module Attributes
 
-| [`MANIFEST_ERROR_KEY`](#enlace.manifest.MANIFEST_ERROR_KEY)   | `extra` key naming why an on-disk manifest was not used.   |
-|-----------------------------------------------------------------------|------------------------------------------------------------|
+| [`MANIFEST_ERROR_KEY`](#enlace.manifest.MANIFEST_ERROR_KEY)   | `extra` key naming why an on-disk manifest was not used.                                |
+|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| [`RUNTIME_VERSION_KEY`](#enlace.manifest.RUNTIME_VERSION_KEY)  | `/_meta` key carrying the enlace version the gateway is *running*, added at serve time. |
 
 ### Functions
 
@@ -109,6 +110,15 @@ Configuration for the model, should be a dictionary conforming to [`ConfigDict`]
 `extra` key naming why an on-disk manifest was not used. It exists only
 when something is wrong, so a healthy `/_meta` is quiet and a degraded
 one cannot be mistaken for “no manifest was ever written”.
+
+### enlace.manifest.RUNTIME_VERSION_KEY *= 'enlace_runtime_version'*
+
+`/_meta` key carrying the enlace version the gateway is *running*, added at
+serve time. `enlace_version` is what the deploy recorded in the manifest and
+wins over the runtime when present, so after an engine-only upgrade (a new
+wheel and a restart, no redeploy) it names the old version. This key never
+does. `None` when enlace’s distribution metadata is unavailable.
+See [https://github.com/i2mint/enlace/issues/78](https://github.com/i2mint/enlace/issues/78).
 
 ### *class* enlace.manifest.SourceRef(\*\*data)
 

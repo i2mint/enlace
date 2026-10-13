@@ -1,4 +1,4 @@
-> built 2026-10-13 14:05 UTC from 533a2ba (main) · enlace 0.1.49. Details: build_info.json
+> built 2026-10-13 14:28 UTC from e80d731 (main) · enlace 0.1.50. Details: build_info.json
 
 # index.html.md
 
@@ -413,6 +413,12 @@ snapshots build identity (git SHA, deploy time, externals) at deploy time into
 `{manifest_dir}/{app}.json`; enlace owns the read paths and schema. This lets
 you tell whether the server is serving the SHA you think it is and whether the
 browser rendered the current build or a stale cache.
+
+`enlace_version` is what the deploy recorded (or, when the manifest records
+none, the running version); `enlace_runtime_version` is always the enlace
+actually running, added at serve time. They differ after an engine-only
+upgrade (a new wheel and a restart, no redeploy), and `enlace doctor` warns
+when they do.
 
 <p class="epythet-aggregates">This documentation as a single file: <a href="enlace.md">enlace.md</a> (Markdown, for agents).</p>
 
@@ -2138,7 +2144,7 @@ Design:
   `on_import_error`. A health tool that dies on the failure it exists to
   detect reports nothing about the thirty apps that are fine.
 - An app the *running* gateway could not load is serving a 500 stub
-  ([`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)); `_check_live_degraded` reads the live
+  ([`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)); `_check_live_meta` reads the live
   `/_meta` and FAILs once per stubbed app. That is the gateway’s own
   answer, so it also catches a failure only the server’s identity hits
   (a file the service user cannot read) that the doctor’s local discovery
@@ -3145,8 +3151,9 @@ See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlac
 
 ### Module Attributes
 
-| [`MANIFEST_ERROR_KEY`](_autosummary/enlace.manifest.html.md#enlace.manifest.MANIFEST_ERROR_KEY)   | `extra` key naming why an on-disk manifest was not used.   |
-|-----------------------------------------------------------------------|------------------------------------------------------------|
+| [`MANIFEST_ERROR_KEY`](_autosummary/enlace.manifest.html.md#enlace.manifest.MANIFEST_ERROR_KEY)   | `extra` key naming why an on-disk manifest was not used.                                |
+|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| [`RUNTIME_VERSION_KEY`](_autosummary/enlace.manifest.html.md#enlace.manifest.RUNTIME_VERSION_KEY)  | `/_meta` key carrying the enlace version the gateway is *running*, added at serve time. |
 
 ### Functions
 
@@ -3225,6 +3232,15 @@ Configuration for the model, should be a dictionary conforming to [`ConfigDict`]
 `extra` key naming why an on-disk manifest was not used. It exists only
 when something is wrong, so a healthy `/_meta` is quiet and a degraded
 one cannot be mistaken for “no manifest was ever written”.
+
+### enlace.manifest.RUNTIME_VERSION_KEY *= 'enlace_runtime_version'*
+
+`/_meta` key carrying the enlace version the gateway is *running*, added at
+serve time. `enlace_version` is what the deploy recorded in the manifest and
+wins over the runtime when present, so after an engine-only upgrade (a new
+wheel and a restart, no redeploy) it names the old version. This key never
+does. `None` when enlace’s distribution metadata is unavailable.
+See [https://github.com/i2mint/enlace/issues/78](https://github.com/i2mint/enlace/issues/78).
 
 ### *class* enlace.manifest.SourceRef(\*\*data)
 
@@ -3858,18 +3874,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 14:05 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/533a2ba3b98a2e7bf7dc00046bd555b5457878b0"><code>533a2ba</code></a> on branch <code>main</code>, for **enlace 0.1.49** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 14:28 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/e80d7310495f1d3d946b2f368a3698f25123897c"><code>e80d731</code></a> on branch <code>main</code>, for **enlace 0.1.50** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.49) is behind the latest release on PyPI (0.1.50): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.50) is behind the latest release on PyPI (0.1.51): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/533a2ba3b98a2e7bf7dc00046bd555b5457878b0"><code>533a2ba3b98a2e7bf7dc00046bd555b5457878b0</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/e80d7310495f1d3d946b2f368a3698f25123897c"><code>e80d7310495f1d3d946b2f368a3698f25123897c</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3880,9 +3896,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38410089015">38410089015</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38413420171">38413420171</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>533a2ba3b98a2e7bf7dc00046bd555b5457878b0</code> (in the history of the built commit) |
+| Event commit | <code>e80d7310495f1d3d946b2f368a3698f25123897c</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -3907,13 +3923,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.50/">0.1.50</a>, newer than the documented version (0.1.49).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.51/">0.1.51</a>, newer than the documented version (0.1.50).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 533a2ba3b98a2e7bf7dc00046bd555b5457878b0
+git checkout e80d7310495f1d3d946b2f368a3698f25123897c
 pip install "epythet==0.2.15"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
