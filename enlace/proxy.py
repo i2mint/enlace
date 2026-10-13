@@ -52,6 +52,48 @@ def platform_cookie_filter(
     return lambda name: not (name in names or name.startswith(prefixes))
 
 
+def platform_cookie_names(platform=None) -> tuple[str, ...]:
+    """The platform's own cookie names, honouring a custom session cookie name.
+
+    ``[auth]`` is opaque to enlace core (enlace_auth owns its schema), so this
+    reads only the one key that renames a platform cookie.
+
+    >>> from types import SimpleNamespace
+    >>> platform_cookie_names(SimpleNamespace(auth={"session_cookie_name": "s"}))[-1]
+    's'
+    """
+    auth = getattr(platform, "auth", None) or {}
+    custom = auth.get("session_cookie_name") if isinstance(auth, dict) else None
+    return PLATFORM_COOKIE_NAMES + ((custom,) if custom else ())
+
+
+def platform_proxy_filters(platform=None, *, forward_credentials: bool = False) -> dict:
+    """:func:`make_proxy_app` keyword arguments that keep platform credentials home.
+
+    The one policy for every proxied app, whatever runs it (an external server,
+    a local process, a container from ``enlace_docker``): the upstream does not
+    see the visitor's platform cookies or ``X-CSRF-Token`` unless
+    *forward_credentials* (an app's ``forward_platform_credentials``) grants
+    that, and it may never set a platform cookie or send
+    :data:`PLATFORM_UNSAFE_RESPONSE_HEADERS`, whatever it is granted.
+
+    >>> filters = platform_proxy_filters()
+    >>> filters["cookie_filter"]("enlace_session"), filters["cookie_filter"]("theme")
+    (False, True)
+    >>> platform_proxy_filters(forward_credentials=True)["cookie_filter"] is None
+    True
+    """
+    platform_cookies = platform_cookie_filter(names=platform_cookie_names(platform))
+    return dict(
+        cookie_filter=None if forward_credentials else platform_cookies,
+        set_cookie_filter=platform_cookies,
+        drop_request_headers=(
+            () if forward_credentials else PLATFORM_CREDENTIAL_REQUEST_HEADERS
+        ),
+        drop_response_headers=PLATFORM_UNSAFE_RESPONSE_HEADERS,
+    )
+
+
 def _filter_cookie_header(value: str, keep: CookieFilter) -> str:
     """Drop the cookies *keep* rejects from a request ``Cookie`` header value."""
     parts = []
@@ -126,7 +168,8 @@ def make_proxy_app(
             *cookie_filter*.
         drop_request_headers / drop_response_headers: header names
             (case-insensitive) never forwarded upstream / never passed back
-            to the client. See ``EXTERNAL_DROP_*`` for what external apps use.
+            to the client. :func:`platform_proxy_filters` gives all four
+            filters as every enlace strategy applies them.
 
     Returns:
         An ASGI callable.
