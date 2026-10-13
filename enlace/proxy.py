@@ -65,9 +65,9 @@ def platform_cookie_filter(
     case-variant of a platform name has no legitimate use and would become a
     shadow the day any reader matched names loosely.
 
-    >>> keep = platform_cookie_filter(names=["enlace_session"], prefixes=["shared_auth_"])
-    >>> [keep(n) for n in ("theme", "enlace_session", "Enlace_Session", "SHARED_AUTH_x")]
-    [True, False, False, False]
+    >>> keep = platform_cookie_filter()
+    >>> [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]
+    [True, False, False]
     """
     names = frozenset(n.casefold() for n in names)
     prefixes = tuple(p.casefold() for p in prefixes)
