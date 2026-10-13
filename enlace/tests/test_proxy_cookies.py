@@ -214,3 +214,32 @@ def test_forward_platform_credentials_is_an_app_toml_key():
     field_map, _ = _resolved_field_map()
     assert field_map["forward_platform_credentials"] == "forward_platform_credentials"
     assert _process_app().forward_platform_credentials is False
+
+
+def test_split_cookie_headers_all_survive_when_credentials_are_forwarded(tmp_path):
+    """HTTP/2 sends one Cookie field per cookie; none may be lost (#60 review)."""
+    seen: dict = {}
+    proxy = ProcessStrategy().make_asgi(
+        _process_app(forward_platform_credentials=True),
+        PlatformConfig(apps_dir=tmp_path),
+    )
+    _client(proxy, seen).get(
+        "/typola/x", headers=[("cookie", "enlace_session=S"), ("cookie", "b=2")]
+    )
+    assert seen["cookie"] == "enlace_session=S; b=2"
+
+
+def test_split_cookie_headers_are_each_filtered(tmp_path):
+    seen: dict = {}
+    proxy = ProcessStrategy().make_asgi(_process_app(), PlatformConfig(apps_dir=tmp_path))
+    _client(proxy, seen).get(
+        "/typola/x",
+        headers=[("cookie", "a=1"), ("cookie", "enlace_session=S"), ("cookie", "b=2")],
+    )
+    assert seen["cookie"] == "a=1; b=2"
+
+
+def test_the_social_login_state_cookie_is_a_platform_cookie():
+    """A proxied app setting a second ``enlace_oauth_state`` would block sign-in."""
+    keep = platform_cookie_filter()
+    assert not keep("enlace_oauth_state")

@@ -11,11 +11,12 @@ app is actually instantiated, so the dependency remains optional.
 from typing import Callable, Iterable, Optional
 
 #: Cookies the platform itself sets on its own origin -- enlace_auth's defaults
-#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, and the
-#: per-app ``shared_auth_<app>`` cookies). Keep in sync with enlace_auth. They
+#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, the
+#: social-login ``enlace_oauth_state`` cookie, and the per-app
+#: ``shared_auth_<app>`` cookies). Keep in sync with enlace_auth. They
 #: are credentials for *this* platform and must never reach an upstream that
 #: is not part of it.
-PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf")
+PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf", "enlace_oauth_state")
 PLATFORM_COOKIE_PREFIXES = ("shared_auth_",)
 
 #: Request headers carrying platform credentials, withheld from proxied
@@ -225,8 +226,11 @@ class _HttpxProxy:
                 decoded = _filter_cookie_header(decoded, self.cookie_filter)
                 if not decoded:
                     continue
-                if "cookie" in headers:  # HTTP/2 may split cookies (RFC 9113)
-                    decoded = f"{headers['cookie']}; {decoded}"
+            if name in headers:
+                # A repeated field is one field (RFC 9110 §5.3); cookies are
+                # joined with "; " because HTTP/2 splits them (RFC 9113 §8.2.3).
+                sep = "; " if name == "cookie" else ", "
+                decoded = f"{headers[name]}{sep}{decoded}"
             headers[name] = decoded
 
         import httpx
