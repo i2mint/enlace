@@ -29,7 +29,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
 
 from enlace.base import AppConfig, PlatformConfig
-from enlace.discover import discover_apps
+from enlace.discover import discover_apps, forget_partial_imports
 from enlace.frontend import (
     LandingWithUnknownApp404,
     RevalidatingStaticFiles,
@@ -74,6 +74,13 @@ def build_backend(
     - mode=static: mount StaticFiles at the route prefix
     - frontend_only (mode=asgi): skip (no backend to mount)
 
+    An asgi app that cannot be imported or loaded does not take the platform
+    down: a 500 stub is mounted in its place and the failure is reported in
+    the logs, ``/_meta``, ``/_apps`` and ``enlace doctor`` (loud and local —
+    see :mod:`enlace.degraded`). ``config.app_load_failure = "raise"``, or
+    ``fail_hard = true`` in an app's app.toml, refuses to boot instead.
+    Platform configuration errors always refuse to boot.
+
     Args:
         config: Platform configuration with apps already discovered.
         plugins: Compose-time plugins, e.g. ``enlace_auth.plugin``.
@@ -96,11 +103,17 @@ def build_backend(
     # strategy's ``make_asgi`` returns either an ASGI sub-app to mount or
     # ``None`` (e.g. frontend-only apps, or apps whose port hasn't been
     # allocated yet).
+    #
+    # An asgi app that fails to load gets a 500 stub instead of taking every
+    # other app down with it (see enlace.degraded). Only the per-app load is
+    # contained; get_strategy's unknown-mode error and every other mode's
+    # make_asgi error are configuration, and propagate.
+    from enlace.degraded import load_or_stub
     from enlace.strategies import get_strategy
 
     for app_config in config.apps:
         strategy = get_strategy(app_config.mode)
-        sub_app = strategy.make_asgi(app_config, config)
+        sub_app = load_or_stub(strategy, app_config, config)
         if sub_app is not None:
             sub_apps.append((app_config.route_prefix, app_config.name, sub_app))
 
@@ -412,25 +425,46 @@ def _add_meta_routes(
         manifest_dir=manifest_dir,
         enlace_version=enlace_version,
     )
+    # Apps serving a 500 stub (enlace.degraded). Fixed for the process's life:
+    # a stub is only ever mounted at compose time.
+    from enlace.degraded import DEGRADED_APPS_KEY, DEGRADED_KEY, degraded_apps
+
+    degraded = degraded_apps(config)
 
     @parent.get("/_meta", include_in_schema=False)
     async def _platform_meta() -> dict:
-        return platform_meta.payload()
+        payload = platform_meta.payload()
+        if degraded:
+            payload[DEGRADED_APPS_KEY] = degraded
+        return payload
 
     for app_config in config.apps:
         manifest = per_app_manifests.get(app_config.name)
         if manifest is None:
             continue
-        _register_app_meta(parent, app_config.route_prefix + "/_meta", manifest)
+        extra = (
+            {DEGRADED_KEY: degraded[app_config.name]}
+            if app_config.name in degraded
+            else {}
+        )
+        _register_app_meta(
+            parent, app_config.route_prefix + "/_meta", manifest, extra=extra
+        )
         # Same data under the frontend mount so SPA code can fetch it with a
         # path relative to its own root.
         frontend_meta = f"/{app_config.name}/_meta"
         if frontend_meta != app_config.route_prefix + "/_meta":
-            _register_app_meta(parent, frontend_meta, manifest)
+            _register_app_meta(parent, frontend_meta, manifest, extra=extra)
 
 
-def _register_app_meta(parent: FastAPI, path: str, manifest: DeployManifest) -> None:
-    payload = manifest.model_dump()
+def _register_app_meta(
+    parent: FastAPI,
+    path: str,
+    manifest: DeployManifest,
+    *,
+    extra: Optional[dict] = None,
+) -> None:
+    payload = {**manifest.model_dump(), **(extra or {})}
 
     async def _meta() -> dict:
         return payload
@@ -565,7 +599,11 @@ def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
     (typola) has no local frontend but serves a working UI at its route prefix,
     and a ``process`` connector (an MCP endpoint) has a route but no human page.
     An explicit ``app.toml`` ``launchable`` overrides the mode-derived default.
+    An app that failed to load (it is serving a 500 stub) is never launchable,
+    whatever its app.toml says.
     """
+    if app.import_error is not None:
+        return False, None
     has_frontend = bool(app.frontend_dir and app.frontend_dir.is_dir())
     if app.launchable is not None:
         launchable = app.launchable
@@ -649,6 +687,9 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
         "launch_url": launch_url,
         # ISO-8601 or null — see _stamp_updated_at. The launcher sorts on it.
         "updated_at": app.updated_at,
+        # True when the app failed to load and a 500 stub serves its routes
+        # (enlace.degraded). The launcher shows it as broken, not launchable.
+        "degraded": app.import_error is not None,
     }
 
 
@@ -807,6 +848,8 @@ def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
             if has_api:
                 links.append(f'<a href="{app.route_prefix}/docs">api docs</a>')
             link_html = " · ".join(links) if links else "(no routes)"
+            if app.import_error is not None:
+                link_html = "<em>unavailable: failed to load</em>"
             items.append(f"<li><strong>{app.display_name}</strong> — {link_html}</li>")
         app_list = "\n".join(items) if items else "<li>No apps discovered.</li>"
         return (
@@ -905,7 +948,8 @@ def _import_app_module(entry_path: Path, source_dir: Path):
     module_name = str(relative.with_suffix("")).replace("/", ".").replace("\\", ".")
     if module_name in sys.modules:
         del sys.modules[module_name]
-    return importlib.import_module(module_name)
+    with forget_partial_imports(module_name):
+        return importlib.import_module(module_name)
 
 
 def create_app() -> FastAPI:
@@ -913,6 +957,11 @@ def create_app() -> FastAPI:
 
     Loads platform config, discovers apps, checks conflicts,
     and builds the composed backend.
+
+    Discovery *records* an app whose entry module fails to import rather than
+    raising, so ``build_backend`` can mount a 500 stub for that app alone
+    (see :mod:`enlace.degraded`). Platform configuration errors, including a
+    broken ``ENLACE_PLUGINS`` entry, still raise here.
 
     Plugins are loaded from the ``ENLACE_PLUGINS`` env var: a comma-separated
     list of ``module:attribute`` pairs, e.g.::
@@ -922,7 +971,7 @@ def create_app() -> FastAPI:
     Each resolved object must be a callable
     ``(parent: FastAPI, config: PlatformConfig) -> None``.
     """
-    config = discover_apps()
+    config = discover_apps(on_import_error="record")
     config = _apply_port_env(config)
     plugins = _load_plugins_from_env()
     return build_backend(config, plugins=plugins)

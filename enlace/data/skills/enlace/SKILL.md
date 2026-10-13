@@ -213,7 +213,7 @@ Environment variables: `ENLACE_APPS_DIRS`, `ENLACE_APP_DIRS` (pathsep-delimited)
 1. Run `enlace show-config --verbose` — is the app listed?
 2. Check directory isn't prefixed with `_` or `.`
 3. Check entry point file exists (`server.py`, `app.py`, or `main.py`)
-4. Check for import errors — enlace intentionally surfaces them (won't silently skip)
+4. Check for import errors — enlace intentionally surfaces them (won't silently skip). A live gateway serves a 500 stub for an app that failed to load and lists it under `degraded_apps` in `/_meta`; the server log has the traceback
 
 **Route conflict?**
 - `enlace check` reports ALL conflicts at once with both app names

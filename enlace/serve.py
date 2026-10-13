@@ -171,7 +171,9 @@ def serve(
     os.environ["ENLACE_APPS_DIR"] = all_apps_dirs[0] if all_apps_dirs else ""
 
     # Run discovery so we can see which apps need supervised lifecycles.
-    discovered = discover_apps(platform)
+    # "record": an un-importable asgi app is the gateway's to stub (see
+    # enlace.degraded), not a reason to refuse to start the supervisor.
+    discovered = discover_apps(platform, on_import_error="record")
 
     reload_dirs = all_apps_dirs + all_app_dirs
 

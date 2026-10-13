@@ -66,6 +66,7 @@ enlace/
 ├── util.py        # Pure helpers: derive_display_name, derive_route_prefix, is_skippable
 ├── discover.py    # ConventionDiscoverer: walks apps/, reads app.toml, detects types
 ├── compose.py     # build_backend(): mounts ASGI sub-apps, proxy routes, static files
+├── degraded.py    # load_or_stub(): loud-and-local 500 stub for an asgi app that fails to load
 ├── access.py      # can_see_app / is_user_allowed: the ONE visibility predicate (launcher + auth gate)
 ├── proxy.py       # Lightweight ASGI reverse proxy for process/external backends (httpx)
 ├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)
@@ -108,6 +109,7 @@ The `mode` field on `AppConfig` determines how an app is served:
 - **NEVER use `BaseHTTPMiddleware`** — it has terminal bugs (exception swallowing, ContextVar corruption). Use pure ASGI middleware (three-callable pattern) only.
 - **Mount on `FastAPI()` directly**, never on `APIRouter` — known framework bug.
 - **Discovery must never silently swallow ImportErrors** — distinguish "module doesn't exist" from "module has broken import".
+- **App-load failures are loud and local** — the gateway mounts a 500 stub for an asgi app that fails to import/load, and every stub is reported in the logs, `/_meta`, `/_apps` and `enlace doctor`. Only per-app loads are contained; platform config errors still refuse to boot. See `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
 - **All middleware must be pure ASGI** (scope, receive, send pattern).
 - **Conflict detection is fail-fast** — report ALL conflicts, don't stop at first.
 - **CORS on parent only** — sub-apps must not add their own CORSMiddleware. If they do, enlace still works (MEDIUM issue, not a blocker), but the diagnostic flags it.
@@ -136,6 +138,7 @@ Consult these before modifying subsystems:
 | Design principles | `misc/docs/design_principles__*.md` |
 | Process orchestration | `misc/docs/Process orchestration and multi-backend composition for enlace.md` |
 | ASGI assumption audit | `misc/docs/audit_backend_generality.md` |
+| Decisions (ADRs) | `misc/docs/decisions/` |
 | Generalization plan | `misc/docs/Enlace Generalization Plan*.md` |
 
 ## Testing

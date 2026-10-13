@@ -12,6 +12,7 @@ but the diagnostic verbs need to survive one in order to report it. See
 :func:`discover_apps`.
 """
 
+import contextlib
 import importlib
 import inspect
 import shlex
@@ -19,7 +20,13 @@ import sys
 from pathlib import Path
 from typing import Literal, Optional, Protocol
 
-from enlace.base import AppConfig, AppImportError, ConventionsConfig, PlatformConfig
+from enlace.base import (
+    CONTAINED_LOAD_ERRORS,
+    AppConfig,
+    AppImportError,
+    ConventionsConfig,
+    PlatformConfig,
+)
 from enlace.util import derive_route_prefix, is_skippable
 
 if sys.version_info >= (3, 11):
@@ -289,18 +296,18 @@ class ConventionDiscoverer:
         Returns ``(app_type, provenance_source, import_error)``, the last being
         ``None`` unless the import failed and the policy is ``"record"``.
 
-        The net is ``Exception``, not ``ImportError``: importing a module runs
-        arbitrary module-level code, so it can raise anything at all — the one
-        failure observed in production was a ``PermissionError`` raised by a
-        transitive dependency reading a dotenv file at import time, which a
-        narrower net would have let through unchanged. ``KeyboardInterrupt``
-        and ``SystemExit`` are not ``Exception`` subclasses and still escape.
+        The net is :data:`enlace.base.CONTAINED_LOAD_ERRORS`, not
+        ``ImportError``: importing a module runs arbitrary module-level code, so
+        it can raise anything at all — the one failure observed in production
+        was a ``PermissionError`` raised by a transitive dependency reading a
+        dotenv file at import time, which a narrower net would have let through
+        unchanged. ``KeyboardInterrupt`` still escapes.
         """
         try:
             app_type, type_source = self._detect_app_type(
                 entry_path, apps_dir, self.conventions.app_attr
             )
-        except Exception as exc:  # noqa: BLE001 - see the policy note above
+        except CONTAINED_LOAD_ERRORS as exc:  # see the policy note above
             if self.on_import_error == "raise":
                 raise
             # Nothing was detected, so fall back to the same assumption
@@ -382,6 +389,8 @@ _CORE_TOML_FIELD_MAP = {
     "keywords": "keywords",
     "icon": "icon",
     "launchable": "launchable",
+    # Refuse to boot rather than mount a 500 stub (see AppConfig.fail_hard).
+    "fail_hard": "fail_hard",
 }
 
 # Core path keys (resolved relative to the app directory). Strategy-specific
@@ -460,6 +469,35 @@ def _parse_build_config(raw: dict, app_dir: Path):
     return BuildConfig(**data)
 
 
+@contextlib.contextmanager
+def forget_partial_imports(module_name: str):
+    """On a failed import of ``module_name``, unload what it left behind.
+
+    Python drops the failing module itself from ``sys.modules`` but keeps every
+    module that imported successfully before the failure — an app's
+    ``helpers.py`` loaded by a ``server.py`` that then raised stays cached,
+    half-initialised by intent if not in fact. Only modules that are *new* since
+    the attempt began *and* live inside the entry module's own package are
+    dropped: a third-party library the app pulled in may already be referenced
+    elsewhere (and a C extension cannot be loaded twice), so it is left alone.
+
+    Side effects outside ``sys.modules`` (environment variables, monkeypatches,
+    registries) cannot be undone from here. The ADR on loud-and-local failures
+    says so, and points at ``mode = "process"`` for real isolation.
+    """
+    package = module_name.rpartition(".")[0]
+    before = set(sys.modules)
+    try:
+        yield
+    except BaseException:
+        if package:
+            prefix = package + "."
+            for name in set(sys.modules) - before:
+                if name.startswith(prefix):
+                    sys.modules.pop(name, None)
+        raise
+
+
 def _import_module_from_path(entry_path: Path, apps_dir: Path) -> object:
     """Import a module from a filesystem path.
 
@@ -484,7 +522,8 @@ def _import_module_from_path(entry_path: Path, apps_dir: Path) -> object:
         if module_name in sys.modules:
             del sys.modules[module_name]
 
-        return importlib.import_module(module_name)
+        with forget_partial_imports(module_name):
+            return importlib.import_module(module_name)
     finally:
         if added_to_path:
             try:

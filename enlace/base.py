@@ -134,30 +134,73 @@ class BuildConfig(BaseModel):
         return v
 
 
-class AppImportError(BaseModel):
-    """Why an app's entry module could not be imported at discovery time.
+#: What a contained app-load failure may be. Importing a module runs arbitrary
+#: module-level code, so the net is ``Exception``, not ``ImportError`` — plus
+#: ``SystemExit``, because a module that calls ``sys.exit()`` at import is a
+#: broken app, and under a pre-forking server an uncaught one ends the worker
+#: and with it every other app. ``KeyboardInterrupt`` is not caught: Ctrl-C
+#: must still stop a dev server mid-boot.
+CONTAINED_LOAD_ERRORS: tuple[type[BaseException], ...] = (Exception, SystemExit)
 
-    Recorded (instead of raised) when discovery runs with
-    ``on_import_error="record"`` — see :func:`enlace.discover.discover_apps`.
+#: Where an app-load failure happened: while discovery imported the entry
+#: module to detect its type, or while ``build_backend`` loaded the sub-app.
+AppLoadStage = Literal["discover", "compose"]
+
+
+class AppImportError(BaseModel):
+    """Why an app could not be loaded, recorded instead of raised.
+
+    Recorded at discovery (``on_import_error="record"`` — see
+    :func:`enlace.discover.discover_apps`) or at compose time, when
+    :func:`enlace.compose.build_backend` contains a per-app load failure and
+    mounts a 500 stub in the app's place (see :mod:`enlace.degraded` and
+    ``misc/docs/decisions/0001-loud-and-local-app-load-failures.md``).
+
     Importing a module runs arbitrary module-level code, so ``exception_type``
     is not necessarily an ``ImportError``: the failure seen in production was a
     ``PermissionError`` from a dependency reading a root-only dotenv at import.
+
+    The exception object itself is kept privately (:attr:`exception`) so a
+    caller that must refuse to boot can re-raise it with its real traceback.
+    It is never serialized.
     """
 
     exception_type: str
     message: str
     entry_module_path: Optional[Path] = None
+    stage: AppLoadStage = "discover"
+    _exception: Optional[BaseException] = PrivateAttr(default=None)
 
     @classmethod
     def from_exception(
-        cls, exc: BaseException, entry_module_path: Optional[Path] = None
+        cls,
+        exc: BaseException,
+        entry_module_path: Optional[Path] = None,
+        *,
+        stage: AppLoadStage = "discover",
     ) -> "AppImportError":
-        """Build a record from the exception the import raised."""
-        return cls(
+        """Build a record from the exception the import (or load) raised."""
+        record = cls(
             exception_type=type(exc).__name__,
             message=str(exc),
             entry_module_path=entry_module_path,
+            stage=stage,
         )
+        record._exception = exc
+        return record
+
+    @property
+    def exception(self) -> Optional[BaseException]:
+        """The original exception, when this record was built from one."""
+        return self._exception
+
+    def public_summary(self) -> dict[str, str]:
+        """What may be shown to anyone: the exception class and the stage.
+
+        Never the message — it can carry server paths or configuration values
+        (the production ``PermissionError`` named the dotenv's path).
+        """
+        return {"exception_type": self.exception_type, "stage": self.stage}
 
     def __str__(self) -> str:
         return f"{self.exception_type}: {self.message}"
@@ -216,11 +259,18 @@ class AppConfig(BaseModel):
     # unless the app opts in with mode = "privacy". See enlace.analytics.
     analytics: AppAnalyticsConfig = Field(default_factory=AppAnalyticsConfig)
 
-    # Set only when discovery ran with ``on_import_error="record"`` and this
-    # app's entry module raised on import. ``None`` on every healthy app, and
-    # on every app discovered under the default ``"raise"`` policy (which
-    # never gets far enough to build a config for a broken app).
+    # Set when discovery ran with ``on_import_error="record"`` and this app's
+    # entry module raised on import, or when ``build_backend`` could not load
+    # the app and mounted a 500 stub in its place (``stage="compose"``).
+    # ``None`` on every healthy app. A set value is never silent: /_meta,
+    # /_apps, ``enlace doctor`` and the logs all report it.
     import_error: Optional[AppImportError] = None
+
+    # Refuse to boot the platform when this app cannot be loaded, instead of
+    # mounting a 500 stub in its place (app.toml ``fail_hard = true``). For an
+    # app that would rather be absent than serve errors; see
+    # ``PlatformConfig.app_load_failure`` for the platform-wide switch.
+    fail_hard: bool = False
 
     # App-launcher metadata. Resolved at discovery from app.toml + harvested
     # sources (manifest, index.html <head>, package.json, pyproject) — see
@@ -338,6 +388,17 @@ class PlatformConfig(BaseModel):
         ),
     )
     backend_port: int = 8000
+    app_load_failure: Literal["stub", "raise"] = Field(
+        default="stub",
+        description=(
+            "What the gateway does when an asgi-mode app cannot be imported or "
+            'loaded. ``"stub"`` (default): mount a 500 stub for that app only and '
+            "report it in /_meta, /_apps, ``enlace doctor`` and the logs; every "
+            'other app serves. ``"raise"``: refuse to boot, as before 0.1.50. A '
+            "single app can ask for ``raise`` with ``fail_hard = true`` in its "
+            "app.toml. Platform configuration errors always refuse to boot."
+        ),
+    )
 
     @field_validator("cors_origins")
     @classmethod
