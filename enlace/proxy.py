@@ -184,7 +184,8 @@ def _upstream_path(scope, strip_prefix: str = "") -> str:
     '/a%2Fb'
     >>> _upstream_path({"path": "/api/x/100%"}, "/api/x")
     '/100%25'
-    >>> _upstream_path({"path": "/api/x/../y", "raw_path": b"/api/x/%2E%2E/y"}, "/api/x")
+    >>> dots = {"path": "/api/x/../y", "raw_path": b"/api/x/%2E%2E/y"}
+    >>> _upstream_path(dots, "/api/x")
     '/../y'
     """
     path = scope.get("path") or "/"

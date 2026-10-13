@@ -32,7 +32,7 @@ def _uvicorn_scope(raw: str) -> dict:
         ("/api/blog/100%25", "/100%25"),
         ("/api/blog/caf%C3%A9", "/caf%C3%A9"),
         ("/api/blog/a%20b/c", "/a%20b/c"),
-        ("/api/blog/%FF", "/%EF%BF%BD"),  # not UTF-8: re-quoted as the server decoded it
+        ("/api/blog/%FF", "/%EF%BF%BD"),  # not UTF-8: re-quoted, as decoded
         ("/api/blog/a//b", "/a//b"),
         ("/api/blog/a@b:c", "/a@b:c"),  # pchar, raw branch, authority unchanged
         ("/api/blog/a%23b", "/a%23b"),
@@ -65,7 +65,13 @@ def test_untrusted_or_missing_raw_path_falls_back_to_quoting(scope, upstream):
 
 
 @pytest.mark.parametrize(
-    "raw", ["/api/blog/%2E%2E/admin", "/api/blog/a/../b", "/api/blog/a%2F..%2Fb", "/api/blog/./x"]
+    "raw",
+    [
+        "/api/blog/%2E%2E/admin",
+        "/api/blog/a/../b",
+        "/api/blog/a%2F..%2Fb",
+        "/api/blog/./x",
+    ],
 )
 def test_dot_segments_are_not_forwarded_escaped(raw):
     """httpx resolves literal dot segments, so an escaped ``..`` must not slip past."""
@@ -77,7 +83,8 @@ def test_dot_segments_are_not_forwarded_escaped(raw):
 
 
 @pytest.mark.parametrize(
-    "path", ["/api/blog@evil.example/x", "/api/blogx", "@evil.example", "", "//evil.example/x"]
+    "path",
+    ["/api/blog@evil.example/x", "/api/blogx", "@evil.example", "", "//evil.example/x"],
 )
 def test_the_upstream_authority_cannot_change(path):
     out = _upstream_path({"path": path}, PREFIX)
