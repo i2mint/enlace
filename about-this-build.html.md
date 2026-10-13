@@ -2,20 +2,20 @@
 
 # About this build
 
-This documentation was built on **2026-10-13 06:48 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/c3db16ea119d080afdf2260f6fad9154a158fe22"><code>c3db16e</code></a> on branch <code>main</code>, for **enlace 0.1.47** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 06:50 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/e0305e2748e1f774c41fd66d0450dd5efa451a0a"><code>e0305e2</code></a> on branch <code>main</code>, for **enlace 0.1.48** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.47) is behind the latest release on PyPI (0.1.48): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.48) is behind the latest release on PyPI (0.1.49): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/c3db16ea119d080afdf2260f6fad9154a158fe22"><code>c3db16ea119d080afdf2260f6fad9154a158fe22</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/e0305e2748e1f774c41fd66d0450dd5efa451a0a"><code>e0305e2748e1f774c41fd66d0450dd5efa451a0a</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
-| Tags at this commit | none                                                                                                                                                 |
+| Tags at this commit | <code>0.1.48</code>                                                                                                                                  |
 | Working tree        | clean                                                                                                                                                |
 | Remote              | <code>https://github.com/i2mint/enlace</code>                                                                                                        |
 
@@ -24,9 +24,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38358666733">38358666733</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38358827540">38358827540</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>5957baf08c20576da79419a75bae6f5ec3a50fb2</code> (in the history of the built commit) |
+| Event commit | <code>320b93418e02e12c9f06f42ff44972a9ae03466c</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -51,13 +51,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.48/">0.1.48</a>, newer than the documented version (0.1.47).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.49/">0.1.49</a>, newer than the documented version (0.1.48).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout c3db16ea119d080afdf2260f6fad9154a158fe22
+git checkout e0305e2748e1f774c41fd66d0450dd5efa451a0a
 pip install "epythet==0.2.14"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

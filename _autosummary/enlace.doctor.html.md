@@ -35,9 +35,9 @@ Design:
 
 ### Classes
 
-| [`Check`](#enlace.doctor.Check)(name, status[, detail, extra])   | Result of a single probe.                   |
-|-----------------------------------------------------------------------------------------|---------------------------------------------|
-| [`Report`](#enlace.doctor.Report)(base_url[, checks])             | Aggregate report for one run of the doctor. |
+| [`Check`](#enlace.doctor.Check)(name, status[, detail, extra])     | Result of a single probe.                   |
+|-------------------------------------------------------------------------------------------|---------------------------------------------|
+| [`Report`](#enlace.doctor.Report)(base_url[, checks, envfile, ...]) | Aggregate report for one run of the doctor. |
 
 ### *class* enlace.doctor.Check(name, status, detail='', extra=<factory>)
 
@@ -45,7 +45,7 @@ Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Result of a single probe.
 
-### *class* enlace.doctor.Report(base_url, checks=<factory>)
+### *class* enlace.doctor.Report(base_url, checks=<factory>, envfile=None, envfile_status='')
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
