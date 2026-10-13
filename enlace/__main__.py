@@ -385,7 +385,7 @@ def diagnose(
         sys.exit(1)
 
 
-def _load_envfile(path: str) -> bool:
+def _load_envfile(path: str, *, override: bool = True) -> bool:
     """Parse a simple KEY=VALUE envfile into ``os.environ``.
 
     Only handles the systemd/shell common case: blank lines, ``#`` comments,
@@ -403,6 +403,9 @@ def _load_envfile(path: str) -> bool:
     A genuinely missing path still hard-fails with ``sys.exit(2)``, because
     that almost always means a typo or wrong path rather than a deliberate
     permission topology.
+
+    With ``override=False``, a variable already set in the environment keeps
+    its value (what the caller exported wins over the file).
     """
     p = Path(path).expanduser()
     if not p.is_file():
@@ -430,7 +433,8 @@ def _load_envfile(path: str) -> bool:
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
             value = value[1:-1]
-        os.environ[key] = value
+        if override or key not in os.environ:
+            os.environ[key] = value
     return True
 
 
@@ -445,10 +449,12 @@ def _resolve_envfile(
 
     ``"auto"`` means the ``.env`` next to *toml_path* when both exist (the
     gateway's own envfile in the usual layout); ``""`` opts out; anything else
-    is an explicit path, which must exist (see :func:`_load_envfile`).
+    is an explicit path, which must exist (see :func:`_load_envfile`). A
+    symlinked platform.toml is not followed: the ``.env`` is the one in the
+    directory the caller is looking at.
     """
     if envfile == _AUTO_ENVFILE:
-        candidate = toml_path.resolve().parent / ".env"
+        candidate = toml_path.absolute().parent / ".env"
         return candidate if toml_path.is_file() and candidate.is_file() else None
     return Path(envfile) if envfile else None
 
@@ -488,9 +494,13 @@ def doctor(
         json: Output as JSON (for CI / deploy pipelines).
         envfile: Path to a KEY=VALUE envfile to load before running env
             checks, so a plain shell sees the variables the gateway runs
-            with. Defaults to the ``.env`` beside ``platform.toml`` when there
-            is one (``auto``); pass ``--envfile ''`` to load none. The report
-            header names the envfile used.
+            with. Defaults to ``auto``: the ``.env`` beside ``platform.toml``
+            in the current directory, when there is one, without overriding
+            variables already exported (its ``ENLACE_*`` values, such as
+            ``ENLACE_APPS_DIRS``, then apply as they do for the gateway). An
+            explicit path overrides exported values; ``--envfile ''`` loads
+            none (a file literally named ``auto``: pass ``./auto``). The
+            report header names the envfile used.
         skip_env_checks: Skip signing-key / shared-password env checks
             entirely. Use when you are running from a shell that doesn't
             have the gateway's env and you trust the HTTP probes as the
@@ -500,15 +510,16 @@ def doctor(
         app_dirs: Comma-separated individual app directories.
     """
     envfile_path = _resolve_envfile(envfile)
-    envfile_note = "none"
+    envfile_status = "none"
     if envfile_path is not None:
-        envfile_note = str(envfile_path)
+        envfile_status = "loaded"
         # If the envfile is unreadable (e.g. root:root 0600 and we are the
         # deploy user) ``_load_envfile`` warns and returns False; auto-skip
         # env checks so the HTTP / config checks still run.
-        if not _load_envfile(str(envfile_path)):
+        override = envfile != _AUTO_ENVFILE
+        if not _load_envfile(str(envfile_path), override=override):
             skip_env_checks = True
-            envfile_note += " (unreadable; env checks skipped)"
+            envfile_status = "unreadable"
 
     config = _build_config(
         apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
@@ -530,7 +541,8 @@ def doctor(
         extra_static_checks=plugin_static,
         extra_http_checks=plugin_http,
     )
-    report.envfile = envfile_note
+    report.envfile = None if envfile_path is None else str(envfile_path)
+    report.envfile_status = envfile_status
 
     if json:
         print(json_module.dumps(report.as_dict(), indent=2, default=str))
