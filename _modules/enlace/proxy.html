@@ -265,6 +265,19 @@
 
 <span class="sd">This module is lazy-loaded: it only imports ``httpx`` when a proxy ASGI</span>
 <span class="sd">app is actually instantiated, so the dependency remains optional.</span>
+
+<span class="sd">What the credential filters do and do not contain: they keep the platform's</span>
+<span class="sd">cookies and CSRF header away from an upstream *server*, and keep an upstream</span>
+<span class="sd">from setting platform cookies or sending origin-wide headers</span>
+<span class="sd">(``PLATFORM_UNSAFE_RESPONSE_HEADERS``). They do not try to stop an upstream</span>
+<span class="sd">from *navigating* a visitor elsewhere on the origin: a ``Location`` or</span>
+<span class="sd">``Refresh`` pointing at ``/auth/...`` is passed through. A redirect is only a</span>
+<span class="sd">top-level GET navigation, which any page on any site can already cause (with</span>
+<span class="sd">the visitor's SameSite=Lax cookies attached), and a proxied app's own pages are</span>
+<span class="sd">served on the platform origin, one ``location.href = ...`` away from the same</span>
+<span class="sd">thing. So the platform's GET routes must be safe to navigate to on their own</span>
+<span class="sd">(the POST ones need CSRF); filtering these headers would only look like a</span>
+<span class="sd">boundary.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
@@ -307,10 +320,24 @@
 <span class="sd">    Used for every proxied app (``mode="external"`` and ``mode="process"``): an</span>
 <span class="sd">    upstream has no business seeing a visitor's platform session, and must not</span>
 <span class="sd">    be able to set (overwrite) one on the platform's origin either.</span>
+
+<span class="sd">    Names match case-insensitively. Browsers and Starlette keep cookie names</span>
+<span class="sd">    case-sensitive, so ``Enlace_Session`` is a different cookie today, but a</span>
+<span class="sd">    case-variant of a platform name has no legitimate use and would become a</span>
+<span class="sd">    shadow the day any reader matched names loosely.</span>
+
+<span class="sd">    &gt;&gt;&gt; keep = platform_cookie_filter()</span>
+<span class="sd">    &gt;&gt;&gt; [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]</span>
+<span class="sd">    [True, False, False]</span>
 <span class="sd">    """</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
-    <span class="n">prefixes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">prefixes</span><span class="p">)</span>
-    <span class="k">return</span> <span class="k">lambda</span> <span class="n">name</span><span class="p">:</span> <span class="ow">not</span> <span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="ow">or</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefixes</span><span class="p">))</span></div>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">)</span>
+    <span class="n">prefixes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prefixes</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">keep</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">folded</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="n">folded</span> <span class="ow">in</span> <span class="n">names</span> <span class="ow">or</span> <span class="n">folded</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefixes</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">keep</span></div>
 
 
 
@@ -605,7 +632,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=aaf63c28"></script>
+</div><script src="../../_static/documentation_options.js?v=03b6484e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

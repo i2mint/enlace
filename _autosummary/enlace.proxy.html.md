@@ -9,6 +9,19 @@ implementation for simple cases.
 This module is lazy-loaded: it only imports `httpx` when a proxy ASGI
 app is actually instantiated, so the dependency remains optional.
 
+What the credential filters do and do not contain: they keep the platform’s
+cookies and CSRF header away from an upstream *server*, and keep an upstream
+from setting platform cookies or sending origin-wide headers
+(`PLATFORM_UNSAFE_RESPONSE_HEADERS`). They do not try to stop an upstream
+from *navigating* a visitor elsewhere on the origin: a `Location` or
+`Refresh` pointing at `/auth/...` is passed through. A redirect is only a
+top-level GET navigation, which any page on any site can already cause (with
+the visitor’s SameSite=Lax cookies attached), and a proxied app’s own pages are
+served on the platform origin, one `location.href = ...` away from the same
+thing. So the platform’s GET routes must be safe to navigate to on their own
+(the POST ones need CSRF); filtering these headers would only look like a
+boundary.
+
 ### Module Attributes
 
 | [`PLATFORM_COOKIE_NAMES`](#enlace.proxy.PLATFORM_COOKIE_NAMES)               | Cookies the platform itself sets on its own origin -- enlace_auth's defaults (`AuthConfig.session_cookie_name`, `CSRFMiddleware` cookie name, the social-login `enlace_oauth_state` cookie, and the per-app `shared_auth_<app>` cookies).                            |
@@ -73,5 +86,16 @@ Used for every proxied app (`mode="external"` and `mode="process"`): an
 upstream has no business seeing a visitor’s platform session, and must not
 be able to set (overwrite) one on the platform’s origin either.
 
+Names match case-insensitively. Browsers and Starlette keep cookie names
+case-sensitive, so `Enlace_Session` is a different cookie today, but a
+case-variant of a platform name has no legitimate use and would become a
+shadow the day any reader matched names loosely.
+
 * **Return type:**
   [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
+
+```pycon
+>>> keep = platform_cookie_filter()
+>>> [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]
+[True, False, False]
+```

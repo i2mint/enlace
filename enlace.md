@@ -1,4 +1,4 @@
-> built 2026-10-13 06:33 UTC from 3a34575 (main) · enlace 0.1.44. Details: build_info.json
+> built 2026-10-13 06:42 UTC from b0846e2 (main) · enlace 0.1.45. Details: build_info.json
 
 # index.html.md
 
@@ -2980,6 +2980,19 @@ implementation for simple cases.
 This module is lazy-loaded: it only imports `httpx` when a proxy ASGI
 app is actually instantiated, so the dependency remains optional.
 
+What the credential filters do and do not contain: they keep the platform’s
+cookies and CSRF header away from an upstream *server*, and keep an upstream
+from setting platform cookies or sending origin-wide headers
+(`PLATFORM_UNSAFE_RESPONSE_HEADERS`). They do not try to stop an upstream
+from *navigating* a visitor elsewhere on the origin: a `Location` or
+`Refresh` pointing at `/auth/...` is passed through. A redirect is only a
+top-level GET navigation, which any page on any site can already cause (with
+the visitor’s SameSite=Lax cookies attached), and a proxied app’s own pages are
+served on the platform origin, one `location.href = ...` away from the same
+thing. So the platform’s GET routes must be safe to navigate to on their own
+(the POST ones need CSRF); filtering these headers would only look like a
+boundary.
+
 ### Module Attributes
 
 | [`PLATFORM_COOKIE_NAMES`](_autosummary/enlace.proxy.html.md#enlace.proxy.PLATFORM_COOKIE_NAMES)               | Cookies the platform itself sets on its own origin -- enlace_auth's defaults (`AuthConfig.session_cookie_name`, `CSRFMiddleware` cookie name, the social-login `enlace_oauth_state` cookie, and the per-app `shared_auth_<app>` cookies).                            |
@@ -3044,8 +3057,19 @@ Used for every proxied app (`mode="external"` and `mode="process"`): an
 upstream has no business seeing a visitor’s platform session, and must not
 be able to set (overwrite) one on the platform’s origin either.
 
+Names match case-insensitively. Browsers and Starlette keep cookie names
+case-sensitive, so `Enlace_Session` is a different cookie today, but a
+case-variant of a platform name has no legitimate use and would become a
+shadow the day any reader matched names loosely.
+
 * **Return type:**
   [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
+
+```pycon
+>>> keep = platform_cookie_filter()
+>>> [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]
+[True, False, False]
+```
 
 
 # _autosummary/enlace.strategies.html.md
@@ -3471,18 +3495,16 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 06:33 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb"><code>3a34575</code></a> on branch <code>main</code>, for **enlace 0.1.44** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 06:42 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/b0846e28c82ca9ae6a98a218b7c45237c6b674dd"><code>b0846e2</code></a> on branch <code>main</code>, for **enlace 0.1.45** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.1.44) is behind the latest release on PyPI (0.1.45): `pip install enlace` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb"><code>3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/b0846e28c82ca9ae6a98a218b7c45237c6b674dd"><code>b0846e28c82ca9ae6a98a218b7c45237c6b674dd</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3493,9 +3515,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38357261419">38357261419</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38358085876">38358085876</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb</code> (in the history of the built commit) |
+| Event commit | <code>b0846e28c82ca9ae6a98a218b7c45237c6b674dd</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -3520,13 +3542,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.45/">0.1.45</a>, newer than the documented version (0.1.44).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.45/">0.1.45</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb
+git checkout b0846e28c82ca9ae6a98a218b7c45237c6b674dd
 pip install "epythet==0.2.14"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
