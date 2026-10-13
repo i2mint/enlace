@@ -201,7 +201,9 @@ def test_process_strategy_opt_in_forwards_credentials_but_never_lets_them_be_set
 
 
 def test_process_strategy_honours_a_custom_session_cookie_name(tmp_path):
-    platform = PlatformConfig(apps_dir=tmp_path, auth={"session_cookie_name": "my_sess"})
+    platform = PlatformConfig(
+        apps_dir=tmp_path, auth={"session_cookie_name": "my_sess"}
+    )
     proxy = ProcessStrategy().make_asgi(_process_app(), platform)
     assert not proxy.cookie_filter("my_sess")
     assert not proxy.set_cookie_filter("my_sess")
@@ -231,7 +233,9 @@ def test_split_cookie_headers_all_survive_when_credentials_are_forwarded(tmp_pat
 
 def test_split_cookie_headers_are_each_filtered(tmp_path):
     seen: dict = {}
-    proxy = ProcessStrategy().make_asgi(_process_app(), PlatformConfig(apps_dir=tmp_path))
+    proxy = ProcessStrategy().make_asgi(
+        _process_app(), PlatformConfig(apps_dir=tmp_path)
+    )
     _client(proxy, seen).get(
         "/typola/x",
         headers=[("cookie", "a=1"), ("cookie", "enlace_session=S"), ("cookie", "b=2")],

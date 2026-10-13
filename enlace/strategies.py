@@ -334,7 +334,9 @@ class ProcessStrategy(BackendStrategy):
         # set: it gets the visitor's platform credentials only when its app.toml
         # asks for them, and it may never set them or rewrite the origin's
         # storage, whatever it asks for.
-        platform_cookies = platform_cookie_filter(names=_platform_cookie_names(platform))
+        platform_cookies = platform_cookie_filter(
+            names=_platform_cookie_names(platform)
+        )
         forward = app.forward_platform_credentials
         return make_proxy_app(
             upstream=f"http://127.0.0.1:{app.port}",
