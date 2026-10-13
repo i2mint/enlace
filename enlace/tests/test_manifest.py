@@ -580,3 +580,23 @@ def test_meta_injected_end_to_end_via_frontend(tmp_apps_dir, manifest_dir):
     resp = client.get("/foo/")
     assert resp.status_code == 200
     assert '<meta name="x-deploy-sha" content="deadbee">' in resp.text
+
+
+def test_deploy_headers_percent_encode_a_non_ascii_app_name(tmp_path, manifest_dir):
+    """#58: an app dir named ``café`` is served and its header stays ASCII."""
+    from urllib.parse import unquote
+
+    apps = tmp_path / "apps"
+    (apps / "café" / "frontend").mkdir(parents=True)
+    (apps / "café" / "frontend" / "index.html").write_text("<p>bonjour</p>")
+    _write(manifest_dir, "café", deployed_at="2026-05-26T18:00:00Z")
+    config = discover_apps(PlatformConfig(apps_dir=apps, manifest_dir=manifest_dir))
+    client = TestClient(build_backend(config))
+
+    resp = client.get("/café/")  # TestClient (httpx) raised here before the fix
+
+    assert resp.status_code == 200
+    assert "bonjour" in resp.text
+    assert resp.headers["x-deploy-app"] == "caf%C3%A9"
+    assert unquote(resp.headers["x-deploy-app"]) == "café"
+    assert resp.headers["x-deploy-time"] == "2026-05-26T18:00:00Z"

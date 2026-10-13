@@ -34,6 +34,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Literal, Optional
+from urllib.parse import quote
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -210,6 +211,25 @@ class _PrefixManifestMiddleware:
         return self._platform
 
 
+# Visible ASCII except "%": the characters a header value keeps as-is. Anything
+# else (non-ASCII, space, control characters) is percent-encoded, so an
+# ASCII-only value is unchanged and the encoding is unambiguous.
+_HEADER_SAFE = "".join(chr(c) for c in range(0x21, 0x7F) if chr(c) != "%")
+
+
+def header_value(value: str) -> bytes:
+    """Encode *value* for an HTTP header: ASCII as-is, the rest percent-encoded.
+
+    Header values must be ASCII (latin-1 at most); an app directory named
+    ``café`` would otherwise reach clients as raw UTF-8, which httpx refuses.
+    Decode with ``urllib.parse.unquote``.
+
+    >>> header_value("reelee-web"), header_value("café"), header_value("a b%")
+    (b'reelee-web', b'caf%C3%A9', b'a%20b%25')
+    """
+    return quote(value, safe=_HEADER_SAFE).encode("ascii")
+
+
 class DeployHeadersMiddleware(_PrefixManifestMiddleware):
     """Pure-ASGI middleware that adds X-Deploy-* headers on every response.
 
@@ -217,7 +237,8 @@ class DeployHeadersMiddleware(_PrefixManifestMiddleware):
     prefix (route_prefix or frontend mount path) for the request path. If no
     per-app prefix matches, the platform manifest fills in. Headers are only
     added when the underlying value is present — a stub manifest produces a
-    short header set (just ``X-Deploy-App``), not bogus SHAs.
+    short header set (just ``X-Deploy-App``), not bogus SHAs. Values are
+    percent-encoded where they are not plain ASCII (see :func:`header_value`).
     """
 
     async def __call__(self, scope, receive, send):
@@ -232,11 +253,11 @@ class DeployHeadersMiddleware(_PrefixManifestMiddleware):
 
         extra: list[tuple[bytes, bytes]] = []
         if manifest.app:
-            extra.append((b"x-deploy-app", manifest.app.encode()))
+            extra.append((b"x-deploy-app", header_value(manifest.app)))
         if manifest.app_source.sha:
-            extra.append((b"x-deploy-sha", manifest.app_source.sha.encode()))
+            extra.append((b"x-deploy-sha", header_value(manifest.app_source.sha)))
         if manifest.deployed_at:
-            extra.append((b"x-deploy-time", manifest.deployed_at.encode()))
+            extra.append((b"x-deploy-time", header_value(manifest.deployed_at)))
 
         if not extra:
             await self.app(scope, receive, send)
