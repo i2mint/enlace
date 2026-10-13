@@ -33,7 +33,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Callable, Literal, Optional, Union
 from urllib.parse import quote
 
 from pydantic import BaseModel, Field, ValidationError
@@ -190,6 +190,15 @@ def load_platform_manifest(
     )
 
 
+# A manifest, or a zero-arg callable returning the current one. The callable form
+# lets a long-running backend pick up a manifest rewritten after startup (#81).
+ManifestSource = Union[DeployManifest, Callable[[], DeployManifest]]
+
+
+def _resolve(source: Optional[ManifestSource]) -> Optional[DeployManifest]:
+    return source() if callable(source) else source
+
+
 class _PrefixManifestMiddleware:
     """Base for middlewares that pick a manifest by longest-matching prefix.
 
@@ -198,14 +207,17 @@ class _PrefixManifestMiddleware:
     prefixes (API mount + frontend mount), longest first, falling back to
     the platform manifest. This base holds that shared selection so the two
     middlewares don't duplicate it.
+
+    Each value may be a ``DeployManifest`` or a zero-arg callable returning one,
+    resolved per request (see :data:`ManifestSource`).
     """
 
     def __init__(
         self,
         app,
         *,
-        manifests_by_prefix: dict[str, DeployManifest],
-        platform_manifest: Optional[DeployManifest] = None,
+        manifests_by_prefix: dict[str, ManifestSource],
+        platform_manifest: Optional[ManifestSource] = None,
     ):
         self.app = app
         # Sort longest-first so /api/foo wins over /api when both registered.
@@ -215,8 +227,8 @@ class _PrefixManifestMiddleware:
     def _select(self, path: str) -> Optional[DeployManifest]:
         for prefix, manifest in self._prefixes:
             if path == prefix or path.startswith(prefix + "/"):
-                return manifest
-        return self._platform
+                return _resolve(manifest)
+        return _resolve(self._platform)
 
 
 # Visible ASCII except "%": the characters a header value keeps as-is. Anything

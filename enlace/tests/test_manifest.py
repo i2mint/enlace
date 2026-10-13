@@ -626,3 +626,80 @@ def test_meta_reports_the_running_enlace_even_when_the_manifest_is_stale(
         payload = client.get(path).json()
         assert payload["enlace_version"] == "0.0.1", path  # the record is kept
         assert payload[RUNTIME_VERSION_KEY] == "9.9.9", path  # the truth is added
+
+
+def _rewrite(dir_, app, *, bump, **fields):
+    """Rewrite a manifest and move its mtime, so the change is visible to stat."""
+    _write(dir_, app, **fields)
+    path = dir_ / f"{app}.json"
+    st = path.stat()
+    os.utime(path, (st.st_atime + bump, st.st_mtime + bump))
+
+
+def test_per_app_meta_rereads_a_rewritten_manifest(single_app_dir, manifest_dir):
+    """An app's manifest rewritten while the backend runs shows up at once (#81).
+
+    Before, ``/api/foo/_meta`` and ``/foo/_meta`` served the compose-time
+    snapshot until a restart, while the platform ``/_meta`` (#49) had already
+    moved on: two endpoints disagreeing about the same app.
+    """
+    _write(manifest_dir, "foo", app_source={"sha": "old111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    for path in ("/api/foo/_meta", "/foo/_meta"):
+        assert client.get(path).json()["app_source"]["sha"] == "old111"
+    assert client.get("/api/foo/hello").headers["x-deploy-sha"] == "old111"
+
+    _rewrite(manifest_dir, "foo", bump=2, app_source={"sha": "new222"})
+
+    for path in ("/api/foo/_meta", "/foo/_meta"):
+        payload = client.get(path).json()
+        assert payload["app_source"]["sha"] == "new222", path
+        on_disk = (manifest_dir / "foo.json").stat().st_mtime
+        reported = datetime.fromisoformat(
+            payload["manifest_mtime"].replace("Z", "+00:00")
+        )
+        assert abs(reported.timestamp() - on_disk) < 1
+    # The response headers read through the same per-app reader.
+    assert client.get("/api/foo/hello").headers["x-deploy-sha"] == "new222"
+
+
+def test_per_app_meta_degrades_on_a_bad_rewrite_and_recovers(
+    single_app_dir, manifest_dir
+):
+    _write(manifest_dir, "foo", app_source={"sha": "good1"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+
+    path = manifest_dir / "foo.json"
+    path.write_text("{ not valid json")
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+    resp = client.get("/api/foo/_meta")
+    assert resp.status_code == 200
+    assert MANIFEST_ERROR_KEY in resp.json()["extra"]
+    assert "x-deploy-sha" not in client.get("/api/foo/hello").headers
+
+    _rewrite(manifest_dir, "foo", bump=4, app_source={"sha": "good2"})
+    healthy = client.get("/api/foo/_meta").json()
+    assert healthy["app_source"]["sha"] == "good2"
+    assert MANIFEST_ERROR_KEY not in healthy["extra"]
+
+
+def test_per_app_meta_picks_up_a_manifest_written_after_startup(
+    single_app_dir, manifest_dir
+):
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    stub = client.get("/api/foo/_meta").json()
+    assert stub["app_source"]["sha"] is None
+    assert stub["manifest_mtime"] is None
+
+    _write(manifest_dir, "foo", app_source={"sha": "late1"})
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "late1"

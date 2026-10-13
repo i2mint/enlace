@@ -200,13 +200,23 @@ def build_backend(
         for app in config.apps
     }
     _stamp_updated_at(config, per_app_manifests)
+    # One reader per manifest file, shared by the /_meta routes and the
+    # deploy-identity middlewares below, so a manifest rewritten while the
+    # backend runs shows up everywhere on the next request (#49, #81).
+    platform_meta = _MtimeCachedManifest(
+        platform_manifest, manifest_dir=manifest_dir, enlace_version=enlace_version
+    )
+    app_metas = {
+        name: _MtimeCachedManifest(
+            manifest,
+            name=name,
+            manifest_dir=manifest_dir,
+            enlace_version=enlace_version,
+        )
+        for name, manifest in per_app_manifests.items()
+    }
     _add_meta_routes(
-        parent,
-        config,
-        platform_manifest,
-        per_app_manifests,
-        manifest_dir=manifest_dir,
-        enlace_version=enlace_version,
+        parent, config, platform_meta, app_metas, enlace_version=enlace_version
     )
 
     # landing_app takes precedence over the default Python index. When set
@@ -282,17 +292,17 @@ def build_backend(
     # Deploy-identity response headers. Build the prefix → manifest map from
     # both the API mount (route_prefix) and the frontend mount (/{name}/) so
     # static asset responses also carry the headers.
-    headers_prefix_map: dict[str, DeployManifest] = {}
+    headers_prefix_map: dict[str, Callable[[], DeployManifest]] = {}
     for app_config in config.apps:
-        manifest = per_app_manifests.get(app_config.name)
-        if manifest is None:
+        app_meta = app_metas.get(app_config.name)
+        if app_meta is None:
             continue
-        headers_prefix_map[app_config.route_prefix] = manifest
-        headers_prefix_map[f"/{app_config.name}"] = manifest
+        headers_prefix_map[app_config.route_prefix] = app_meta.current
+        headers_prefix_map[f"/{app_config.name}"] = app_meta.current
     parent.add_middleware(
         DeployHeadersMiddleware,
         manifests_by_prefix=headers_prefix_map,
-        platform_manifest=platform_manifest,
+        platform_manifest=platform_meta.current,
     )
 
     # Inject deploy <meta> tags into HTML responses so a browser can compare
@@ -303,7 +313,7 @@ def build_backend(
     parent.add_middleware(
         DeployMetaTagMiddleware,
         manifests_by_prefix=headers_prefix_map,
-        platform_manifest=platform_manifest,
+        platform_manifest=platform_meta.current,
     )
 
     # Give every app's HTML the platform's icon wiring (favicon, apple-touch-icon,
@@ -353,7 +363,7 @@ def _detect_enlace_version() -> Optional[str]:
 
 
 class _MtimeCachedManifest:
-    """The platform manifest as it is on disk *now*, re-read when the file changes.
+    """One manifest as it is on disk *now*, re-read when the file changes.
 
     ``/_meta`` is a diagnostic endpoint, so a payload captured once at compose
     time is the wrong answer. Anything that legitimately rewrites the manifest
@@ -366,23 +376,26 @@ class _MtimeCachedManifest:
     and one ``stat`` per request on the cache-hit path. With no manifest
     directory configured, or no file there, the compose-time manifest is served
     unchanged — which is exactly the previous behaviour.
+
+    *name* selects the file (``{name}.json``): the platform manifest by default,
+    or one app's. Each app gets its own reader, shared by its ``/_meta`` routes
+    and the deploy-identity middlewares, so the endpoints and the headers can
+    never disagree about the same app (#81).
     """
 
     def __init__(
         self,
         manifest: DeployManifest,
         *,
+        name: str = PLATFORM_MANIFEST_NAME,
         manifest_dir: Optional[Path] = None,
         enlace_version: Optional[str] = None,
     ):
         self._manifest = manifest
+        self._name = name
         self._manifest_dir = manifest_dir
         self._enlace_version = enlace_version
-        self._path = (
-            None
-            if manifest_dir is None
-            else manifest_dir / f"{PLATFORM_MANIFEST_NAME}.json"
-        )
+        self._path = None if manifest_dir is None else manifest_dir / f"{name}.json"
         # None until the first request, so the first read refreshes rather than
         # trusting a snapshot taken before the routes even existed.
         self._stat_key: Optional[tuple[int, int]] = None
@@ -394,18 +407,26 @@ class _MtimeCachedManifest:
         file to date the answer by — so a reader is never left guessing how old
         the payload is.
         """
+        manifest, st = self._refresh()
+        payload = manifest.model_dump()
+        payload["manifest_mtime"] = None if st is None else _iso_utc(st.st_mtime)
+        return payload
+
+    def current(self) -> DeployManifest:
+        """Return the manifest as it is on disk now (for the response headers)."""
+        return self._refresh()[0]
+
+    def _refresh(self) -> tuple[DeployManifest, Optional[os.stat_result]]:
         st = self._stat()
         stat_key = None if st is None else (st.st_mtime_ns, st.st_size)
         if stat_key != self._stat_key:
             # Never raises on a bad file: it degrades to a stub whose
             # ``extra.manifest_error`` says why (see ``load_manifest``).
-            self._manifest = load_platform_manifest(
-                self._manifest_dir, enlace_version=self._enlace_version
+            self._manifest = load_manifest(
+                self._name, self._manifest_dir, enlace_version=self._enlace_version
             )
             self._stat_key = stat_key
-        payload = self._manifest.model_dump()
-        payload["manifest_mtime"] = None if st is None else _iso_utc(st.st_mtime)
-        return payload
+        return self._manifest, st
 
     def _stat(self) -> Optional[os.stat_result]:
         """``stat`` the manifest file, or ``None`` if there is nothing to stat."""
@@ -429,10 +450,9 @@ def _iso_utc(timestamp: float) -> str:
 def _add_meta_routes(
     parent: FastAPI,
     config: PlatformConfig,
-    platform_manifest: DeployManifest,
-    per_app_manifests: dict[str, DeployManifest],
+    platform_meta: "_MtimeCachedManifest",
+    app_metas: dict[str, "_MtimeCachedManifest"],
     *,
-    manifest_dir: Optional[Path] = None,
     enlace_version: Optional[str] = None,
 ) -> None:
     """Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.
@@ -442,16 +462,10 @@ def _add_meta_routes(
     (``/{name}/_meta``). Browser JS commonly fetches the latter with a
     relative URL from the SPA root.
 
-    ``manifest_dir`` and ``enlace_version`` let the platform ``/_meta`` re-read
-    the manifest when it changes on disk instead of serving the compose-time
-    snapshot (see ``_MtimeCachedManifest``). Omitting them serves that snapshot,
-    as before.
+    Every endpoint reads through a ``_MtimeCachedManifest``, so it reflects the
+    manifest on disk now rather than a compose-time snapshot (#49 for the
+    platform, #81 for the apps).
     """
-    platform_meta = _MtimeCachedManifest(
-        platform_manifest,
-        manifest_dir=manifest_dir,
-        enlace_version=enlace_version,
-    )
     # Apps serving a 500 stub (enlace.degraded). Read per request, not
     # captured here: an app whose lifespan startup fails is stubbed after
     # these routes exist.
@@ -467,7 +481,7 @@ def _add_meta_routes(
         return payload
 
     for app_config in config.apps:
-        manifest = per_app_manifests.get(app_config.name)
+        manifest = app_metas.get(app_config.name)
         if manifest is None:
             continue
 
@@ -490,15 +504,14 @@ def _add_meta_routes(
 def _register_app_meta(
     parent: FastAPI,
     path: str,
-    manifest: DeployManifest,
+    manifest: "_MtimeCachedManifest",
     *,
     extra: Optional[Callable[[], dict]] = None,
 ) -> None:
-    """Serve ``manifest`` at ``path``, plus whatever ``extra()`` says *now*."""
-    payload = manifest.model_dump()
+    """Serve ``manifest`` as it is *now* at ``path``, plus what ``extra()`` says."""
 
     async def _meta() -> dict:
-        return {**payload, **(extra() if extra else {})}
+        return {**manifest.payload(), **(extra() if extra else {})}
 
     parent.add_api_route(path, _meta, methods=["GET"], include_in_schema=False)
 
