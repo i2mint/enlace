@@ -352,3 +352,18 @@ def test_platform_proxy_filters_credential_opt_in_still_refuses_set_cookie():
     assert f["drop_request_headers"] == ()
     assert not f["set_cookie_filter"]("enlace_session")
     assert "clear-site-data" in f["drop_response_headers"]
+
+
+def test_a_repeated_request_header_is_joined_not_overwritten():
+    """RFC 9110 §5.3: two fields with one name are one comma-joined field.
+
+    Keeping only the last would let a client smuggle a second value past
+    whatever inspected the first (#60 review). Ported from #69.
+    """
+    seen: dict = {}
+    proxy = make_proxy_app(upstream="http://127.0.0.1:9", strip_prefix="/typola")
+    _client(proxy, seen).get(
+        "/typola/x",
+        headers=[("authorization", "Bearer one"), ("authorization", "Bearer two")],
+    )
+    assert seen["authorization"] == "Bearer one, Bearer two"
