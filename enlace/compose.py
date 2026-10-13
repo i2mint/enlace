@@ -699,6 +699,10 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
     metadata-edit endpoints can return the *identical* item shape after a
     mutation — single source of truth for the item contract. ``overlay`` is the
     app's Tier-A record (``{}`` if none).
+
+    The link fields (``route``, ``launch_url``, ``icon_url``) are percent-encoded
+    URLs (#75); ``api_route`` is the configured route as an identifier, decoded,
+    and must be passed through :func:`enlace.util.url_path` before use as a link.
     """
     launchable, launch_url = _app_launch(app)
     resolved = _resolved_app_meta(app, config, overlay)
