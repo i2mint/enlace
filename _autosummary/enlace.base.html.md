@@ -26,9 +26,9 @@ owned by another tool, and `enlace doctor` reports the same list.
 
 ### Module Attributes
 
-| [`CONTAINED_LOAD_ERRORS`](#enlace.base.CONTAINED_LOAD_ERRORS)   | What a contained app-load failure may be.                                                                  |
-|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| [`AppLoadStage`](#enlace.base.AppLoadStage)            | while discovery imported the entry module to detect its type, or while `build_backend` loaded the sub-app. |
+| [`CONTAINED_LOAD_ERRORS`](#enlace.base.CONTAINED_LOAD_ERRORS)   | What a contained app-load failure may be.                                                                                                                        |
+|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`AppLoadStage`](#enlace.base.AppLoadStage)            | while discovery imported the entry module to detect its type, while `build_backend` loaded the sub-app, or while the gateway ran the sub-app's lifespan startup. |
 
 ### Functions
 
@@ -129,12 +129,13 @@ Never the message — it can carry server paths or configuration values
 ### enlace.base.AppLoadStage
 
 while discovery imported the entry
-module to detect its type, or while `build_backend` loaded the sub-app.
+module to detect its type, while `build_backend` loaded the sub-app, or
+while the gateway ran the sub-app’s lifespan startup.
 
 * **Type:**
   Where an app-load failure happened
 
-alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’]
+alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’, ‘lifespan’]
 
 ### *class* enlace.base.BuildConfig(\*\*data)
 

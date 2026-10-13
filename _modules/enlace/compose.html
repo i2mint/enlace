@@ -383,6 +383,8 @@
         <span class="k">if</span> <span class="n">sub_app</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sub_apps</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">sub_app</span><span class="p">))</span>
 
+    <span class="n">apps_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">}</span>
+
     <span class="nd">@asynccontextmanager</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cascade_lifespan</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""Forward startup/shutdown to mounted sub-apps.</span>
@@ -390,14 +392,37 @@
 <span class="sd">        Starlette does NOT propagate lifespan events to mounted sub-apps</span>
 <span class="sd">        (issue #649, open since Sept 2019). This workaround iterates Mount</span>
 <span class="sd">        routes and enters their lifespan contexts.</span>
+
+<span class="sd">        App mounts are ``_AppIdInjector`` wrappers, so the app whose lifespan</span>
+<span class="sd">        runs is the wrapped one (until #76 the wrapper hid it, and no app's</span>
+<span class="sd">        lifespan ever ran). An asgi app whose startup raises is swapped for a</span>
+<span class="sd">        500 stub and reported, like an import failure (enlace.degraded); the</span>
+<span class="sd">        other apps start. Its shutdown is not run: it never started.</span>
+
+<span class="sd">        What the apps' lifespans yield (Starlette's lifespan state) is merged</span>
+<span class="sd">        and yielded here, so ``request.state`` carries it as it would for a</span>
+<span class="sd">        standalone app. The state is shared by every app on the gateway.</span>
 <span class="sd">        """</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.degraded</span><span class="w"> </span><span class="kn">import</span> <span class="n">enter_lifespan_or_stub</span>
+
+        <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">AsyncExitStack</span><span class="p">()</span> <span class="k">as</span> <span class="n">stack</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Mount</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="s2">"router"</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="p">,</span> <span class="n">Mount</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">_AppIdInjector</span><span class="p">):</span>
+                    <span class="n">app_config</span> <span class="o">=</span> <span class="n">apps_by_name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">app_id</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">app_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">app_state</span> <span class="o">=</span> <span class="k">await</span> <span class="n">enter_lifespan_or_stub</span><span class="p">(</span>
+                            <span class="n">stack</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="n">app_config</span><span class="p">,</span> <span class="n">config</span>
+                        <span class="p">)</span>
+                        <span class="n">state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">app_state</span> <span class="ow">or</span> <span class="p">{})</span>
+                        <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">,</span> <span class="s2">"router"</span><span class="p">):</span>
                     <span class="n">lifespan</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">router</span><span class="p">,</span> <span class="s2">"lifespan_context"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
                     <span class="k">if</span> <span class="n">lifespan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                         <span class="k">await</span> <span class="n">stack</span><span class="o">.</span><span class="n">enter_async_context</span><span class="p">(</span><span class="n">lifespan</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">app</span><span class="p">))</span>
-            <span class="k">yield</span>
+            <span class="k">yield</span> <span class="n">state</span> <span class="ow">or</span> <span class="kc">None</span>
 
     <span class="n">parent</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span>
         <span class="n">title</span><span class="o">=</span><span class="s2">"enlace platform"</span><span class="p">,</span>
@@ -692,16 +717,16 @@
         <span class="n">manifest_dir</span><span class="o">=</span><span class="n">manifest_dir</span><span class="p">,</span>
         <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="c1"># Apps serving a 500 stub (enlace.degraded). Fixed for the process's life:</span>
-    <span class="c1"># a stub is only ever mounted at compose time.</span>
+    <span class="c1"># Apps serving a 500 stub (enlace.degraded). Read per request, not</span>
+    <span class="c1"># captured here: an app whose lifespan startup fails is stubbed after</span>
+    <span class="c1"># these routes exist.</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.degraded</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEGRADED_APPS_KEY</span><span class="p">,</span> <span class="n">DEGRADED_KEY</span><span class="p">,</span> <span class="n">degraded_apps</span>
-
-    <span class="n">degraded</span> <span class="o">=</span> <span class="n">degraded_apps</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
     <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/_meta"</span><span class="p">,</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_platform_meta</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">platform_meta</span><span class="o">.</span><span class="n">payload</span><span class="p">()</span>
         <span class="n">payload</span><span class="p">[</span><span class="n">RUNTIME_VERSION_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">enlace_version</span>
+        <span class="n">degraded</span> <span class="o">=</span> <span class="n">degraded_apps</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">degraded</span><span class="p">:</span>
             <span class="n">payload</span><span class="p">[</span><span class="n">DEGRADED_APPS_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">degraded</span>
         <span class="k">return</span> <span class="n">payload</span>
@@ -710,9 +735,13 @@
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">extra</span> <span class="o">=</span> <span class="p">{</span><span class="n">RUNTIME_VERSION_KEY</span><span class="p">:</span> <span class="n">enlace_version</span><span class="p">}</span>
-        <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">degraded</span><span class="p">:</span>
-            <span class="n">extra</span><span class="p">[</span><span class="n">DEGRADED_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">degraded</span><span class="p">[</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">extra</span><span class="p">(</span><span class="n">app_config</span><span class="o">=</span><span class="n">app_config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="p">{</span><span class="n">RUNTIME_VERSION_KEY</span><span class="p">:</span> <span class="n">enlace_version</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">app_config</span><span class="o">.</span><span class="n">import_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">DEGRADED_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_config</span><span class="o">.</span><span class="n">import_error</span><span class="o">.</span><span class="n">public_summary</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">out</span>
+
         <span class="n">_register_app_meta</span><span class="p">(</span>
             <span class="n">parent</span><span class="p">,</span> <span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span> <span class="o">+</span> <span class="s2">"/_meta"</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">extra</span>
         <span class="p">)</span>
@@ -728,12 +757,13 @@
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span> <span class="o">**</span><span class="p">(</span><span class="n">extra</span> <span class="ow">or</span> <span class="p">{})}</span>
+<span class="w">    </span><span class="sd">"""Serve ``manifest`` at ``path``, plus whatever ``extra()`` says *now*."""</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_meta</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">payload</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">payload</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">extra</span><span class="p">()</span> <span class="k">if</span> <span class="n">extra</span> <span class="k">else</span> <span class="p">{})}</span>
 
     <span class="n">parent</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_meta</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">],</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -1339,7 +1369,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=c61c636a"></script>
+</div><script src="../../_static/documentation_options.js?v=6f5c170c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -20,12 +20,13 @@ the same `AppConfig.import_error` record:
   gateway’s `/_meta`, so a failure only the server’s own identity hits (a
   file only it cannot read) is still reported.
 
-What is contained is narrow on purpose: an `asgi`-mode app’s import, or the
-detection and loading of its sub-app. Platform configuration errors (a bad
+What is contained is narrow on purpose: an `asgi`-mode app’s import, the
+detection and loading of its sub-app, and its lifespan startup
+([`enter_lifespan_or_stub()`](#enlace.degraded.enter_lifespan_or_stub)). Platform configuration errors (a bad
 `platform.toml`, an unknown `landing_app`, route conflicts, a plugin that
-refuses its configuration) still refuse to boot, as do lifespan failures, an
-app with `fail_hard = true` in its app.toml, and every app when the platform
-sets `app_load_failure = "raise"`. The decision and its reasons are recorded
+refuses its configuration) still refuse to boot, as do an app with
+`fail_hard = true` in its app.toml, and every app when the platform sets
+`app_load_failure = "raise"`. The decision and its reasons are recorded
 in `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
 
 ### Module Attributes
@@ -39,10 +40,11 @@ in `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
 
 ### Functions
 
-| [`degraded_apps`](#enlace.degraded.degraded_apps)(config)                 | The apps that failed to load, by name, with their public summary.         |
-|----------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
-| [`load_or_stub`](#enlace.degraded.load_or_stub)(strategy, app, platform) | Return `app`'s ASGI sub-app, or a stub when an asgi app cannot load.      |
-| [`refuse_to_boot_if_required`](#enlace.degraded.refuse_to_boot_if_required)(platform)  | Raise the first recorded load failure the configuration says not to stub. |
+| [`degraded_apps`](#enlace.degraded.degraded_apps)(config)                          | The apps that failed to load, by name, with their public summary.          |
+|-------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| [`enter_lifespan_or_stub`](#enlace.degraded.enter_lifespan_or_stub)(stack, mount, app, ...) | Start `app`'s lifespan, register its shutdown on `stack`; stub on failure. |
+| [`load_or_stub`](#enlace.degraded.load_or_stub)(strategy, app, platform)          | Return `app`'s ASGI sub-app, or a stub when an asgi app cannot load.       |
+| [`refuse_to_boot_if_required`](#enlace.degraded.refuse_to_boot_if_required)(platform)           | Raise the first recorded load failure the configuration says not to stub.  |
 
 ### Classes
 
@@ -110,6 +112,34 @@ The apps that failed to load, by name, with their public summary.
 >>> degraded_apps(PlatformConfig())
 {}
 ```
+
+### *async* enlace.degraded.enter_lifespan_or_stub(stack, mount, app, platform)
+
+Start `app`’s lifespan, register its shutdown on `stack`; stub on failure.
+
+`mount` is the wrapper the app is mounted through (anything with an
+`app` attribute holding the sub-app). On a startup failure of an asgi
+app, its `app` is swapped for an [`UnavailableApp`](#enlace.degraded.UnavailableApp) — the route
+stays, now answering 500 — and the failure is recorded (`stage =
+"lifespan"`) and logged, so `/_meta`, `/_apps` and the doctor report
+it like any other stub. The failed lifespan’s shutdown is not run (it never
+started).
+
+The shutdown is registered as a plain callback, not with
+`enter_async_context`: an exit stack hands an in-flight exception to every
+context it unwinds, and an `asynccontextmanager` lifespan would have it
+thrown in at its `yield`, skipping its own cleanup. So when the gateway’s
+startup aborts (`fail_hard`) or another app’s shutdown raises, the apps
+that did start still shut down normally.
+
+Returns the state the lifespan yielded (a dict), or `None`, so the caller
+can expose it as request state as Starlette would for a top-level app.
+
+`fail_hard`, `app_load_failure = "raise"` and non-asgi modes re-raise,
+which aborts the gateway’s startup.
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 ### enlace.degraded.load_or_stub(strategy, app, platform)
 

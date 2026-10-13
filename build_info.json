@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-13T14:28:47Z",
+  "built_at": "2026-10-13T14:37:39Z",
   "package": {
     "name": "enlace",
-    "version": "0.1.50",
+    "version": "0.1.51",
     "display_name": "enlace",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "e80d7310495f1d3d946b2f368a3698f25123897c",
-    "short_commit": "e80d731",
+    "commit": "57ad0a9212cc414ca6f178aea065b2e43a908aad",
+    "short_commit": "57ad0a9",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/i2mint/enlace",
-    "commit_url": "https://github.com/i2mint/enlace/commit/e80d7310495f1d3d946b2f368a3698f25123897c",
+    "commit_url": "https://github.com/i2mint/enlace/commit/57ad0a9212cc414ca6f178aea065b2e43a908aad",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "i2mint/enlace",
-    "sha": "e80d7310495f1d3d946b2f368a3698f25123897c",
+    "sha": "57ad0a9212cc414ca6f178aea065b2e43a908aad",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "38413420171",
-    "run_url": "https://github.com/i2mint/enlace/actions/runs/38413420171",
+    "run_id": "38414699360",
+    "run_url": "https://github.com/i2mint/enlace/actions/runs/38414699360",
     "server_url": "https://github.com"
   },
   "tools": {
@@ -56,20 +56,20 @@
   },
   "site": {
     "modules_documented": 20,
-    "objects_documented": 261
+    "objects_documented": 262
   },
   "pypi": {
     "checked": true,
-    "latest": "0.1.51",
+    "latest": "0.1.52",
     "relation": "behind",
     "error": null
   },
-  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout e80d7310495f1d3d946b2f368a3698f25123897c\npip install \"epythet==0.2.15\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout 57ad0a9212cc414ca6f178aea065b2e43a908aad\npip install \"epythet==0.2.15\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
     "aligned": false,
     "notes": [
-      "The documented version (0.1.50) is behind the latest release on PyPI (0.1.51): `pip install enlace` gives newer code than these docs describe."
+      "The documented version (0.1.51) is behind the latest release on PyPI (0.1.52): `pip install enlace` gives newer code than these docs describe."
     ]
   }
 }

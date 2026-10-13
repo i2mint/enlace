@@ -412,8 +412,9 @@
 <span class="n">CONTAINED_LOAD_ERRORS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">)</span>
 
 <span class="c1">#: Where an app-load failure happened: while discovery imported the entry</span>
-<span class="c1">#: module to detect its type, or while ``build_backend`` loaded the sub-app.</span>
-<span class="n">AppLoadStage</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"discover"</span><span class="p">,</span> <span class="s2">"compose"</span><span class="p">]</span>
+<span class="c1">#: module to detect its type, while ``build_backend`` loaded the sub-app, or</span>
+<span class="c1">#: while the gateway ran the sub-app's lifespan startup.</span>
+<span class="n">AppLoadStage</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"discover"</span><span class="p">,</span> <span class="s2">"compose"</span><span class="p">,</span> <span class="s2">"lifespan"</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="AppImportError">
@@ -962,7 +963,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=c61c636a"></script>
+</div><script src="../../_static/documentation_options.js?v=6f5c170c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

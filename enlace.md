@@ -1,4 +1,4 @@
-> built 2026-10-13 14:28 UTC from e80d731 (main) · enlace 0.1.50. Details: build_info.json
+> built 2026-10-13 14:37 UTC from 57ad0a9 (main) · enlace 0.1.51. Details: build_info.json
 
 # index.html.md
 
@@ -1309,9 +1309,9 @@ owned by another tool, and `enlace doctor` reports the same list.
 
 ### Module Attributes
 
-| [`CONTAINED_LOAD_ERRORS`](_autosummary/enlace.base.html.md#enlace.base.CONTAINED_LOAD_ERRORS)   | What a contained app-load failure may be.                                                                  |
-|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| [`AppLoadStage`](_autosummary/enlace.base.html.md#enlace.base.AppLoadStage)            | while discovery imported the entry module to detect its type, or while `build_backend` loaded the sub-app. |
+| [`CONTAINED_LOAD_ERRORS`](_autosummary/enlace.base.html.md#enlace.base.CONTAINED_LOAD_ERRORS)   | What a contained app-load failure may be.                                                                                                                        |
+|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`AppLoadStage`](_autosummary/enlace.base.html.md#enlace.base.AppLoadStage)            | while discovery imported the entry module to detect its type, while `build_backend` loaded the sub-app, or while the gateway ran the sub-app's lifespan startup. |
 
 ### Functions
 
@@ -1412,12 +1412,13 @@ Never the message — it can carry server paths or configuration values
 ### enlace.base.AppLoadStage
 
 while discovery imported the entry
-module to detect its type, or while `build_backend` loaded the sub-app.
+module to detect its type, while `build_backend` loaded the sub-app, or
+while the gateway ran the sub-app’s lifespan startup.
 
 * **Type:**
   Where an app-load failure happened
 
-alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’]
+alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’, ‘lifespan’]
 
 ### *class* enlace.base.BuildConfig(\*\*data)
 
@@ -1768,12 +1769,13 @@ the same `AppConfig.import_error` record:
   gateway’s `/_meta`, so a failure only the server’s own identity hits (a
   file only it cannot read) is still reported.
 
-What is contained is narrow on purpose: an `asgi`-mode app’s import, or the
-detection and loading of its sub-app. Platform configuration errors (a bad
+What is contained is narrow on purpose: an `asgi`-mode app’s import, the
+detection and loading of its sub-app, and its lifespan startup
+([`enter_lifespan_or_stub()`](_autosummary/enlace.degraded.html.md#enlace.degraded.enter_lifespan_or_stub)). Platform configuration errors (a bad
 `platform.toml`, an unknown `landing_app`, route conflicts, a plugin that
-refuses its configuration) still refuse to boot, as do lifespan failures, an
-app with `fail_hard = true` in its app.toml, and every app when the platform
-sets `app_load_failure = "raise"`. The decision and its reasons are recorded
+refuses its configuration) still refuse to boot, as do an app with
+`fail_hard = true` in its app.toml, and every app when the platform sets
+`app_load_failure = "raise"`. The decision and its reasons are recorded
 in `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
 
 ### Module Attributes
@@ -1787,10 +1789,11 @@ in `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
 
 ### Functions
 
-| [`degraded_apps`](_autosummary/enlace.degraded.html.md#enlace.degraded.degraded_apps)(config)                 | The apps that failed to load, by name, with their public summary.         |
-|----------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
-| [`load_or_stub`](_autosummary/enlace.degraded.html.md#enlace.degraded.load_or_stub)(strategy, app, platform) | Return `app`'s ASGI sub-app, or a stub when an asgi app cannot load.      |
-| [`refuse_to_boot_if_required`](_autosummary/enlace.degraded.html.md#enlace.degraded.refuse_to_boot_if_required)(platform)  | Raise the first recorded load failure the configuration says not to stub. |
+| [`degraded_apps`](_autosummary/enlace.degraded.html.md#enlace.degraded.degraded_apps)(config)                          | The apps that failed to load, by name, with their public summary.          |
+|-------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| [`enter_lifespan_or_stub`](_autosummary/enlace.degraded.html.md#enlace.degraded.enter_lifespan_or_stub)(stack, mount, app, ...) | Start `app`'s lifespan, register its shutdown on `stack`; stub on failure. |
+| [`load_or_stub`](_autosummary/enlace.degraded.html.md#enlace.degraded.load_or_stub)(strategy, app, platform)          | Return `app`'s ASGI sub-app, or a stub when an asgi app cannot load.       |
+| [`refuse_to_boot_if_required`](_autosummary/enlace.degraded.html.md#enlace.degraded.refuse_to_boot_if_required)(platform)           | Raise the first recorded load failure the configuration says not to stub.  |
 
 ### Classes
 
@@ -1858,6 +1861,34 @@ The apps that failed to load, by name, with their public summary.
 >>> degraded_apps(PlatformConfig())
 {}
 ```
+
+### *async* enlace.degraded.enter_lifespan_or_stub(stack, mount, app, platform)
+
+Start `app`’s lifespan, register its shutdown on `stack`; stub on failure.
+
+`mount` is the wrapper the app is mounted through (anything with an
+`app` attribute holding the sub-app). On a startup failure of an asgi
+app, its `app` is swapped for an [`UnavailableApp`](_autosummary/enlace.degraded.html.md#enlace.degraded.UnavailableApp) — the route
+stays, now answering 500 — and the failure is recorded (`stage =
+"lifespan"`) and logged, so `/_meta`, `/_apps` and the doctor report
+it like any other stub. The failed lifespan’s shutdown is not run (it never
+started).
+
+The shutdown is registered as a plain callback, not with
+`enter_async_context`: an exit stack hands an in-flight exception to every
+context it unwinds, and an `asynccontextmanager` lifespan would have it
+thrown in at its `yield`, skipping its own cleanup. So when the gateway’s
+startup aborts (`fail_hard`) or another app’s shutdown raises, the apps
+that did start still shut down normally.
+
+Returns the state the lifespan yielded (a dict), or `None`, so the caller
+can expose it as request state as Starlette would for a top-level app.
+
+`fail_hard`, `app_load_failure = "raise"` and non-asgi modes re-raise,
+which aborts the gateway’s startup.
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)]
 
 ### enlace.degraded.load_or_stub(strategy, app, platform)
 
@@ -3874,18 +3905,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 14:28 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/e80d7310495f1d3d946b2f368a3698f25123897c"><code>e80d731</code></a> on branch <code>main</code>, for **enlace 0.1.50** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 14:37 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/57ad0a9212cc414ca6f178aea065b2e43a908aad"><code>57ad0a9</code></a> on branch <code>main</code>, for **enlace 0.1.51** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.50) is behind the latest release on PyPI (0.1.51): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.51) is behind the latest release on PyPI (0.1.52): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/e80d7310495f1d3d946b2f368a3698f25123897c"><code>e80d7310495f1d3d946b2f368a3698f25123897c</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/57ad0a9212cc414ca6f178aea065b2e43a908aad"><code>57ad0a9212cc414ca6f178aea065b2e43a908aad</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3896,9 +3927,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38413420171">38413420171</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38414699360">38414699360</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>e80d7310495f1d3d946b2f368a3698f25123897c</code> (in the history of the built commit) |
+| Event commit | <code>57ad0a9212cc414ca6f178aea065b2e43a908aad</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -3923,13 +3954,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.51/">0.1.51</a>, newer than the documented version (0.1.50).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.52/">0.1.52</a>, newer than the documented version (0.1.51).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout e80d7310495f1d3d946b2f368a3698f25123897c
+git checkout 57ad0a9212cc414ca6f178aea065b2e43a908aad
 pip install "epythet==0.2.15"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

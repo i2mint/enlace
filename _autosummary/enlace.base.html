@@ -295,7 +295,7 @@ owned by another tool, and <code class="docutils literal notranslate"><span clas
 <td><p>What a contained app-load failure may be.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.base.AppLoadStage" title="enlace.base.AppLoadStage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppLoadStage</span></code></a></p></td>
-<td><p>while discovery imported the entry module to detect its type, or while <code class="docutils literal notranslate"><span class="pre">build_backend</span></code> loaded the sub-app.</p></td>
+<td><p>while discovery imported the entry module to detect its type, while <code class="docutils literal notranslate"><span class="pre">build_backend</span></code> loaded the sub-app, or while the gateway ran the sub-app's lifespan startup.</p></td>
 </tr>
 </tbody>
 </table>
@@ -441,13 +441,14 @@ It is never serialized.</p>
 <dt class="sig sig-object py" id="enlace.base.AppLoadStage">
 <span class="sig-prename descclassname"><span class="pre">enlace.base.</span></span><span class="sig-name descname"><span class="pre">AppLoadStage</span></span><a class="headerlink" href="#enlace.base.AppLoadStage" title="Link to this definition">¶</a></dt>
 <dd><p>while discovery imported the entry
-module to detect its type, or while <code class="docutils literal notranslate"><span class="pre">build_backend</span></code> loaded the sub-app.</p>
+module to detect its type, while <code class="docutils literal notranslate"><span class="pre">build_backend</span></code> loaded the sub-app, or
+while the gateway ran the sub-app’s lifespan startup.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Where an app-load failure happened</p>
 </dd>
 </dl>
-<p>alias of <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘discover’, ‘compose’]</p>
+<p>alias of <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘discover’, ‘compose’, ‘lifespan’]</p>
 </dd></dl>
 
 <dl class="py class">
@@ -710,7 +711,7 @@ when one is close, the enlace table it was probably meant to be.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=c61c636a"></script>
+</div><script src="../_static/documentation_options.js?v=6f5c170c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -286,12 +286,13 @@ the same <code class="docutils literal notranslate"><span class="pre">AppConfig.
 gateway’s <code class="docutils literal notranslate"><span class="pre">/_meta</span></code>, so a failure only the server’s own identity hits (a
 file only it cannot read) is still reported.</p></li>
 </ul>
-<p>What is contained is narrow on purpose: an <code class="docutils literal notranslate"><span class="pre">asgi</span></code>-mode app’s import, or the
-detection and loading of its sub-app. Platform configuration errors (a bad
+<p>What is contained is narrow on purpose: an <code class="docutils literal notranslate"><span class="pre">asgi</span></code>-mode app’s import, the
+detection and loading of its sub-app, and its lifespan startup
+(<a class="reference internal" href="#enlace.degraded.enter_lifespan_or_stub" title="enlace.degraded.enter_lifespan_or_stub"><code class="xref py py-func docutils literal notranslate"><span class="pre">enter_lifespan_or_stub()</span></code></a>). Platform configuration errors (a bad
 <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>, an unknown <code class="docutils literal notranslate"><span class="pre">landing_app</span></code>, route conflicts, a plugin that
-refuses its configuration) still refuse to boot, as do lifespan failures, an
-app with <code class="docutils literal notranslate"><span class="pre">fail_hard</span> <span class="pre">=</span> <span class="pre">true</span></code> in its app.toml, and every app when the platform
-sets <code class="docutils literal notranslate"><span class="pre">app_load_failure</span> <span class="pre">=</span> <span class="pre">&quot;raise&quot;</span></code>. The decision and its reasons are recorded
+refuses its configuration) still refuse to boot, as do an app with
+<code class="docutils literal notranslate"><span class="pre">fail_hard</span> <span class="pre">=</span> <span class="pre">true</span></code> in its app.toml, and every app when the platform sets
+<code class="docutils literal notranslate"><span class="pre">app_load_failure</span> <span class="pre">=</span> <span class="pre">&quot;raise&quot;</span></code>. The decision and its reasons are recorded
 in <code class="docutils literal notranslate"><span class="pre">misc/docs/decisions/0001-loud-and-local-app-load-failures.md</span></code>.</p>
 <p class="rubric">Module Attributes</p>
 <div class="table-wrapper autosummary longtable docutils container">
@@ -322,10 +323,13 @@ in <code class="docutils literal notranslate"><span class="pre">misc/docs/decisi
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.degraded.degraded_apps" title="enlace.degraded.degraded_apps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">degraded_apps</span></code></a>(config)</p></td>
 <td><p>The apps that failed to load, by name, with their public summary.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.degraded.load_or_stub" title="enlace.degraded.load_or_stub"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_or_stub</span></code></a>(strategy, app, platform)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.degraded.enter_lifespan_or_stub" title="enlace.degraded.enter_lifespan_or_stub"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enter_lifespan_or_stub</span></code></a>(stack, mount, app, ...)</p></td>
+<td><p>Start <code class="docutils literal notranslate"><span class="pre">app</span></code>'s lifespan, register its shutdown on <code class="docutils literal notranslate"><span class="pre">stack</span></code>; stub on failure.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.degraded.load_or_stub" title="enlace.degraded.load_or_stub"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_or_stub</span></code></a>(strategy, app, platform)</p></td>
 <td><p>Return <code class="docutils literal notranslate"><span class="pre">app</span></code>'s ASGI sub-app, or a stub when an asgi app cannot load.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.degraded.refuse_to_boot_if_required" title="enlace.degraded.refuse_to_boot_if_required"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refuse_to_boot_if_required</span></code></a>(platform)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.degraded.refuse_to_boot_if_required" title="enlace.degraded.refuse_to_boot_if_required"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refuse_to_boot_if_required</span></code></a>(platform)</p></td>
 <td><p>Raise the first recorded load failure the configuration says not to stub.</p></td>
 </tr>
 </tbody>
@@ -424,6 +428,34 @@ passes it by.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="enlace.degraded.enter_lifespan_or_stub">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.degraded.</span></span><span class="sig-name descname"><span class="pre">enter_lifespan_or_stub</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mount</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/degraded.html#enter_lifespan_or_stub"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.degraded.enter_lifespan_or_stub" title="Link to this definition">¶</a></dt>
+<dd><p>Start <code class="docutils literal notranslate"><span class="pre">app</span></code>’s lifespan, register its shutdown on <code class="docutils literal notranslate"><span class="pre">stack</span></code>; stub on failure.</p>
+<p><code class="docutils literal notranslate"><span class="pre">mount</span></code> is the wrapper the app is mounted through (anything with an
+<code class="docutils literal notranslate"><span class="pre">app</span></code> attribute holding the sub-app). On a startup failure of an asgi
+app, its <code class="docutils literal notranslate"><span class="pre">app</span></code> is swapped for an <a class="reference internal" href="#enlace.degraded.UnavailableApp" title="enlace.degraded.UnavailableApp"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnavailableApp</span></code></a> — the route
+stays, now answering 500 — and the failure is recorded (<code class="docutils literal notranslate"><span class="pre">stage</span> <span class="pre">=</span>
+<span class="pre">&quot;lifespan&quot;</span></code>) and logged, so <code class="docutils literal notranslate"><span class="pre">/_meta</span></code>, <code class="docutils literal notranslate"><span class="pre">/_apps</span></code> and the doctor report
+it like any other stub. The failed lifespan’s shutdown is not run (it never
+started).</p>
+<p>The shutdown is registered as a plain callback, not with
+<code class="docutils literal notranslate"><span class="pre">enter_async_context</span></code>: an exit stack hands an in-flight exception to every
+context it unwinds, and an <code class="docutils literal notranslate"><span class="pre">asynccontextmanager</span></code> lifespan would have it
+thrown in at its <code class="docutils literal notranslate"><span class="pre">yield</span></code>, skipping its own cleanup. So when the gateway’s
+startup aborts (<code class="docutils literal notranslate"><span class="pre">fail_hard</span></code>) or another app’s shutdown raises, the apps
+that did start still shut down normally.</p>
+<p>Returns the state the lifespan yielded (a dict), or <code class="docutils literal notranslate"><span class="pre">None</span></code>, so the caller
+can expose it as request state as Starlette would for a top-level app.</p>
+<p><code class="docutils literal notranslate"><span class="pre">fail_hard</span></code>, <code class="docutils literal notranslate"><span class="pre">app_load_failure</span> <span class="pre">=</span> <span class="pre">&quot;raise&quot;</span></code> and non-asgi modes re-raise,
+which aborts the gateway’s startup.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="enlace.degraded.load_or_stub">
 <span class="sig-prename descclassname"><span class="pre">enlace.degraded.</span></span><span class="sig-name descname"><span class="pre">load_or_stub</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/degraded.html#load_or_stub"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.degraded.load_or_stub" title="Link to this definition">¶</a></dt>
 <dd><p>Return <code class="docutils literal notranslate"><span class="pre">app</span></code>’s ASGI sub-app, or a stub when an asgi app cannot load.</p>
@@ -516,6 +548,7 @@ up front, as they did when discovery raised.</p>
 <li><a class="reference internal" href="#enlace.degraded.STUB_STATUS"><code class="docutils literal notranslate"><span class="pre">STUB_STATUS</span></code></a></li>
 <li><a class="reference internal" href="#enlace.degraded.UnavailableApp"><code class="docutils literal notranslate"><span class="pre">UnavailableApp</span></code></a></li>
 <li><a class="reference internal" href="#enlace.degraded.degraded_apps"><code class="docutils literal notranslate"><span class="pre">degraded_apps()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.degraded.enter_lifespan_or_stub"><code class="docutils literal notranslate"><span class="pre">enter_lifespan_or_stub()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.degraded.load_or_stub"><code class="docutils literal notranslate"><span class="pre">load_or_stub()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.degraded.refuse_to_boot_if_required"><code class="docutils literal notranslate"><span class="pre">refuse_to_boot_if_required()</span></code></a></li>
 </ul>
@@ -529,7 +562,7 @@ up front, as they did when discovery raised.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=c61c636a"></script>
+</div><script src="../_static/documentation_options.js?v=6f5c170c"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

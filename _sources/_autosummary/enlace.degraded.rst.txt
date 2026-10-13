@@ -19,6 +19,7 @@ enlace.degraded
    .. autosummary::
    
       degraded_apps
+      enter_lifespan_or_stub
       load_or_stub
       refuse_to_boot_if_required
    
