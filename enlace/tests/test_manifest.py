@@ -703,3 +703,75 @@ def test_per_app_meta_picks_up_a_manifest_written_after_startup(
 
     _write(manifest_dir, "foo", app_source={"sha": "late1"})
     assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "late1"
+
+
+def test_injected_meta_tags_follow_a_rewritten_manifest(tmp_apps_dir, manifest_dir):
+    frontend = tmp_apps_dir / "foo" / "frontend"
+    frontend.mkdir(parents=True)
+    (frontend / "index.html").write_text("<html><head></head><body>hi</body></html>")
+    _write(manifest_dir, "foo", app_source={"sha": "aaa1111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=tmp_apps_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    assert 'content="aaa1111"' in client.get("/foo/").text
+
+    _rewrite(manifest_dir, "foo", bump=2, app_source={"sha": "bbb2222"})
+    assert 'content="bbb2222"' in client.get("/foo/").text
+
+
+def test_a_deleted_app_manifest_reverts_to_the_stub(single_app_dir, manifest_dir):
+    _write(manifest_dir, "foo", app_source={"sha": "gone111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "gone111"
+
+    (manifest_dir / "foo.json").unlink()
+    payload = client.get("/api/foo/_meta").json()
+    assert payload["app_source"]["sha"] is None
+    assert payload["manifest_mtime"] is None
+
+
+def test_a_same_tick_same_size_rewrite_is_not_missed(single_app_dir, manifest_dir):
+    """mtime is coarse: a second write in the same tick keeps the stat key.
+
+    Found by the review of #85. While the file is that young, it is re-read.
+    """
+    _write(manifest_dir, "foo", app_source={"sha": "aaaaaaa"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    path = manifest_dir / "foo.json"
+    first = path.stat()
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "aaaaaaa"
+
+    with open(path, "r+") as f:  # in place: same inode, same size
+        text = f.read().replace("aaaaaaa", "bbbbbbb")
+        f.seek(0)
+        f.write(text)
+    os.utime(path, ns=(first.st_atime_ns, first.st_mtime_ns))  # same tick
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "bbbbbbb"
+
+
+def test_a_manifest_that_breaks_the_parser_never_fails_a_request(
+    single_app_dir, manifest_dir
+):
+    """``load_manifest`` only degrades on OSError/ValueError; the middlewares read
+    the manifest on every request, so anything else must not escape (review of #85).
+    """
+    _write(manifest_dir, "foo", app_source={"sha": "good111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    assert client.get("/api/foo/hello").status_code == 200
+
+    path = manifest_dir / "foo.json"
+    path.write_text("[" * 200_000)  # RecursionError in json.load
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+    assert client.get("/api/foo/hello").status_code == 200
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "good111"

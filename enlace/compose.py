@@ -18,6 +18,7 @@ import inspect
 import logging
 import os
 import sys
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -362,6 +363,13 @@ def _detect_enlace_version() -> Optional[str]:
         return None
 
 
+#: How recent a manifest's mtime must be for its stat key not to be trusted yet:
+#: comfortably more than a filesystem timestamp tick (a few ms on Linux).
+_MTIME_TICK_NS = 50_000_000
+#: A stat key no real one equals (an absent file keys as ``None``): read next time.
+_UNTRUSTED = object()
+
+
 class _MtimeCachedManifest:
     """One manifest as it is on disk *now*, re-read when the file changes.
 
@@ -396,9 +404,9 @@ class _MtimeCachedManifest:
         self._manifest_dir = manifest_dir
         self._enlace_version = enlace_version
         self._path = None if manifest_dir is None else manifest_dir / f"{name}.json"
-        # None until the first request, so the first read refreshes rather than
-        # trusting a snapshot taken before the routes even existed.
-        self._stat_key: Optional[tuple[int, int]] = None
+        # Untrusted until the first request, so the first read refreshes rather
+        # than trusting a snapshot taken before the routes even existed.
+        self._stat_key: object = _UNTRUSTED
 
     def payload(self) -> dict:
         """Return the manifest as a dict, plus the ``manifest_mtime`` it reflects.
@@ -418,14 +426,23 @@ class _MtimeCachedManifest:
 
     def _refresh(self) -> tuple[DeployManifest, Optional[os.stat_result]]:
         st = self._stat()
-        stat_key = None if st is None else (st.st_mtime_ns, st.st_size)
+        stat_key = None if st is None else (st.st_ino, st.st_mtime_ns, st.st_size)
         if stat_key != self._stat_key:
-            # Never raises on a bad file: it degrades to a stub whose
-            # ``extra.manifest_error`` says why (see ``load_manifest``).
-            self._manifest = load_manifest(
-                self._name, self._manifest_dir, enlace_version=self._enlace_version
-            )
-            self._stat_key = stat_key
+            try:
+                # Degrades to a stub whose ``extra.manifest_error`` says why on
+                # any file it can parse as bad (see ``load_manifest``).
+                self._manifest = load_manifest(
+                    self._name, self._manifest_dir, enlace_version=self._enlace_version
+                )
+            except Exception:  # noqa: BLE001 — e.g. RecursionError on deep JSON
+                # The deploy-identity middlewares call this on EVERY request under
+                # the app's prefix, so it must never raise: keep the last manifest.
+                _logger.warning("Unusable manifest %s", self._path, exc_info=True)
+            # Filesystem mtimes are coarse (a kernel tick), so a second same-size
+            # write within the tick of the first leaves the key unchanged. While
+            # the file is that young, re-read it next time too ("racy git").
+            young = st is not None and time.time_ns() - st.st_mtime_ns < _MTIME_TICK_NS
+            self._stat_key = _UNTRUSTED if young else stat_key
         return self._manifest, st
 
     def _stat(self) -> Optional[os.stat_result]:
