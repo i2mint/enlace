@@ -12,11 +12,13 @@ cookies and CSRF header away from an upstream *server*, and keep an upstream
 from setting platform cookies or sending origin-wide headers
 (``PLATFORM_UNSAFE_RESPONSE_HEADERS``). They do not try to stop an upstream
 from *navigating* a visitor elsewhere on the origin: a ``Location`` or
-``Refresh`` pointing at ``/auth/...`` is passed through. A proxied app's pages
-are served on the platform origin, so the same navigation is one
-``<meta http-equiv="refresh">`` or ``location.href = ...`` away, and the
-state-changing auth routes are POST plus CSRF, which no redirect can trigger.
-Filtering those headers would only look like a boundary.
+``Refresh`` pointing at ``/auth/...`` is passed through. A redirect is only a
+top-level GET navigation, which any page on any site can already cause (with
+the visitor's SameSite=Lax cookies attached), and a proxied app's own pages are
+served on the platform origin, one ``location.href = ...`` away from the same
+thing. So the platform's GET routes must be safe to navigate to on their own
+(the POST ones need CSRF); filtering these headers would only look like a
+boundary.
 """
 
 from typing import Callable, Iterable, Optional

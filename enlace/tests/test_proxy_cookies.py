@@ -299,9 +299,9 @@ def test_custom_platform_cookie_names_match_case_insensitively():
 def test_upstream_redirects_pass_through_unfiltered():
     """#66 decision: Location/Refresh are navigation, not a credential leak.
 
-    A proxied app's pages run on the platform origin and can navigate there by
-    themselves; the state-changing /auth routes are POST + CSRF. See the
-    enlace.proxy module docstring.
+    Any cross-site page can already navigate a visitor to /auth/..., and a
+    proxied app's pages run on the platform origin; GET routes must be safe on
+    their own. See the enlace.proxy module docstring.
     """
     client = _proxy_answering(
         [("location", "/auth/logout"), ("refresh", "0; url=/auth/logout")], {}
