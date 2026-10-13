@@ -133,9 +133,14 @@ def build_backend(
         lifespan ever ran). An asgi app whose startup raises is swapped for a
         500 stub and reported, like an import failure (enlace.degraded); the
         other apps start. Its shutdown is not run: it never started.
+
+        What the apps' lifespans yield (Starlette's lifespan state) is merged
+        and yielded here, so ``request.state`` carries it as it would for a
+        standalone app. The state is shared by every app on the gateway.
         """
         from enlace.degraded import enter_lifespan_or_stub
 
+        state: dict = {}
         async with contextlib.AsyncExitStack() as stack:
             for route in app.routes:
                 if not isinstance(route, Mount):
@@ -143,15 +148,16 @@ def build_backend(
                 if isinstance(route.app, _AppIdInjector):
                     app_config = apps_by_name.get(route.app.app_id)
                     if app_config is not None:
-                        await enter_lifespan_or_stub(
+                        app_state = await enter_lifespan_or_stub(
                             stack, route.app, app_config, config
                         )
+                        state.update(app_state or {})
                         continue
                 if hasattr(route.app, "router"):
                     lifespan = getattr(route.app.router, "lifespan_context", None)
                     if lifespan is not None:
                         await stack.enter_async_context(lifespan(route.app))
-            yield
+            yield state or None
 
     parent = FastAPI(
         title="enlace platform",

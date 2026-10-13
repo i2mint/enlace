@@ -134,6 +134,9 @@ def test_fail_hard_aborts_startup(tmp_path):
     with pytest.raises(RuntimeError, match="startup of strict failed"):
         with TestClient(build_backend(config)):
             pass
+    # The app that did start is still shut down cleanly: the abort is not
+    # thrown into its lifespan at its yield (the #76 review's finding).
+    assert _events(log) == ["start ok", "start strict", "stop ok"]
 
 
 def test_platform_raise_policy_aborts_startup(tmp_path):
@@ -176,3 +179,56 @@ def test_a_non_asgi_mode_startup_failure_is_not_contained():
                 pass
     finally:
         _STRATEGIES.pop(Failing.name, None)
+
+
+def test_one_apps_failing_shutdown_does_not_skip_anothers(tmp_path):
+    apps, log = tmp_path / "apps", tmp_path / "log"
+    apps.mkdir()
+    _lifespan_app(apps, "a_ok", log)
+    d = apps / "z_bad_stop"
+    d.mkdir()
+    (d / "server.py").write_text(
+        textwrap.dedent("""\
+            from contextlib import asynccontextmanager
+            from fastapi import FastAPI
+
+            @asynccontextmanager
+            async def lifespan(app):
+                yield
+                raise RuntimeError("shutdown of z_bad_stop failed")
+
+            app = FastAPI(lifespan=lifespan)
+        """)
+    )
+    config = discover_apps(PlatformConfig(apps_dir=apps))
+    with pytest.raises(RuntimeError, match="shutdown of z_bad_stop"):
+        with TestClient(build_backend(config)):
+            pass
+    assert _events(log) == ["start a_ok", "stop a_ok"]
+
+
+def test_lifespan_state_reaches_request_state(tmp_path):
+    """What a lifespan yields is request state, as for a standalone app."""
+    apps = tmp_path / "apps"
+    d = apps / "stateful"
+    d.mkdir(parents=True)
+    (d / "server.py").write_text(
+        textwrap.dedent("""\
+            from contextlib import asynccontextmanager
+            from fastapi import FastAPI, Request
+
+            @asynccontextmanager
+            async def lifespan(app):
+                yield {"greeting": "hi from lifespan"}
+
+            app = FastAPI(lifespan=lifespan)
+
+            @app.get("/hello")
+            def hello(request: Request):
+                return {"greeting": request.state.greeting}
+        """)
+    )
+    config = discover_apps(PlatformConfig(apps_dir=apps))
+    with TestClient(build_backend(config)) as client:
+        r = client.get("/api/stateful/hello")
+        assert r.json() == {"greeting": "hi from lifespan"}

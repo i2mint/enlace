@@ -143,8 +143,8 @@ async def enter_lifespan_or_stub(
     mount: Any,
     app: AppConfig,
     platform: PlatformConfig,
-) -> None:
-    """Start ``app``'s lifespan on ``stack``; on a contained failure, stub it.
+) -> Optional[dict]:
+    """Start ``app``'s lifespan, register its shutdown on ``stack``; stub on failure.
 
     ``mount`` is the wrapper the app is mounted through (anything with an
     ``app`` attribute holding the sub-app). On a startup failure of an asgi
@@ -152,7 +152,17 @@ async def enter_lifespan_or_stub(
     stays, now answering 500 — and the failure is recorded (``stage =
     "lifespan"``) and logged, so ``/_meta``, ``/_apps`` and the doctor report
     it like any other stub. The failed lifespan's shutdown is not run (it never
-    started); the apps that did start are shut down as usual.
+    started).
+
+    The shutdown is registered as a plain callback, not with
+    ``enter_async_context``: an exit stack hands an in-flight exception to every
+    context it unwinds, and an ``asynccontextmanager`` lifespan would have it
+    thrown in at its ``yield``, skipping its own cleanup. So when the gateway's
+    startup aborts (``fail_hard``) or another app's shutdown raises, the apps
+    that did start still shut down normally.
+
+    Returns the state the lifespan yielded (a dict), or ``None``, so the caller
+    can expose it as request state as Starlette would for a top-level app.
 
     ``fail_hard``, ``app_load_failure = "raise"`` and non-asgi modes re-raise,
     which aborts the gateway's startup.
@@ -160,9 +170,10 @@ async def enter_lifespan_or_stub(
     target = mount.app
     lifespan = getattr(getattr(target, "router", None), "lifespan_context", None)
     if lifespan is None:
-        return
+        return None
+    cm = lifespan(target)
     try:
-        await stack.enter_async_context(lifespan(target))
+        state = await cm.__aenter__()
     except CONTAINED_LOAD_ERRORS as exc:
         if app.mode not in CONTAINED_MODES or _must_refuse_to_boot(app, platform):
             raise
@@ -171,6 +182,9 @@ async def enter_lifespan_or_stub(
         )
         _log_stub(app)
         mount.app = UnavailableApp(app.name, app.import_error.exception_type)
+        return None
+    stack.push_async_callback(cm.__aexit__, None, None, None)
+    return state if isinstance(state, dict) else None
 
 
 def degraded_apps(config: PlatformConfig) -> dict[str, dict[str, str]]:
