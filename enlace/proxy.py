@@ -6,6 +6,17 @@ implementation for simple cases.
 
 This module is lazy-loaded: it only imports ``httpx`` when a proxy ASGI
 app is actually instantiated, so the dependency remains optional.
+
+What the credential filters do and do not contain: they keep the platform's
+cookies and CSRF header away from an upstream *server*, and keep an upstream
+from setting platform cookies or sending origin-wide headers
+(``PLATFORM_UNSAFE_RESPONSE_HEADERS``). They do not try to stop an upstream
+from *navigating* a visitor elsewhere on the origin: a ``Location`` or
+``Refresh`` pointing at ``/auth/...`` is passed through. A proxied app's pages
+are served on the platform origin, so the same navigation is one
+``<meta http-equiv="refresh">`` or ``location.href = ...`` away, and the
+state-changing auth routes are POST plus CSRF, which no redirect can trigger.
+Filtering those headers would only look like a boundary.
 """
 
 from typing import Callable, Iterable, Optional
@@ -46,10 +57,24 @@ def platform_cookie_filter(
     Used for every proxied app (``mode="external"`` and ``mode="process"``): an
     upstream has no business seeing a visitor's platform session, and must not
     be able to set (overwrite) one on the platform's origin either.
+
+    Names match case-insensitively. Browsers and Starlette keep cookie names
+    case-sensitive, so ``Enlace_Session`` is a different cookie today, but a
+    case-variant of a platform name has no legitimate use and would become a
+    shadow the day any reader matched names loosely.
+
+    >>> keep = platform_cookie_filter(names=["enlace_session"], prefixes=["shared_auth_"])
+    >>> [keep(n) for n in ("theme", "enlace_session", "Enlace_Session", "SHARED_AUTH_x")]
+    [True, False, False, False]
     """
-    names = frozenset(names)
-    prefixes = tuple(prefixes)
-    return lambda name: not (name in names or name.startswith(prefixes))
+    names = frozenset(n.casefold() for n in names)
+    prefixes = tuple(p.casefold() for p in prefixes)
+
+    def keep(name: str) -> bool:
+        folded = name.casefold()
+        return not (folded in names or folded.startswith(prefixes))
+
+    return keep
 
 
 def _filter_cookie_header(value: str, keep: CookieFilter) -> str:
