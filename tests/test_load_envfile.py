@@ -13,12 +13,14 @@ had succeeded. These tests pin the new contract:
   (so the caller can degrade env-based checks without aborting)
 """
 
+import json as _json
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
-from enlace.__main__ import _load_envfile
+from enlace.__main__ import _load_envfile, _resolve_envfile, doctor
 
 
 def test_loads_valid_envfile(tmp_path, monkeypatch):
@@ -72,3 +74,53 @@ def test_unreadable_envfile_warns_and_skips(tmp_path, monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "not readable" in captured.err
     assert str(envfile) in captured.err
+
+
+# -- doctor's envfile default (#64) -------------------------------------------
+
+def test_auto_envfile_is_the_dotenv_beside_platform_toml(tmp_path):
+    toml = tmp_path / "platform.toml"
+    assert _resolve_envfile("auto", toml_path=toml) is None  # no toml
+    toml.write_text("[platform]\n")
+    assert _resolve_envfile("auto", toml_path=toml) is None  # no .env
+    (tmp_path / ".env").write_text("A=1\n")
+    assert _resolve_envfile("auto", toml_path=toml) == tmp_path / ".env"
+
+
+def test_empty_envfile_opts_out_and_a_path_is_taken_verbatim(tmp_path):
+    (tmp_path / "platform.toml").write_text("[platform]\n")
+    (tmp_path / ".env").write_text("A=1\n")
+    assert _resolve_envfile("", toml_path=tmp_path / "platform.toml") is None
+    assert _resolve_envfile("x/y.env") == Path("x/y.env")
+
+
+def _doctor_in(tmp_path, monkeypatch, capsys, **kwargs) -> dict:
+    (tmp_path / "apps").mkdir()
+    (tmp_path / "platform.toml").write_text('[platform]\napps_dirs = ["apps"]\n')
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("ENLACE_PLUGINS", "")
+    monkeypatch.delenv("ENLACE_APPS_DIRS", raising=False)
+    monkeypatch.setenv("ENLACE_TEST_DOCTOR_KEY", "from-shell")
+    doctor(json=True, **kwargs)
+    return _json.loads(capsys.readouterr().out)
+
+
+def test_doctor_loads_the_dotenv_beside_platform_toml_by_default(
+    tmp_path, monkeypatch, capsys
+):
+    (tmp_path / ".env").write_text("ENLACE_TEST_DOCTOR_KEY=from-envfile\n")
+    report = _doctor_in(tmp_path, monkeypatch, capsys)
+    assert report["envfile"] == str(tmp_path.resolve() / ".env")
+    assert os.environ["ENLACE_TEST_DOCTOR_KEY"] == "from-envfile"
+
+
+def test_doctor_envfile_empty_string_loads_nothing(tmp_path, monkeypatch, capsys):
+    (tmp_path / ".env").write_text("ENLACE_TEST_DOCTOR_KEY=from-envfile\n")
+    report = _doctor_in(tmp_path, monkeypatch, capsys, envfile="")
+    assert report["envfile"] == "none"
+    assert os.environ["ENLACE_TEST_DOCTOR_KEY"] == "from-shell"
+
+
+def test_doctor_without_a_dotenv_reports_none(tmp_path, monkeypatch, capsys):
+    report = _doctor_in(tmp_path, monkeypatch, capsys)
+    assert report["envfile"] == "none"

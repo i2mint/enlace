@@ -60,6 +60,8 @@ class Report:
 
     base_url: Optional[str]
     checks: list[Check] = field(default_factory=list)
+    # The envfile the CLI loaded ("none" when none); None when not reported.
+    envfile: Optional[str] = None
 
     @property
     def ok(self) -> bool:
@@ -69,6 +71,7 @@ class Report:
     def as_dict(self) -> dict:
         return {
             "base_url": self.base_url,
+            "envfile": self.envfile,
             "ok": self.ok,
             "summary": self._summary(),
             "checks": [asdict(c) for c in self.checks],
@@ -88,6 +91,8 @@ class Report:
             lines.append(f"enlace doctor — probing {self.base_url}")
         else:
             lines.append("enlace doctor — static checks only")
+        if self.envfile is not None:
+            lines.append(f"envfile: {self.envfile}")
         lines.append("=" * 60)
         for c in self.checks:
             prefix = symbol.get(c.status, "??  ")

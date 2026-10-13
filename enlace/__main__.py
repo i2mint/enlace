@@ -434,13 +434,32 @@ def _load_envfile(path: str) -> bool:
     return True
 
 
+# `enlace doctor --envfile` default: the .env beside platform.toml, if any.
+_AUTO_ENVFILE = "auto"
+
+
+def _resolve_envfile(
+    envfile: str, *, toml_path: Path = Path("platform.toml")
+) -> Optional[Path]:
+    """The envfile ``doctor`` should load, or ``None`` for none.
+
+    ``"auto"`` means the ``.env`` next to *toml_path* when both exist (the
+    gateway's own envfile in the usual layout); ``""`` opts out; anything else
+    is an explicit path, which must exist (see :func:`_load_envfile`).
+    """
+    if envfile == _AUTO_ENVFILE:
+        candidate = toml_path.resolve().parent / ".env"
+        return candidate if toml_path.is_file() and candidate.is_file() else None
+    return Path(envfile) if envfile else None
+
+
 def doctor(
     *,
     base_url: str = "",
     timeout: float = 5.0,
     apps: str = "",
     json: bool = False,
-    envfile: str = "",
+    envfile: str = _AUTO_ENVFILE,
     skip_env_checks: bool = False,
     apps_dir: str = "",
     apps_dirs: str = "",
@@ -468,8 +487,10 @@ def doctor(
             Static checks still run across all apps.
         json: Output as JSON (for CI / deploy pipelines).
         envfile: Path to a KEY=VALUE envfile to load before running env
-            checks. Use this when probing from outside the service process
-            (e.g. a deploy script sourcing /opt/tw_platform/.env).
+            checks, so a plain shell sees the variables the gateway runs
+            with. Defaults to the ``.env`` beside ``platform.toml`` when there
+            is one (``auto``); pass ``--envfile ''`` to load none. The report
+            header names the envfile used.
         skip_env_checks: Skip signing-key / shared-password env checks
             entirely. Use when you are running from a shell that doesn't
             have the gateway's env and you trust the HTTP probes as the
@@ -478,12 +499,16 @@ def doctor(
         apps_dirs: Comma-separated container directories.
         app_dirs: Comma-separated individual app directories.
     """
-    if envfile:
+    envfile_path = _resolve_envfile(envfile)
+    envfile_note = "none"
+    if envfile_path is not None:
+        envfile_note = str(envfile_path)
         # If the envfile is unreadable (e.g. root:root 0600 and we are the
         # deploy user) ``_load_envfile`` warns and returns False; auto-skip
         # env checks so the HTTP / config checks still run.
-        if not _load_envfile(envfile):
+        if not _load_envfile(str(envfile_path)):
             skip_env_checks = True
+            envfile_note += " (unreadable; env checks skipped)"
 
     config = _build_config(
         apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
@@ -505,6 +530,7 @@ def doctor(
         extra_static_checks=plugin_static,
         extra_http_checks=plugin_http,
     )
+    report.envfile = envfile_note
 
     if json:
         print(json_module.dumps(report.as_dict(), indent=2, default=str))
