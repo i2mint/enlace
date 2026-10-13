@@ -247,3 +247,66 @@ def test_the_social_login_state_cookie_is_a_platform_cookie():
     """A proxied app setting a second ``enlace_oauth_state`` would block sign-in."""
     keep = platform_cookie_filter()
     assert not keep("enlace_oauth_state")
+
+
+def _proxy_answering(headers: list, seen: dict) -> TestClient:
+    """A filtered proxy whose upstream answers with *headers*."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["cookie"] = request.headers.get("cookie")
+        return httpx.Response(302, headers=headers)
+
+    proxy = make_proxy_app(
+        upstream="https://space.example",
+        strip_prefix="/typola",
+        cookie_filter=platform_cookie_filter(),
+    )
+
+    async def _get_client():
+        return httpx.AsyncClient(transport=httpx.MockTransport(handler))
+
+    proxy._get_client = _get_client
+    return TestClient(Starlette(routes=[Mount("/typola", app=proxy)]))
+
+
+def test_case_variant_platform_cookie_names_are_platform_cookies():
+    """#66: ``Enlace_Session`` may not be set by, or sent to, an upstream."""
+    seen: dict = {}
+    client = _proxy_answering(
+        [
+            ("set-cookie", "Enlace_Session=forged; Path=/"),
+            ("set-cookie", "ENLACE_CSRF=forged"),
+            ("set-cookie", "Shared_Auth_vault=forged"),
+            ("set-cookie", "space_pref=dark"),
+        ],
+        seen,
+    )
+    r = client.get(
+        "/typola/x",
+        headers={"Cookie": "ENLACE_SESSION=S; space_pref=light"},
+        follow_redirects=False,
+    )
+    assert r.headers.get_list("set-cookie") == ["space_pref=dark"]
+    assert seen["cookie"] == "space_pref=light"
+
+
+def test_custom_platform_cookie_names_match_case_insensitively():
+    keep = platform_cookie_filter(names=["My_Sess"], prefixes=["Vault_"])
+    assert not keep("my_sess") and not keep("MY_SESS") and not keep("vault_x")
+    assert keep("my_sess2") and keep("theme")
+
+
+def test_upstream_redirects_pass_through_unfiltered():
+    """#66 decision: Location/Refresh are navigation, not a credential leak.
+
+    Any cross-site page can already navigate a visitor to /auth/..., and a
+    proxied app's pages run on the platform origin; GET routes must be safe on
+    their own. See the enlace.proxy module docstring.
+    """
+    client = _proxy_answering(
+        [("location", "/auth/logout"), ("refresh", "0; url=/auth/logout")], {}
+    )
+    r = client.get("/typola/x", follow_redirects=False)
+    assert r.status_code == 302
+    assert r.headers["location"] == "/auth/logout"
+    assert r.headers["refresh"] == "0; url=/auth/logout"
