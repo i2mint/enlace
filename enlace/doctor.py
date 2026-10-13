@@ -41,6 +41,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from enlace.base import PlatformConfig
+from enlace.util import url_path
 
 _DEFAULT_TIMEOUT = 5.0
 
@@ -314,7 +315,7 @@ def _check_frontend_mount(base_url: str, app_name: str, timeout: float) -> Check
     Fails on 404 (mount missing — the SPA catch-all or a hole), 5xx, and
     connection errors.
     """
-    url = f"{base_url.rstrip('/')}/{app_name}/"
+    url = f"{base_url.rstrip('/')}{url_path(f'/{app_name}/')}"
     status, headers, _body, err = _http_get(url, timeout=timeout)
     name = f"http:/{app_name}/"
     if err:
@@ -346,7 +347,7 @@ def _check_api_mount(
     the point is to detect "something ate my traffic", not to enforce API
     conventions each app chose not to follow.
     """
-    url = f"{base_url.rstrip('/')}{route_prefix.rstrip('/')}/"
+    url = f"{base_url.rstrip('/')}{url_path(route_prefix.rstrip('/') + '/')}"
     status, _headers, _body, err = _http_get(url, timeout=timeout)
     name = f"http:{route_prefix}/"
     if err:
