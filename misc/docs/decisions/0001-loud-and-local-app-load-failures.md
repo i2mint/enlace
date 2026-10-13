@@ -23,7 +23,7 @@ The policy becomes **loud and local**. When an `asgi`-mode app cannot be importe
 
 | Surface | What it shows |
 |---|---|
-| The stub itself | `500`, `Cache-Control: no-store`, `X-Enlace-App-Status: load-failed`, and a body naming the app and the exception **class**. It never includes the message or the traceback, which can carry server paths. Websockets are refused with close code 1011. |
+| The stub itself | `500`, `Cache-Control: no-store`, `X-Enlace-App-Status: load-failed`, and a body naming the app and the exception **class**. It never includes the message or the traceback, which can carry server paths. A websocket handshake is refused (a close before accept, which uvicorn sends as an HTTP 403). |
 | Logs | One `ERROR` line per stubbed app at boot, with the full traceback. |
 | `/_meta` | The platform payload gains `degraded_apps: {name: {exception_type, stage}}`. The app's own `/_meta` gains `degraded`. Both keys are absent when everything is healthy, so a healthy `/_meta` stays quiet. |
 | `/_apps` | The app is listed with `degraded: true`, `launchable: false` and no `launch_url`. The built-in index marks it unavailable. |
@@ -31,12 +31,12 @@ The policy becomes **loud and local**. When an `asgi`-mode app cannot be importe
 
 What is contained, exactly:
 
-- **In scope:** the failure of an `asgi`-mode app's entry-module import during discovery (type detection), or of loading its sub-app in `build_backend` (for example, the configured `app` attribute is missing). The net is `Exception` plus `SystemExit`, because import runs arbitrary module code. The one production case of this kind was a `PermissionError`, and a module calling `sys.exit()` at import would otherwise end the worker. `KeyboardInterrupt` still escapes.
+- **In scope:** the failure of an `asgi`-mode app's entry-module import during discovery (type detection), or of loading its sub-app in `build_backend` (for example, an import that succeeds once and fails on the re-import). Detection uses the `entry_point` and `app_attr` from the app's `app.toml` when they are set, because that is what will be mounted. An entry module with neither a callable app attribute nor a public function is a load failure at discovery (`AttributeError`). It used to pass discovery, and so `enlace check`, and then fail at boot. The net is `Exception` plus `SystemExit`, because import runs arbitrary module code. The one production case of this kind was a `PermissionError`, and a module calling `sys.exit()` at import would otherwise end the worker. `KeyboardInterrupt` still escapes.
 - **Out of scope; these still refuse to boot:** every platform configuration error. That covers an unparseable `platform.toml`, an unknown `landing_app`, route and name conflicts, an unknown mode, a broken `ENLACE_PLUGINS` entry, and a plugin that rejects its own configuration (such as an auth allowlist). It also covers `make_asgi` failures in any mode other than `asgi`: a proxy or plugin strategy failing is configuration, not app code. Lifespan failures stay out too (see question 3).
 
-The library seam is unchanged: `discover_apps(..., on_import_error="raise")` remains the default for library callers. Only the gateway entry points, `create_app` (what gunicorn loads) and `enlace serve`, discover with `"record"` and let `build_backend` decide.
+The library seam is unchanged: `discover_apps(..., on_import_error="raise")` remains the default for library callers. Only the gateway entry points, `create_app` (what gunicorn loads) and `enlace serve`, discover with `"record"` and let `build_backend` decide. `enlace serve` checks `fail_hard` and `app_load_failure` right after discovery (`enlace.degraded.refuse_to_boot_if_required`), so a refusal still happens before any process-mode child is spawned.
 
-On a failed import, modules of the app's own package that loaded before the failure are dropped from `sys.modules` (`enlace.discover.forget_partial_imports`). Third-party modules are left alone, because another app may already hold them and a C extension cannot be loaded twice.
+On a failed import, modules of the app's own package that loaded before the failure are dropped from `sys.modules`, and unbound from their parent package (`enlace.discover.forget_partial_imports`). Third-party modules are left alone, because another app may already hold them and a C extension cannot be loaded twice.
 
 ## The four open questions from the issue
 
@@ -52,4 +52,5 @@ On a failed import, modules of the app's own package that loaded before the fail
 - Containment covers availability, not isolation. A failed import can still have run side effects (environment variables, monkeypatches, global registries) that enlace cannot undo. An app that needs real isolation should run in `mode = "process"`.
 - An app whose backend fails but whose frontend directory exists still has its static frontend served at `/{name}/`. Its API calls answer 500, and the launcher shows it as broken.
 - Under the default policy, the gateway's discovery no longer raises for an un-importable app. Code that called `create_app()` expecting an exception must now check `degraded_apps`, or set `app_load_failure = "raise"`.
+- Each gunicorn worker composes the platform on its own (there is no `preload_app`). A failure that depends on timing or on state can therefore stub an app in one worker and not in another, and `/_meta` and the doctor's `degraded:` check would flip from one request to the next. A flapping `degraded_apps` signals a non-deterministic import and should be treated as a failure.
 - `/_meta` names stubbed apps, including protected ones, with the exception class only. App names are already observable (a protected app's `/<name>/_meta` answers 401, an unknown one 404), and the deploy manifest in the same payload already names apps and connectors.

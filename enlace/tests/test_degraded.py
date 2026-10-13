@@ -6,8 +6,10 @@ replacement policy and, above all, that a stub is never silent: every stubbed
 app is reported in /_meta, /_apps, ``enlace doctor`` and the logs.
 """
 
+import importlib
 import logging
 import sys
+import textwrap
 
 import pytest
 from fastapi import FastAPI
@@ -48,6 +50,21 @@ def _boot(apps_dir, **platform_kw):
 # A module that imports fine at discovery but fails when build_backend loads
 # it: the configured app attribute does not exist.
 NO_APP_ATTR = "x = 1\n"
+
+# Imports fine the first time (discovery) and raises the second (build_backend
+# re-imports): the shape of a flaky import, and the one way an app passes
+# discovery yet fails to load at compose time.
+SECOND_IMPORT_FAILS = textwrap.dedent("""\
+    from pathlib import Path
+
+    from fastapi import FastAPI
+
+    _marker = Path(__file__).with_suffix(".imported")
+    if _marker.exists():
+        raise RuntimeError("fails on the second import")
+    _marker.touch()
+    app = FastAPI()
+""")
 
 
 # --- the gateway boots; only the broken app is affected ----------------------
@@ -91,14 +108,14 @@ def test_stub_body_has_no_traceback_or_message(tmp_apps_dir):
 def test_compose_time_failure_is_contained_too(tmp_apps_dir):
     """Discovery imported it fine; loading the sub-app is what fails."""
     _app(tmp_apps_dir, "ok", _make_app_code("ok"))
-    _app(tmp_apps_dir, "noattr", NO_APP_ATTR)
+    _app(tmp_apps_dir, "flaky", SECOND_IMPORT_FAILS)
 
     config, client = _boot(tmp_apps_dir)
 
     assert client.get("/api/ok/hello").status_code == 200
-    assert client.get("/api/noattr/").status_code == 500
-    err = {a.name: a for a in config.apps}["noattr"].import_error
-    assert (err.exception_type, err.stage) == ("AttributeError", "compose")
+    assert client.get("/api/flaky/").status_code == 500
+    err = {a.name: a for a in config.apps}["flaky"].import_error
+    assert (err.exception_type, err.stage) == ("RuntimeError", "compose")
 
 
 def test_sys_exit_at_import_is_contained(tmp_apps_dir):
@@ -217,6 +234,8 @@ def test_partial_imports_are_forgotten(tmp_apps_dir):
     # helpers really did load: the failure is the later import, not this one
     assert "nonexistent_package_xyz" in config.apps[0].import_error.message
     assert not [m for m in sys.modules if m.startswith("apps.halfway.")]
+    # ...and not left bound on the parent package for `from ... import` to find
+    assert not hasattr(sys.modules.get("apps.halfway"), "helpers")
 
 
 # --- no stub is ever silent ---------------------------------------------------
@@ -230,8 +249,8 @@ def platform_with_a_stub(request, tmp_apps_dir):
         _app(tmp_apps_dir, "broken", BROKEN_MODULE, frontend=True)
         config, client = _boot(tmp_apps_dir)
     else:
-        # Imports fine at discovery (an asgi_app by fallback), fails to load.
-        _app(tmp_apps_dir, "broken", NO_APP_ATTR, frontend=True)
+        # Imports fine at discovery, fails when build_backend loads it.
+        _app(tmp_apps_dir, "broken", SECOND_IMPORT_FAILS, frontend=True)
         config, client = _boot(tmp_apps_dir)
     return request.param, config, client
 
@@ -411,3 +430,54 @@ def test_fail_hard_is_read_from_app_toml(tmp_apps_dir):
     [app] = discover_apps(PlatformConfig(apps_dir=tmp_apps_dir)).apps
     assert app.fail_hard is True
     assert app.provenance["fail_hard"] == "override: app.toml"
+
+
+# --- adversarial-review regressions -------------------------------------------
+
+
+def test_nothing_to_mount_fails_at_discovery_not_only_at_boot(tmp_apps_dir):
+    """No `app` and no public function: `enlace check` and the static doctor
+    must see it, not only the booted gateway (review finding 1)."""
+    _app(tmp_apps_dir, "noattr", NO_APP_ATTR)
+    config = discover_apps(
+        PlatformConfig(apps_dir=tmp_apps_dir), on_import_error="record"
+    )
+    [check] = [c for c in doctor.run_doctor(config).checks if c.status == "fail"]
+    assert check.name == "import:noattr"
+    assert check.extra["exception_type"] == "AttributeError"
+
+
+def test_app_toml_app_attr_is_used_for_detection(tmp_apps_dir):
+    code = "from fastapi import FastAPI\napplication = FastAPI()\n"
+    _app(tmp_apps_dir, "custom", code, toml='app_attr = "application"\n')
+    config, client = _boot(tmp_apps_dir)
+    assert config.apps[0].import_error is None
+    assert "degraded_apps" not in client.get("/_meta").json()
+
+
+def test_app_toml_entry_point_is_used_for_detection(tmp_apps_dir):
+    """A stale broken server.py beside the declared entry must not stub the app."""
+    d = _app(tmp_apps_dir, "moved", BROKEN_MODULE, toml='entry_point = "main2.py"\n')
+    (d / "main2.py").write_text(_make_app_code("moved"))
+    config, client = _boot(tmp_apps_dir)
+    assert config.apps[0].import_error is None
+    assert client.get("/api/moved/hello").status_code == 200
+
+
+def test_serve_refuses_before_spawning_anything(tmp_apps_dir, monkeypatch):
+    """fail_hard stops `enlace serve` up front, as discovery used to (finding 2)."""
+    serve_mod = importlib.import_module("enlace.serve")
+
+    for var in ("ENLACE_APPS_DIRS", "ENLACE_APP_DIRS", "ENLACE_APPS_DIR"):
+        monkeypatch.setenv(var, "")  # serve() writes these; restore after
+
+    def must_not_run(*a, **k):
+        raise AssertionError("serve spawned a server for a fail_hard app")
+
+    monkeypatch.setattr(serve_mod, "_serve_asgi_only", must_not_run)
+    monkeypatch.setattr(serve_mod, "_serve_mixed", must_not_run)
+    _app(tmp_apps_dir, "strict", BROKEN_MODULE, toml="fail_hard = true\n")
+    monkeypatch.chdir(tmp_apps_dir.parent)
+
+    with pytest.raises(ModuleNotFoundError):
+        serve_mod.serve(apps_dir=str(tmp_apps_dir))

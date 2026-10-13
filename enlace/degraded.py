@@ -74,8 +74,9 @@ class UnavailableApp:
     Every HTTP request answers 500 with a short plain-text body naming the app
     and the exception *class* — never the message or a traceback, which can
     carry server paths and is logged instead. A websocket handshake is refused
-    with close code 1011. It has no ``router``, so the gateway's lifespan
-    cascade passes it by.
+    (a close before accept: uvicorn answers it as an HTTP 403; the ASGI close
+    code is 1011). It has no ``router``, so the gateway's lifespan cascade
+    passes it by.
     """
 
     def __init__(self, app_name: str, exception_type: str):
@@ -146,6 +147,19 @@ def degraded_apps(config: PlatformConfig) -> dict[str, dict[str, str]]:
         for app in config.apps
         if app.import_error is not None
     }
+
+
+def refuse_to_boot_if_required(platform: PlatformConfig) -> None:
+    """Raise the first recorded load failure the configuration says not to stub.
+
+    For callers that act on a discovered config *before* ``build_backend`` runs
+    — ``enlace serve`` spawns process-mode children and a supervised gateway —
+    so ``fail_hard`` and ``app_load_failure = "raise"`` still stop everything
+    up front, as they did when discovery raised.
+    """
+    for app in platform.apps:
+        if app.import_error is not None and _must_refuse_to_boot(app, platform):
+            _reraise(app.import_error, app.name)
 
 
 def _must_refuse_to_boot(app: AppConfig, platform: PlatformConfig) -> bool:

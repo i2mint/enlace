@@ -121,7 +121,14 @@ class ConventionDiscoverer:
             return self._finalize_metadata(config, app_dir)
 
         # -- Standard asgi-mode discovery (current behavior) --
-        entry_path = self._find_entry_point(app_dir)
+        # app.toml's `entry_point` / `app_attr` (if set) are what will be
+        # mounted, so they are what detection must import and inspect —
+        # detecting on the convention file instead can stub (or pass) an app
+        # for the wrong file's sake.
+        entry_path = self._find_entry_point(
+            app_dir, override=toml_data.get("entry_point") if toml_data else None
+        )
+        app_attr = (toml_data or {}).get("app_attr") or self.conventions.app_attr
         # app.toml's `frontend_dir` (if set) overrides the convention.
         # Without this, an app whose build outputs to e.g. ./dist would be
         # silently skipped — discovery would conclude "no frontend" and the
@@ -138,7 +145,7 @@ class ConventionDiscoverer:
         import_error: Optional[AppImportError] = None
         if entry_path is not None:
             app_type, type_source, import_error = self._detect_app_type_or_record(
-                entry_path, apps_dir
+                entry_path, apps_dir, app_attr
             )
             provenance["app_type"] = type_source
             provenance["entry_module_path"] = (
@@ -231,8 +238,19 @@ class ConventionDiscoverer:
         fields["provenance"] = provenance
         return AppConfig(**fields)
 
-    def _find_entry_point(self, app_dir: Path) -> Optional[Path]:
-        """Find the first matching entry point in the app directory."""
+    def _find_entry_point(
+        self, app_dir: Path, *, override: Optional[str] = None
+    ) -> Optional[Path]:
+        """Find the app's entry point: app.toml's ``entry_point``, else convention.
+
+        A declared ``entry_point`` that is not a file falls back to the
+        convention, as before; the override then still points the mount at the
+        missing file, which fails to load and is stubbed and reported.
+        """
+        if override:
+            candidate = app_dir / override
+            if candidate.is_file():
+                return candidate
         for name in self.conventions.entry_points:
             candidate = app_dir / name
             if candidate.is_file():
@@ -263,6 +281,8 @@ class ConventionDiscoverer:
             Tuple of (app_type, provenance_source).
 
         Raises:
+            AttributeError: If the module has neither a callable ``app_attr``
+                nor a public function — there is nothing to mount.
             ImportError: If the module exists but fails to import (e.g. syntax
                 error, missing dependency). This is intentionally NOT caught
                 *here* — silently swallowing import errors is an anti-pattern.
@@ -286,10 +306,17 @@ class ConventionDiscoverer:
         if public_functions:
             return "functions", "detected: no app attr, has public functions"
 
-        return "asgi_app", f"detected: has '{app_attr}' attribute (fallback)"
+        # Neither an ASGI app nor a public function: nothing can be mounted.
+        # This used to be called an asgi_app "by fallback" and then failed at
+        # compose time — after `enlace check` and the static doctor had passed
+        # it. Detection is where it is known, so it fails here, as a load error.
+        raise AttributeError(
+            f"{entry_path.name} has no callable {app_attr!r} attribute and no "
+            "public functions, so there is nothing to mount"
+        )
 
     def _detect_app_type_or_record(
-        self, entry_path: Path, apps_dir: Path
+        self, entry_path: Path, apps_dir: Path, app_attr: Optional[str] = None
     ) -> tuple[str, str, Optional[AppImportError]]:
         """``_detect_app_type`` under the configured ``on_import_error`` policy.
 
@@ -305,7 +332,7 @@ class ConventionDiscoverer:
         """
         try:
             app_type, type_source = self._detect_app_type(
-                entry_path, apps_dir, self.conventions.app_attr
+                entry_path, apps_dir, app_attr or self.conventions.app_attr
             )
         except CONTAINED_LOAD_ERRORS as exc:  # see the policy note above
             if self.on_import_error == "raise":
@@ -495,6 +522,12 @@ def forget_partial_imports(module_name: str):
             for name in set(sys.modules) - before:
                 if name.startswith(prefix):
                     sys.modules.pop(name, None)
+                    # The import system also bound it on its parent package;
+                    # left there, `from pkg import mod` would get the stale one.
+                    parent, _, child = name.rpartition(".")
+                    if parent in sys.modules:
+                        with contextlib.suppress(AttributeError):
+                            delattr(sys.modules[parent], child)
         raise
 
 

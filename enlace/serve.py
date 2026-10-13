@@ -174,6 +174,11 @@ def serve(
     # "record": an un-importable asgi app is the gateway's to stub (see
     # enlace.degraded), not a reason to refuse to start the supervisor.
     discovered = discover_apps(platform, on_import_error="record")
+    # ...unless its config says to refuse to boot: then stop here, before any
+    # process-mode child is spawned, exactly as when discovery used to raise.
+    from enlace.degraded import refuse_to_boot_if_required
+
+    refuse_to_boot_if_required(discovered)
 
     reload_dirs = all_apps_dirs + all_app_dirs
 
