@@ -481,3 +481,63 @@ def test_serve_refuses_before_spawning_anything(tmp_apps_dir, monkeypatch):
 
     with pytest.raises(ModuleNotFoundError):
         serve_mod.serve(apps_dir=str(tmp_apps_dir))
+
+
+# --- doctor reads the live /_meta (#78, and the #77 review of a blind read) ----
+
+
+def _doctor_against(client, monkeypatch, base="http://gw"):
+    def via_client(url, *, timeout=None):
+        r = client.get(url.replace(base, ""))
+        return r.status_code, dict(r.headers), r.content, None
+
+    monkeypatch.setattr(doctor, "_http_get", via_client)
+    return {c.name: c for c in doctor._check_live_meta(base, 1.0)}
+
+
+def test_a_blind_meta_read_is_a_fail_not_a_warn(monkeypatch):
+    """The only detector of a stub behind an auth gate must not go quietly blind:
+    a deploy gate that sets aside the doctor-local import checks would otherwise
+    pass with nothing examined about stubs."""
+    for status, body, err in [
+        (200, b"<html>landing</html>", None),
+        (502, b"", None),
+        (None, None, "connection failed: refused"),
+    ]:
+        monkeypatch.setattr(
+            doctor, "_http_get", lambda url, *, timeout=None: (status, {}, body, err)
+        )
+        [check] = doctor._check_live_meta("http://gw", 1.0)
+        assert (check.name, check.status) == ("meta:degraded_apps", "fail")
+
+
+def test_doctor_warns_when_the_engine_was_upgraded_since_the_deploy(
+    multi_app_dir, monkeypatch, tmp_path
+):
+    from enlace import compose
+
+    manifests = tmp_path / "manifests"
+    manifests.mkdir()
+    (manifests / "_platform.json").write_text(
+        '{"app": "_platform", "enlace_version": "0.0.1"}'
+    )
+    monkeypatch.setattr(compose, "_detect_enlace_version", lambda: "9.9.9")
+    _config, client = _boot(multi_app_dir, manifest_dir=manifests)
+
+    checks = _doctor_against(client, monkeypatch)
+    assert checks["meta:enlace_version"].status == "warn"
+    assert "9.9.9" in checks["meta:enlace_version"].detail
+    assert checks["meta:degraded_apps"].status == "pass"
+
+
+def test_no_version_warning_when_they_agree(multi_app_dir, monkeypatch, tmp_path):
+    from enlace import compose
+
+    manifests = tmp_path / "manifests"
+    manifests.mkdir()
+    (manifests / "_platform.json").write_text(
+        '{"app": "_platform", "enlace_version": "9.9.9"}'
+    )
+    monkeypatch.setattr(compose, "_detect_enlace_version", lambda: "9.9.9")
+    _config, client = _boot(multi_app_dir, manifest_dir=manifests)
+    assert "meta:enlace_version" not in _doctor_against(client, monkeypatch)

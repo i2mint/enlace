@@ -414,3 +414,9 @@ snapshots build identity (git SHA, deploy time, externals) at deploy time into
 `{manifest_dir}/{app}.json`; enlace owns the read paths and schema. This lets
 you tell whether the server is serving the SHA you think it is and whether the
 browser rendered the current build or a stale cache.
+
+`enlace_version` is what the deploy recorded (or, when the manifest records
+none, the running version); `enlace_runtime_version` is always the enlace
+actually running, added at serve time. They differ after an engine-only
+upgrade (a new wheel and a restart, no redeploy), and `enlace doctor` warns
+when they do.
