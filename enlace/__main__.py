@@ -219,7 +219,7 @@ def check(
     # boot on it. Recording it rather than raising changes only the *shape* of
     # the report — every healthy app still gets validated and listed.
     errors = _import_error_lines(config) + config.check_conflicts()
-    warnings: list[str] = []
+    warnings: list[str] = [f"platform.toml: {m}" for m in config.unknown_tables]
     for app in config.apps:
         warnings.extend(validate_build(app))
     from enlace.app_icons import home_screen_gaps

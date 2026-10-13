@@ -138,6 +138,19 @@ def _check_app_imports(config: PlatformConfig) -> list[Check]:
     return out
 
 
+def _check_unknown_tables(config: PlatformConfig) -> list[Check]:
+    """Top-level platform.toml tables enlace ignores and no one declared.
+
+    A WARN, not a FAIL: a platform.toml may carry tables for another tool,
+    which ``[platform] foreign_tables`` declares to silence this check.
+    """
+    if not config.unknown_tables:
+        return []
+    detail = "; ".join(config.unknown_tables)
+    hint = "list tables another tool owns in [platform] foreign_tables"
+    return [Check("config:unknown_tables", WARN, f"{detail} ({hint})")]
+
+
 def _check_frontend_dirs(config: PlatformConfig) -> list[Check]:
     """Apps declaring frontend_dir should actually have a directory there."""
     out: list[Check] = []
@@ -326,6 +339,7 @@ def run_doctor(
 
     report.checks.extend(_check_app_imports(config))
     report.checks.extend(_check_frontend_dirs(config))
+    report.checks.extend(_check_unknown_tables(config))
     for fn in extra_static_checks:
         report.checks.extend(fn(config))
 
