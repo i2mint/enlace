@@ -30,7 +30,6 @@ from starlette.routing import Mount, Route
 
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps, forget_partial_imports
-from enlace.util import url_path
 from enlace.frontend import (
     LandingWithUnknownApp404,
     RevalidatingStaticFiles,
@@ -47,6 +46,7 @@ from enlace.manifest import (
     load_platform_manifest,
     resolve_manifest_dir,
 )
+from enlace.util import url_path
 
 _logger = logging.getLogger("enlace")
 
