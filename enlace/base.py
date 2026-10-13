@@ -80,7 +80,7 @@ def unknown_toml_tables(
         if key in claimed:
             continue
         msg = f"[{key}] is not an enlace table and is ignored"
-        close = difflib.get_close_matches(key, sorted(ENLACE_TABLES), n=1)
+        close = difflib.get_close_matches(key.lower(), sorted(ENLACE_TABLES), n=1)
         if close:
             msg += f" (did you mean [{close[0]}]?)"
         messages.append(msg)
