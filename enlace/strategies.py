@@ -323,28 +323,19 @@ class ProcessStrategy(BackendStrategy):
     def make_asgi(self, app, platform):
         if app.port is None:
             return None
-        from enlace.proxy import (
-            PLATFORM_CREDENTIAL_REQUEST_HEADERS,
-            PLATFORM_UNSAFE_RESPONSE_HEADERS,
-            make_proxy_app,
-            platform_cookie_filter,
-        )
+        from enlace.proxy import make_proxy_app, platform_proxy_filters
 
         # A local process is still a separate program with its own dependency
         # set: it gets the visitor's platform credentials only when its app.toml
         # asks for them, and it may never set them or rewrite the origin's
         # storage, whatever it asks for.
-        platform_cookies = platform_cookie_filter(
-            names=_platform_cookie_names(platform)
-        )
-        forward = app.forward_platform_credentials
         return make_proxy_app(
             upstream=f"http://127.0.0.1:{app.port}",
             strip_prefix=app.route_prefix,
-            cookie_filter=None if forward else platform_cookies,
-            set_cookie_filter=platform_cookies,
-            drop_request_headers=() if forward else PLATFORM_CREDENTIAL_REQUEST_HEADERS,
-            drop_response_headers=PLATFORM_UNSAFE_RESPONSE_HEADERS,
+            **platform_proxy_filters(
+                platform=platform,
+                forward_credentials=app.forward_platform_credentials,
+            ),
         )
 
     def make_lifecycle(self, app, platform):
@@ -372,19 +363,6 @@ class ProcessStrategy(BackendStrategy):
         )
 
 
-def _platform_cookie_names(platform) -> tuple[str, ...]:
-    """The platform's own cookie names, honouring a custom session cookie name.
-
-    ``[auth]`` is opaque to enlace core (enlace_auth owns its schema), so this
-    reads only the one key that renames a platform cookie.
-    """
-    from enlace.proxy import PLATFORM_COOKIE_NAMES
-
-    auth = getattr(platform, "auth", None) or {}
-    custom = auth.get("session_cookie_name") if isinstance(auth, dict) else None
-    return PLATFORM_COOKIE_NAMES + ((custom,) if custom else ())
-
-
 class ExternalStrategy(BackendStrategy):
     """Route to a pre-existing service at a known URL; no lifecycle."""
 
@@ -402,23 +380,15 @@ class ExternalStrategy(BackendStrategy):
     def make_asgi(self, app, platform):
         if not app.upstream_url:
             return None
-        from enlace.proxy import (
-            EXTERNAL_DROP_REQUEST_HEADERS,
-            EXTERNAL_DROP_RESPONSE_HEADERS,
-            make_proxy_app,
-            platform_cookie_filter,
-        )
+        from enlace.proxy import make_proxy_app, platform_proxy_filters
 
         # An external upstream is someone else's server: it must neither see
-        # the visitor's platform credentials nor set them on our origin.
+        # the visitor's platform credentials nor set them on our origin (no
+        # opt-in: forward_platform_credentials is a process-mode key).
         return make_proxy_app(
             upstream=app.upstream_url,
             strip_prefix=app.route_prefix,
-            cookie_filter=platform_cookie_filter(
-                names=_platform_cookie_names(platform)
-            ),
-            drop_request_headers=EXTERNAL_DROP_REQUEST_HEADERS,
-            drop_response_headers=EXTERNAL_DROP_RESPONSE_HEADERS,
+            **platform_proxy_filters(platform=platform),
         )
 
 

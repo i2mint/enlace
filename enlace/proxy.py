@@ -79,6 +79,59 @@ def platform_cookie_filter(
     return keep
 
 
+def platform_cookie_names(platform=None) -> tuple[str, ...]:
+    """The platform's own cookie names, honouring a custom session cookie name.
+
+    ``[auth]`` is opaque to enlace core (enlace_auth owns its schema), so this
+    reads only the one key that renames a platform cookie,
+    ``[auth] session_cookie_name``.
+
+    >>> platform_cookie_names()
+    ('enlace_session', 'enlace_csrf', 'enlace_oauth_state')
+    >>> from types import SimpleNamespace
+    >>> platform_cookie_names(SimpleNamespace(auth={"session_cookie_name": "s"}))[-1]
+    's'
+    """
+    auth = getattr(platform, "auth", None) or {}
+    custom = auth.get("session_cookie_name") if isinstance(auth, dict) else None
+    return PLATFORM_COOKIE_NAMES + ((custom,) if custom else ())
+
+
+def platform_proxy_filters(
+    *, platform=None, forward_credentials: bool = False
+) -> dict:
+    """``make_proxy_app`` kwargs that keep platform credentials inside the platform.
+
+    The one policy every proxying backend uses (enlace's process and external
+    modes, and plugin strategies such as enlace_docker): the upstream never
+    receives the visitor's platform cookies or CSRF header, and never sets
+    platform cookies or origin-wide headers. ``forward_credentials=True`` (an
+    app's ``forward_platform_credentials`` opt-in) lets the upstream *read* the
+    platform session; it still cannot set it.
+
+    Usage: ``make_proxy_app(upstream=..., strip_prefix=...,
+    **platform_proxy_filters(platform=platform))``.
+
+    >>> f = platform_proxy_filters()
+    >>> sorted(f)  # doctest: +NORMALIZE_WHITESPACE
+    ['cookie_filter', 'drop_request_headers',
+     'drop_response_headers', 'set_cookie_filter']
+    >>> f["cookie_filter"]("enlace_session"), f["set_cookie_filter"]("theme")
+    (False, True)
+    >>> platform_proxy_filters(forward_credentials=True)["cookie_filter"] is None
+    True
+    """
+    platform_cookies = platform_cookie_filter(names=platform_cookie_names(platform))
+    return {
+        "cookie_filter": None if forward_credentials else platform_cookies,
+        "set_cookie_filter": platform_cookies,
+        "drop_request_headers": (
+            () if forward_credentials else PLATFORM_CREDENTIAL_REQUEST_HEADERS
+        ),
+        "drop_response_headers": PLATFORM_UNSAFE_RESPONSE_HEADERS,
+    }
+
+
 def _filter_cookie_header(value: str, keep: CookieFilter) -> str:
     """Drop the cookies *keep* rejects from a request ``Cookie`` header value."""
     parts = []

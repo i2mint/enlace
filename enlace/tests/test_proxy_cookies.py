@@ -310,3 +310,45 @@ def test_upstream_redirects_pass_through_unfiltered():
     assert r.status_code == 302
     assert r.headers["location"] == "/auth/logout"
     assert r.headers["refresh"] == "0; url=/auth/logout"
+
+
+def test_platform_proxy_filters_is_what_both_proxying_strategies_use(tmp_path):
+    """#65: one public policy; process and external modes build the same filters."""
+    from enlace.proxy import (
+        PLATFORM_CREDENTIAL_REQUEST_HEADERS,
+        PLATFORM_UNSAFE_RESPONSE_HEADERS,
+        platform_proxy_filters,
+    )
+
+    platform = PlatformConfig(apps_dir=tmp_path, auth={"session_cookie_name": "sx"})
+    f = platform_proxy_filters(platform=platform)
+    assert not f["cookie_filter"]("sx") and not f["set_cookie_filter"]("SX")
+    assert f["drop_request_headers"] == PLATFORM_CREDENTIAL_REQUEST_HEADERS
+    assert f["drop_response_headers"] == PLATFORM_UNSAFE_RESPONSE_HEADERS
+
+    proxy = ProcessStrategy().make_asgi(_process_app(), platform)
+    assert not proxy.cookie_filter("sx") and not proxy.set_cookie_filter("sx")
+    assert "x-csrf-token" in proxy._drop_request
+    assert "clear-site-data" in proxy._drop_response
+
+    external = AppConfig(
+        name="typola",
+        route_prefix="/typola",
+        app_type="asgi_app",
+        mode="external",
+        upstream_url="https://space.example",
+    )
+    proxy = ExternalStrategy().make_asgi(external, platform)
+    assert not proxy.cookie_filter("sx") and not proxy.set_cookie_filter("sx")
+    assert "x-csrf-token" in proxy._drop_request
+    assert "clear-site-data" in proxy._drop_response
+
+
+def test_platform_proxy_filters_credential_opt_in_still_refuses_set_cookie():
+    from enlace.proxy import platform_proxy_filters
+
+    f = platform_proxy_filters(forward_credentials=True)
+    assert f["cookie_filter"] is None
+    assert f["drop_request_headers"] == ()
+    assert not f["set_cookie_filter"]("enlace_session")
+    assert "clear-site-data" in f["drop_response_headers"]
