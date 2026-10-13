@@ -270,11 +270,27 @@ def _check_live_meta(base_url: str, timeout: float) -> list[Check]:
     return out
 
 
+def _same_version(a: str, b: str) -> bool:
+    """Equal as versions (``1.0`` == ``1.0.0``), falling back to the strings.
+
+    >>> _same_version("1.0", "1.0.0"), _same_version("0.1.49", "0.1.50")
+    (True, False)
+    """
+    try:
+        from packaging.version import InvalidVersion, Version
+    except ImportError:  # pragma: no cover - packaging ships with pip
+        return a == b
+    try:
+        return Version(a) == Version(b)
+    except InvalidVersion:
+        return a == b
+
+
 def _version_drift(payload: dict, runtime_key: str) -> list[Check]:
     """WARN when the running enlace is not the one the manifest recorded."""
     running = payload.get(runtime_key)
     recorded = payload.get("enlace_version")
-    if not running or not recorded or running == recorded:
+    if not running or not recorded or _same_version(running, recorded):
         return []
     return [
         Check(
