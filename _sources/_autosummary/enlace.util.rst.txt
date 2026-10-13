@@ -11,4 +11,5 @@ enlace.util
       derive_display_name
       derive_route_prefix
       is_skippable
+      url_path
    

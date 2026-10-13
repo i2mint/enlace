@@ -1,4 +1,4 @@
-> built 2026-10-13 21:33 UTC from 2f3ab1e (main) · enlace 0.1.52. Details: build_info.json
+> built 2026-10-13 22:55 UTC from e4592a4 (main) · enlace 0.1.53. Details: build_info.json
 
 # index.html.md
 
@@ -1715,6 +1715,10 @@ Public (unlike the `_`-helpers) so the `enlace_auth` plugin’s
 metadata-edit endpoints can return the *identical* item shape after a
 mutation — single source of truth for the item contract. `overlay` is the
 app’s Tier-A record (`{}` if none).
+
+The link fields (`route`, `launch_url`, `icon_url`) are percent-encoded
+URLs (#75); `api_route` is the configured route as an identifier, decoded,
+and must be passed through [`enlace.util.url_path()`](_autosummary/enlace.util.html.md#enlace.util.url_path) before use as a link.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
@@ -3851,6 +3855,7 @@ Internal helpers for enlace.
 |----------------------------------------------------------------------------------|---------------------------------------------------------------------|
 | [`derive_route_prefix`](_autosummary/enlace.util.html.md#enlace.util.derive_route_prefix)(dir_name)   | Derive an API route prefix from a directory name.                   |
 | [`is_skippable`](_autosummary/enlace.util.html.md#enlace.util.is_skippable)(name)              | Return True if a directory name should be skipped during discovery. |
+| [`url_path`](_autosummary/enlace.util.html.md#enlace.util.url_path)(path)                  | Percent-encode an app route or name for use in a URL enlace emits.  |
 
 ### enlace.util.derive_display_name(dir_name)
 
@@ -3898,6 +3903,29 @@ True
 False
 ```
 
+### enlace.util.url_path(path)
+
+Percent-encode an app route or name for use in a URL enlace emits.
+
+App names come from directory names, which may hold a space, `%`, `#`,
+`?` or non-ASCII letters. Mounting works on the decoded path either way, but
+a `Location`, an `href` or a launcher link must be a valid URL (#75). The
+names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+```pycon
+>>> url_path("/chord_analyzer/")
+'/chord_analyzer/'
+>>> url_path("/my app/")
+'/my%20app/'
+>>> url_path("/100%/")
+'/100%25/'
+>>> url_path("/café/")
+'/caf%C3%A9/'
+```
+
 
 # about-this-build.html.md
 
@@ -3905,7 +3933,7 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 21:33 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50"><code>2f3ab1e</code></a> on branch <code>main</code>, for **enlace 0.1.52** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 22:55 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/e4592a4eef00f8a5fe29febc94f406c875ba5c64"><code>e4592a4</code></a> on branch <code>main</code>, for **enlace 0.1.53** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -3914,7 +3942,7 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50"><code>2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/e4592a4eef00f8a5fe29febc94f406c875ba5c64"><code>e4592a4eef00f8a5fe29febc94f406c875ba5c64</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3925,9 +3953,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38471300930">38471300930</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38480759934">38480759934</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50</code> (in the history of the built commit) |
+| Event commit | <code>e4592a4eef00f8a5fe29febc94f406c875ba5c64</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -3952,13 +3980,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.52/">0.1.52</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.53/">0.1.53</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50
+git checkout e4592a4eef00f8a5fe29febc94f406c875ba5c64
 pip install "epythet==0.2.17"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

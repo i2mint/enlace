@@ -294,6 +294,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.html_rewrite</span><span class="w"> </span><span class="kn">import</span> <span class="n">HEAD_CLOSE_RE</span><span class="p">,</span> <span class="n">inject_into_head</span><span class="p">,</span> <span class="n">rewrite_html_response</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">url_path</span>
 
 <span class="c1"># favicon (32), apple-touch-icon (180), manifest (192, 512 — Chrome's install bar).</span>
 <span class="n">PNG_SIZES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">192</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>
@@ -460,7 +461,7 @@
 
 <span class="sd">    Scoped to the app's own mount so each app installs as its own shortcut.</span>
 <span class="sd">    """</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/_apps/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">url_path</span><span class="p">(</span><span class="sa">f</span><span class="s2">"/_apps/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">has_png</span><span class="p">:</span>
         <span class="n">icons</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">{</span>
@@ -476,8 +477,8 @@
     <span class="n">manifest</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"name"</span><span class="p">:</span> <span class="n">display_name</span><span class="p">,</span>
         <span class="s2">"short_name"</span><span class="p">:</span> <span class="n">display_name</span><span class="p">,</span>
-        <span class="s2">"start_url"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
-        <span class="s2">"scope"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
+        <span class="s2">"start_url"</span><span class="p">:</span> <span class="n">url_path</span><span class="p">(</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span><span class="p">),</span>
+        <span class="s2">"scope"</span><span class="p">:</span> <span class="n">url_path</span><span class="p">(</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span><span class="p">),</span>
         <span class="s2">"display"</span><span class="p">:</span> <span class="n">display</span><span class="p">,</span>
         <span class="s2">"icons"</span><span class="p">:</span> <span class="n">icons</span><span class="p">,</span>
     <span class="p">}</span>
@@ -536,7 +537,7 @@
 <span class="sd">    where the page lacks it — unless ``replace``, in which case the page's own</span>
 <span class="sd">    icon links are dropped and the platform's take their place.</span>
 <span class="sd">    """</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"/_apps/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">url_path</span><span class="p">(</span><span class="sa">f</span><span class="s2">"/_apps/</span><span class="si">{</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">icon</span><span class="o">.</span><span class="n">token</span>
     <span class="n">raster</span> <span class="o">=</span> <span class="n">is_raster</span><span class="p">(</span><span class="n">icon</span><span class="p">)</span>
     <span class="n">head</span> <span class="o">=</span> <span class="n">_ICON_LINK_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">b</span><span class="s2">""</span><span class="p">,</span> <span class="n">page_head</span><span class="p">)</span> <span class="k">if</span> <span class="n">replace</span> <span class="k">else</span> <span class="n">page_head</span>
@@ -694,7 +695,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4fed8de7"></script>
+</div><script src="../../_static/documentation_options.js?v=e6adf981"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

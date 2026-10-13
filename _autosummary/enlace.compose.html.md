@@ -73,6 +73,10 @@ metadata-edit endpoints can return the *identical* item shape after a
 mutation — single source of truth for the item contract. `overlay` is the
 app’s Tier-A record (`{}` if none).
 
+The link fields (`route`, `launch_url`, `icon_url`) are percent-encoded
+URLs (#75); `api_route` is the configured route as an identifier, decoded,
+and must be passed through [`enlace.util.url_path()`](enlace.util.html.md#enlace.util.url_path) before use as a link.
+
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 

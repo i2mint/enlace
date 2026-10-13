@@ -301,6 +301,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.request</span><span class="w"> </span><span class="kn">import</span> <span class="n">Request</span><span class="p">,</span> <span class="n">urlopen</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlatformConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">url_path</span>
 
 <span class="n">_DEFAULT_TIMEOUT</span> <span class="o">=</span> <span class="mf">5.0</span>
 
@@ -583,7 +584,7 @@
 <span class="sd">    Fails on 404 (mount missing — the SPA catch-all or a hole), 5xx, and</span>
 <span class="sd">    connection errors.</span>
 <span class="sd">    """</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">/"</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="si">}{</span><span class="n">url_path</span><span class="p">(</span><span class="sa">f</span><span class="s1">'/</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s1">/'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
     <span class="n">status</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">_body</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">_http_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"http:/</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">/"</span>
     <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
@@ -615,7 +616,7 @@
 <span class="sd">    the point is to detect "something ate my traffic", not to enforce API</span>
 <span class="sd">    conventions each app chose not to follow.</span>
 <span class="sd">    """</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="si">}{</span><span class="n">route_prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="si">}</span><span class="s2">/"</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="si">}{</span><span class="n">url_path</span><span class="p">(</span><span class="n">route_prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s1">'/'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
     <span class="n">status</span><span class="p">,</span> <span class="n">_headers</span><span class="p">,</span> <span class="n">_body</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">_http_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"http:</span><span class="si">{</span><span class="n">route_prefix</span><span class="si">}</span><span class="s2">/"</span>
     <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
@@ -783,7 +784,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4fed8de7"></script>
+</div><script src="../../_static/documentation_options.js?v=e6adf981"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

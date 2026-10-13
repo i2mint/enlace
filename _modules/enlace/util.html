@@ -260,6 +260,31 @@
           <h1>Source code for enlace.util</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Internal helpers for enlace."""</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span>
+
+
+<div class="viewcode-block" id="url_path">
+<a class="viewcode-back" href="../../_autosummary/enlace.util.html#enlace.util.url_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">url_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Percent-encode an app route or name for use in a URL enlace emits.</span>
+
+<span class="sd">    App names come from directory names, which may hold a space, ``%``, ``#``,</span>
+<span class="sd">    ``?`` or non-ASCII letters. Mounting works on the decoded path either way, but</span>
+<span class="sd">    a ``Location``, an ``href`` or a launcher link must be a valid URL (#75). The</span>
+<span class="sd">    names apps actually use (letters, digits, ``_ - . ~``) are returned unchanged.</span>
+
+<span class="sd">    &gt;&gt;&gt; url_path("/chord_analyzer/")</span>
+<span class="sd">    '/chord_analyzer/'</span>
+<span class="sd">    &gt;&gt;&gt; url_path("/my app/")</span>
+<span class="sd">    '/my%20app/'</span>
+<span class="sd">    &gt;&gt;&gt; url_path("/100%/")</span>
+<span class="sd">    '/100%25/'</span>
+<span class="sd">    &gt;&gt;&gt; url_path("/café/")</span>
+<span class="sd">    '/caf%C3%A9/'</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">quote</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="s2">"/"</span><span class="p">)</span></div>
+
+
 
 <div class="viewcode-block" id="derive_display_name">
 <a class="viewcode-back" href="../../_autosummary/enlace.util.html#enlace.util.derive_display_name">[docs]</a>
@@ -333,7 +358,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=4fed8de7"></script>
+</div><script src="../../_static/documentation_options.js?v=e6adf981"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

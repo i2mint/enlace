@@ -2,7 +2,7 @@
 
 # About this build
 
-This documentation was built on **2026-10-13 21:33 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50"><code>2f3ab1e</code></a> on branch <code>main</code>, for **enlace 0.1.52** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 22:55 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/e4592a4eef00f8a5fe29febc94f406c875ba5c64"><code>e4592a4</code></a> on branch <code>main</code>, for **enlace 0.1.53** (from <code>pyproject.toml</code>).
 
 #### NOTE
 Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
@@ -11,7 +11,7 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50"><code>2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/e4592a4eef00f8a5fe29febc94f406c875ba5c64"><code>e4592a4eef00f8a5fe29febc94f406c875ba5c64</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -22,9 +22,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38471300930">38471300930</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38480759934">38480759934</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50</code> (in the history of the built commit) |
+| Event commit | <code>e4592a4eef00f8a5fe29febc94f406c875ba5c64</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -49,13 +49,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.52/">0.1.52</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.53/">0.1.53</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50
+git checkout e4592a4eef00f8a5fe29febc94f406c875ba5c64
 pip install "epythet==0.2.17"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

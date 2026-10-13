@@ -282,6 +282,9 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.util.is_skippable" title="enlace.util.is_skippable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_skippable</span></code></a>(name)</p></td>
 <td><p>Return True if a directory name should be skipped during discovery.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.util.url_path" title="enlace.util.url_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">url_path</span></code></a>(path)</p></td>
+<td><p>Percent-encode an app route or name for use in a URL enlace emits.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -335,6 +338,31 @@
 <span class="go">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">is_skippable</span><span class="p">(</span><span class="s2">"my_app"</span><span class="p">)</span>
 <span class="go">False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.util.url_path">
+<span class="sig-prename descclassname"><span class="pre">enlace.util.</span></span><span class="sig-name descname"><span class="pre">url_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/util.html#url_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.util.url_path" title="Link to this definition">¶</a></dt>
+<dd><p>Percent-encode an app route or name for use in a URL enlace emits.</p>
+<p>App names come from directory names, which may hold a space, <code class="docutils literal notranslate"><span class="pre">%</span></code>, <code class="docutils literal notranslate"><span class="pre">#</span></code>,
+<code class="docutils literal notranslate"><span class="pre">?</span></code> or non-ASCII letters. Mounting works on the decoded path either way, but
+a <code class="docutils literal notranslate"><span class="pre">Location</span></code>, an <code class="docutils literal notranslate"><span class="pre">href</span></code> or a launcher link must be a valid URL (#75). The
+names apps actually use (letters, digits, <code class="docutils literal notranslate"><span class="pre">_</span> <span class="pre">-</span> <span class="pre">.</span> <span class="pre">~</span></code>) are returned unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">url_path</span><span class="p">(</span><span class="s2">"/chord_analyzer/"</span><span class="p">)</span>
+<span class="go">'/chord_analyzer/'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">url_path</span><span class="p">(</span><span class="s2">"/my app/"</span><span class="p">)</span>
+<span class="go">'/my%20app/'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">url_path</span><span class="p">(</span><span class="s2">"/100%/"</span><span class="p">)</span>
+<span class="go">'/100%25/'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">url_path</span><span class="p">(</span><span class="s2">"/café/"</span><span class="p">)</span>
+<span class="go">'/caf%C3%A9/'</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -396,6 +424,7 @@
 <li><a class="reference internal" href="#enlace.util.derive_display_name"><code class="docutils literal notranslate"><span class="pre">derive_display_name()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.util.derive_route_prefix"><code class="docutils literal notranslate"><span class="pre">derive_route_prefix()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.util.is_skippable"><code class="docutils literal notranslate"><span class="pre">is_skippable()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.util.url_path"><code class="docutils literal notranslate"><span class="pre">url_path()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -407,7 +436,7 @@
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=4fed8de7"></script>
+</div><script src="../_static/documentation_options.js?v=e6adf981"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
