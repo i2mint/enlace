@@ -60,6 +60,10 @@ class Report:
 
     base_url: Optional[str]
     checks: list[Check] = field(default_factory=list)
+    # The envfile the CLI tried (None: none) and how that went: "loaded",
+    # "unreadable" (env checks skipped) or "none". "" when not reported.
+    envfile: Optional[str] = None
+    envfile_status: str = ""
 
     @property
     def ok(self) -> bool:
@@ -69,6 +73,8 @@ class Report:
     def as_dict(self) -> dict:
         return {
             "base_url": self.base_url,
+            "envfile": self.envfile,
+            "envfile_status": self.envfile_status,
             "ok": self.ok,
             "summary": self._summary(),
             "checks": [asdict(c) for c in self.checks],
@@ -88,6 +94,10 @@ class Report:
             lines.append(f"enlace doctor — probing {self.base_url}")
         else:
             lines.append("enlace doctor — static checks only")
+        if self.envfile_status:
+            note = {"unreadable": " (unreadable; env checks skipped)"}
+            shown = self.envfile or "none"
+            lines.append(f"envfile: {shown}{note.get(self.envfile_status, '')}")
         lines.append("=" * 60)
         for c in self.checks:
             prefix = symbol.get(c.status, "??  ")
