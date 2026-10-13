@@ -32,7 +32,9 @@ def _uvicorn_scope(raw: str) -> dict:
         ("/api/blog/100%25", "/100%25"),
         ("/api/blog/caf%C3%A9", "/caf%C3%A9"),
         ("/api/blog/a%20b/c", "/a%20b/c"),
-        ("/api/blog/%FF", "/%FF"),  # not UTF-8: still the client's bytes
+        ("/api/blog/%FF", "/%EF%BF%BD"),  # not UTF-8: re-quoted as the server decoded it
+        ("/api/blog/a//b", "/a//b"),
+        ("/api/blog/a@b:c", "/a@b:c"),  # pchar, raw branch, authority unchanged
         ("/api/blog/a%23b", "/a%23b"),
         ("/api/blog", "/"),
         ("/api/blog/", "/"),
@@ -102,3 +104,26 @@ def test_through_a_mount_end_to_end():
     assert client.get("/api/blog/100%25").status_code == 200
     assert client.get("/api/blog/a%3Fb").status_code == 200
     assert seen == [(b"/a%2Fb?q=1", b"q=1"), (b"/100%25", b""), (b"/a%3Fb", b"")]
+
+
+@pytest.mark.parametrize("prefix", ["", "/", "/api/blog/"])
+def test_degenerate_prefixes(prefix):
+    scope = _uvicorn_scope("/api/blog/a%2Fb")
+    out = _upstream_path(scope, prefix)
+    assert out == ("/a%2Fb" if prefix == "/api/blog/" else "/api/blog/a%2Fb")
+
+
+def test_a_raw_path_holding_a_query_is_not_trusted():
+    """Some servers once put the query in raw_path; it must not reach the path."""
+    scope = {"path": "/api/blog/a", "raw_path": b"/api/blog/a?x=1"}
+    assert _upstream_path(scope, PREFIX) == "/a"
+
+
+def test_a_lone_surrogate_does_not_500():
+    assert _upstream_path({"path": "/api/blog/a\udc80"}, PREFIX).startswith("/a")
+
+
+def test_an_overlong_dot_is_not_forwarded_verbatim():
+    """``%C0%AE`` is an overlong dot; a lenient upstream could decode it as one."""
+    out = _upstream_path(_uvicorn_scope("/api/blog/%C0%AE%C0%AE/x"), PREFIX)
+    assert "%C0" not in out.upper() and out.endswith("/x")

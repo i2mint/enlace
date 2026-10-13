@@ -197,7 +197,7 @@ def _upstream_path(scope, strip_prefix: str = "") -> str:
         remainder = "/" + remainder
 
     if any(seg in (".", "..") for seg in remainder.split("/")):
-        return quote(remainder, safe=_PATH_SAFE)
+        return quote(remainder, safe=_PATH_SAFE, errors="replace")
 
     raw = scope.get("raw_path")
     if isinstance(raw, (bytes, bytearray)):
@@ -206,11 +206,17 @@ def _upstream_path(scope, strip_prefix: str = "") -> str:
         parts = raw_s.split("/")
         if [unquote(p) for p in parts[:n]] == (prefix.split("/") if prefix else [""]):
             raw_rest = "/" + "/".join(parts[n:])
-            # unquote's default errors="replace" is how uvicorn decodes too, so
-            # an escape that is not UTF-8 (%FF) still matches and travels as is.
-            if _WIRE_PATH.fullmatch(raw_rest) and unquote(raw_rest) == remainder:
+            # Strict: an escape that is not UTF-8 (%FF, overlong %C0%AE) is
+            # not forwarded as is. The server decoded it to U+FFFD, so the dot
+            # check above never saw it, and a lenient upstream might read an
+            # overlong form as "." (review of #82).
+            try:
+                decoded = unquote(raw_rest, errors="strict")
+            except UnicodeDecodeError:
+                decoded = None
+            if _WIRE_PATH.fullmatch(raw_rest) and decoded == remainder:
                 return raw_rest
-    return quote(remainder, safe=_PATH_SAFE)
+    return quote(remainder, safe=_PATH_SAFE, errors="replace")
 
 
 # Default per-request timeout (seconds) for proxied requests. Bounds a hung
