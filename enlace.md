@@ -1,4 +1,4 @@
-> built 2026-10-13 03:30 UTC from b3f0472 (main) · enlace 0.1.43. Details: build_info.json
+> built 2026-10-13 06:33 UTC from 3a34575 (main) · enlace 0.1.44. Details: build_info.json
 
 # index.html.md
 
@@ -1276,6 +1276,16 @@ Likewise, `[auth.*]` and `[stores.*]` tables in `platform.toml` are
 preserved as untyped dicts on `PlatformConfig` so plugins can deserialize
 them with their own models.
 
+Any other top-level table is not read by enlace. `from_toml` logs a warning
+for each one (a misnested `[oauth_server]` or a typo such as `[stores_]`
+would otherwise vanish), unless `[platform] foreign_tables` declares it as
+owned by another tool, and `enlace doctor` reports the same list.
+
+### Functions
+
+| [`unknown_toml_tables`](_autosummary/enlace.base.html.md#enlace.base.unknown_toml_tables)(data, \*[, foreign_tables])   | Top-level keys of a parsed platform.toml that nobody claims, as messages.   |
+|----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+
 ### Classes
 
 | [`AppConfig`](_autosummary/enlace.base.html.md#enlace.base.AppConfig)(\*\*data)         | Resolved configuration for a single discovered app.                |
@@ -1405,6 +1415,11 @@ design):
 - ENLACE_APP_DIRS (pathsep-delimited): individual app directories
 - ENLACE_APPS_DIR (legacy): single container directory
 
+Top-level tables enlace does not read are logged as warnings (and
+kept on [`unknown_tables`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig.unknown_tables)) unless `[platform] foreign_tables`
+lists them; they are never an error, since a platform.toml may carry
+tables for other tools.
+
 * **Parameters:**
   **path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Path to platform.toml. If the file doesn’t exist, returns
   a PlatformConfig with all default values.
@@ -1414,6 +1429,39 @@ design):
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+#### model_post_init(context,)
+
+This function is meant to behave like a BaseModel method to initialize private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** (`BaseModel`) – The BaseModel instance.
+  * **context** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any)) – The context.
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### *property* unknown_tables *: [list](https://docs.python.org/3/builtins/stdtypes.html#list)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]*
+
+Unclaimed top-level tables in the loaded platform.toml, as messages.
+
+### enlace.base.unknown_toml_tables(data, , foreign_tables=())
+
+Top-level keys of a parsed platform.toml that nobody claims, as messages.
+
+A key is claimed when enlace reads it (`ENLACE_TABLES`) or when the
+config declares it in `foreign_tables`. Each message names the key and,
+when one is close, the enlace table it was probably meant to be.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+```pycon
+>>> unknown_toml_tables({"platform": {}, "deploy": {}, "stores_": {}},
+...                     foreign_tables=["deploy"])
+['[stores_] is not an enlace table and is ignored (did you mean [stores]?)']
+```
 
 
 # _autosummary/enlace.build.html.md
@@ -2465,6 +2513,11 @@ design):
 - ENLACE_APP_DIRS (pathsep-delimited): individual app directories
 - ENLACE_APPS_DIR (legacy): single container directory
 
+Top-level tables enlace does not read are logged as warnings (and
+kept on [`unknown_tables`](_autosummary/enlace.html.md#enlace.PlatformConfig.unknown_tables)) unless `[platform] foreign_tables`
+lists them; they are never an error, since a platform.toml may carry
+tables for other tools.
+
 * **Parameters:**
   **path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Path to platform.toml. If the file doesn’t exist, returns
   a PlatformConfig with all default values.
@@ -2474,6 +2527,22 @@ design):
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+#### model_post_init(context,)
+
+This function is meant to behave like a BaseModel method to initialize private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** (`BaseModel`) – The BaseModel instance.
+  * **context** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any)) – The context.
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### *property* unknown_tables *: [list](https://docs.python.org/3/builtins/stdtypes.html#list)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]*
+
+Unclaimed top-level tables in the loaded platform.toml, as messages.
 
 ### *class* enlace.SourceRef(\*\*data)
 
@@ -3402,18 +3471,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 03:30 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/b3f0472b69eafb2522748b04fcef5d694be8d350"><code>b3f0472</code></a> on branch <code>main</code>, for **enlace 0.1.43** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 06:33 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb"><code>3a34575</code></a> on branch <code>main</code>, for **enlace 0.1.44** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.43) is behind the latest release on PyPI (0.1.44): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.44) is behind the latest release on PyPI (0.1.45): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/b3f0472b69eafb2522748b04fcef5d694be8d350"><code>b3f0472b69eafb2522748b04fcef5d694be8d350</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb"><code>3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3424,15 +3493,15 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38341921430">38341921430</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38357261419">38357261419</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>b3f0472b69eafb2522748b04fcef5d694be8d350</code> (in the history of the built commit) |
+| Event commit | <code>3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.13  |
+| epythet  | 0.2.14  |
 | Sphinx   | 9.1.0   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
@@ -3451,14 +3520,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.44/">0.1.44</a>, newer than the documented version (0.1.43).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.45/">0.1.45</a>, newer than the documented version (0.1.44).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout b3f0472b69eafb2522748b04fcef5d694be8d350
-pip install "epythet==0.2.13"
+git checkout 3a345753f50d8dd2d968e05c0ae4ad1aaeae12bb
+pip install "epythet==0.2.14"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

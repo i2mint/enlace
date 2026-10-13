@@ -4,6 +4,12 @@ enlace.base
 .. automodule:: enlace.base
 
    
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      unknown_toml_tables
+   
    .. rubric:: Classes
 
    .. autosummary::

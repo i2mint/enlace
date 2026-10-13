@@ -406,6 +406,19 @@
     <span class="k">return</span> <span class="n">out</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_unknown_tables</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Top-level platform.toml tables enlace ignores and no one declared.</span>
+
+<span class="sd">    A WARN, not a FAIL: a platform.toml may carry tables for another tool,</span>
+<span class="sd">    which ``[platform] foreign_tables`` declares to silence this check.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">unknown_tables</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="n">detail</span> <span class="o">=</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">unknown_tables</span><span class="p">)</span>
+    <span class="n">hint</span> <span class="o">=</span> <span class="s2">"list tables another tool owns in [platform] foreign_tables"</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">Check</span><span class="p">(</span><span class="s2">"config:unknown_tables"</span><span class="p">,</span> <span class="n">WARN</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">detail</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">hint</span><span class="si">}</span><span class="s2">)"</span><span class="p">)]</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_frontend_dirs</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Apps declaring frontend_dir should actually have a directory there."""</span>
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -596,6 +609,7 @@
 
     <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_app_imports</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
     <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_frontend_dirs</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_unknown_tables</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">extra_static_checks</span><span class="p">:</span>
         <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">fn</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
 
@@ -665,7 +679,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=42d57d98"></script>
+</div><script src="../../_static/documentation_options.js?v=aaf63c28"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

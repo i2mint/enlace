@@ -365,6 +365,11 @@ design):
 - ENLACE_APP_DIRS (pathsep-delimited): individual app directories
 - ENLACE_APPS_DIR (legacy): single container directory
 
+Top-level tables enlace does not read are logged as warnings (and
+kept on [`unknown_tables`](#enlace.PlatformConfig.unknown_tables)) unless `[platform] foreign_tables`
+lists them; they are never an error, since a platform.toml may carry
+tables for other tools.
+
 * **Parameters:**
   **path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Path to platform.toml. If the file doesn’t exist, returns
   a PlatformConfig with all default values.
@@ -374,6 +379,22 @@ design):
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+#### model_post_init(context,)
+
+This function is meant to behave like a BaseModel method to initialize private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** (`BaseModel`) – The BaseModel instance.
+  * **context** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any)) – The context.
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### *property* unknown_tables *: [list](https://docs.python.org/3/builtins/stdtypes.html#list)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]*
+
+Unclaimed top-level tables in the loaded platform.toml, as messages.
 
 ### *class* enlace.SourceRef(\*\*data)
 

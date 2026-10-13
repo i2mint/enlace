@@ -275,15 +275,29 @@
 <span class="sd">Likewise, ``[auth.*]`` and ``[stores.*]`` tables in ``platform.toml`` are</span>
 <span class="sd">preserved as untyped dicts on ``PlatformConfig`` so plugins can deserialize</span>
 <span class="sd">them with their own models.</span>
+
+<span class="sd">Any other top-level table is not read by enlace. ``from_toml`` logs a warning</span>
+<span class="sd">for each one (a misnested ``[oauth_server]`` or a typo such as ``[stores_]``</span>
+<span class="sd">would otherwise vanish), unless ``[platform] foreign_tables`` declares it as</span>
+<span class="sd">owned by another tool, and ``enlace doctor`` reports the same list.</span>
 <span class="sd">"""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">difflib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseModel</span><span class="p">,</span>
+    <span class="n">ConfigDict</span><span class="p">,</span>
+    <span class="n">Field</span><span class="p">,</span>
+    <span class="n">PrivateAttr</span><span class="p">,</span>
+    <span class="n">field_validator</span><span class="p">,</span>
+    <span class="n">model_validator</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.analytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppAnalyticsConfig</span><span class="p">,</span> <span class="n">PlatformAnalyticsConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.appmeta</span><span class="w"> </span><span class="kn">import</span> <span class="n">AppMetaConfig</span>
@@ -295,6 +309,44 @@
         <span class="kn">import</span><span class="w"> </span><span class="nn">tomllib</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">tomli</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tomllib</span>  <span class="c1"># type: ignore[no-redef]</span>
+
+<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"enlace.config"</span><span class="p">)</span>
+
+<span class="c1"># The top-level platform.toml tables enlace itself reads (see</span>
+<span class="c1"># PlatformConfig.from_toml). Anything else is a typo, a misnested table, or a</span>
+<span class="c1"># table owned by another tool (declared via [platform] foreign_tables).</span>
+<span class="n">ENLACE_TABLES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"platform"</span><span class="p">,</span> <span class="s2">"conventions"</span><span class="p">,</span> <span class="s2">"auth"</span><span class="p">,</span> <span class="s2">"stores"</span><span class="p">,</span> <span class="s2">"app_meta"</span><span class="p">,</span> <span class="s2">"analytics"</span><span class="p">}</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="unknown_toml_tables">
+<a class="viewcode-back" href="../../_autosummary/enlace.base.html#enlace.unknown_toml_tables">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unknown_toml_tables</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">foreign_tables</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">()</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Top-level keys of a parsed platform.toml that nobody claims, as messages.</span>
+
+<span class="sd">    A key is claimed when enlace reads it (:data:`ENLACE_TABLES`) or when the</span>
+<span class="sd">    config declares it in ``foreign_tables``. Each message names the key and,</span>
+<span class="sd">    when one is close, the enlace table it was probably meant to be.</span>
+
+<span class="sd">    &gt;&gt;&gt; unknown_toml_tables({"platform": {}, "deploy": {}, "stores_": {}},</span>
+<span class="sd">    ...                     foreign_tables=["deploy"])</span>
+<span class="sd">    ['[stores_] is not an enlace table and is ignored (did you mean [stores]?)']</span>
+<span class="sd">    """</span>
+    <span class="n">claimed</span> <span class="o">=</span> <span class="n">ENLACE_TABLES</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">foreign_tables</span><span class="p">)</span>
+    <span class="n">messages</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">claimed</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"[</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">] is not an enlace table and is ignored"</span>
+        <span class="n">close</span> <span class="o">=</span> <span class="n">difflib</span><span class="o">.</span><span class="n">get_close_matches</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ENLACE_TABLES</span><span class="p">),</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">close</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" (did you mean [</span><span class="si">{</span><span class="n">close</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]?)"</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">messages</span></div>
+
 
 
 <div class="viewcode-block" id="ConventionsConfig">
@@ -626,6 +678,22 @@
     <span class="c1"># Platform-wide analytics settings (platform.toml [analytics]): storage,</span>
     <span class="c1"># retention, timezone. Apps opt in individually; see enlace.analytics.</span>
     <span class="n">analytics</span><span class="p">:</span> <span class="n">PlatformAnalyticsConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">PlatformAnalyticsConfig</span><span class="p">)</span>
+    <span class="n">foreign_tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Top-level platform.toml tables owned by another tool (e.g. a "</span>
+            <span class="s2">"deploy script's ``[deploy]``). enlace ignores them without the "</span>
+            <span class="s2">"unknown-table warning."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="c1"># Messages for the unclaimed top-level tables from_toml found; read by</span>
+    <span class="c1"># `enlace doctor`. Empty for a config built in code.</span>
+    <span class="n">_unknown_tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unknown_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Unclaimed top-level tables in the loaded platform.toml, as messages."""</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unknown_tables</span><span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -660,6 +728,11 @@
 <span class="sd">        - ENLACE_APPS_DIRS (pathsep-delimited): container directories</span>
 <span class="sd">        - ENLACE_APP_DIRS (pathsep-delimited): individual app directories</span>
 <span class="sd">        - ENLACE_APPS_DIR (legacy): single container directory</span>
+
+<span class="sd">        Top-level tables enlace does not read are logged as warnings (and</span>
+<span class="sd">        kept on :attr:`unknown_tables`) unless ``[platform] foreign_tables``</span>
+<span class="sd">        lists them; they are never an error, since a platform.toml may carry</span>
+<span class="sd">        tables for other tools.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path: Path to platform.toml. If the file doesn't exist, returns</span>
@@ -737,7 +810,18 @@
         <span class="k">if</span> <span class="n">env_apps_dir</span> <span class="ow">and</span> <span class="s2">"apps_dirs"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">platform_data</span><span class="p">:</span>
             <span class="n">platform_data</span><span class="p">[</span><span class="s2">"apps_dir"</span><span class="p">]</span> <span class="o">=</span> <span class="n">env_apps_dir</span>
 
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">platform_data</span><span class="p">)</span></div>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">platform_data</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">_unknown_tables</span> <span class="o">=</span> <span class="n">unknown_toml_tables</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">foreign_tables</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">foreign_tables</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">_unknown_tables</span><span class="p">:</span>
+            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">; if another tool owns it, list it in "</span>
+                <span class="s2">"[platform] foreign_tables"</span><span class="p">,</span>
+                <span class="n">path</span><span class="p">,</span>
+                <span class="n">msg</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">config</span></div>
 
 
 <div class="viewcode-block" id="PlatformConfig.check_conflicts">
@@ -816,7 +900,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=42d57d98"></script>
+</div><script src="../../_static/documentation_options.js?v=aaf63c28"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

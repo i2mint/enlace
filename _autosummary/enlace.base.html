@@ -282,6 +282,20 @@ allowlist matching at request time, and CSRF all live in the
 <p>Likewise, <code class="docutils literal notranslate"><span class="pre">[auth.*]</span></code> and <code class="docutils literal notranslate"><span class="pre">[stores.*]</span></code> tables in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code> are
 preserved as untyped dicts on <code class="docutils literal notranslate"><span class="pre">PlatformConfig</span></code> so plugins can deserialize
 them with their own models.</p>
+<p>Any other top-level table is not read by enlace. <code class="docutils literal notranslate"><span class="pre">from_toml</span></code> logs a warning
+for each one (a misnested <code class="docutils literal notranslate"><span class="pre">[oauth_server]</span></code> or a typo such as <code class="docutils literal notranslate"><span class="pre">[stores_]</span></code>
+would otherwise vanish), unless <code class="docutils literal notranslate"><span class="pre">[platform]</span> <span class="pre">foreign_tables</span></code> declares it as
+owned by another tool, and <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span></code> reports the same list.</p>
+<p class="rubric">Functions</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.base.unknown_toml_tables" title="enlace.base.unknown_toml_tables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unknown_toml_tables</span></code></a>(data, *[, foreign_tables])</p></td>
+<td><p>Top-level keys of a parsed platform.toml that nobody claims, as messages.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p class="rubric">Classes</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -451,6 +465,10 @@ design):</p>
 <li><p>ENLACE_APP_DIRS (pathsep-delimited): individual app directories</p></li>
 <li><p>ENLACE_APPS_DIR (legacy): single container directory</p></li>
 </ul>
+<p>Top-level tables enlace does not read are logged as warnings (and
+kept on <a class="reference internal" href="#enlace.base.PlatformConfig.unknown_tables" title="enlace.base.PlatformConfig.unknown_tables"><code class="xref py py-attr docutils literal notranslate"><span class="pre">unknown_tables</span></code></a>) unless <code class="docutils literal notranslate"><span class="pre">[platform]</span> <span class="pre">foreign_tables</span></code>
+lists them; they are never an error, since a platform.toml may carry
+tables for other tools.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>path</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a></span>) – Path to platform.toml. If the file doesn’t exist, returns
@@ -468,6 +486,49 @@ a PlatformConfig with all default values.</p>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<code class="code docutils literal notranslate"><span class="pre">ConfigDict</span></code>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.base.PlatformConfig.model_post_init">
+<span class="sig-name descname"><span class="pre">model_post_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#enlace.base.PlatformConfig.model_post_init" title="Link to this definition">¶</a></dt>
+<dd><p>This function is meant to behave like a BaseModel method to initialize private attributes.</p>
+<p>It takes context as an argument since that’s what pydantic-core passes when calling it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></span>) – The BaseModel instance.</p></li>
+<li><p><strong>context</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span>) – The context.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="enlace.base.PlatformConfig.unknown_tables">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">unknown_tables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#enlace.base.PlatformConfig.unknown_tables" title="Link to this definition">¶</a></dt>
+<dd><p>Unclaimed top-level tables in the loaded platform.toml, as messages.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.base.unknown_toml_tables">
+<span class="sig-prename descclassname"><span class="pre">enlace.base.</span></span><span class="sig-name descname"><span class="pre">unknown_toml_tables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">foreign_tables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#unknown_toml_tables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.base.unknown_toml_tables" title="Link to this definition">¶</a></dt>
+<dd><p>Top-level keys of a parsed platform.toml that nobody claims, as messages.</p>
+<p>A key is claimed when enlace reads it (<code class="xref py py-data docutils literal notranslate"><span class="pre">ENLACE_TABLES</span></code>) or when the
+config declares it in <code class="docutils literal notranslate"><span class="pre">foreign_tables</span></code>. Each message names the key and,
+when one is close, the enlace table it was probably meant to be.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">unknown_toml_tables</span><span class="p">({</span><span class="s2">"platform"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"deploy"</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">"stores_"</span><span class="p">:</span> <span class="p">{}},</span>
+<span class="gp">... </span>                    <span class="n">foreign_tables</span><span class="o">=</span><span class="p">[</span><span class="s2">"deploy"</span><span class="p">])</span>
+<span class="go">['[stores_] is not an enlace table and is ignored (did you mean [stores]?)']</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </section>
@@ -547,8 +608,11 @@ a PlatformConfig with all default values.</p>
 <li><a class="reference internal" href="#enlace.base.PlatformConfig.check_conflicts"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.check_conflicts()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.base.PlatformConfig.from_toml"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.from_toml()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.base.PlatformConfig.model_config"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.model_config</span></code></a></li>
+<li><a class="reference internal" href="#enlace.base.PlatformConfig.model_post_init"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.model_post_init()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.base.PlatformConfig.unknown_tables"><code class="docutils literal notranslate"><span class="pre">PlatformConfig.unknown_tables</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#enlace.base.unknown_toml_tables"><code class="docutils literal notranslate"><span class="pre">unknown_toml_tables()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -560,7 +624,7 @@ a PlatformConfig with all default values.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=42d57d98"></script>
+</div><script src="../_static/documentation_options.js?v=aaf63c28"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
