@@ -1,5 +1,27 @@
 """Internal helpers for enlace."""
 
+from urllib.parse import quote
+
+
+def url_path(path: str) -> str:
+    """Percent-encode an app route or name for use in a URL enlace emits.
+
+    App names come from directory names, which may hold a space, ``%``, ``#``,
+    ``?`` or non-ASCII letters. Mounting works on the decoded path either way, but
+    a ``Location``, an ``href`` or a launcher link must be a valid URL (#75). The
+    names apps actually use (letters, digits, ``_ - . ~``) are returned unchanged.
+
+    >>> url_path("/chord_analyzer/")
+    '/chord_analyzer/'
+    >>> url_path("/my app/")
+    '/my%20app/'
+    >>> url_path("/100%/")
+    '/100%25/'
+    >>> url_path("/café/")
+    '/caf%C3%A9/'
+    """
+    return quote(path, safe="/")
+
 
 def derive_display_name(dir_name: str) -> str:
     """Convert a directory name to a human-readable display name.

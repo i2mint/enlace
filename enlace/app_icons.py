@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import Optional
 
 from enlace.html_rewrite import HEAD_CLOSE_RE, inject_into_head, rewrite_html_response
+from enlace.util import url_path
 
 # favicon (32), apple-touch-icon (180), manifest (192, 512 — Chrome's install bar).
 PNG_SIZES = (32, 180, 192, 512)
@@ -180,7 +181,7 @@ def web_manifest(
 
     Scoped to the app's own mount so each app installs as its own shortcut.
     """
-    base = f"/_apps/{app.name}"
+    base = url_path(f"/_apps/{app.name}")
     if has_png:
         icons = [
             {
@@ -196,8 +197,8 @@ def web_manifest(
     manifest = {
         "name": display_name,
         "short_name": display_name,
-        "start_url": f"/{app.name}/",
-        "scope": f"/{app.name}/",
+        "start_url": url_path(f"/{app.name}/"),
+        "scope": url_path(f"/{app.name}/"),
         "display": display,
         "icons": icons,
     }
@@ -247,7 +248,7 @@ def head_links(
     where the page lacks it — unless ``replace``, in which case the page's own
     icon links are dropped and the platform's take their place.
     """
-    base = f"/_apps/{app.name}"
+    base = url_path(f"/_apps/{app.name}")
     v = icon.token
     raster = is_raster(icon)
     head = _ICON_LINK_RE.sub(b"", page_head) if replace else page_head

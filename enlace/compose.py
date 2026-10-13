@@ -30,6 +30,7 @@ from starlette.routing import Mount, Route
 
 from enlace.base import AppConfig, PlatformConfig
 from enlace.discover import discover_apps, forget_partial_imports
+from enlace.util import url_path
 from enlace.frontend import (
     LandingWithUnknownApp404,
     RevalidatingStaticFiles,
@@ -519,7 +520,7 @@ def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
         return
 
     async def _redirect() -> RedirectResponse:
-        return RedirectResponse(f"{prefix}/")
+        return RedirectResponse(url_path(f"{prefix}/"))
 
     parent.add_api_route(
         prefix,
@@ -646,8 +647,8 @@ def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
     if not launchable:
         return False, None
     if has_frontend:
-        return True, f"/{app.name}/"  # the SPA mount, not the API route_prefix
-    return True, app.route_prefix.rstrip("/") + "/"  # external proxy UI
+        return True, url_path(f"/{app.name}/")  # the SPA mount, not route_prefix
+    return True, url_path(app.route_prefix.rstrip("/") + "/")  # external proxy UI
 
 
 def _overlay_entry(request: Request, name: str) -> dict:
@@ -687,7 +688,7 @@ def _resolved_app_meta(app: AppConfig, config: PlatformConfig, overlay: dict) ->
         "description": description,
         "keywords": keywords,
         "keyword_sources": sources,
-        "icon_url": f"/_apps/{app.name}/icon?v={icon.token}",
+        "icon_url": f"{url_path(f'/_apps/{app.name}')}/icon?v={icon.token}",
     }
 
 
@@ -708,7 +709,8 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
         "keywords": resolved["keywords"],
         "keyword_sources": resolved["keyword_sources"],
         "icon_url": resolved["icon_url"],
-        "route": f"/{app.name}/",  # back-compat; new landing ignores
+        "route": url_path(f"/{app.name}/"),  # back-compat; new landing ignores
+        # The configured route as an identifier (not a link), so left decoded.
         "api_route": app.route_prefix,
         "access": app.access,
         "has_frontend": bool(app.frontend_dir and app.frontend_dir.is_dir()),
@@ -874,9 +876,11 @@ def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
             has_api = app.app_type != "frontend_only"
             links = []
             if has_frontend:
-                links.append(f'<a href="/{app.name}/">open</a>')
+                links.append(f'<a href="{url_path(f"/{app.name}/")}">open</a>')
             if has_api:
-                links.append(f'<a href="{app.route_prefix}/docs">api docs</a>')
+                links.append(
+                    f'<a href="{url_path(app.route_prefix)}/docs">api docs</a>'
+                )
             link_html = " · ".join(links) if links else "(no routes)"
             if app.import_error is not None:
                 link_html = "<em>unavailable: failed to load</em>"
