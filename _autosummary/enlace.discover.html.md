@@ -17,6 +17,7 @@ but the diagnostic verbs need to survive one in order to report it. See
 
 | [`discover_apps`](#enlace.discover.discover_apps)([config, on_import_error])   | High-level discovery: load config, discover apps, check conflicts.   |
 |---------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| [`forget_partial_imports`](#enlace.discover.forget_partial_imports)(module_name)        | On a failed import of `module_name`, unload what it left behind.     |
 
 ### Classes
 
@@ -96,3 +97,19 @@ Iterates over all configured source directories:
   PlatformConfig with apps populated.
 * **Raises:**
   [**RuntimeError**](https://docs.python.org/3/builtins/exceptions.html#RuntimeError) – If name or route conflicts are detected.
+
+### enlace.discover.forget_partial_imports(module_name)
+
+On a failed import of `module_name`, unload what it left behind.
+
+Python drops the failing module itself from `sys.modules` but keeps every
+module that imported successfully before the failure — an app’s
+`helpers.py` loaded by a `server.py` that then raised stays cached,
+half-initialised by intent if not in fact. Only modules that are *new* since
+the attempt began *and* live inside the entry module’s own package are
+dropped: a third-party library the app pulled in may already be referenced
+elsewhere (and a C extension cannot be loaded twice), so it is left alone.
+
+Side effects outside `sys.modules` (environment variables, monkeypatches,
+registries) cannot be undone from here. The ADR on loud-and-local failures
+says so, and points at `mode = "process"` for real isolation.

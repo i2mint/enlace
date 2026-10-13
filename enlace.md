@@ -1,4 +1,4 @@
-> built 2026-10-13 06:50 UTC from e0305e2 (main) · enlace 0.1.48. Details: build_info.json
+> built 2026-10-13 14:05 UTC from 533a2ba (main) · enlace 0.1.49. Details: build_info.json
 
 # index.html.md
 
@@ -220,12 +220,32 @@ discover_apps(config)  # raise (default)
 discover_apps(config, on_import_error="record")  # record and carry on
 ```
 
-`serve` keeps the default: a gateway must not boot pretending a broken app is
-fine. The diagnostic verbs (`doctor`, `check`, `list-apps`, `show-config`,
-`app-meta`) record instead, so one broken app no longer hides the health of
-every other one — `enlace doctor --json` still exits nonzero, but now with a
-parseable `FAIL` naming the app and its exception class, on
-`AppConfig.import_error`.
+The diagnostic verbs (`doctor`, `check`, `list-apps`, `show-config`,
+`app-meta`) record, so one broken app no longer hides the health of every other
+one — `enlace doctor --json` still exits nonzero, but now with a parseable
+`FAIL` naming the app and its exception class, on `AppConfig.import_error`.
+
+The gateway (`create_app`, which gunicorn loads, and `enlace serve`) records
+too, and is **loud and local**: the broken app’s route prefix gets a 500 stub
+naming the app and the exception class, and every other app serves. A stub is
+never silent: one ERROR log line with the traceback, `degraded_apps` in
+`/_meta`, `degraded: true` (and not launchable) in `/_apps`, and a `FAIL` in
+`enlace doctor` read from the live gateway’s `/_meta`. Platform configuration
+errors still refuse to boot. To refuse to boot on an app’s failure too:
+
+```toml
+# app.toml — this app would rather be absent than serve a 500
+fail_hard = true
+```
+
+```toml
+# platform.toml — every app, the pre-0.1.50 behaviour
+[platform]
+app_load_failure = "raise"
+```
+
+The decision and its limits are in
+[ADR-0001]().
 
 ### Configuration
 
@@ -1281,6 +1301,12 @@ for each one (a misnested `[oauth_server]` or a typo such as `[stores_]`
 would otherwise vanish), unless `[platform] foreign_tables` declares it as
 owned by another tool, and `enlace doctor` reports the same list.
 
+### Module Attributes
+
+| [`CONTAINED_LOAD_ERRORS`](_autosummary/enlace.base.html.md#enlace.base.CONTAINED_LOAD_ERRORS)   | What a contained app-load failure may be.                                                                  |
+|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| [`AppLoadStage`](_autosummary/enlace.base.html.md#enlace.base.AppLoadStage)            | while discovery imported the entry module to detect its type, or while `build_backend` loaded the sub-app. |
+
 ### Functions
 
 | [`unknown_toml_tables`](_autosummary/enlace.base.html.md#enlace.base.unknown_toml_tables)(data, \*[, foreign_tables])   | Top-level keys of a parsed platform.toml that nobody claims, as messages.   |
@@ -1288,12 +1314,12 @@ owned by another tool, and `enlace doctor` reports the same list.
 
 ### Classes
 
-| [`AppConfig`](_autosummary/enlace.base.html.md#enlace.base.AppConfig)(\*\*data)         | Resolved configuration for a single discovered app.                |
-|------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| [`AppImportError`](_autosummary/enlace.base.html.md#enlace.base.AppImportError)(\*\*data)    | Why an app's entry module could not be imported at discovery time. |
-| [`BuildConfig`](_autosummary/enlace.base.html.md#enlace.base.BuildConfig)(\*\*data)       | Declarative build instructions for an app's compiled frontend.     |
-| [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*\*data) | Meta-conventions controlling how apps are discovered.              |
-| [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*\*data)    | Resolved configuration for the entire platform.                    |
+| [`AppConfig`](_autosummary/enlace.base.html.md#enlace.base.AppConfig)(\*\*data)         | Resolved configuration for a single discovered app.            |
+|------------------------------------------------------------------------------|----------------------------------------------------------------|
+| [`AppImportError`](_autosummary/enlace.base.html.md#enlace.base.AppImportError)(\*\*data)    | Why an app could not be loaded, recorded instead of raised.    |
+| [`BuildConfig`](_autosummary/enlace.base.html.md#enlace.base.BuildConfig)(\*\*data)       | Declarative build instructions for an app's compiled frontend. |
+| [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*\*data) | Meta-conventions controlling how apps are discovered.          |
+| [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*\*data)    | Resolved configuration for the entire platform.                |
 
 ### *class* enlace.base.AppConfig(\*\*data)
 
@@ -1324,17 +1350,29 @@ Configuration for the model, should be a dictionary conforming to [`ConfigDict`]
 
 Bases: `BaseModel`
 
-Why an app’s entry module could not be imported at discovery time.
+Why an app could not be loaded, recorded instead of raised.
 
-Recorded (instead of raised) when discovery runs with
-`on_import_error="record"` — see [`enlace.discover.discover_apps()`](_autosummary/enlace.discover.html.md#enlace.discover.discover_apps).
+Recorded at discovery (`on_import_error="record"` — see
+[`enlace.discover.discover_apps()`](_autosummary/enlace.discover.html.md#enlace.discover.discover_apps)) or at compose time, when
+[`enlace.compose.build_backend()`](_autosummary/enlace.compose.html.md#enlace.compose.build_backend) contains a per-app load failure and
+mounts a 500 stub in the app’s place (see [`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded) and
+`misc/docs/decisions/0001-loud-and-local-app-load-failures.md`).
+
 Importing a module runs arbitrary module-level code, so `exception_type`
 is not necessarily an `ImportError`: the failure seen in production was a
 `PermissionError` from a dependency reading a root-only dotenv at import.
 
-#### *classmethod* from_exception(exc, entry_module_path=None)
+The exception object itself is kept privately ([`exception`](_autosummary/enlace.base.html.md#enlace.base.AppImportError.exception)) so a
+caller that must refuse to boot can re-raise it with its real traceback.
+It is never serialized.
 
-Build a record from the exception the import raised.
+#### *property* exception *: [BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+
+The original exception, when this record was built from one.
+
+#### *classmethod* from_exception(exc, entry_module_path=None, , stage='discover')
+
+Build a record from the exception the import (or load) raised.
 
 * **Return type:**
   [`AppImportError`](_autosummary/enlace.base.html.md#enlace.base.AppImportError)
@@ -1342,6 +1380,38 @@ Build a record from the exception the import raised.
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+#### model_post_init(context,)
+
+This function is meant to behave like a BaseModel method to initialize private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** (`BaseModel`) – The BaseModel instance.
+  * **context** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any)) – The context.
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### public_summary()
+
+What may be shown to anyone: the exception class and the stage.
+
+Never the message — it can carry server paths or configuration values
+(the production `PermissionError` named the dotenv’s path).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.base.AppLoadStage
+
+while discovery imported the entry
+module to detect its type, or while `build_backend` loaded the sub-app.
+
+* **Type:**
+  Where an app-load failure happened
+
+alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’]
 
 ### *class* enlace.base.BuildConfig(\*\*data)
 
@@ -1365,6 +1435,15 @@ not choose values. `outputs` is an optional hint of produced paths.
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+### enlace.base.CONTAINED_LOAD_ERRORS *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[type](https://docs.python.org/3/builtins/functions.html#type)[[BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException)], ...]* *= (<class 'Exception'>, <class 'SystemExit'>)*
+
+What a contained app-load failure may be. Importing a module runs arbitrary
+module-level code, so the net is `Exception`, not `ImportError` — plus
+`SystemExit`, because a module that calls `sys.exit()` at import is a
+broken app, and under a pre-forking server an uncaught one ends the worker
+and with it every other app. `KeyboardInterrupt` is not caught: Ctrl-C
+must still stop a dev server mid-boot.
 
 ### *class* enlace.base.ConventionsConfig(\*\*data)
 
@@ -1603,6 +1682,13 @@ For each discovered app:
 - mode=static: mount StaticFiles at the route prefix
 - frontend_only (mode=asgi): skip (no backend to mount)
 
+An asgi app that cannot be imported or loaded does not take the platform
+down: a 500 stub is mounted in its place and the failure is reported in
+the logs, `/_meta`, `/_apps` and `enlace doctor` (loud and local —
+see [`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)). `config.app_load_failure = "raise"`, or
+`fail_hard = true` in an app’s app.toml, refuses to boot instead.
+Platform configuration errors always refuse to boot.
+
 * **Parameters:**
   * **config** ([`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
   * **plugins** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`FastAPI`, [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – Compose-time plugins, e.g. `enlace_auth.plugin`.
@@ -1633,6 +1719,11 @@ App factory for Uvicorn’s –factory flag.
 Loads platform config, discovers apps, checks conflicts,
 and builds the composed backend.
 
+Discovery *records* an app whose entry module fails to import rather than
+raising, so `build_backend` can mount a 500 stub for that app alone
+(see [`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)). Platform configuration errors, including a
+broken `ENLACE_PLUGINS` entry, still raise here.
+
 Plugins are loaded from the `ENLACE_PLUGINS` env var: a comma-separated
 list of `module:attribute` pairs, e.g.:
 
@@ -1645,6 +1736,147 @@ Each resolved object must be a callable
 
 * **Return type:**
   `FastAPI`
+
+
+# _autosummary/enlace.degraded.html.md
+
+# enlace.degraded
+
+Loud-and-local app-load failures: a 500 stub for the one app that broke.
+
+An `asgi`-mode app is mounted by *importing* it, in the gateway’s own process.
+Before this module, one app whose import raised took every worker down with it,
+and every app on the platform answered 502. Now [`load_or_stub()`](_autosummary/enlace.degraded.html.md#enlace.degraded.load_or_stub) contains
+that failure to the app: the app’s route prefix answers 500 naming the app and
+the exception class, and the other apps serve.
+
+A stub is **not** a degraded success. It is as loud as the crash-loop it
+replaces, only not as wide. Every stub is reported in four places, all fed by
+the same `AppConfig.import_error` record:
+
+- the logs: one ERROR line with the traceback per stubbed app, at boot;
+- `/_meta`: the platform payload gains `degraded_apps`, and the app’s own
+  `/_meta` gains `degraded` (see [`degraded_apps()`](_autosummary/enlace.degraded.html.md#enlace.degraded.degraded_apps));
+- `/_apps`: the app is listed with `degraded: true` and is not launchable;
+- `enlace doctor`: a FAIL check per stubbed app, read from the live
+  gateway’s `/_meta`, so a failure only the server’s own identity hits (a
+  file only it cannot read) is still reported.
+
+What is contained is narrow on purpose: an `asgi`-mode app’s import, or the
+detection and loading of its sub-app. Platform configuration errors (a bad
+`platform.toml`, an unknown `landing_app`, route conflicts, a plugin that
+refuses its configuration) still refuse to boot, as do lifespan failures, an
+app with `fail_hard = true` in its app.toml, and every app when the platform
+sets `app_load_failure = "raise"`. The decision and its reasons are recorded
+in `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
+
+### Module Attributes
+
+| [`STUB_STATUS`](_autosummary/enlace.degraded.html.md#enlace.degraded.STUB_STATUS)       | Status the stub answers every HTTP request with.                                                        |
+|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| [`STUB_HEADER`](_autosummary/enlace.degraded.html.md#enlace.degraded.STUB_HEADER)       | Response header naming the condition, so a log line or a probe can tell a stub's 500 from an app's own. |
+| [`DEGRADED_APPS_KEY`](_autosummary/enlace.degraded.html.md#enlace.degraded.DEGRADED_APPS_KEY) | Platform `/_meta` key listing stubbed apps.                                                             |
+| [`DEGRADED_KEY`](_autosummary/enlace.degraded.html.md#enlace.degraded.DEGRADED_KEY)      | Per-app `/_meta` and `/_apps` key flagging a stubbed app.                                               |
+| [`CONTAINED_MODES`](_autosummary/enlace.degraded.html.md#enlace.degraded.CONTAINED_MODES)   | Modes whose load failures are contained.                                                                |
+
+### Functions
+
+| [`degraded_apps`](_autosummary/enlace.degraded.html.md#enlace.degraded.degraded_apps)(config)                 | The apps that failed to load, by name, with their public summary.         |
+|----------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| [`load_or_stub`](_autosummary/enlace.degraded.html.md#enlace.degraded.load_or_stub)(strategy, app, platform) | Return `app`'s ASGI sub-app, or a stub when an asgi app cannot load.      |
+| [`refuse_to_boot_if_required`](_autosummary/enlace.degraded.html.md#enlace.degraded.refuse_to_boot_if_required)(platform)  | Raise the first recorded load failure the configuration says not to stub. |
+
+### Classes
+
+| [`UnavailableApp`](_autosummary/enlace.degraded.html.md#enlace.degraded.UnavailableApp)(app_name, exception_type)   | Pure-ASGI stub standing in for an app that failed to load.   |
+|---------------------------------------------------------------------------------------------|--------------------------------------------------------------|
+
+### Exceptions
+
+| [`EnlaceAppLoadError`](_autosummary/enlace.degraded.html.md#enlace.degraded.EnlaceAppLoadError)   | An app could not be loaded and its configuration says not to stub it.   |
+|-----------------------------------------------------------------------|-------------------------------------------------------------------------|
+
+### enlace.degraded.CONTAINED_MODES *= frozenset({'asgi'})*
+
+Modes whose load failures are contained. Only `asgi` imports app code
+into the gateway; every other mode’s `make_asgi` failure is configuration.
+
+### enlace.degraded.DEGRADED_APPS_KEY *= 'degraded_apps'*
+
+Platform `/_meta` key listing stubbed apps. Present only when one is, so a
+healthy `/_meta` stays quiet (the same convention as `manifest_error`).
+
+### enlace.degraded.DEGRADED_KEY *= 'degraded'*
+
+Per-app `/_meta` and `/_apps` key flagging a stubbed app.
+
+### *exception* enlace.degraded.EnlaceAppLoadError
+
+Bases: [`RuntimeError`](https://docs.python.org/3/builtins/exceptions.html#RuntimeError)
+
+An app could not be loaded and its configuration says not to stub it.
+
+Raised only when the original exception is not available to re-raise
+(an `AppImportError` built by hand rather than from an exception).
+
+### enlace.degraded.STUB_HEADER *= 'x-enlace-app-status'*
+
+Response header naming the condition, so a log line or a probe can tell a
+stub’s 500 from an app’s own.
+
+### enlace.degraded.STUB_STATUS *= 500*
+
+Status the stub answers every HTTP request with.
+
+### *class* enlace.degraded.UnavailableApp(app_name, exception_type)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Pure-ASGI stub standing in for an app that failed to load.
+
+Every HTTP request answers 500 with a short plain-text body naming the app
+and the exception *class* — never the message or a traceback, which can
+carry server paths and is logged instead. A websocket handshake is refused
+(a close before accept: uvicorn answers it as an HTTP 403; the ASGI close
+code is 1011). It has no `router`, so the gateway’s lifespan cascade
+passes it by.
+
+### enlace.degraded.degraded_apps(config)
+
+The apps that failed to load, by name, with their public summary.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+
+```pycon
+>>> degraded_apps(PlatformConfig())
+{}
+```
+
+### enlace.degraded.load_or_stub(strategy, app, platform)
+
+Return `app`’s ASGI sub-app, or a stub when an asgi app cannot load.
+
+An app that discovery already recorded as un-importable is not imported a
+second time. A contained compose-time failure is recorded on `app`
+(mutated in place, like `updated_at`) so every reporting surface reads
+the same record. A failure that must not be contained is re-raised with its
+original traceback.
+
+* **Return type:**
+  [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+
+### enlace.degraded.refuse_to_boot_if_required(platform)
+
+Raise the first recorded load failure the configuration says not to stub.
+
+For callers that act on a discovered config *before* `build_backend` runs
+— `enlace serve` spawns process-mode children and a supervised gateway —
+so `fail_hard` and `app_load_failure = "raise"` still stop everything
+up front, as they did when discovery raised.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 
 # _autosummary/enlace.diagnose.html.md
@@ -1782,6 +2014,7 @@ but the diagnostic verbs need to survive one in order to report it. See
 
 | [`discover_apps`](_autosummary/enlace.discover.html.md#enlace.discover.discover_apps)([config, on_import_error])   | High-level discovery: load config, discover apps, check conflicts.   |
 |---------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| [`forget_partial_imports`](_autosummary/enlace.discover.html.md#enlace.discover.forget_partial_imports)(module_name)        | On a failed import of `module_name`, unload what it left behind.     |
 
 ### Classes
 
@@ -1862,6 +2095,22 @@ Iterates over all configured source directories:
 * **Raises:**
   [**RuntimeError**](https://docs.python.org/3/builtins/exceptions.html#RuntimeError) – If name or route conflicts are detected.
 
+### enlace.discover.forget_partial_imports(module_name)
+
+On a failed import of `module_name`, unload what it left behind.
+
+Python drops the failing module itself from `sys.modules` but keeps every
+module that imported successfully before the failure — an app’s
+`helpers.py` loaded by a `server.py` that then raised stays cached,
+half-initialised by intent if not in fact. Only modules that are *new* since
+the attempt began *and* live inside the entry module’s own package are
+dropped: a third-party library the app pulled in may already be referenced
+elsewhere (and a C extension cannot be loaded twice), so it is left alone.
+
+Side effects outside `sys.modules` (environment variables, monkeypatches,
+registries) cannot be undone from here. The ADR on loud-and-local failures
+says so, and points at `mode = "process"` for real isolation.
+
 
 # _autosummary/enlace.doctor.html.md
 
@@ -1888,6 +2137,12 @@ Design:
   a traceback — see `_check_app_imports` and `discover_apps`’
   `on_import_error`. A health tool that dies on the failure it exists to
   detect reports nothing about the thirty apps that are fine.
+- An app the *running* gateway could not load is serving a 500 stub
+  ([`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)); `_check_live_degraded` reads the live
+  `/_meta` and FAILs once per stubbed app. That is the gateway’s own
+  answer, so it also catches a failure only the server’s identity hits
+  (a file the service user cannot read) that the doctor’s local discovery
+  would not reproduce.
 - Plugins can supply extra static or HTTP probes via `extra_static_checks`
   and `extra_http_checks` on `run_doctor`. Those are also discovered
   automatically from the plugins the platform is configured to load — see
@@ -2174,7 +2429,7 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 | [`AppAnalyticsConfig`](_autosummary/enlace.html.md#enlace.AppAnalyticsConfig)(\*\*data)                 | An app's `[analytics]` table in `app.toml`.                                 |
 |-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
 | [`AppConfig`](_autosummary/enlace.html.md#enlace.AppConfig)(\*\*data)                          | Resolved configuration for a single discovered app.                         |
-| [`AppImportError`](_autosummary/enlace.html.md#enlace.AppImportError)(\*\*data)                     | Why an app's entry module could not be imported at discovery time.          |
+| [`AppImportError`](_autosummary/enlace.html.md#enlace.AppImportError)(\*\*data)                     | Why an app could not be loaded, recorded instead of raised.                 |
 | [`BuildConfig`](_autosummary/enlace.html.md#enlace.BuildConfig)(\*\*data)                        | Declarative build instructions for an app's compiled frontend.              |
 | [`BuildResult`](_autosummary/enlace.html.md#enlace.BuildResult)(app, cwd[, commands, ran, ...])  | Outcome of building one app.                                                |
 | [`ConventionsConfig`](_autosummary/enlace.html.md#enlace.ConventionsConfig)(\*\*data)                  | Meta-conventions controlling how apps are discovered.                       |
@@ -2241,17 +2496,29 @@ Configuration for the model, should be a dictionary conforming to [`ConfigDict`]
 
 Bases: `BaseModel`
 
-Why an app’s entry module could not be imported at discovery time.
+Why an app could not be loaded, recorded instead of raised.
 
-Recorded (instead of raised) when discovery runs with
-`on_import_error="record"` — see [`enlace.discover.discover_apps()`](_autosummary/enlace.discover.html.md#enlace.discover.discover_apps).
+Recorded at discovery (`on_import_error="record"` — see
+[`enlace.discover.discover_apps()`](_autosummary/enlace.discover.html.md#enlace.discover.discover_apps)) or at compose time, when
+[`enlace.compose.build_backend()`](_autosummary/enlace.compose.html.md#enlace.compose.build_backend) contains a per-app load failure and
+mounts a 500 stub in the app’s place (see [`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded) and
+`misc/docs/decisions/0001-loud-and-local-app-load-failures.md`).
+
 Importing a module runs arbitrary module-level code, so `exception_type`
 is not necessarily an `ImportError`: the failure seen in production was a
 `PermissionError` from a dependency reading a root-only dotenv at import.
 
-#### *classmethod* from_exception(exc, entry_module_path=None)
+The exception object itself is kept privately ([`exception`](_autosummary/enlace.html.md#enlace.AppImportError.exception)) so a
+caller that must refuse to boot can re-raise it with its real traceback.
+It is never serialized.
 
-Build a record from the exception the import raised.
+#### *property* exception *: [BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+
+The original exception, when this record was built from one.
+
+#### *classmethod* from_exception(exc, entry_module_path=None, , stage='discover')
+
+Build a record from the exception the import (or load) raised.
 
 * **Return type:**
   [`AppImportError`](_autosummary/enlace.base.html.md#enlace.base.AppImportError)
@@ -2259,6 +2526,28 @@ Build a record from the exception the import raised.
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+#### model_post_init(context,)
+
+This function is meant to behave like a BaseModel method to initialize private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** (`BaseModel`) – The BaseModel instance.
+  * **context** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any)) – The context.
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### public_summary()
+
+What may be shown to anyone: the exception class and the stage.
+
+Never the message — it can carry server paths or configuration values
+(the production `PermissionError` named the dotenv’s path).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 ### *class* enlace.BuildConfig(\*\*data)
 
@@ -2578,6 +2867,13 @@ For each discovered app:
 - mode=static: mount StaticFiles at the route prefix
 - frontend_only (mode=asgi): skip (no backend to mount)
 
+An asgi app that cannot be imported or loaded does not take the platform
+down: a 500 stub is mounted in its place and the failure is reported in
+the logs, `/_meta`, `/_apps` and `enlace doctor` (loud and local —
+see [`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)). `config.app_load_failure = "raise"`, or
+`fail_hard = true` in an app’s app.toml, refuses to boot instead.
+Platform configuration errors always refuse to boot.
+
 * **Parameters:**
   * **config** ([`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
   * **plugins** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`FastAPI`, [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – Compose-time plugins, e.g. `enlace_auth.plugin`.
@@ -2595,6 +2891,11 @@ App factory for Uvicorn’s –factory flag.
 
 Loads platform config, discovers apps, checks conflicts,
 and builds the composed backend.
+
+Discovery *records* an app whose entry module fails to import rather than
+raising, so `build_backend` can mount a 500 stub for that app alone
+(see [`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)). Platform configuration errors, including a
+broken `ENLACE_PLUGINS` entry, still raise here.
 
 Plugins are loaded from the `ENLACE_PLUGINS` env var: a comma-separated
 list of `module:attribute` pairs, e.g.:
@@ -2747,6 +3048,7 @@ present, has a `build` command and that its working directory exists.
 | [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
 | [`build`](_autosummary/enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
 | [`compose`](_autosummary/enlace.compose.html.md#module-enlace.compose)               | ASGI app composition for enlace.                                                     |
+| [`degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)             | Loud-and-local app-load failures: a 500 stub for the one app that broke.             |
 | [`diagnose`](_autosummary/enlace.diagnose.html.md#module-enlace.diagnose)             | Diagnose app compatibility with enlace.                                              |
 | [`discover`](_autosummary/enlace.discover.html.md#module-enlace.discover)             | Convention-based app discovery for enlace.                                           |
 | [`doctor`](_autosummary/enlace.doctor.html.md#module-enlace.doctor)                 | Post-deploy smoke checks for a running enlace gateway.                               |
@@ -3556,20 +3858,20 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 06:50 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/e0305e2748e1f774c41fd66d0450dd5efa451a0a"><code>e0305e2</code></a> on branch <code>main</code>, for **enlace 0.1.48** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 14:05 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/533a2ba3b98a2e7bf7dc00046bd555b5457878b0"><code>533a2ba</code></a> on branch <code>main</code>, for **enlace 0.1.49** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.48) is behind the latest release on PyPI (0.1.49): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.49) is behind the latest release on PyPI (0.1.50): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/e0305e2748e1f774c41fd66d0450dd5efa451a0a"><code>e0305e2748e1f774c41fd66d0450dd5efa451a0a</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/533a2ba3b98a2e7bf7dc00046bd555b5457878b0"><code>533a2ba3b98a2e7bf7dc00046bd555b5457878b0</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
-| Tags at this commit | <code>0.1.48</code>                                                                                                                                  |
+| Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
 | Remote              | <code>https://github.com/i2mint/enlace</code>                                                                                                        |
 
@@ -3578,15 +3880,15 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38358827540">38358827540</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38410089015">38410089015</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>320b93418e02e12c9f06f42ff44972a9ae03466c</code> (in the history of the built commit) |
+| Event commit | <code>533a2ba3b98a2e7bf7dc00046bd555b5457878b0</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.14  |
+| epythet  | 0.2.15  |
 | Sphinx   | 9.1.0   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
@@ -3605,14 +3907,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.49/">0.1.49</a>, newer than the documented version (0.1.48).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.50/">0.1.50</a>, newer than the documented version (0.1.49).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout e0305e2748e1f774c41fd66d0450dd5efa451a0a
-pip install "epythet==0.2.14"
+git checkout 533a2ba3b98a2e7bf7dc00046bd555b5457878b0
+pip install "epythet==0.2.15"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

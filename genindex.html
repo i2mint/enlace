@@ -207,6 +207,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.build.html">enlace.build</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.compose.html">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.degraded.html">enlace.degraded</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.discover.html">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.doctor.html">enlace.doctor</a></li>
@@ -314,6 +315,8 @@
           <li><a href="_autosummary/enlace.base.html#enlace.base.AppImportError">(class in enlace.base)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.base.html#enlace.base.AppLoadStage">AppLoadStage (in module enlace.base)</a>
+</li>
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.AppMetaConfig">AppMetaConfig (class in enlace.appmeta)</a>
 </li>
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.AppMetaEntry">AppMetaEntry (class in enlace.appmeta)</a>
@@ -380,9 +383,13 @@
         </ul></li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.collect_strategy_field_maps">collect_strategy_field_maps() (in module enlace.strategies)</a>
 </li>
+        <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.compact">compact() (enlace.analytics.PageViewCounter method)</a>
+</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.compact">compact() (enlace.analytics.PageViewCounter method)</a>
+        <li><a href="_autosummary/enlace.base.html#enlace.base.CONTAINED_LOAD_ERRORS">CONTAINED_LOAD_ERRORS (in module enlace.base)</a>
+</li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.CONTAINED_MODES">CONTAINED_MODES (in module enlace.degraded)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.ConventionDiscoverer">ConventionDiscoverer (class in enlace)</a>
 
@@ -420,6 +427,12 @@
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.default_store_path">default_store_path() (in module enlace.analytics)</a>
 </li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.degraded_apps">degraded_apps() (in module enlace.degraded)</a>
+</li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.DEGRADED_APPS_KEY">DEGRADED_APPS_KEY (in module enlace.degraded)</a>
+</li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.DEGRADED_KEY">DEGRADED_KEY (in module enlace.degraded)</a>
+</li>
         <li><a href="_autosummary/enlace.html#enlace.DeployHeadersMiddleware">DeployHeadersMiddleware (class in enlace)</a>
 
         <ul>
@@ -438,12 +451,12 @@
           <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.DeployMetaTagMiddleware">(class in enlace.manifest)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.util.html#enlace.util.derive_display_name">derive_display_name() (in module enlace.util)</a>
 </li>
         <li><a href="_autosummary/enlace.util.html#enlace.util.derive_route_prefix">derive_route_prefix() (in module enlace.util)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.device_class">device_class() (in module enlace.analytics)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.diagnose_app">diagnose_app() (in module enlace)</a>
@@ -551,6 +564,13 @@
 </li>
         </ul></li>
         <li>
+    enlace.degraded
+
+        <ul>
+          <li><a href="_autosummary/enlace.degraded.html#module-enlace.degraded">module</a>
+</li>
+        </ul></li>
+        <li>
     enlace.diagnose
 
         <ul>
@@ -564,8 +584,6 @@
           <li><a href="_autosummary/enlace.discover.html#module-enlace.discover">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     enlace.doctor
 
@@ -573,6 +591,8 @@
           <li><a href="_autosummary/enlace.doctor.html#module-enlace.doctor">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     enlace.frontend
 
@@ -629,8 +649,16 @@
           <li><a href="_autosummary/enlace.util.html#module-enlace.util">module</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.EnlaceAppLoadError">EnlaceAppLoadError</a>
+</li>
         <li><a href="_autosummary/enlace.compose.html#enlace.compose.EnlaceConfigError">EnlaceConfigError</a>, <a href="_autosummary/enlace.html#enlace.EnlaceConfigError">[1]</a>
 </li>
+        <li><a href="_autosummary/enlace.html#enlace.AppImportError.exception">exception (enlace.AppImportError property)</a>
+
+        <ul>
+          <li><a href="_autosummary/enlace.base.html#enlace.base.AppImportError.exception">(enlace.base.AppImportError property)</a>
+</li>
+        </ul></li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.JsonFileStore.exclusive">exclusive() (enlace.analytics.JsonFileStore method)</a>
 
         <ul>
@@ -656,6 +684,8 @@
         <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.RevalidatingStaticFiles.file_response">file_response() (enlace.frontend.RevalidatingStaticFiles method)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.flush">flush() (enlace.analytics.PageViewCounter method)</a>
+</li>
+        <li><a href="_autosummary/enlace.discover.html#enlace.discover.forget_partial_imports">forget_partial_imports() (in module enlace.discover)</a>
 </li>
         <li><a href="_autosummary/enlace.diagnose.html#enlace.diagnose.DiagnosticReport.format_text">format_text() (enlace.diagnose.DiagnosticReport method)</a>
 
@@ -831,6 +861,8 @@
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.load_or_stub">load_or_stub() (in module enlace.degraded)</a>
+</li>
         <li><a href="_autosummary/enlace.html#enlace.load_platform_manifest">load_platform_manifest() (in module enlace)</a>
 
         <ul>
@@ -935,9 +967,13 @@
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="_autosummary/enlace.base.html#enlace.base.PlatformConfig.model_post_init">model_post_init() (enlace.base.PlatformConfig method)</a>
+        <li><a href="_autosummary/enlace.html#enlace.AppImportError.model_post_init">model_post_init() (enlace.AppImportError method)</a>
 
         <ul>
+          <li><a href="_autosummary/enlace.base.html#enlace.base.AppImportError.model_post_init">(enlace.base.AppImportError method)</a>
+</li>
+          <li><a href="_autosummary/enlace.base.html#enlace.base.PlatformConfig.model_post_init">(enlace.base.PlatformConfig method)</a>
+</li>
           <li><a href="_autosummary/enlace.html#enlace.PlatformConfig.model_post_init">(enlace.PlatformConfig method)</a>
 </li>
         </ul></li>
@@ -960,6 +996,8 @@
           <li><a href="_autosummary/enlace.build.html#module-enlace.build">enlace.build</a>
 </li>
           <li><a href="_autosummary/enlace.compose.html#module-enlace.compose">enlace.compose</a>
+</li>
+          <li><a href="_autosummary/enlace.degraded.html#module-enlace.degraded">enlace.degraded</a>
 </li>
           <li><a href="_autosummary/enlace.diagnose.html#module-enlace.diagnose">enlace.diagnose</a>
 </li>
@@ -1032,10 +1070,10 @@
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.platform_proxy_filters">platform_proxy_filters() (in module enlace.proxy)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS">PLATFORM_UNSAFE_RESPONSE_HEADERS (in module enlace.proxy)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.html#enlace.PlatformAnalyticsConfig">PlatformAnalyticsConfig (class in enlace)</a>
 
         <ul>
@@ -1054,6 +1092,12 @@
 </li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.ProcessStrategy">ProcessStrategy (class in enlace.strategies)</a>
 </li>
+        <li><a href="_autosummary/enlace.html#enlace.AppImportError.public_summary">public_summary() (enlace.AppImportError method)</a>
+
+        <ul>
+          <li><a href="_autosummary/enlace.base.html#enlace.base.AppImportError.public_summary">(enlace.base.AppImportError method)</a>
+</li>
+        </ul></li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.purge_expired">purge_expired() (enlace.analytics.PageViewCounter method)</a>
 </li>
     </ul></td>
@@ -1070,6 +1114,8 @@
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.referrer_domain">referrer_domain() (in module enlace.analytics)</a>
 </li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.refuse_to_boot_if_required">refuse_to_boot_if_required() (in module enlace.degraded)</a>
+</li>
         <li><a href="_autosummary/enlace.diagnose.html#enlace.diagnose.register_diagnoser">register_diagnoser() (in module enlace.diagnose)</a>
 </li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.register_strategy">register_strategy() (in module enlace.strategies)</a>
@@ -1078,10 +1124,10 @@
 </li>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.resolve_app_icon">resolve_app_icon() (in module enlace.app_icons)</a>
 </li>
-        <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.resolve_icon">resolve_icon() (in module enlace.appmeta)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.resolve_icon">resolve_icon() (in module enlace.appmeta)</a>
+</li>
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.resolve_keywords">resolve_keywords() (in module enlace.appmeta)</a>
 </li>
         <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.resolve_manifest_dir">resolve_manifest_dir() (in module enlace.manifest)</a>
@@ -1126,15 +1172,19 @@
         </ul></li>
         <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.SPAStaticFiles">SPAStaticFiles (class in enlace.frontend)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.start">start() (enlace.supervise.ManagedProcess method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.StaticStrategy">StaticStrategy (class in enlace.strategies)</a>
 </li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.stop">stop() (enlace.supervise.ManagedProcess method)</a>
 </li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.stream_logs">stream_logs() (enlace.supervise.ManagedProcess method)</a>
+</li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.STUB_HEADER">STUB_HEADER (in module enlace.degraded)</a>
+</li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.STUB_STATUS">STUB_STATUS (in module enlace.degraded)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.summarize">summarize() (in module enlace.analytics)</a>
 </li>
@@ -1168,6 +1218,8 @@
   <h2>U</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.UnavailableApp">UnavailableApp (class in enlace.degraded)</a>
+</li>
         <li><a href="_autosummary/enlace.base.html#enlace.base.PlatformConfig.unknown_tables">unknown_tables (enlace.base.PlatformConfig property)</a>
 
         <ul>
@@ -1254,7 +1306,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=28305784"></script>
+</div><script src="_static/documentation_options.js?v=817023e2"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

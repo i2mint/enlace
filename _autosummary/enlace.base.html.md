@@ -24,6 +24,12 @@ for each one (a misnested `[oauth_server]` or a typo such as `[stores_]`
 would otherwise vanish), unless `[platform] foreign_tables` declares it as
 owned by another tool, and `enlace doctor` reports the same list.
 
+### Module Attributes
+
+| [`CONTAINED_LOAD_ERRORS`](#enlace.base.CONTAINED_LOAD_ERRORS)   | What a contained app-load failure may be.                                                                  |
+|--------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| [`AppLoadStage`](#enlace.base.AppLoadStage)            | while discovery imported the entry module to detect its type, or while `build_backend` loaded the sub-app. |
+
 ### Functions
 
 | [`unknown_toml_tables`](#enlace.base.unknown_toml_tables)(data, \*[, foreign_tables])   | Top-level keys of a parsed platform.toml that nobody claims, as messages.   |
@@ -31,12 +37,12 @@ owned by another tool, and `enlace doctor` reports the same list.
 
 ### Classes
 
-| [`AppConfig`](#enlace.base.AppConfig)(\*\*data)         | Resolved configuration for a single discovered app.                |
-|------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| [`AppImportError`](#enlace.base.AppImportError)(\*\*data)    | Why an app's entry module could not be imported at discovery time. |
-| [`BuildConfig`](#enlace.base.BuildConfig)(\*\*data)       | Declarative build instructions for an app's compiled frontend.     |
-| [`ConventionsConfig`](#enlace.base.ConventionsConfig)(\*\*data) | Meta-conventions controlling how apps are discovered.              |
-| [`PlatformConfig`](#enlace.base.PlatformConfig)(\*\*data)    | Resolved configuration for the entire platform.                    |
+| [`AppConfig`](#enlace.base.AppConfig)(\*\*data)         | Resolved configuration for a single discovered app.            |
+|------------------------------------------------------------------------------|----------------------------------------------------------------|
+| [`AppImportError`](#enlace.base.AppImportError)(\*\*data)    | Why an app could not be loaded, recorded instead of raised.    |
+| [`BuildConfig`](#enlace.base.BuildConfig)(\*\*data)       | Declarative build instructions for an app's compiled frontend. |
+| [`ConventionsConfig`](#enlace.base.ConventionsConfig)(\*\*data) | Meta-conventions controlling how apps are discovered.          |
+| [`PlatformConfig`](#enlace.base.PlatformConfig)(\*\*data)    | Resolved configuration for the entire platform.                |
 
 ### *class* enlace.base.AppConfig(\*\*data)
 
@@ -67,17 +73,29 @@ Configuration for the model, should be a dictionary conforming to [`ConfigDict`]
 
 Bases: `BaseModel`
 
-Why an app’s entry module could not be imported at discovery time.
+Why an app could not be loaded, recorded instead of raised.
 
-Recorded (instead of raised) when discovery runs with
-`on_import_error="record"` — see [`enlace.discover.discover_apps()`](enlace.discover.html.md#enlace.discover.discover_apps).
+Recorded at discovery (`on_import_error="record"` — see
+[`enlace.discover.discover_apps()`](enlace.discover.html.md#enlace.discover.discover_apps)) or at compose time, when
+[`enlace.compose.build_backend()`](enlace.compose.html.md#enlace.compose.build_backend) contains a per-app load failure and
+mounts a 500 stub in the app’s place (see [`enlace.degraded`](enlace.degraded.html.md#module-enlace.degraded) and
+`misc/docs/decisions/0001-loud-and-local-app-load-failures.md`).
+
 Importing a module runs arbitrary module-level code, so `exception_type`
 is not necessarily an `ImportError`: the failure seen in production was a
 `PermissionError` from a dependency reading a root-only dotenv at import.
 
-#### *classmethod* from_exception(exc, entry_module_path=None)
+The exception object itself is kept privately ([`exception`](#enlace.base.AppImportError.exception)) so a
+caller that must refuse to boot can re-raise it with its real traceback.
+It is never serialized.
 
-Build a record from the exception the import raised.
+#### *property* exception *: [BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+
+The original exception, when this record was built from one.
+
+#### *classmethod* from_exception(exc, entry_module_path=None, , stage='discover')
+
+Build a record from the exception the import (or load) raised.
 
 * **Return type:**
   [`AppImportError`](#enlace.base.AppImportError)
@@ -85,6 +103,38 @@ Build a record from the exception the import raised.
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+#### model_post_init(context,)
+
+This function is meant to behave like a BaseModel method to initialize private attributes.
+
+It takes context as an argument since that’s what pydantic-core passes when calling it.
+
+* **Parameters:**
+  * **self** (`BaseModel`) – The BaseModel instance.
+  * **context** ([`Any`](https://docs.python.org/3/library/typing.html#typing.Any)) – The context.
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
+
+#### public_summary()
+
+What may be shown to anyone: the exception class and the stage.
+
+Never the message — it can carry server paths or configuration values
+(the production `PermissionError` named the dotenv’s path).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.base.AppLoadStage
+
+while discovery imported the entry
+module to detect its type, or while `build_backend` loaded the sub-app.
+
+* **Type:**
+  Where an app-load failure happened
+
+alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’]
 
 ### *class* enlace.base.BuildConfig(\*\*data)
 
@@ -108,6 +158,15 @@ not choose values. `outputs` is an optional hint of produced paths.
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+### enlace.base.CONTAINED_LOAD_ERRORS *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[type](https://docs.python.org/3/builtins/functions.html#type)[[BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException)], ...]* *= (<class 'Exception'>, <class 'SystemExit'>)*
+
+What a contained app-load failure may be. Importing a module runs arbitrary
+module-level code, so the net is `Exception`, not `ImportError` — plus
+`SystemExit`, because a module that calls `sys.exit()` at import is a
+broken app, and under a pre-forking server an uncaught one ends the worker
+and with it every other app. `KeyboardInterrupt` is not caught: Ctrl-C
+must still stop a dev server mid-boot.
 
 ### *class* enlace.base.ConventionsConfig(\*\*data)
 

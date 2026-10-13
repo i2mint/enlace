@@ -208,6 +208,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.build.html">enlace.build</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.compose.html">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.degraded.html">enlace.degraded</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.discover.html">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.doctor.html">enlace.doctor</a></li>
@@ -402,34 +403,80 @@
 
 
 
+<span class="c1">#: What a contained app-load failure may be. Importing a module runs arbitrary</span>
+<span class="c1">#: module-level code, so the net is ``Exception``, not ``ImportError`` — plus</span>
+<span class="c1">#: ``SystemExit``, because a module that calls ``sys.exit()`` at import is a</span>
+<span class="c1">#: broken app, and under a pre-forking server an uncaught one ends the worker</span>
+<span class="c1">#: and with it every other app. ``KeyboardInterrupt`` is not caught: Ctrl-C</span>
+<span class="c1">#: must still stop a dev server mid-boot.</span>
+<span class="n">CONTAINED_LOAD_ERRORS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">)</span>
+
+<span class="c1">#: Where an app-load failure happened: while discovery imported the entry</span>
+<span class="c1">#: module to detect its type, or while ``build_backend`` loaded the sub-app.</span>
+<span class="n">AppLoadStage</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"discover"</span><span class="p">,</span> <span class="s2">"compose"</span><span class="p">]</span>
+
+
 <div class="viewcode-block" id="AppImportError">
 <a class="viewcode-back" href="../../_autosummary/enlace.base.html#enlace.AppImportError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AppImportError</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Why an app's entry module could not be imported at discovery time.</span>
+<span class="w">    </span><span class="sd">"""Why an app could not be loaded, recorded instead of raised.</span>
 
-<span class="sd">    Recorded (instead of raised) when discovery runs with</span>
-<span class="sd">    ``on_import_error="record"`` — see :func:`enlace.discover.discover_apps`.</span>
+<span class="sd">    Recorded at discovery (``on_import_error="record"`` — see</span>
+<span class="sd">    :func:`enlace.discover.discover_apps`) or at compose time, when</span>
+<span class="sd">    :func:`enlace.compose.build_backend` contains a per-app load failure and</span>
+<span class="sd">    mounts a 500 stub in the app's place (see :mod:`enlace.degraded` and</span>
+<span class="sd">    ``misc/docs/decisions/0001-loud-and-local-app-load-failures.md``).</span>
+
 <span class="sd">    Importing a module runs arbitrary module-level code, so ``exception_type``</span>
 <span class="sd">    is not necessarily an ``ImportError``: the failure seen in production was a</span>
 <span class="sd">    ``PermissionError`` from a dependency reading a root-only dotenv at import.</span>
+
+<span class="sd">    The exception object itself is kept privately (:attr:`exception`) so a</span>
+<span class="sd">    caller that must refuse to boot can re-raise it with its real traceback.</span>
+<span class="sd">    It is never serialized.</span>
 <span class="sd">    """</span>
 
     <span class="n">exception_type</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">entry_module_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">stage</span><span class="p">:</span> <span class="n">AppLoadStage</span> <span class="o">=</span> <span class="s2">"discover"</span>
+    <span class="n">_exception</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">]</span> <span class="o">=</span> <span class="n">PrivateAttr</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AppImportError.from_exception">
 <a class="viewcode-back" href="../../_autosummary/enlace.base.html#enlace.AppImportError.from_exception">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_exception</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">,</span> <span class="n">entry_module_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">exc</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">,</span>
+        <span class="n">entry_module_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">stage</span><span class="p">:</span> <span class="n">AppLoadStage</span> <span class="o">=</span> <span class="s2">"discover"</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AppImportError"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build a record from the exception the import raised."""</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+<span class="w">        </span><span class="sd">"""Build a record from the exception the import (or load) raised."""</span>
+        <span class="n">record</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">exception_type</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
             <span class="n">entry_module_path</span><span class="o">=</span><span class="n">entry_module_path</span><span class="p">,</span>
-        <span class="p">)</span></div>
+            <span class="n">stage</span><span class="o">=</span><span class="n">stage</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">record</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="n">exc</span>
+        <span class="k">return</span> <span class="n">record</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exception</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The original exception, when this record was built from one."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span>
+
+<div class="viewcode-block" id="AppImportError.public_summary">
+<a class="viewcode-back" href="../../_autosummary/enlace.base.html#enlace.AppImportError.public_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">public_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""What may be shown to anyone: the exception class and the stage.</span>
+
+<span class="sd">        Never the message — it can carry server paths or configuration values</span>
+<span class="sd">        (the production ``PermissionError`` named the dotenv's path).</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"exception_type"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">exception_type</span><span class="p">,</span> <span class="s2">"stage"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">stage</span><span class="p">}</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -492,11 +539,18 @@
     <span class="c1"># unless the app opts in with mode = "privacy". See enlace.analytics.</span>
     <span class="n">analytics</span><span class="p">:</span> <span class="n">AppAnalyticsConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">AppAnalyticsConfig</span><span class="p">)</span>
 
-    <span class="c1"># Set only when discovery ran with ``on_import_error="record"`` and this</span>
-    <span class="c1"># app's entry module raised on import. ``None`` on every healthy app, and</span>
-    <span class="c1"># on every app discovered under the default ``"raise"`` policy (which</span>
-    <span class="c1"># never gets far enough to build a config for a broken app).</span>
+    <span class="c1"># Set when discovery ran with ``on_import_error="record"`` and this app's</span>
+    <span class="c1"># entry module raised on import, or when ``build_backend`` could not load</span>
+    <span class="c1"># the app and mounted a 500 stub in its place (``stage="compose"``).</span>
+    <span class="c1"># ``None`` on every healthy app. A set value is never silent: /_meta,</span>
+    <span class="c1"># /_apps, ``enlace doctor`` and the logs all report it.</span>
     <span class="n">import_error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AppImportError</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Refuse to boot the platform when this app cannot be loaded, instead of</span>
+    <span class="c1"># mounting a 500 stub in its place (app.toml ``fail_hard = true``). For an</span>
+    <span class="c1"># app that would rather be absent than serve errors; see</span>
+    <span class="c1"># ``PlatformConfig.app_load_failure`` for the platform-wide switch.</span>
+    <span class="n">fail_hard</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># App-launcher metadata. Resolved at discovery from app.toml + harvested</span>
     <span class="c1"># sources (manifest, index.html &lt;head&gt;, package.json, pyproject) — see</span>
@@ -617,6 +671,17 @@
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">backend_port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span>
+    <span class="n">app_load_failure</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"stub"</span><span class="p">,</span> <span class="s2">"raise"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"stub"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"What the gateway does when an asgi-mode app cannot be imported or "</span>
+            <span class="s1">'loaded. ``"stub"`` (default): mount a 500 stub for that app only and '</span>
+            <span class="s2">"report it in /_meta, /_apps, ``enlace doctor`` and the logs; every "</span>
+            <span class="s1">'other app serves. ``"raise"``: refuse to boot, as before 0.1.50. A '</span>
+            <span class="s2">"single app can ask for ``raise`` with ``fail_hard = true`` in its "</span>
+            <span class="s2">"app.toml. Platform configuration errors always refuse to boot."</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"cors_origins"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
@@ -897,7 +962,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=28305784"></script>
+</div><script src="../../_static/documentation_options.js?v=817023e2"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

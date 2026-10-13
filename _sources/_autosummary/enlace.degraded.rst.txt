@@ -1,0 +1,36 @@
+enlace.degraded
+===============
+
+.. automodule:: enlace.degraded
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      STUB_STATUS
+      STUB_HEADER
+      DEGRADED_APPS_KEY
+      DEGRADED_KEY
+      CONTAINED_MODES
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      degraded_apps
+      load_or_stub
+      refuse_to_boot_if_required
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      UnavailableApp
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      EnlaceAppLoadError
+   

@@ -46,6 +46,13 @@ For each discovered app:
 - mode=static: mount StaticFiles at the route prefix
 - frontend_only (mode=asgi): skip (no backend to mount)
 
+An asgi app that cannot be imported or loaded does not take the platform
+down: a 500 stub is mounted in its place and the failure is reported in
+the logs, `/_meta`, `/_apps` and `enlace doctor` (loud and local —
+see [`enlace.degraded`](enlace.degraded.html.md#module-enlace.degraded)). `config.app_load_failure = "raise"`, or
+`fail_hard = true` in an app’s app.toml, refuses to boot instead.
+Platform configuration errors always refuse to boot.
+
 * **Parameters:**
   * **config** ([`PlatformConfig`](enlace.base.html.md#enlace.base.PlatformConfig)) – Platform configuration with apps already discovered.
   * **plugins** ([`Sequence`](https://docs.python.org/3/library/typing.html#typing.Sequence)[[`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[`FastAPI`, [`PlatformConfig`](enlace.base.html.md#enlace.base.PlatformConfig)], [`None`](https://docs.python.org/3/builtins/constants.html#None)]]) – Compose-time plugins, e.g. `enlace_auth.plugin`.
@@ -75,6 +82,11 @@ App factory for Uvicorn’s –factory flag.
 
 Loads platform config, discovers apps, checks conflicts,
 and builds the composed backend.
+
+Discovery *records* an app whose entry module fails to import rather than
+raising, so `build_backend` can mount a 500 stub for that app alone
+(see [`enlace.degraded`](enlace.degraded.html.md#module-enlace.degraded)). Platform configuration errors, including a
+broken `ENLACE_PLUGINS` entry, still raise here.
 
 Plugins are loaded from the `ENLACE_PLUGINS` env var: a comma-separated
 list of `module:attribute` pairs, e.g.:

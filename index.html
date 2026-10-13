@@ -211,6 +211,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.build.html">enlace.build</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.compose.html">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.degraded.html">enlace.degraded</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.discover.html">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.doctor.html">enlace.doctor</a></li>
@@ -509,12 +510,28 @@ What happens next is a policy you choose:</p>
 <span class="n">discover_apps</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">on_import_error</span><span class="o">=</span><span class="s2">"record"</span><span class="p">)</span>  <span class="c1"># record and carry on</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">serve</span></code> keeps the default: a gateway must not boot pretending a broken app is
-fine. The diagnostic verbs (<code class="docutils literal notranslate"><span class="pre">doctor</span></code>, <code class="docutils literal notranslate"><span class="pre">check</span></code>, <code class="docutils literal notranslate"><span class="pre">list-apps</span></code>, <code class="docutils literal notranslate"><span class="pre">show-config</span></code>,
-<code class="docutils literal notranslate"><span class="pre">app-meta</span></code>) record instead, so one broken app no longer hides the health of
-every other one — <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span> <span class="pre">--json</span></code> still exits nonzero, but now with a
-parseable <code class="docutils literal notranslate"><span class="pre">FAIL</span></code> naming the app and its exception class, on
-<code class="docutils literal notranslate"><span class="pre">AppConfig.import_error</span></code>.</p>
+<p>The diagnostic verbs (<code class="docutils literal notranslate"><span class="pre">doctor</span></code>, <code class="docutils literal notranslate"><span class="pre">check</span></code>, <code class="docutils literal notranslate"><span class="pre">list-apps</span></code>, <code class="docutils literal notranslate"><span class="pre">show-config</span></code>,
+<code class="docutils literal notranslate"><span class="pre">app-meta</span></code>) record, so one broken app no longer hides the health of every other
+one — <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span> <span class="pre">--json</span></code> still exits nonzero, but now with a parseable
+<code class="docutils literal notranslate"><span class="pre">FAIL</span></code> naming the app and its exception class, on <code class="docutils literal notranslate"><span class="pre">AppConfig.import_error</span></code>.</p>
+<p>The gateway (<code class="docutils literal notranslate"><span class="pre">create_app</span></code>, which gunicorn loads, and <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">serve</span></code>) records
+too, and is <strong>loud and local</strong>: the broken app’s route prefix gets a 500 stub
+naming the app and the exception class, and every other app serves. A stub is
+never silent: one ERROR log line with the traceback, <code class="docutils literal notranslate"><span class="pre">degraded_apps</span></code> in
+<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>, <code class="docutils literal notranslate"><span class="pre">degraded:</span> <span class="pre">true</span></code> (and not launchable) in <code class="docutils literal notranslate"><span class="pre">/_apps</span></code>, and a <code class="docutils literal notranslate"><span class="pre">FAIL</span></code> in
+<code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span></code> read from the live gateway’s <code class="docutils literal notranslate"><span class="pre">/_meta</span></code>. Platform configuration
+errors still refuse to boot. To refuse to boot on an app’s failure too:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># app.toml — this app would rather be absent than serve a 500</span>
+<span class="n">fail_hard</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</pre></div>
+</div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># platform.toml — every app, the pre-0.1.50 behaviour</span>
+<span class="k">[platform]</span>
+<span class="n">app_load_failure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"raise"</span>
+</pre></div>
+</div>
+<p>The decision and its limits are in
+<a class="reference internal" href="#misc/docs/decisions/0001-loud-and-local-app-load-failures.md"><span class="xref myst">ADR-0001</span></a>.</p>
 </section>
 </section>
 <section id="configuration">
@@ -711,7 +728,7 @@ browser rendered the current build or a stale cache.</p>
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-13 06:50 UTC from <a href="https://github.com/i2mint/enlace/commit/e0305e2748e1f774c41fd66d0450dd5efa451a0a">e0305e2</a> (main) · enlace 0.1.48 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-13 14:05 UTC from <a href="https://github.com/i2mint/enlace/commit/533a2ba3b98a2e7bf7dc00046bd555b5457878b0">533a2ba</a> (main) · enlace 0.1.49 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -790,7 +807,7 @@ browser rendered the current build or a stale cache.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=28305784"></script>
+</div><script src="_static/documentation_options.js?v=817023e2"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

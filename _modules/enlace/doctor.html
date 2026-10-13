@@ -208,6 +208,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.build.html">enlace.build</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.compose.html">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.degraded.html">enlace.degraded</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.discover.html">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.doctor.html">enlace.doctor</a></li>
@@ -277,6 +278,12 @@
 <span class="sd">  a traceback — see ``_check_app_imports`` and ``discover_apps``'</span>
 <span class="sd">  ``on_import_error``. A health tool that dies on the failure it exists to</span>
 <span class="sd">  detect reports nothing about the thirty apps that are fine.</span>
+<span class="sd">- An app the *running* gateway could not load is serving a 500 stub</span>
+<span class="sd">  (:mod:`enlace.degraded`); ``_check_live_degraded`` reads the live</span>
+<span class="sd">  ``/_meta`` and FAILs once per stubbed app. That is the gateway's own</span>
+<span class="sd">  answer, so it also catches a failure only the server's identity hits</span>
+<span class="sd">  (a file the service user cannot read) that the doctor's local discovery</span>
+<span class="sd">  would not reproduce.</span>
 <span class="sd">- Plugins can supply extra static or HTTP probes via ``extra_static_checks``</span>
 <span class="sd">  and ``extra_http_checks`` on ``run_doctor``. Those are also discovered</span>
 <span class="sd">  automatically from the plugins the platform is configured to load — see</span>
@@ -410,6 +417,7 @@
                     <span class="s2">"exception_type"</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">exception_type</span><span class="p">,</span>
                     <span class="s2">"message"</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">message</span><span class="p">,</span>
                     <span class="s2">"entry_module_path"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">entry_module_path</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">),</span>
+                    <span class="s2">"stage"</span><span class="p">:</span> <span class="n">err</span><span class="o">.</span><span class="n">stage</span><span class="p">,</span>
                 <span class="p">},</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -477,6 +485,49 @@
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{},</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"connection failed: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># pragma: no cover - defensive</span>
         <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{},</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"unexpected error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_live_degraded</span><span class="p">(</span><span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""FAIL once per app the live gateway is serving a 500 stub for.</span>
+
+<span class="sd">    Reads ``degraded_apps`` from the platform ``/_meta`` (see</span>
+<span class="sd">    :mod:`enlace.degraded`). One PASS when the gateway reports none; a WARN</span>
+<span class="sd">    when ``/_meta`` cannot be read as JSON, since then nothing can be said</span>
+<span class="sd">    either way (the per-app HTTP probes still FAIL on a stub's 500).</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.degraded</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEGRADED_APPS_KEY</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_url</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span><span class="si">}</span><span class="s2">/_meta"</span>
+    <span class="n">status</span><span class="p">,</span> <span class="n">_headers</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">_http_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"meta:degraded_apps"</span>
+    <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Check</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">WARN</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"could not read /_meta: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span><span class="p">)]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">body</span> <span class="ow">or</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">status</span> <span class="o">!=</span> <span class="mi">200</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Check</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">WARN</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"/_meta status=</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">, not a JSON object"</span><span class="p">)]</span>
+    <span class="n">degraded</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DEGRADED_APPS_KEY</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">degraded</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Check</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">WARN</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"/_meta </span><span class="si">{</span><span class="n">DEGRADED_APPS_KEY</span><span class="si">}</span><span class="s2"> is not a mapping"</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">degraded</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Check</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">PASS</span><span class="p">,</span> <span class="s2">"no app is serving a load-failure stub"</span><span class="p">)]</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">app_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">degraded</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">info</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="n">exc_type</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"exception_type"</span><span class="p">,</span> <span class="s2">"?"</span><span class="p">)</span>
+        <span class="n">stage</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"stage"</span><span class="p">,</span> <span class="s2">"?"</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Check</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"degraded:</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">FAIL</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"live gateway serves a 500 stub: failed to load at </span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">exc_type</span><span class="si">}</span><span class="s2">); the server log has the traceback"</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"app"</span><span class="p">:</span> <span class="n">app_name</span><span class="p">,</span> <span class="s2">"exception_type"</span><span class="p">:</span> <span class="n">exc_type</span><span class="p">,</span> <span class="s2">"stage"</span><span class="p">:</span> <span class="n">stage</span><span class="p">},</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_frontend_mount</span><span class="p">(</span><span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">app_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Check</span><span class="p">:</span>
@@ -625,6 +676,7 @@
 
     <span class="c1"># HTTP probes — only when a base URL is provided.</span>
     <span class="k">if</span> <span class="n">base_url</span><span class="p">:</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_live_degraded</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">timeout</span><span class="p">))</span>
         <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">extra_http_checks</span><span class="p">:</span>
             <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">fn</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="n">timeout</span><span class="p">))</span>
 
@@ -689,7 +741,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=28305784"></script>
+</div><script src="../../_static/documentation_options.js?v=817023e2"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -211,6 +211,7 @@
 <li class="toctree-l3"><a class="reference internal" href="enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.build.html">enlace.build</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.compose.html">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.degraded.html">enlace.degraded</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3 current current-page"><a class="current reference internal" href="#">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.doctor.html">enlace.doctor</a></li>
@@ -283,6 +284,9 @@ but the diagnostic verbs need to survive one in order to report it. See
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.discover.discover_apps" title="enlace.discover.discover_apps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover_apps</span></code></a>([config, on_import_error])</p></td>
 <td><p>High-level discovery: load config, discover apps, check conflicts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.discover.forget_partial_imports" title="enlace.discover.forget_partial_imports"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forget_partial_imports</span></code></a>(module_name)</p></td>
+<td><p>On a failed import of <code class="docutils literal notranslate"><span class="pre">module_name</span></code>, unload what it left behind.</p></td>
 </tr>
 </tbody>
 </table>
@@ -398,6 +402,24 @@ dying on it.</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.discover.forget_partial_imports">
+<span class="sig-prename descclassname"><span class="pre">enlace.discover.</span></span><span class="sig-name descname"><span class="pre">forget_partial_imports</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/discover.html#forget_partial_imports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.discover.forget_partial_imports" title="Link to this definition">¶</a></dt>
+<dd><p>On a failed import of <code class="docutils literal notranslate"><span class="pre">module_name</span></code>, unload what it left behind.</p>
+<p>Python drops the failing module itself from <code class="docutils literal notranslate"><span class="pre">sys.modules</span></code> but keeps every
+module that imported successfully before the failure — an app’s
+<code class="docutils literal notranslate"><span class="pre">helpers.py</span></code> loaded by a <code class="docutils literal notranslate"><span class="pre">server.py</span></code> that then raised stays cached,
+half-initialised by intent if not in fact. Only modules that are <em>new</em> since
+the attempt began <em>and</em> live inside the entry module’s own package are
+dropped: a third-party library the app pulled in may already be referenced
+elsewhere (and a C extension cannot be loaded twice), so it is left alone.</p>
+<p>Side effects outside <code class="docutils literal notranslate"><span class="pre">sys.modules</span></code> (environment variables, monkeypatches,
+registries) cannot be undone from here. The ADR on loud-and-local failures
+says so, and points at <code class="docutils literal notranslate"><span class="pre">mode</span> <span class="pre">=</span> <span class="pre">&quot;process&quot;</span></code> for real isolation.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
 </section>
 
         </article>
@@ -459,6 +481,7 @@ dying on it.</p></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#enlace.discover.discover_apps"><code class="docutils literal notranslate"><span class="pre">discover_apps()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.discover.forget_partial_imports"><code class="docutils literal notranslate"><span class="pre">forget_partial_imports()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -470,7 +493,7 @@ dying on it.</p></li>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=28305784"></script>
+</div><script src="../_static/documentation_options.js?v=817023e2"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

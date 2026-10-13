@@ -9,6 +9,7 @@ enlace.discover
    .. autosummary::
    
       discover_apps
+      forget_partial_imports
    
    .. rubric:: Classes
 

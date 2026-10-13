@@ -15,6 +15,7 @@
 - [enlace.base](_autosummary/enlace.base.html.md): Core data structures for enlace platform configuration.
 - [enlace.build](_autosummary/enlace.build.html.md): Run and validate declarative app builds from &#96;app.toml&#96; &#96;&#91;build&#93;&#96;.
 - [enlace.compose](_autosummary/enlace.compose.html.md): ASGI app composition for enlace.
+- [enlace.degraded](_autosummary/enlace.degraded.html.md): Loud-and-local app-load failures: a 500 stub for the one app that broke.
 - [enlace.diagnose](_autosummary/enlace.diagnose.html.md): Diagnose app compatibility with enlace.
 - [enlace.discover](_autosummary/enlace.discover.html.md): Convention-based app discovery for enlace.
 - [enlace.doctor](_autosummary/enlace.doctor.html.md): Post-deploy smoke checks for a running enlace gateway.
@@ -27,7 +28,7 @@
 - [enlace.supervise](_autosummary/enlace.supervise.html.md): Dev-mode process supervisor for enlace.
 - [enlace.util](_autosummary/enlace.util.html.md): Internal helpers for enlace.
 - [For AI agents](ai-agents.html.md): &#96;enlace&#96; ships artifacts for coding agents alongside its code. This page lists
-- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-10-13 06:50 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-10-13 14:05 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
 
 ## Optional
 

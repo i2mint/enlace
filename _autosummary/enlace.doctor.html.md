@@ -21,6 +21,12 @@ Design:
   a traceback — see `_check_app_imports` and `discover_apps`’
   `on_import_error`. A health tool that dies on the failure it exists to
   detect reports nothing about the thirty apps that are fine.
+- An app the *running* gateway could not load is serving a 500 stub
+  ([`enlace.degraded`](enlace.degraded.html.md#module-enlace.degraded)); `_check_live_degraded` reads the live
+  `/_meta` and FAILs once per stubbed app. That is the gateway’s own
+  answer, so it also catches a failure only the server’s identity hits
+  (a file the service user cannot read) that the doctor’s local discovery
+  would not reproduce.
 - Plugins can supply extra static or HTTP probes via `extra_static_checks`
   and `extra_http_checks` on `run_doctor`. Those are also discovered
   automatically from the plugins the platform is configured to load — see

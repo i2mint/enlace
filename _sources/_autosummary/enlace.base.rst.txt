@@ -4,6 +4,13 @@ enlace.base
 .. automodule:: enlace.base
 
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      CONTAINED_LOAD_ERRORS
+      AppLoadStage
+   
    .. rubric:: Functions
 
    .. autosummary::

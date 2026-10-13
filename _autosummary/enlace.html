@@ -211,6 +211,7 @@
 <li class="toctree-l3"><a class="reference internal" href="enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.build.html">enlace.build</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.compose.html">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.degraded.html">enlace.degraded</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.discover.html">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.doctor.html">enlace.doctor</a></li>
@@ -324,7 +325,7 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 <td><p>Resolved configuration for a single discovered app.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.AppImportError" title="enlace.AppImportError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppImportError</span></code></a>(**data)</p></td>
-<td><p>Why an app's entry module could not be imported at discovery time.</p></td>
+<td><p>Why an app could not be loaded, recorded instead of raised.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.BuildConfig" title="enlace.BuildConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BuildConfig</span></code></a>(**data)</p></td>
 <td><p>Declarative build instructions for an app's compiled frontend.</p></td>
@@ -439,18 +440,30 @@ either way.</p>
 <dt class="sig sig-object py" id="enlace.AppImportError">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.</span></span><span class="sig-name descname"><span class="pre">AppImportError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#AppImportError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.AppImportError" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
-<p>Why an app’s entry module could not be imported at discovery time.</p>
-<p>Recorded (instead of raised) when discovery runs with
-<code class="docutils literal notranslate"><span class="pre">on_import_error=&quot;record&quot;</span></code> — see <a class="reference internal" href="enlace.discover.html#enlace.discover.discover_apps" title="enlace.discover.discover_apps"><code class="xref py py-func docutils literal notranslate"><span class="pre">enlace.discover.discover_apps()</span></code></a>.
-Importing a module runs arbitrary module-level code, so <code class="docutils literal notranslate"><span class="pre">exception_type</span></code>
+<p>Why an app could not be loaded, recorded instead of raised.</p>
+<p>Recorded at discovery (<code class="docutils literal notranslate"><span class="pre">on_import_error=&quot;record&quot;</span></code> — see
+<a class="reference internal" href="enlace.discover.html#enlace.discover.discover_apps" title="enlace.discover.discover_apps"><code class="xref py py-func docutils literal notranslate"><span class="pre">enlace.discover.discover_apps()</span></code></a>) or at compose time, when
+<a class="reference internal" href="enlace.compose.html#enlace.compose.build_backend" title="enlace.compose.build_backend"><code class="xref py py-func docutils literal notranslate"><span class="pre">enlace.compose.build_backend()</span></code></a> contains a per-app load failure and
+mounts a 500 stub in the app’s place (see <a class="reference internal" href="enlace.degraded.html#module-enlace.degraded" title="enlace.degraded"><code class="xref py py-mod docutils literal notranslate"><span class="pre">enlace.degraded</span></code></a> and
+<code class="docutils literal notranslate"><span class="pre">misc/docs/decisions/0001-loud-and-local-app-load-failures.md</span></code>).</p>
+<p>Importing a module runs arbitrary module-level code, so <code class="docutils literal notranslate"><span class="pre">exception_type</span></code>
 is not necessarily an <code class="docutils literal notranslate"><span class="pre">ImportError</span></code>: the failure seen in production was a
 <code class="docutils literal notranslate"><span class="pre">PermissionError</span></code> from a dependency reading a root-only dotenv at import.</p>
+<p>The exception object itself is kept privately (<a class="reference internal" href="#enlace.AppImportError.exception" title="enlace.AppImportError.exception"><code class="xref py py-attr docutils literal notranslate"><span class="pre">exception</span></code></a>) so a
+caller that must refuse to boot can re-raise it with its real traceback.
+It is never serialized.</p>
 <dl class="field-list simple">
 </dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="enlace.AppImportError.exception">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">exception</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#BaseException" title="(in Python v3.15)"><span class="pre">BaseException</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#enlace.AppImportError.exception" title="Link to this definition">¶</a></dt>
+<dd><p>The original exception, when this record was built from one.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="enlace.AppImportError.from_exception">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_exception</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_module_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#AppImportError.from_exception"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.AppImportError.from_exception" title="Link to this definition">¶</a></dt>
-<dd><p>Build a record from the exception the import raised.</p>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_exception</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entry_module_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'discover'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#AppImportError.from_exception"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.AppImportError.from_exception" title="Link to this definition">¶</a></dt>
+<dd><p>Build a record from the exception the import (or load) raised.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.base.html#enlace.base.AppImportError" title="enlace.base.AppImportError"><code class="xref py py-class docutils literal notranslate"><span class="pre">AppImportError</span></code></a></span></p>
@@ -462,6 +475,37 @@ is not necessarily an <code class="docutils literal notranslate"><span class="pr
 <dt class="sig sig-object py" id="enlace.AppImportError.model_config">
 <span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#enlace.AppImportError.model_config" title="Link to this definition">¶</a></dt>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<code class="code docutils literal notranslate"><span class="pre">ConfigDict</span></code>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.AppImportError.model_post_init">
+<span class="sig-name descname"><span class="pre">model_post_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#enlace.AppImportError.model_post_init" title="Link to this definition">¶</a></dt>
+<dd><p>This function is meant to behave like a BaseModel method to initialize private attributes.</p>
+<p>It takes context as an argument since that’s what pydantic-core passes when calling it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></span>) – The BaseModel instance.</p></li>
+<li><p><strong>context</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span>) – The context.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.AppImportError.public_summary">
+<span class="sig-name descname"><span class="pre">public_summary</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/base.html#AppImportError.public_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.AppImportError.public_summary" title="Link to this definition">¶</a></dt>
+<dd><p>What may be shown to anyone: the exception class and the stage.</p>
+<p>Never the message — it can carry server paths or configuration values
+(the production <code class="docutils literal notranslate"><span class="pre">PermissionError</span></code> named the dotenv’s path).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -875,6 +919,12 @@ is used; no app is imported).</p>
 <li><p>mode=static: mount StaticFiles at the route prefix</p></li>
 <li><p>frontend_only (mode=asgi): skip (no backend to mount)</p></li>
 </ul>
+<p>An asgi app that cannot be imported or loaded does not take the platform
+down: a 500 stub is mounted in its place and the failure is reported in
+the logs, <code class="docutils literal notranslate"><span class="pre">/_meta</span></code>, <code class="docutils literal notranslate"><span class="pre">/_apps</span></code> and <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span></code> (loud and local —
+see <a class="reference internal" href="enlace.degraded.html#module-enlace.degraded" title="enlace.degraded"><code class="xref py py-mod docutils literal notranslate"><span class="pre">enlace.degraded</span></code></a>). <code class="docutils literal notranslate"><span class="pre">config.app_load_failure</span> <span class="pre">=</span> <span class="pre">&quot;raise&quot;</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">fail_hard</span> <span class="pre">=</span> <span class="pre">true</span></code> in an app’s app.toml, refuses to boot instead.
+Platform configuration errors always refuse to boot.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -900,6 +950,10 @@ JSON files under <code class="docutils literal notranslate"><span class="pre">[a
 <dd><p>App factory for Uvicorn’s –factory flag.</p>
 <p>Loads platform config, discovers apps, checks conflicts,
 and builds the composed backend.</p>
+<p>Discovery <em>records</em> an app whose entry module fails to import rather than
+raising, so <code class="docutils literal notranslate"><span class="pre">build_backend</span></code> can mount a 500 stub for that app alone
+(see <a class="reference internal" href="enlace.degraded.html#module-enlace.degraded" title="enlace.degraded"><code class="xref py py-mod docutils literal notranslate"><span class="pre">enlace.degraded</span></code></a>). Platform configuration errors, including a
+broken <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> entry, still raise here.</p>
 <p>Plugins are loaded from the <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> env var: a comma-separated
 list of <code class="docutils literal notranslate"><span class="pre">module:attribute</span></code> pairs, e.g.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ENLACE_PLUGINS</span><span class="o">=</span><span class="n">enlace_auth</span><span class="p">:</span><span class="n">plugin</span>
@@ -1112,37 +1166,40 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
 <tr class="row-odd"><td><p><a class="reference internal" href="enlace.compose.html#module-enlace.compose" title="enlace.compose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compose</span></code></a></p></td>
 <td><p>ASGI app composition for enlace.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.diagnose.html#module-enlace.diagnose" title="enlace.diagnose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diagnose</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.degraded.html#module-enlace.degraded" title="enlace.degraded"><code class="xref py py-obj docutils literal notranslate"><span class="pre">degraded</span></code></a></p></td>
+<td><p>Loud-and-local app-load failures: a 500 stub for the one app that broke.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.diagnose.html#module-enlace.diagnose" title="enlace.diagnose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diagnose</span></code></a></p></td>
 <td><p>Diagnose app compatibility with enlace.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.discover.html#module-enlace.discover" title="enlace.discover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.discover.html#module-enlace.discover" title="enlace.discover"><code class="xref py py-obj docutils literal notranslate"><span class="pre">discover</span></code></a></p></td>
 <td><p>Convention-based app discovery for enlace.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.doctor.html#module-enlace.doctor" title="enlace.doctor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">doctor</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.doctor.html#module-enlace.doctor" title="enlace.doctor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">doctor</span></code></a></p></td>
 <td><p>Post-deploy smoke checks for a running enlace gateway.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.frontend.html#module-enlace.frontend" title="enlace.frontend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frontend</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.frontend.html#module-enlace.frontend" title="enlace.frontend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">frontend</span></code></a></p></td>
 <td><p>SPA-aware static file serving for enlace.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.gzip_selective.html#module-enlace.gzip_selective" title="enlace.gzip_selective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gzip_selective</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.gzip_selective.html#module-enlace.gzip_selective" title="enlace.gzip_selective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gzip_selective</span></code></a></p></td>
 <td><p>Compression that knows what it must not compress.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.html_rewrite.html#module-enlace.html_rewrite" title="enlace.html_rewrite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_rewrite</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.html_rewrite.html#module-enlace.html_rewrite" title="enlace.html_rewrite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">html_rewrite</span></code></a></p></td>
 <td><p>Rewrite HTML response bodies from pure-ASGI middleware.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.manifest.html#module-enlace.manifest" title="enlace.manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manifest</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.manifest.html#module-enlace.manifest" title="enlace.manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">manifest</span></code></a></p></td>
 <td><p>Deploy manifest: build-identity for diagnosing &quot;what is actually deployed&quot;.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.proxy.html#module-enlace.proxy" title="enlace.proxy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proxy</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.proxy.html#module-enlace.proxy" title="enlace.proxy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">proxy</span></code></a></p></td>
 <td><p>Lightweight ASGI reverse proxy for process and external backends.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.strategies.html#module-enlace.strategies" title="enlace.strategies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strategies</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.strategies.html#module-enlace.strategies" title="enlace.strategies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strategies</span></code></a></p></td>
 <td><p>Backend-strategy registry and built-in strategies for enlace.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="enlace.supervise.html#module-enlace.supervise" title="enlace.supervise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supervise</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="enlace.supervise.html#module-enlace.supervise" title="enlace.supervise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supervise</span></code></a></p></td>
 <td><p>Dev-mode process supervisor for enlace.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="enlace.util.html#module-enlace.util" title="enlace.util"><code class="xref py py-obj docutils literal notranslate"><span class="pre">util</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="enlace.util.html#module-enlace.util" title="enlace.util"><code class="xref py py-obj docutils literal notranslate"><span class="pre">util</span></code></a></p></td>
 <td><p>Internal helpers for enlace.</p></td>
 </tr>
 </tbody>
@@ -1213,8 +1270,11 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
 </ul>
 </li>
 <li><a class="reference internal" href="#enlace.AppImportError"><code class="docutils literal notranslate"><span class="pre">AppImportError</span></code></a><ul>
+<li><a class="reference internal" href="#enlace.AppImportError.exception"><code class="docutils literal notranslate"><span class="pre">AppImportError.exception</span></code></a></li>
 <li><a class="reference internal" href="#enlace.AppImportError.from_exception"><code class="docutils literal notranslate"><span class="pre">AppImportError.from_exception()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.AppImportError.model_config"><code class="docutils literal notranslate"><span class="pre">AppImportError.model_config</span></code></a></li>
+<li><a class="reference internal" href="#enlace.AppImportError.model_post_init"><code class="docutils literal notranslate"><span class="pre">AppImportError.model_post_init()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.AppImportError.public_summary"><code class="docutils literal notranslate"><span class="pre">AppImportError.public_summary()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#enlace.BuildConfig"><code class="docutils literal notranslate"><span class="pre">BuildConfig</span></code></a><ul>
@@ -1293,7 +1353,7 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=28305784"></script>
+</div><script src="../_static/documentation_options.js?v=817023e2"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

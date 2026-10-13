@@ -13,6 +13,7 @@
 - [enlace.base](enlace.base.html.md): Core data structures for enlace platform configuration.
 - [enlace.build](enlace.build.html.md): Run and validate declarative app builds from &#96;app.toml&#96; &#96;&#91;build&#93;&#96;.
 - [enlace.compose](enlace.compose.html.md): ASGI app composition for enlace.
+- [enlace.degraded](enlace.degraded.html.md): Loud-and-local app-load failures: a 500 stub for the one app that broke.
 - [enlace.diagnose](enlace.diagnose.html.md): Diagnose app compatibility with enlace.
 - [enlace.discover](enlace.discover.html.md): Convention-based app discovery for enlace.
 - [enlace.doctor](enlace.doctor.html.md): Post-deploy smoke checks for a running enlace gateway.

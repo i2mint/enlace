@@ -7,7 +7,7 @@
 <link rel="alternate" type="text/markdown" href="enlace.compose.html.md">
 <link rel="describedby" href="../llms.txt" type="text/markdown">
 <link rel="alternate" type="text/markdown" href="enlace.compose.html.md">
-<link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="enlace.diagnose" href="enlace.diagnose.html"><link rel="prev" title="enlace.build" href="enlace.build.html">
+<link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="enlace.degraded" href="enlace.degraded.html"><link rel="prev" title="enlace.build" href="enlace.build.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>enlace.compose - enlace</title>
@@ -211,6 +211,7 @@
 <li class="toctree-l3"><a class="reference internal" href="enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.build.html">enlace.build</a></li>
 <li class="toctree-l3 current current-page"><a class="current reference internal" href="#">enlace.compose</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.degraded.html">enlace.degraded</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.diagnose.html">enlace.diagnose</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.discover.html">enlace.discover</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.doctor.html">enlace.doctor</a></li>
@@ -326,6 +327,12 @@ target this specific class.</p>
 <li><p>mode=static: mount StaticFiles at the route prefix</p></li>
 <li><p>frontend_only (mode=asgi): skip (no backend to mount)</p></li>
 </ul>
+<p>An asgi app that cannot be imported or loaded does not take the platform
+down: a 500 stub is mounted in its place and the failure is reported in
+the logs, <code class="docutils literal notranslate"><span class="pre">/_meta</span></code>, <code class="docutils literal notranslate"><span class="pre">/_apps</span></code> and <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span></code> (loud and local —
+see <a class="reference internal" href="enlace.degraded.html#module-enlace.degraded" title="enlace.degraded"><code class="xref py py-mod docutils literal notranslate"><span class="pre">enlace.degraded</span></code></a>). <code class="docutils literal notranslate"><span class="pre">config.app_load_failure</span> <span class="pre">=</span> <span class="pre">&quot;raise&quot;</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">fail_hard</span> <span class="pre">=</span> <span class="pre">true</span></code> in an app’s app.toml, refuses to boot instead.
+Platform configuration errors always refuse to boot.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -366,6 +373,10 @@ app’s Tier-A record (<code class="docutils literal notranslate"><span class="p
 <dd><p>App factory for Uvicorn’s –factory flag.</p>
 <p>Loads platform config, discovers apps, checks conflicts,
 and builds the composed backend.</p>
+<p>Discovery <em>records</em> an app whose entry module fails to import rather than
+raising, so <code class="docutils literal notranslate"><span class="pre">build_backend</span></code> can mount a 500 stub for that app alone
+(see <a class="reference internal" href="enlace.degraded.html#module-enlace.degraded" title="enlace.degraded"><code class="xref py py-mod docutils literal notranslate"><span class="pre">enlace.degraded</span></code></a>). Platform configuration errors, including a
+broken <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> entry, still raise here.</p>
 <p>Plugins are loaded from the <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> env var: a comma-separated
 list of <code class="docutils literal notranslate"><span class="pre">module:attribute</span></code> pairs, e.g.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ENLACE_PLUGINS</span><span class="o">=</span><span class="n">enlace_auth</span><span class="p">:</span><span class="n">plugin</span>
@@ -387,12 +398,12 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="enlace.diagnose.html">
+          <a class="next-page" href="enlace.degraded.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">enlace.diagnose</div>
+                <div class="title">enlace.degraded</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -449,7 +460,7 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=28305784"></script>
+</div><script src="../_static/documentation_options.js?v=817023e2"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
