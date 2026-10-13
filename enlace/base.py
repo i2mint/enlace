@@ -61,9 +61,7 @@ ENLACE_TABLES = frozenset(
 )
 
 
-def unknown_toml_tables(
-    data: dict, *, foreign_tables: Iterable[str] = ()
-) -> list[str]:
+def unknown_toml_tables(data: dict, *, foreign_tables: Iterable[str] = ()) -> list[str]:
     """Top-level keys of a parsed platform.toml that nobody claims, as messages.
 
     A key is claimed when enlace reads it (:data:`ENLACE_TABLES`) or when the
@@ -535,8 +533,7 @@ class PlatformConfig(BaseModel):
         )
         for msg in config._unknown_tables:
             _logger.warning(
-                "%s: %s; if another tool owns it, list it in "
-                "[platform] foreign_tables",
+                "%s: %s; if another tool owns it, list it in [platform] foreign_tables",
                 path,
                 msg,
             )
