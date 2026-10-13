@@ -143,8 +143,9 @@ class BuildConfig(BaseModel):
 CONTAINED_LOAD_ERRORS: tuple[type[BaseException], ...] = (Exception, SystemExit)
 
 #: Where an app-load failure happened: while discovery imported the entry
-#: module to detect its type, or while ``build_backend`` loaded the sub-app.
-AppLoadStage = Literal["discover", "compose"]
+#: module to detect its type, while ``build_backend`` loaded the sub-app, or
+#: while the gateway ran the sub-app's lifespan startup.
+AppLoadStage = Literal["discover", "compose", "lifespan"]
 
 
 class AppImportError(BaseModel):

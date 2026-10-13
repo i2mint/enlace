@@ -118,6 +118,8 @@ def build_backend(
         if sub_app is not None:
             sub_apps.append((app_config.route_prefix, app_config.name, sub_app))
 
+    apps_by_name = {a.name: a for a in config.apps}
+
     @asynccontextmanager
     async def cascade_lifespan(app: FastAPI):
         """Forward startup/shutdown to mounted sub-apps.
@@ -125,10 +127,27 @@ def build_backend(
         Starlette does NOT propagate lifespan events to mounted sub-apps
         (issue #649, open since Sept 2019). This workaround iterates Mount
         routes and enters their lifespan contexts.
+
+        App mounts are ``_AppIdInjector`` wrappers, so the app whose lifespan
+        runs is the wrapped one (until #76 the wrapper hid it, and no app's
+        lifespan ever ran). An asgi app whose startup raises is swapped for a
+        500 stub and reported, like an import failure (enlace.degraded); the
+        other apps start. Its shutdown is not run: it never started.
         """
+        from enlace.degraded import enter_lifespan_or_stub
+
         async with contextlib.AsyncExitStack() as stack:
             for route in app.routes:
-                if isinstance(route, Mount) and hasattr(route.app, "router"):
+                if not isinstance(route, Mount):
+                    continue
+                if isinstance(route.app, _AppIdInjector):
+                    app_config = apps_by_name.get(route.app.app_id)
+                    if app_config is not None:
+                        await enter_lifespan_or_stub(
+                            stack, route.app, app_config, config
+                        )
+                        continue
+                if hasattr(route.app, "router"):
                     lifespan = getattr(route.app.router, "lifespan_context", None)
                     if lifespan is not None:
                         await stack.enter_async_context(lifespan(route.app))
@@ -426,16 +445,16 @@ def _add_meta_routes(
         manifest_dir=manifest_dir,
         enlace_version=enlace_version,
     )
-    # Apps serving a 500 stub (enlace.degraded). Fixed for the process's life:
-    # a stub is only ever mounted at compose time.
+    # Apps serving a 500 stub (enlace.degraded). Read per request, not
+    # captured here: an app whose lifespan startup fails is stubbed after
+    # these routes exist.
     from enlace.degraded import DEGRADED_APPS_KEY, DEGRADED_KEY, degraded_apps
-
-    degraded = degraded_apps(config)
 
     @parent.get("/_meta", include_in_schema=False)
     async def _platform_meta() -> dict:
         payload = platform_meta.payload()
         payload[RUNTIME_VERSION_KEY] = enlace_version
+        degraded = degraded_apps(config)
         if degraded:
             payload[DEGRADED_APPS_KEY] = degraded
         return payload
@@ -444,9 +463,13 @@ def _add_meta_routes(
         manifest = per_app_manifests.get(app_config.name)
         if manifest is None:
             continue
-        extra = {RUNTIME_VERSION_KEY: enlace_version}
-        if app_config.name in degraded:
-            extra[DEGRADED_KEY] = degraded[app_config.name]
+
+        def extra(app_config=app_config) -> dict:
+            out = {RUNTIME_VERSION_KEY: enlace_version}
+            if app_config.import_error is not None:
+                out[DEGRADED_KEY] = app_config.import_error.public_summary()
+            return out
+
         _register_app_meta(
             parent, app_config.route_prefix + "/_meta", manifest, extra=extra
         )
@@ -462,12 +485,13 @@ def _register_app_meta(
     path: str,
     manifest: DeployManifest,
     *,
-    extra: Optional[dict] = None,
+    extra: Optional[Callable[[], dict]] = None,
 ) -> None:
-    payload = {**manifest.model_dump(), **(extra or {})}
+    """Serve ``manifest`` at ``path``, plus whatever ``extra()`` says *now*."""
+    payload = manifest.model_dump()
 
     async def _meta() -> dict:
-        return payload
+        return {**payload, **(extra() if extra else {})}
 
     parent.add_api_route(path, _meta, methods=["GET"], include_in_schema=False)
 

@@ -18,15 +18,17 @@ the same ``AppConfig.import_error`` record:
   gateway's ``/_meta``, so a failure only the server's own identity hits (a
   file only it cannot read) is still reported.
 
-What is contained is narrow on purpose: an ``asgi``-mode app's import, or the
-detection and loading of its sub-app. Platform configuration errors (a bad
+What is contained is narrow on purpose: an ``asgi``-mode app's import, the
+detection and loading of its sub-app, and its lifespan startup
+(:func:`enter_lifespan_or_stub`). Platform configuration errors (a bad
 ``platform.toml``, an unknown ``landing_app``, route conflicts, a plugin that
-refuses its configuration) still refuse to boot, as do lifespan failures, an
-app with ``fail_hard = true`` in its app.toml, and every app when the platform
-sets ``app_load_failure = "raise"``. The decision and its reasons are recorded
+refuses its configuration) still refuse to boot, as do an app with
+``fail_hard = true`` in its app.toml, and every app when the platform sets
+``app_load_failure = "raise"``. The decision and its reasons are recorded
 in ``misc/docs/decisions/0001-loud-and-local-app-load-failures.md``.
 """
 
+import contextlib
 import logging
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -134,6 +136,41 @@ def load_or_stub(
 
     _log_stub(app)
     return UnavailableApp(app.name, app.import_error.exception_type)
+
+
+async def enter_lifespan_or_stub(
+    stack: "contextlib.AsyncExitStack",
+    mount: Any,
+    app: AppConfig,
+    platform: PlatformConfig,
+) -> None:
+    """Start ``app``'s lifespan on ``stack``; on a contained failure, stub it.
+
+    ``mount`` is the wrapper the app is mounted through (anything with an
+    ``app`` attribute holding the sub-app). On a startup failure of an asgi
+    app, its ``app`` is swapped for an :class:`UnavailableApp` — the route
+    stays, now answering 500 — and the failure is recorded (``stage =
+    "lifespan"``) and logged, so ``/_meta``, ``/_apps`` and the doctor report
+    it like any other stub. The failed lifespan's shutdown is not run (it never
+    started); the apps that did start are shut down as usual.
+
+    ``fail_hard``, ``app_load_failure = "raise"`` and non-asgi modes re-raise,
+    which aborts the gateway's startup.
+    """
+    target = mount.app
+    lifespan = getattr(getattr(target, "router", None), "lifespan_context", None)
+    if lifespan is None:
+        return
+    try:
+        await stack.enter_async_context(lifespan(target))
+    except CONTAINED_LOAD_ERRORS as exc:
+        if app.mode not in CONTAINED_MODES or _must_refuse_to_boot(app, platform):
+            raise
+        app.import_error = AppImportError.from_exception(
+            exc, app.entry_module_path, stage="lifespan"
+        )
+        _log_stub(app)
+        mount.app = UnavailableApp(app.name, app.import_error.exception_type)
 
 
 def degraded_apps(config: PlatformConfig) -> dict[str, dict[str, str]]:

@@ -119,9 +119,10 @@ stub for the broken asgi app only (`enlace/degraded.py`, ADR-0001 in
 `misc/docs/decisions/`). **A stub is not a degraded success**: every stub must
 show up in the ERROR log, `/_meta` `degraded_apps`, `/_apps` (`degraded`, not
 launchable) and `enlace doctor` — `test_no_stub_is_ever_silent` pins it. Keep
-the net narrow: only an asgi app's import/load is contained; platform config
-errors, route conflicts, non-asgi `make_asgi` errors and lifespan failures
-(#76) still refuse to boot, as does `fail_hard = true` / `app_load_failure =
+the net narrow: only an asgi app's import, load and lifespan startup are
+contained (a startup failure swaps that mount's target for the stub, #76);
+platform config errors, route conflicts and non-asgi `make_asgi`/lifespan
+errors still refuse to boot, as does `fail_hard = true` / `app_load_failure =
 "raise"`.
 
 ### Conflict detection: fail-fast, report ALL
@@ -133,7 +134,11 @@ need to see all conflicts at once to fix them in one pass.
 
 Mounted sub-apps never receive startup/shutdown. The `cascade_lifespan` context
 manager in compose.py works around this by iterating Mount routes and entering
-their lifespan contexts. Any new mounting logic must preserve this.
+their lifespan contexts. Any new mounting logic must preserve this — including
+any wrapper around a mounted app: app mounts are `_AppIdInjector`s, and for
+months the cascade looked for `router` on the wrapper and ran *no* app's
+lifespan (#76). `test_degraded_lifespan.py::test_mounted_apps_lifespans_run`
+pins it.
 
 ### CORS on parent only
 
