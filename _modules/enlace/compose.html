@@ -278,6 +278,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -465,13 +466,23 @@
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
     <span class="p">}</span>
     <span class="n">_stamp_updated_at</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">per_app_manifests</span><span class="p">)</span>
+    <span class="c1"># One reader per manifest file, shared by the /_meta routes and the</span>
+    <span class="c1"># deploy-identity middlewares below, so a manifest rewritten while the</span>
+    <span class="c1"># backend runs shows up everywhere on the next request (#49, #81).</span>
+    <span class="n">platform_meta</span> <span class="o">=</span> <span class="n">_MtimeCachedManifest</span><span class="p">(</span>
+        <span class="n">platform_manifest</span><span class="p">,</span> <span class="n">manifest_dir</span><span class="o">=</span><span class="n">manifest_dir</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span>
+    <span class="p">)</span>
+    <span class="n">app_metas</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">_MtimeCachedManifest</span><span class="p">(</span>
+            <span class="n">manifest</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">manifest_dir</span><span class="o">=</span><span class="n">manifest_dir</span><span class="p">,</span>
+            <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
     <span class="n">_add_meta_routes</span><span class="p">(</span>
-        <span class="n">parent</span><span class="p">,</span>
-        <span class="n">config</span><span class="p">,</span>
-        <span class="n">platform_manifest</span><span class="p">,</span>
-        <span class="n">per_app_manifests</span><span class="p">,</span>
-        <span class="n">manifest_dir</span><span class="o">=</span><span class="n">manifest_dir</span><span class="p">,</span>
-        <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">,</span>
+        <span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">platform_meta</span><span class="p">,</span> <span class="n">app_metas</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span>
     <span class="p">)</span>
 
     <span class="c1"># landing_app takes precedence over the default Python index. When set</span>
@@ -547,17 +558,17 @@
     <span class="c1"># Deploy-identity response headers. Build the prefix → manifest map from</span>
     <span class="c1"># both the API mount (route_prefix) and the frontend mount (/{name}/) so</span>
     <span class="c1"># static asset responses also carry the headers.</span>
-    <span class="n">headers_prefix_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">headers_prefix_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">DeployManifest</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="n">manifest</span> <span class="o">=</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">app_meta</span> <span class="o">=</span> <span class="n">app_metas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">app_meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
-        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span>
+        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">current</span>
+        <span class="n">headers_prefix_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">current</span>
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
         <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
         <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
-        <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_manifest</span><span class="p">,</span>
+        <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_meta</span><span class="o">.</span><span class="n">current</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Inject deploy &lt;meta&gt; tags into HTML responses so a browser can compare</span>
@@ -568,7 +579,7 @@
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
         <span class="n">DeployMetaTagMiddleware</span><span class="p">,</span>
         <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
-        <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_manifest</span><span class="p">,</span>
+        <span class="n">platform_manifest</span><span class="o">=</span><span class="n">platform_meta</span><span class="o">.</span><span class="n">current</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Give every app's HTML the platform's icon wiring (favicon, apple-touch-icon,</span>
@@ -618,8 +629,15 @@
         <span class="k">return</span> <span class="kc">None</span>
 
 
+<span class="c1">#: How recent a manifest's mtime must be for its stat key not to be trusted yet:</span>
+<span class="c1">#: comfortably more than a filesystem timestamp tick (a few ms on Linux).</span>
+<span class="n">_MTIME_TICK_NS</span> <span class="o">=</span> <span class="mi">50_000_000</span>
+<span class="c1">#: A stat key no real one equals (an absent file keys as ``None``): read next time.</span>
+<span class="n">_UNTRUSTED</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">_MtimeCachedManifest</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The platform manifest as it is on disk *now*, re-read when the file changes.</span>
+<span class="w">    </span><span class="sd">"""One manifest as it is on disk *now*, re-read when the file changes.</span>
 
 <span class="sd">    ``/_meta`` is a diagnostic endpoint, so a payload captured once at compose</span>
 <span class="sd">    time is the wrong answer. Anything that legitimately rewrites the manifest</span>
@@ -632,26 +650,29 @@
 <span class="sd">    and one ``stat`` per request on the cache-hit path. With no manifest</span>
 <span class="sd">    directory configured, or no file there, the compose-time manifest is served</span>
 <span class="sd">    unchanged — which is exactly the previous behaviour.</span>
+
+<span class="sd">    *name* selects the file (``{name}.json``): the platform manifest by default,</span>
+<span class="sd">    or one app's. Each app gets its own reader, shared by its ``/_meta`` routes</span>
+<span class="sd">    and the deploy-identity middlewares, so the endpoints and the headers can</span>
+<span class="sd">    never disagree about the same app (#81).</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">PLATFORM_MANIFEST_NAME</span><span class="p">,</span>
         <span class="n">manifest_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">enlace_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span> <span class="o">=</span> <span class="n">manifest</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_dir</span> <span class="o">=</span> <span class="n">manifest_dir</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_enlace_version</span> <span class="o">=</span> <span class="n">enlace_version</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="kc">None</span>
-            <span class="k">if</span> <span class="n">manifest_dir</span> <span class="ow">is</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="n">manifest_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PLATFORM_MANIFEST_NAME</span><span class="si">}</span><span class="s2">.json"</span>
-        <span class="p">)</span>
-        <span class="c1"># None until the first request, so the first read refreshes rather than</span>
-        <span class="c1"># trusting a snapshot taken before the routes even existed.</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stat_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">manifest_dir</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">manifest_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span>
+        <span class="c1"># Untrusted until the first request, so the first read refreshes rather</span>
+        <span class="c1"># than trusting a snapshot taken before the routes even existed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stat_key</span><span class="p">:</span> <span class="nb">object</span> <span class="o">=</span> <span class="n">_UNTRUSTED</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">payload</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return the manifest as a dict, plus the ``manifest_mtime`` it reflects.</span>
@@ -660,18 +681,35 @@
 <span class="sd">        file to date the answer by — so a reader is never left guessing how old</span>
 <span class="sd">        the payload is.</span>
 <span class="sd">        """</span>
-        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stat</span><span class="p">()</span>
-        <span class="n">stat_key</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">st</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mtime_ns</span><span class="p">,</span> <span class="n">st</span><span class="o">.</span><span class="n">st_size</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">stat_key</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stat_key</span><span class="p">:</span>
-            <span class="c1"># Never raises on a bad file: it degrades to a stub whose</span>
-            <span class="c1"># ``extra.manifest_error`` says why (see ``load_manifest``).</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span> <span class="o">=</span> <span class="n">load_platform_manifest</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_dir</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_enlace_version</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_stat_key</span> <span class="o">=</span> <span class="n">stat_key</span>
-        <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+        <span class="n">manifest</span><span class="p">,</span> <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh</span><span class="p">()</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
         <span class="n">payload</span><span class="p">[</span><span class="s2">"manifest_mtime"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">st</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">_iso_utc</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">payload</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">current</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeployManifest</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return the manifest as it is on disk now (for the response headers)."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DeployManifest</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">stat_result</span><span class="p">]]:</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stat</span><span class="p">()</span>
+        <span class="n">stat_key</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">st</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_ino</span><span class="p">,</span> <span class="n">st</span><span class="o">.</span><span class="n">st_mtime_ns</span><span class="p">,</span> <span class="n">st</span><span class="o">.</span><span class="n">st_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stat_key</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stat_key</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Degrades to a stub whose ``extra.manifest_error`` says why on</span>
+                <span class="c1"># any file it can parse as bad (see ``load_manifest``).</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest_dir</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_enlace_version</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 — e.g. RecursionError on deep JSON</span>
+                <span class="c1"># The deploy-identity middlewares call this on EVERY request under</span>
+                <span class="c1"># the app's prefix, so it must never raise: keep the last manifest.</span>
+                <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Unusable manifest </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># Filesystem mtimes are coarse (a kernel tick), so a second same-size</span>
+            <span class="c1"># write within the tick of the first leaves the key unchanged. While</span>
+            <span class="c1"># the file is that young, re-read it next time too ("racy git").</span>
+            <span class="n">young</span> <span class="o">=</span> <span class="n">st</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">time_ns</span><span class="p">()</span> <span class="o">-</span> <span class="n">st</span><span class="o">.</span><span class="n">st_mtime_ns</span> <span class="o">&lt;</span> <span class="n">_MTIME_TICK_NS</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stat_key</span> <span class="o">=</span> <span class="n">_UNTRUSTED</span> <span class="k">if</span> <span class="n">young</span> <span class="k">else</span> <span class="n">stat_key</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span><span class="p">,</span> <span class="n">st</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stat</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">stat_result</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""``stat`` the manifest file, or ``None`` if there is nothing to stat."""</span>
@@ -695,10 +733,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_meta_routes</span><span class="p">(</span>
     <span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span>
-    <span class="n">platform_manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">,</span>
-    <span class="n">per_app_manifests</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeployManifest</span><span class="p">],</span>
+    <span class="n">platform_meta</span><span class="p">:</span> <span class="s2">"_MtimeCachedManifest"</span><span class="p">,</span>
+    <span class="n">app_metas</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">"_MtimeCachedManifest"</span><span class="p">],</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">manifest_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">enlace_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.</span>
@@ -708,16 +745,10 @@
 <span class="sd">    (``/{name}/_meta``). Browser JS commonly fetches the latter with a</span>
 <span class="sd">    relative URL from the SPA root.</span>
 
-<span class="sd">    ``manifest_dir`` and ``enlace_version`` let the platform ``/_meta`` re-read</span>
-<span class="sd">    the manifest when it changes on disk instead of serving the compose-time</span>
-<span class="sd">    snapshot (see ``_MtimeCachedManifest``). Omitting them serves that snapshot,</span>
-<span class="sd">    as before.</span>
+<span class="sd">    Every endpoint reads through a ``_MtimeCachedManifest``, so it reflects the</span>
+<span class="sd">    manifest on disk now rather than a compose-time snapshot (#49 for the</span>
+<span class="sd">    platform, #81 for the apps).</span>
 <span class="sd">    """</span>
-    <span class="n">platform_meta</span> <span class="o">=</span> <span class="n">_MtimeCachedManifest</span><span class="p">(</span>
-        <span class="n">platform_manifest</span><span class="p">,</span>
-        <span class="n">manifest_dir</span><span class="o">=</span><span class="n">manifest_dir</span><span class="p">,</span>
-        <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="c1"># Apps serving a 500 stub (enlace.degraded). Read per request, not</span>
     <span class="c1"># captured here: an app whose lifespan startup fails is stubbed after</span>
     <span class="c1"># these routes exist.</span>
@@ -733,7 +764,7 @@
         <span class="k">return</span> <span class="n">payload</span>
 
     <span class="k">for</span> <span class="n">app_config</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="n">manifest</span> <span class="o">=</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="n">app_metas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
 
@@ -756,15 +787,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_register_app_meta</span><span class="p">(</span>
     <span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span>
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">,</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="s2">"_MtimeCachedManifest"</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="nb">dict</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Serve ``manifest`` at ``path``, plus whatever ``extra()`` says *now*."""</span>
-    <span class="n">payload</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">"""Serve ``manifest`` as it is *now* at ``path``, plus what ``extra()`` says."""</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_meta</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">payload</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">extra</span><span class="p">()</span> <span class="k">if</span> <span class="n">extra</span> <span class="k">else</span> <span class="p">{})}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="n">manifest</span><span class="o">.</span><span class="n">payload</span><span class="p">(),</span> <span class="o">**</span><span class="p">(</span><span class="n">extra</span><span class="p">()</span> <span class="k">if</span> <span class="n">extra</span> <span class="k">else</span> <span class="p">{})}</span>
 
     <span class="n">parent</span><span class="o">.</span><span class="n">add_api_route</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">_meta</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"GET"</span><span class="p">],</span> <span class="n">include_in_schema</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
@@ -1377,7 +1407,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=e6adf981"></script>
+</div><script src="../../_static/documentation_options.js?v=0e8eb831"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
