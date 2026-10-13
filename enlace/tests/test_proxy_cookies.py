@@ -310,3 +310,17 @@ def test_upstream_redirects_pass_through_unfiltered():
     assert r.status_code == 302
     assert r.headers["location"] == "/auth/logout"
     assert r.headers["refresh"] == "0; url=/auth/logout"
+
+def test_a_repeated_request_header_is_joined_not_overwritten():
+    """RFC 9110 §5.3: two fields with one name are one comma-joined field.
+
+    Keeping only the last would let a client smuggle a second value past
+    whatever inspected the first (#60 review).
+    """
+    seen: dict = {}
+    proxy = make_proxy_app(upstream="http://127.0.0.1:9", strip_prefix="/typola")
+    _client(proxy, seen).get(
+        "/typola/x",
+        headers=[("authorization", "Bearer one"), ("authorization", "Bearer two")],
+    )
+    assert seen["authorization"] == "Bearer one, Bearer two"
