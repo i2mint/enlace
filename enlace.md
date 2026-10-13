@@ -1,4 +1,4 @@
-> built 2026-10-13 14:37 UTC from 57ad0a9 (main) · enlace 0.1.51. Details: build_info.json
+> built 2026-10-13 21:33 UTC from 2f3ab1e (main) · enlace 0.1.52. Details: build_info.json
 
 # index.html.md
 
@@ -3905,18 +3905,16 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 14:37 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/57ad0a9212cc414ca6f178aea065b2e43a908aad"><code>57ad0a9</code></a> on branch <code>main</code>, for **enlace 0.1.51** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 21:33 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50"><code>2f3ab1e</code></a> on branch <code>main</code>, for **enlace 0.1.52** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.1.51) is behind the latest release on PyPI (0.1.52): `pip install enlace` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/57ad0a9212cc414ca6f178aea065b2e43a908aad"><code>57ad0a9212cc414ca6f178aea065b2e43a908aad</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50"><code>2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3927,15 +3925,15 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38414699360">38414699360</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38471300930">38471300930</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>57ad0a9212cc414ca6f178aea065b2e43a908aad</code> (in the history of the built commit) |
+| Event commit | <code>2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.15  |
+| epythet  | 0.2.17  |
 | Sphinx   | 9.1.0   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
@@ -3954,14 +3952,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.52/">0.1.52</a>, newer than the documented version (0.1.51).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.52/">0.1.52</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 57ad0a9212cc414ca6f178aea065b2e43a908aad
-pip install "epythet==0.2.15"
+git checkout 2f3ab1e6a52ee26a30c0b31bf58b5d35b3736c50
+pip install "epythet==0.2.17"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

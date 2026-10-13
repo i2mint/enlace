@@ -281,7 +281,9 @@
 <span class="sd">boundary.</span>
 <span class="sd">"""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span><span class="p">,</span> <span class="n">unquote</span>
 
 <span class="c1">#: Cookies the platform itself sets on its own origin -- enlace_auth's defaults</span>
 <span class="c1">#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, the</span>
@@ -416,6 +418,77 @@
     <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">keep</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
 
+<span class="c1">#: A path as it may travel on the wire: RFC 3986 ``pchar`` and ``/``, with every</span>
+<span class="c1">#: ``%`` starting a two-digit escape. Anything else is not forwarded verbatim.</span>
+<span class="n">_WIRE_PATH</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?:[A-Za-z0-9\-._~!$&amp;'()*+,;=:@/]|%[0-9A-Fa-f]</span><span class="si">{2}</span><span class="s2">)*"</span><span class="p">)</span>
+
+<span class="c1">#: Characters :func:`quote` leaves alone when re-encoding a decoded path:</span>
+<span class="c1">#: ``pchar`` minus ``%``, so ``%``, ``?``, ``#`` and spaces are escaped.</span>
+<span class="n">_PATH_SAFE</span> <span class="o">=</span> <span class="s2">"/!$&amp;'()*+,;=:@-._~"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_upstream_path</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">strip_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The path to forward, percent-encoded as the client sent it (enlace#74).</span>
+
+<span class="sd">    ASGI servers hand ``scope["path"]`` over *decoded*, so building the upstream</span>
+<span class="sd">    URL from it changes the request: ``a%2Fb`` arrives as ``a/b``, ``a%3Fb``</span>
+<span class="sd">    moves ``b`` into the query, and ``100%25`` becomes a bare ``%``. The bytes</span>
+<span class="sd">    the client sent are in ``scope["raw_path"]``, so the remainder after the</span>
+<span class="sd">    mount prefix is taken from there. That happens only when the raw path</span>
+<span class="sd">    provably *is* the decoded one: its leading segments decode to exactly</span>
+<span class="sd">    ``strip_prefix``, the rest decodes to exactly the decoded remainder, and it</span>
+<span class="sd">    is well-formed on the wire. Otherwise the decoded remainder is re-quoted,</span>
+<span class="sd">    which keeps ``%``, ``?`` and ``#`` inside the path.</span>
+
+<span class="sd">    A remainder with a ``.`` or ``..`` segment (decoded, so ``%2E%2E`` counts)</span>
+<span class="sd">    is also re-quoted. httpx then resolves the dot segments, as it always</span>
+<span class="sd">    did, rather than handing an escaped ``..`` to the upstream to decode.</span>
+
+<span class="sd">    The result always starts with ``/``. Concatenated onto the upstream's base</span>
+<span class="sd">    URL it can only name a path on that host, never a different authority</span>
+<span class="sd">    (``/api/x@evil`` must not become ``http://127.0.0.1:9100@evil``).</span>
+
+<span class="sd">    &gt;&gt;&gt; scope = {"path": "/api/x/a/b", "raw_path": b"/api/x/a%2Fb"}</span>
+<span class="sd">    &gt;&gt;&gt; _upstream_path(scope, "/api/x")</span>
+<span class="sd">    '/a%2Fb'</span>
+<span class="sd">    &gt;&gt;&gt; _upstream_path({"path": "/api/x/100%"}, "/api/x")</span>
+<span class="sd">    '/100%25'</span>
+<span class="sd">    &gt;&gt;&gt; dots = {"path": "/api/x/../y", "raw_path": b"/api/x/%2E%2E/y"}</span>
+<span class="sd">    &gt;&gt;&gt; _upstream_path(dots, "/api/x")</span>
+<span class="sd">    '/../y'</span>
+<span class="sd">    """</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"path"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"/"</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">strip_prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">and</span> <span class="p">(</span><span class="n">path</span> <span class="o">==</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">"/"</span><span class="p">)):</span>
+        <span class="n">remainder</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># not under the prefix segment-wise (no Mount routes this): forward as is</span>
+        <span class="n">remainder</span><span class="p">,</span> <span class="n">prefix</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="s2">""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">remainder</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+        <span class="n">remainder</span> <span class="o">=</span> <span class="s2">"/"</span> <span class="o">+</span> <span class="n">remainder</span>
+
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">seg</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">)</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">remainder</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">quote</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="n">_PATH_SAFE</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span>
+
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"raw_path"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="p">(</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">)):</span>
+        <span class="n">raw_s</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">))</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">raw_s</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">[</span><span class="n">unquote</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">[:</span><span class="n">n</span><span class="p">]]</span> <span class="o">==</span> <span class="p">(</span><span class="n">prefix</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="p">[</span><span class="s2">""</span><span class="p">]):</span>
+            <span class="n">raw_rest</span> <span class="o">=</span> <span class="s2">"/"</span> <span class="o">+</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="n">n</span><span class="p">:])</span>
+            <span class="c1"># Strict: an escape that is not UTF-8 (%FF, overlong %C0%AE) is</span>
+            <span class="c1"># not forwarded as is. The server decoded it to U+FFFD, so the dot</span>
+            <span class="c1"># check above never saw it, and a lenient upstream might read an</span>
+            <span class="c1"># overlong form as "." (review of #82).</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">decoded</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span><span class="n">raw_rest</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"strict"</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                <span class="n">decoded</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">_WIRE_PATH</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">raw_rest</span><span class="p">)</span> <span class="ow">and</span> <span class="n">decoded</span> <span class="o">==</span> <span class="n">remainder</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">raw_rest</span>
+    <span class="k">return</span> <span class="n">quote</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="n">_PATH_SAFE</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">)</span>
+
+
 <span class="c1"># Default per-request timeout (seconds) for proxied requests. Bounds a hung</span>
 <span class="c1"># upstream so a stuck app can't tie up the gateway indefinitely.</span>
 <span class="n">_DEFAULT_TIMEOUT_S</span> <span class="o">=</span> <span class="mf">60.0</span>
@@ -537,10 +610,8 @@
 
         <span class="n">client</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_client</span><span class="p">()</span>
 
-        <span class="c1"># Build the upstream path</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"path"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span><span class="p">):</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span><span class="p">)</span> <span class="p">:]</span> <span class="ow">or</span> <span class="s2">"/"</span>
+        <span class="c1"># The upstream path, as the client encoded it (see _upstream_path).</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">_upstream_path</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strip_prefix</span><span class="p">)</span>
 
         <span class="n">query</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"query_string"</span><span class="p">,</span> <span class="sa">b</span><span class="s2">""</span><span class="p">)</span>
         <span class="c1"># httpx.Request(url=...) does not apply AsyncClient.base_url (only the</span>
@@ -683,7 +754,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=6f5c170c"></script>
+</div><script src="../../_static/documentation_options.js?v=4fed8de7"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
