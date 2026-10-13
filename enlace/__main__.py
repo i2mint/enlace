@@ -25,9 +25,10 @@ from enlace.serve import serve
 
 # The diagnostic verbs (show-config, check, list-apps, app-meta, doctor) report
 # ON apps; they must survive one that cannot be imported in order to say so.
-# `serve` and `build_backend` keep the default "raise" — a gateway must not boot
-# pretending a broken app is fine. `build` keeps it too: it is a deploy step,
-# not a report.
+# The gateway (`serve`, `create_app`) records too, then mounts a 500 stub for
+# the broken app and reports it loudly (enlace.degraded) — loud and local, not
+# loud and global. `build` keeps the default "raise": it is a deploy step, not
+# a report.
 _DIAGNOSTIC_IMPORT_POLICY: ImportErrorPolicy = "record"
 
 

@@ -18,6 +18,12 @@ Design:
   a traceback — see ``_check_app_imports`` and ``discover_apps``'
   ``on_import_error``. A health tool that dies on the failure it exists to
   detect reports nothing about the thirty apps that are fine.
+- An app the *running* gateway could not load is serving a 500 stub
+  (:mod:`enlace.degraded`); ``_check_live_degraded`` reads the live
+  ``/_meta`` and FAILs once per stubbed app. That is the gateway's own
+  answer, so it also catches a failure only the server's identity hits
+  (a file the service user cannot read) that the doctor's local discovery
+  would not reproduce.
 - Plugins can supply extra static or HTTP probes via ``extra_static_checks``
   and ``extra_http_checks`` on ``run_doctor``. Those are also discovered
   automatically from the plugins the platform is configured to load — see
@@ -142,6 +148,7 @@ def _check_app_imports(config: PlatformConfig) -> list[Check]:
                     "exception_type": err.exception_type,
                     "message": err.message,
                     "entry_module_path": str(err.entry_module_path or ""),
+                    "stage": err.stage,
                 },
             )
         )
@@ -209,6 +216,49 @@ def _http_get(
         return None, {}, None, f"connection failed: {e.reason}"
     except Exception as e:  # pragma: no cover - defensive
         return None, {}, None, f"unexpected error: {e}"
+
+
+def _check_live_degraded(base_url: str, timeout: float) -> list[Check]:
+    """FAIL once per app the live gateway is serving a 500 stub for.
+
+    Reads ``degraded_apps`` from the platform ``/_meta`` (see
+    :mod:`enlace.degraded`). One PASS when the gateway reports none; a WARN
+    when ``/_meta`` cannot be read as JSON, since then nothing can be said
+    either way (the per-app HTTP probes still FAIL on a stub's 500).
+    """
+    from enlace.degraded import DEGRADED_APPS_KEY
+
+    url = f"{base_url.rstrip('/')}/_meta"
+    status, _headers, body, err = _http_get(url, timeout=timeout)
+    name = "meta:degraded_apps"
+    if err:
+        return [Check(name, WARN, f"could not read /_meta: {err}")]
+    try:
+        payload = json.loads(body or b"")
+    except ValueError:
+        payload = None
+    if status != 200 or not isinstance(payload, dict):
+        return [Check(name, WARN, f"/_meta status={status}, not a JSON object")]
+    degraded = payload.get(DEGRADED_APPS_KEY) or {}
+    if not isinstance(degraded, dict):
+        return [Check(name, WARN, f"/_meta {DEGRADED_APPS_KEY} is not a mapping")]
+    if not degraded:
+        return [Check(name, PASS, "no app is serving a load-failure stub")]
+    out = []
+    for app_name, info in sorted(degraded.items()):
+        info = info if isinstance(info, dict) else {}
+        exc_type = info.get("exception_type", "?")
+        stage = info.get("stage", "?")
+        out.append(
+            Check(
+                f"degraded:{app_name}",
+                FAIL,
+                f"live gateway serves a 500 stub: failed to load at {stage} "
+                f"({exc_type}); the server log has the traceback",
+                extra={"app": app_name, "exception_type": exc_type, "stage": stage},
+            )
+        )
+    return out
 
 
 def _check_frontend_mount(base_url: str, app_name: str, timeout: float) -> Check:
@@ -355,6 +405,7 @@ def run_doctor(
 
     # HTTP probes — only when a base URL is provided.
     if base_url:
+        report.checks.extend(_check_live_degraded(base_url, timeout))
         for fn in extra_http_checks:
             report.checks.extend(fn(config, base_url, timeout))
 

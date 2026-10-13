@@ -12,6 +12,7 @@ but the diagnostic verbs need to survive one in order to report it. See
 :func:`discover_apps`.
 """
 
+import contextlib
 import importlib
 import inspect
 import shlex
@@ -19,7 +20,13 @@ import sys
 from pathlib import Path
 from typing import Literal, Optional, Protocol
 
-from enlace.base import AppConfig, AppImportError, ConventionsConfig, PlatformConfig
+from enlace.base import (
+    CONTAINED_LOAD_ERRORS,
+    AppConfig,
+    AppImportError,
+    ConventionsConfig,
+    PlatformConfig,
+)
 from enlace.util import derive_route_prefix, is_skippable
 
 if sys.version_info >= (3, 11):
@@ -114,7 +121,14 @@ class ConventionDiscoverer:
             return self._finalize_metadata(config, app_dir)
 
         # -- Standard asgi-mode discovery (current behavior) --
-        entry_path = self._find_entry_point(app_dir)
+        # app.toml's `entry_point` / `app_attr` (if set) are what will be
+        # mounted, so they are what detection must import and inspect —
+        # detecting on the convention file instead can stub (or pass) an app
+        # for the wrong file's sake.
+        entry_path = self._find_entry_point(
+            app_dir, override=toml_data.get("entry_point") if toml_data else None
+        )
+        app_attr = (toml_data or {}).get("app_attr") or self.conventions.app_attr
         # app.toml's `frontend_dir` (if set) overrides the convention.
         # Without this, an app whose build outputs to e.g. ./dist would be
         # silently skipped — discovery would conclude "no frontend" and the
@@ -131,7 +145,7 @@ class ConventionDiscoverer:
         import_error: Optional[AppImportError] = None
         if entry_path is not None:
             app_type, type_source, import_error = self._detect_app_type_or_record(
-                entry_path, apps_dir
+                entry_path, apps_dir, app_attr
             )
             provenance["app_type"] = type_source
             provenance["entry_module_path"] = (
@@ -224,8 +238,19 @@ class ConventionDiscoverer:
         fields["provenance"] = provenance
         return AppConfig(**fields)
 
-    def _find_entry_point(self, app_dir: Path) -> Optional[Path]:
-        """Find the first matching entry point in the app directory."""
+    def _find_entry_point(
+        self, app_dir: Path, *, override: Optional[str] = None
+    ) -> Optional[Path]:
+        """Find the app's entry point: app.toml's ``entry_point``, else convention.
+
+        A declared ``entry_point`` that is not a file falls back to the
+        convention, as before; the override then still points the mount at the
+        missing file, which fails to load and is stubbed and reported.
+        """
+        if override:
+            candidate = app_dir / override
+            if candidate.is_file():
+                return candidate
         for name in self.conventions.entry_points:
             candidate = app_dir / name
             if candidate.is_file():
@@ -256,6 +281,8 @@ class ConventionDiscoverer:
             Tuple of (app_type, provenance_source).
 
         Raises:
+            AttributeError: If the module has neither a callable ``app_attr``
+                nor a public function — there is nothing to mount.
             ImportError: If the module exists but fails to import (e.g. syntax
                 error, missing dependency). This is intentionally NOT caught
                 *here* — silently swallowing import errors is an anti-pattern.
@@ -279,28 +306,35 @@ class ConventionDiscoverer:
         if public_functions:
             return "functions", "detected: no app attr, has public functions"
 
-        return "asgi_app", f"detected: has '{app_attr}' attribute (fallback)"
+        # Neither an ASGI app nor a public function: nothing can be mounted.
+        # This used to be called an asgi_app "by fallback" and then failed at
+        # compose time — after `enlace check` and the static doctor had passed
+        # it. Detection is where it is known, so it fails here, as a load error.
+        raise AttributeError(
+            f"{entry_path.name} has no callable {app_attr!r} attribute and no "
+            "public functions, so there is nothing to mount"
+        )
 
     def _detect_app_type_or_record(
-        self, entry_path: Path, apps_dir: Path
+        self, entry_path: Path, apps_dir: Path, app_attr: Optional[str] = None
     ) -> tuple[str, str, Optional[AppImportError]]:
         """``_detect_app_type`` under the configured ``on_import_error`` policy.
 
         Returns ``(app_type, provenance_source, import_error)``, the last being
         ``None`` unless the import failed and the policy is ``"record"``.
 
-        The net is ``Exception``, not ``ImportError``: importing a module runs
-        arbitrary module-level code, so it can raise anything at all — the one
-        failure observed in production was a ``PermissionError`` raised by a
-        transitive dependency reading a dotenv file at import time, which a
-        narrower net would have let through unchanged. ``KeyboardInterrupt``
-        and ``SystemExit`` are not ``Exception`` subclasses and still escape.
+        The net is :data:`enlace.base.CONTAINED_LOAD_ERRORS`, not
+        ``ImportError``: importing a module runs arbitrary module-level code, so
+        it can raise anything at all — the one failure observed in production
+        was a ``PermissionError`` raised by a transitive dependency reading a
+        dotenv file at import time, which a narrower net would have let through
+        unchanged. ``KeyboardInterrupt`` still escapes.
         """
         try:
             app_type, type_source = self._detect_app_type(
-                entry_path, apps_dir, self.conventions.app_attr
+                entry_path, apps_dir, app_attr or self.conventions.app_attr
             )
-        except Exception as exc:  # noqa: BLE001 - see the policy note above
+        except CONTAINED_LOAD_ERRORS as exc:  # see the policy note above
             if self.on_import_error == "raise":
                 raise
             # Nothing was detected, so fall back to the same assumption
@@ -382,6 +416,8 @@ _CORE_TOML_FIELD_MAP = {
     "keywords": "keywords",
     "icon": "icon",
     "launchable": "launchable",
+    # Refuse to boot rather than mount a 500 stub (see AppConfig.fail_hard).
+    "fail_hard": "fail_hard",
 }
 
 # Core path keys (resolved relative to the app directory). Strategy-specific
@@ -460,6 +496,41 @@ def _parse_build_config(raw: dict, app_dir: Path):
     return BuildConfig(**data)
 
 
+@contextlib.contextmanager
+def forget_partial_imports(module_name: str):
+    """On a failed import of ``module_name``, unload what it left behind.
+
+    Python drops the failing module itself from ``sys.modules`` but keeps every
+    module that imported successfully before the failure — an app's
+    ``helpers.py`` loaded by a ``server.py`` that then raised stays cached,
+    half-initialised by intent if not in fact. Only modules that are *new* since
+    the attempt began *and* live inside the entry module's own package are
+    dropped: a third-party library the app pulled in may already be referenced
+    elsewhere (and a C extension cannot be loaded twice), so it is left alone.
+
+    Side effects outside ``sys.modules`` (environment variables, monkeypatches,
+    registries) cannot be undone from here. The ADR on loud-and-local failures
+    says so, and points at ``mode = "process"`` for real isolation.
+    """
+    package = module_name.rpartition(".")[0]
+    before = set(sys.modules)
+    try:
+        yield
+    except BaseException:
+        if package:
+            prefix = package + "."
+            for name in set(sys.modules) - before:
+                if name.startswith(prefix):
+                    sys.modules.pop(name, None)
+                    # The import system also bound it on its parent package;
+                    # left there, `from pkg import mod` would get the stale one.
+                    parent, _, child = name.rpartition(".")
+                    if parent in sys.modules:
+                        with contextlib.suppress(AttributeError):
+                            delattr(sys.modules[parent], child)
+        raise
+
+
 def _import_module_from_path(entry_path: Path, apps_dir: Path) -> object:
     """Import a module from a filesystem path.
 
@@ -484,7 +555,8 @@ def _import_module_from_path(entry_path: Path, apps_dir: Path) -> object:
         if module_name in sys.modules:
             del sys.modules[module_name]
 
-        return importlib.import_module(module_name)
+        with forget_partial_imports(module_name):
+            return importlib.import_module(module_name)
     finally:
         if added_to_path:
             try:

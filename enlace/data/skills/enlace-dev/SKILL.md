@@ -60,6 +60,7 @@ enlace/
 ├── util.py        # Pure helpers: derive_display_name, derive_route_prefix, is_skippable
 ├── discover.py    # ConventionDiscoverer: walks apps/, detects types, loads TOML
 ├── compose.py     # build_backend(): mounts sub-apps, cascade_lifespan
+├── degraded.py    # load_or_stub(): 500 stub for an asgi app that fails to load
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
 ├── serve.py       # Uvicorn subprocess orchestration, signal forwarding
 ├── __main__.py    # CLI: one dispatch list of verb functions (cw)
@@ -108,11 +109,20 @@ This prevents the Celery autodiscover anti-pattern.
 Reporting is not swallowing. `discover_apps(..., on_import_error="record")`
 records the failure on `AppConfig.import_error` and carries on, so the
 diagnostic verbs can name the broken app instead of dying on it — `enlace
-doctor` still exits nonzero, with a `FAIL` check. `serve` keeps the default
-`"raise"`. Never make `"record"` the default: a gateway that boots pretending a
-broken app is fine IS the anti-pattern. Note the net is `Exception`, not
-`ImportError` — a module runs arbitrary code at import (the failure seen in
-production was a `PermissionError`).
+doctor` still exits nonzero, with a `FAIL` check. The library default stays
+`"raise"`. Note the net is `Exception` + `SystemExit`, not `ImportError` — a
+module runs arbitrary code at import (the failure seen in production was a
+`PermissionError`).
+
+The gateway (`create_app`, `serve`) records, and `build_backend` mounts a 500
+stub for the broken asgi app only (`enlace/degraded.py`, ADR-0001 in
+`misc/docs/decisions/`). **A stub is not a degraded success**: every stub must
+show up in the ERROR log, `/_meta` `degraded_apps`, `/_apps` (`degraded`, not
+launchable) and `enlace doctor` — `test_no_stub_is_ever_silent` pins it. Keep
+the net narrow: only an asgi app's import/load is contained; platform config
+errors, route conflicts, non-asgi `make_asgi` errors and lifespan failures
+(#76) still refuse to boot, as does `fail_hard = true` / `app_load_failure =
+"raise"`.
 
 ### Conflict detection: fail-fast, report ALL
 

@@ -221,12 +221,32 @@ discover_apps(config)  # raise (default)
 discover_apps(config, on_import_error="record")  # record and carry on
 ```
 
-`serve` keeps the default: a gateway must not boot pretending a broken app is
-fine. The diagnostic verbs (`doctor`, `check`, `list-apps`, `show-config`,
-`app-meta`) record instead, so one broken app no longer hides the health of
-every other one — `enlace doctor --json` still exits nonzero, but now with a
-parseable `FAIL` naming the app and its exception class, on
-`AppConfig.import_error`.
+The diagnostic verbs (`doctor`, `check`, `list-apps`, `show-config`,
+`app-meta`) record, so one broken app no longer hides the health of every other
+one — `enlace doctor --json` still exits nonzero, but now with a parseable
+`FAIL` naming the app and its exception class, on `AppConfig.import_error`.
+
+The gateway (`create_app`, which gunicorn loads, and `enlace serve`) records
+too, and is **loud and local**: the broken app's route prefix gets a 500 stub
+naming the app and the exception class, and every other app serves. A stub is
+never silent: one ERROR log line with the traceback, `degraded_apps` in
+`/_meta`, `degraded: true` (and not launchable) in `/_apps`, and a `FAIL` in
+`enlace doctor` read from the live gateway's `/_meta`. Platform configuration
+errors still refuse to boot. To refuse to boot on an app's failure too:
+
+```toml
+# app.toml — this app would rather be absent than serve a 500
+fail_hard = true
+```
+
+```toml
+# platform.toml — every app, the pre-0.1.50 behaviour
+[platform]
+app_load_failure = "raise"
+```
+
+The decision and its limits are in
+[ADR-0001](misc/docs/decisions/0001-loud-and-local-app-load-failures.md).
 
 ### Configuration
 

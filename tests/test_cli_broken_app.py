@@ -128,16 +128,30 @@ def test_show_config_flags_the_broken_app(apps_with_a_broken_one):
     assert "ModuleNotFoundError" in result.stdout
 
 
-def test_serve_still_refuses_to_boot(apps_with_a_broken_one):
-    """Boot behaviour is untouched: serve dies on discovery, as it always has.
+def test_the_gateway_factory_boots_with_a_stub(apps_with_a_broken_one, monkeypatch):
+    """The gateway no longer refuses to boot on one broken app (i2mint/enlace#37).
 
-    It never reaches uvicorn — `discover_apps` raises first — so this does not
-    bind a port.
+    ``create_app`` is what gunicorn and ``enlace serve`` load. It is called
+    in-process here, never through ``serve``: that would start a real server.
     """
-    result = _run_cli(apps_with_a_broken_one, "serve")
+    from fastapi.testclient import TestClient
 
-    assert result.returncode != 0
-    assert "nonexistent_package_xyz" in result.stderr
+    from enlace.compose import create_app
+
+    monkeypatch.chdir(apps_with_a_broken_one.parent)  # no platform.toml here
+    monkeypatch.setenv("ENLACE_APPS_DIRS", str(apps_with_a_broken_one))
+    monkeypatch.delenv("ENLACE_APP_DIRS", raising=False)
+    monkeypatch.delenv("ENLACE_APPS_DIR", raising=False)
+    monkeypatch.setenv("ENLACE_PLUGINS", "")
+
+    client = TestClient(create_app())
+
+    assert client.get("/api/alpha/hello").status_code == 200
+    assert client.get("/api/broken/anything").status_code == 500
+    meta = client.get("/_meta").json()
+    assert meta["degraded_apps"] == {
+        "broken": {"exception_type": "ModuleNotFoundError", "stage": "discover"}
+    }
 
 
 def test_a_healthy_tree_is_byte_identical(tmp_path):
