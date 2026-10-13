@@ -311,6 +311,7 @@ def test_upstream_redirects_pass_through_unfiltered():
     assert r.headers["location"] == "/auth/logout"
     assert r.headers["refresh"] == "0; url=/auth/logout"
 
+
 def test_a_repeated_request_header_is_joined_not_overwritten():
     """RFC 9110 §5.3: two fields with one name are one comma-joined field.
 
