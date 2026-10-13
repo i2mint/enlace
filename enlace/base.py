@@ -208,6 +208,13 @@ class AppConfig(BaseModel):
     restart_policy: Literal["always", "on-failure", "never"] = "on-failure"
     max_retries: int = 5
     restart_delay_ms: int = 100
+    #: Forward the visitor's platform session and CSRF credentials (cookies and
+    #: the ``X-CSRF-Token`` header) to the process. Off by default: a process app
+    #: is a separate program with its own dependencies, and bearer-token apps
+    #: such as MCP connectors never need them. Response filtering (no platform
+    #: ``Set-Cookie``, ``Clear-Site-Data`` or ``Service-Worker-Allowed``) applies
+    #: either way.
+    forward_platform_credentials: bool = False
 
     # External-mode fields
     upstream_url: Optional[str] = None

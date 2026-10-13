@@ -11,22 +11,27 @@ app is actually instantiated, so the dependency remains optional.
 from typing import Callable, Iterable, Optional
 
 #: Cookies the platform itself sets on its own origin -- enlace_auth's defaults
-#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, and the
-#: per-app ``shared_auth_<app>`` cookies). Keep in sync with enlace_auth. They
+#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, the
+#: social-login ``enlace_oauth_state`` cookie, and the per-app
+#: ``shared_auth_<app>`` cookies). Keep in sync with enlace_auth. They
 #: are credentials for *this* platform and must never reach an upstream that
 #: is not part of it.
-PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf")
+PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf", "enlace_oauth_state")
 PLATFORM_COOKIE_PREFIXES = ("shared_auth_",)
 
-#: Request headers carrying platform credentials, withheld from external
+#: Request headers carrying platform credentials, withheld from proxied
 #: upstreams (the CSRF double-submit token pairs with ``enlace_csrf``).
-EXTERNAL_DROP_REQUEST_HEADERS = ("x-csrf-token",)
+PLATFORM_CREDENTIAL_REQUEST_HEADERS = ("x-csrf-token",)
 
-#: Response headers an external upstream may not send on the platform origin:
+#: Response headers a proxied upstream may not send on the platform origin:
 #: ``Clear-Site-Data`` could wipe the platform's cookies/storage, and
 #: ``Service-Worker-Allowed`` could let a script under the app's prefix
 #: register a service worker controlling the whole origin.
-EXTERNAL_DROP_RESPONSE_HEADERS = ("clear-site-data", "service-worker-allowed")
+PLATFORM_UNSAFE_RESPONSE_HEADERS = ("clear-site-data", "service-worker-allowed")
+
+# Original names, kept for importers: external mode was the first user.
+EXTERNAL_DROP_REQUEST_HEADERS = PLATFORM_CREDENTIAL_REQUEST_HEADERS
+EXTERNAL_DROP_RESPONSE_HEADERS = PLATFORM_UNSAFE_RESPONSE_HEADERS
 
 CookieFilter = Callable[[str], bool]  # cookie name -> forward it?
 
@@ -38,9 +43,9 @@ def platform_cookie_filter(
 ) -> CookieFilter:
     """Return a filter that keeps every cookie except the platform's own.
 
-    Used for ``mode="external"`` apps: an upstream on another host has no
-    business seeing a visitor's platform session, and must not be able to set
-    (overwrite) one on the platform's origin either.
+    Used for every proxied app (``mode="external"`` and ``mode="process"``): an
+    upstream has no business seeing a visitor's platform session, and must not
+    be able to set (overwrite) one on the platform's origin either.
     """
     names = frozenset(names)
     prefixes = tuple(prefixes)
@@ -101,6 +106,7 @@ def make_proxy_app(
     upstream: str,
     strip_prefix: str = "",
     cookie_filter: Optional[CookieFilter] = None,
+    set_cookie_filter: Optional[CookieFilter] = None,
     drop_request_headers: Iterable[str] = (),
     drop_response_headers: Iterable[str] = (),
 ):
@@ -113,8 +119,11 @@ def make_proxy_app(
         cookie_filter: ``name -> bool``; when given, request cookies it
             rejects are not forwarded and upstream ``Set-Cookie`` headers
             naming them are dropped. ``None`` (the default) forwards all
-            cookies, which suits a local process app that is part of the
-            platform. See :func:`platform_cookie_filter`.
+            cookies. See :func:`platform_cookie_filter`.
+        set_cookie_filter: the filter for upstream ``Set-Cookie`` alone, when
+            it must differ from *cookie_filter* (an app trusted to read the
+            platform session is still not allowed to set it). Defaults to
+            *cookie_filter*.
         drop_request_headers / drop_response_headers: header names
             (case-insensitive) never forwarded upstream / never passed back
             to the client. See ``EXTERNAL_DROP_*`` for what external apps use.
@@ -126,6 +135,7 @@ def make_proxy_app(
         upstream=upstream,
         strip_prefix=strip_prefix,
         cookie_filter=cookie_filter,
+        set_cookie_filter=set_cookie_filter,
         drop_request_headers=drop_request_headers,
         drop_response_headers=drop_response_headers,
     )
@@ -141,10 +151,14 @@ class _HttpxProxy:
         strip_prefix: str = "",
         timeout: float = _DEFAULT_TIMEOUT_S,
         cookie_filter: Optional[CookieFilter] = None,
+        set_cookie_filter: Optional[CookieFilter] = None,
         drop_request_headers: Iterable[str] = (),
         drop_response_headers: Iterable[str] = (),
     ):
         self.cookie_filter = cookie_filter
+        self.set_cookie_filter = (
+            cookie_filter if set_cookie_filter is None else set_cookie_filter
+        )
         self._drop_request = {"host", "transfer-encoding", "connection"} | {
             h.lower() for h in drop_request_headers
         }
@@ -212,8 +226,11 @@ class _HttpxProxy:
                 decoded = _filter_cookie_header(decoded, self.cookie_filter)
                 if not decoded:
                     continue
-                if "cookie" in headers:  # HTTP/2 may split cookies (RFC 9113)
-                    decoded = f"{headers['cookie']}; {decoded}"
+            if name in headers:
+                # A repeated field is one field (RFC 9110 §5.3); cookies are
+                # joined with "; " because HTTP/2 splits them (RFC 9113 §8.2.3).
+                sep = "; " if name == "cookie" else ", "
+                decoded = f"{headers[name]}{sep}{decoded}"
             headers[name] = decoded
 
         import httpx
@@ -246,8 +263,8 @@ class _HttpxProxy:
                 if k.lower() not in self._drop_response
                 and not (
                     k.lower() == "set-cookie"
-                    and self.cookie_filter is not None
-                    and not _set_cookie_allowed(v, self.cookie_filter)
+                    and self.set_cookie_filter is not None
+                    and not _set_cookie_allowed(v, self.set_cookie_filter)
                 )
             ]
 

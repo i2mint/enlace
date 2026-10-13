@@ -16,7 +16,7 @@ from starlette.testclient import TestClient
 
 from enlace.base import AppConfig, PlatformConfig
 from enlace.proxy import _HttpxProxy, make_proxy_app, platform_cookie_filter
-from enlace.strategies import ExternalStrategy
+from enlace.strategies import ExternalStrategy, ProcessStrategy
 
 
 def _echo_transport(seen: dict):
@@ -84,7 +84,7 @@ def test_filtered_proxy_drops_cookie_header_when_nothing_is_left():
 
 
 def test_unfiltered_proxy_is_unchanged():
-    """Process-mode (local, part of the platform) keeps forwarding everything."""
+    """``make_proxy_app`` with no filter forwards everything (strategies opt in)."""
     seen: dict = {}
     proxy = make_proxy_app(upstream="http://127.0.0.1:9", strip_prefix="/typola")
     r = _client(proxy, seen).get("/typola/x", headers={"Cookie": VISITOR_COOKIES})
@@ -143,3 +143,103 @@ def test_external_strategy_applies_the_platform_filter(tmp_path, auth, extra_nam
     assert keep("space_pref")
     if extra_name:
         assert not keep(extra_name)
+
+
+# --- mode="process" (i2mint/enlace#60) ---------------------------------------
+# A local process is still a separate program with its own dependency set, and
+# a bearer-token app (an MCP connector) never needs the platform session.
+
+
+def _process_app(**overrides) -> AppConfig:
+    fields = dict(
+        name="connector",
+        route_prefix="/typola",  # the mount _client uses
+        app_type="asgi_app",
+        mode="process",
+        command=["serve"],
+        port=9,
+    )
+    return AppConfig(**{**fields, **overrides})
+
+
+def _through_process(tmp_path, app, seen):
+    proxy = ProcessStrategy().make_asgi(app, PlatformConfig(apps_dir=tmp_path))
+    return _client(proxy, seen).get(
+        "/typola/x",
+        headers={
+            "Cookie": VISITOR_COOKIES,
+            "X-CSRF-Token": "SECRET-CSRF",
+            "Authorization": "Bearer connector-own-token",
+        },
+    )
+
+
+def test_process_strategy_withholds_platform_credentials_by_default(tmp_path):
+    seen: dict = {}
+    r = _through_process(tmp_path, _process_app(), seen)
+    assert seen["cookie"] == "space_pref=light"
+    assert seen["x-csrf-token"] is None
+    assert seen["authorization"] == "Bearer connector-own-token"
+    assert r.headers.get_list("set-cookie") == ["space_pref=dark; Path=/typola"]
+    assert "clear-site-data" not in r.headers
+    assert "service-worker-allowed" not in r.headers
+    assert r.headers["x-upstream"] == "kept"
+
+
+def test_process_strategy_opt_in_forwards_credentials_but_never_lets_them_be_set(
+    tmp_path,
+):
+    """``forward_platform_credentials`` is a read grant, not a write grant."""
+    seen: dict = {}
+    app = _process_app(forward_platform_credentials=True)
+    r = _through_process(tmp_path, app, seen)
+    assert seen["cookie"] == VISITOR_COOKIES
+    assert seen["x-csrf-token"] == "SECRET-CSRF"
+    assert r.headers.get_list("set-cookie") == ["space_pref=dark; Path=/typola"]
+    assert "clear-site-data" not in r.headers
+    assert "service-worker-allowed" not in r.headers
+
+
+def test_process_strategy_honours_a_custom_session_cookie_name(tmp_path):
+    platform = PlatformConfig(apps_dir=tmp_path, auth={"session_cookie_name": "my_sess"})
+    proxy = ProcessStrategy().make_asgi(_process_app(), platform)
+    assert not proxy.cookie_filter("my_sess")
+    assert not proxy.set_cookie_filter("my_sess")
+    assert proxy.cookie_filter("space_pref")
+
+
+def test_forward_platform_credentials_is_an_app_toml_key():
+    from enlace.discover import _resolved_field_map
+
+    field_map, _ = _resolved_field_map()
+    assert field_map["forward_platform_credentials"] == "forward_platform_credentials"
+    assert _process_app().forward_platform_credentials is False
+
+
+def test_split_cookie_headers_all_survive_when_credentials_are_forwarded(tmp_path):
+    """HTTP/2 sends one Cookie field per cookie; none may be lost (#60 review)."""
+    seen: dict = {}
+    proxy = ProcessStrategy().make_asgi(
+        _process_app(forward_platform_credentials=True),
+        PlatformConfig(apps_dir=tmp_path),
+    )
+    _client(proxy, seen).get(
+        "/typola/x", headers=[("cookie", "enlace_session=S"), ("cookie", "b=2")]
+    )
+    assert seen["cookie"] == "enlace_session=S; b=2"
+
+
+def test_split_cookie_headers_are_each_filtered(tmp_path):
+    seen: dict = {}
+    proxy = ProcessStrategy().make_asgi(_process_app(), PlatformConfig(apps_dir=tmp_path))
+    _client(proxy, seen).get(
+        "/typola/x",
+        headers=[("cookie", "a=1"), ("cookie", "enlace_session=S"), ("cookie", "b=2")],
+    )
+    assert seen["cookie"] == "a=1; b=2"
+
+
+def test_the_social_login_state_cookie_is_a_platform_cookie():
+    """A proxied app setting a second ``enlace_oauth_state`` would block sign-in."""
+    keep = platform_cookie_filter()
+    assert not keep("enlace_oauth_state")
