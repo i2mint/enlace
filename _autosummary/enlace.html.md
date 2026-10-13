@@ -202,7 +202,8 @@ The header values come from the manifest matching the longest registered
 prefix (route_prefix or frontend mount path) for the request path. If no
 per-app prefix matches, the platform manifest fills in. Headers are only
 added when the underlying value is present — a stub manifest produces a
-short header set (just `X-Deploy-App`), not bogus SHAs.
+short header set (just `X-Deploy-App`), not bogus SHAs. Values are
+percent-encoded where they are not plain ASCII (see `header_value()`).
 
 ### *class* enlace.DeployManifest(\*\*data)
 

@@ -34,10 +34,11 @@ See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlac
 
 ### Functions
 
-| [`load_manifest`](#enlace.manifest.load_manifest)(app_name, manifest_dir, \*[, ...])   | Load the deploy manifest for one app, or return a minimal stub.   |
-|-----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| [`load_platform_manifest`](#enlace.manifest.load_platform_manifest)(manifest_dir, \*[, ...])    | Load the platform-level deploy manifest (or a minimal stub).      |
-| [`resolve_manifest_dir`](#enlace.manifest.resolve_manifest_dir)([config_manifest_dir])        | Resolve the manifest directory from env var or config.            |
+| [`header_value`](#enlace.manifest.header_value)(value)                              | Encode *value* for an HTTP header: ASCII as-is, the rest percent-encoded.   |
+|---------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`load_manifest`](#enlace.manifest.load_manifest)(app_name, manifest_dir, \*[, ...]) | Load the deploy manifest for one app, or return a minimal stub.             |
+| [`load_platform_manifest`](#enlace.manifest.load_platform_manifest)(manifest_dir, \*[, ...])  | Load the platform-level deploy manifest (or a minimal stub).                |
+| [`resolve_manifest_dir`](#enlace.manifest.resolve_manifest_dir)([config_manifest_dir])      | Resolve the manifest directory from env var or config.                      |
 
 ### Classes
 
@@ -58,7 +59,8 @@ The header values come from the manifest matching the longest registered
 prefix (route_prefix or frontend mount path) for the request path. If no
 per-app prefix matches, the platform manifest fills in. Headers are only
 added when the underlying value is present — a stub manifest produces a
-short header set (just `X-Deploy-App`), not bogus SHAs.
+short header set (just `X-Deploy-App`), not bogus SHAs. Values are
+percent-encoded where they are not plain ASCII (see [`header_value()`](#enlace.manifest.header_value)).
 
 ### *class* enlace.manifest.DeployManifest(\*\*data)
 
@@ -117,6 +119,22 @@ Git identity for a single source tree (app or platform).
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+### enlace.manifest.header_value(value)
+
+Encode *value* for an HTTP header: ASCII as-is, the rest percent-encoded.
+
+Header values must be ASCII (latin-1 at most); an app directory named
+`café` would otherwise reach clients as raw UTF-8, which httpx refuses.
+Decode with `urllib.parse.unquote`.
+
+* **Return type:**
+  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+
+```pycon
+>>> header_value("reelee-web"), header_value("café"), header_value("a b%")
+(b'reelee-web', b'caf%C3%A9', b'a%20b%25')
+```
 
 ### enlace.manifest.load_manifest(app_name, manifest_dir, , enlace_version=None)
 

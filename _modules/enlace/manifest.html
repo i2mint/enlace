@@ -293,6 +293,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">ValidationError</span>
 
@@ -487,6 +488,28 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_platform</span>
 
 
+<span class="c1"># Visible ASCII except "%": the characters a header value keeps as-is. Anything</span>
+<span class="c1"># else (non-ASCII, space, control characters) is percent-encoded, so an</span>
+<span class="c1"># ASCII-only value is unchanged and the encoding is unambiguous.</span>
+<span class="n">_HEADER_SAFE</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mh">0x21</span><span class="p">,</span> <span class="mh">0x7F</span><span class="p">)</span> <span class="k">if</span> <span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"%"</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="header_value">
+<a class="viewcode-back" href="../../_autosummary/enlace.manifest.html#enlace.header_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">header_value</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Encode *value* for an HTTP header: ASCII as-is, the rest percent-encoded.</span>
+
+<span class="sd">    Header values must be ASCII (latin-1 at most); an app directory named</span>
+<span class="sd">    ``café`` would otherwise reach clients as raw UTF-8, which httpx refuses.</span>
+<span class="sd">    Decode with ``urllib.parse.unquote``.</span>
+
+<span class="sd">    &gt;&gt;&gt; header_value("reelee-web"), header_value("café"), header_value("a b%")</span>
+<span class="sd">    (b'reelee-web', b'caf%C3%A9', b'a%20b%25')</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">quote</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="n">_HEADER_SAFE</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"ascii"</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="DeployHeadersMiddleware">
 <a class="viewcode-back" href="../../_autosummary/enlace.manifest.html#enlace.DeployHeadersMiddleware">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DeployHeadersMiddleware</span><span class="p">(</span><span class="n">_PrefixManifestMiddleware</span><span class="p">):</span>
@@ -496,7 +519,8 @@
 <span class="sd">    prefix (route_prefix or frontend mount path) for the request path. If no</span>
 <span class="sd">    per-app prefix matches, the platform manifest fills in. Headers are only</span>
 <span class="sd">    added when the underlying value is present — a stub manifest produces a</span>
-<span class="sd">    short header set (just ``X-Deploy-App``), not bogus SHAs.</span>
+<span class="sd">    short header set (just ``X-Deploy-App``), not bogus SHAs. Values are</span>
+<span class="sd">    percent-encoded where they are not plain ASCII (see :func:`header_value`).</span>
 <span class="sd">    """</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
@@ -511,11 +535,11 @@
 
         <span class="n">extra</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app</span><span class="p">:</span>
-            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">"x-deploy-app"</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">"x-deploy-app"</span><span class="p">,</span> <span class="n">header_value</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">app</span><span class="p">)))</span>
         <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">sha</span><span class="p">:</span>
-            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">"x-deploy-sha"</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">sha</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">"x-deploy-sha"</span><span class="p">,</span> <span class="n">header_value</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">sha</span><span class="p">)))</span>
         <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span><span class="p">:</span>
-            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">"x-deploy-time"</span><span class="p">,</span> <span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span><span class="o">.</span><span class="n">encode</span><span class="p">()))</span>
+            <span class="n">extra</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">b</span><span class="s2">"x-deploy-time"</span><span class="p">,</span> <span class="n">header_value</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span><span class="p">)))</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">extra</span><span class="p">:</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">app</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
@@ -621,7 +645,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=03b6484e"></script>
+</div><script src="../../_static/documentation_options.js?v=2307d2a5"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

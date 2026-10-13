@@ -18,4 +18,6 @@ enlace.proxy
    
       make_proxy_app
       platform_cookie_filter
+      platform_cookie_names
+      platform_proxy_filters
    

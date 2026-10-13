@@ -1,4 +1,4 @@
-> built 2026-10-13 06:42 UTC from b0846e2 (main) · enlace 0.1.45. Details: build_info.json
+> built 2026-10-13 06:48 UTC from 5957baf (main) · enlace 0.1.46. Details: build_info.json
 
 # index.html.md
 
@@ -2350,7 +2350,8 @@ The header values come from the manifest matching the longest registered
 prefix (route_prefix or frontend mount path) for the request path. If no
 per-app prefix matches, the platform manifest fills in. Headers are only
 added when the underlying value is present — a stub manifest produces a
-short header set (just `X-Deploy-App`), not bogus SHAs.
+short header set (just `X-Deploy-App`), not bogus SHAs. Values are
+percent-encoded where they are not plain ASCII (see `header_value()`).
 
 ### *class* enlace.DeployManifest(\*\*data)
 
@@ -2847,10 +2848,11 @@ See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlac
 
 ### Functions
 
-| [`load_manifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.load_manifest)(app_name, manifest_dir, \*[, ...])   | Load the deploy manifest for one app, or return a minimal stub.   |
-|-----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| [`load_platform_manifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.load_platform_manifest)(manifest_dir, \*[, ...])    | Load the platform-level deploy manifest (or a minimal stub).      |
-| [`resolve_manifest_dir`](_autosummary/enlace.manifest.html.md#enlace.manifest.resolve_manifest_dir)([config_manifest_dir])        | Resolve the manifest directory from env var or config.            |
+| [`header_value`](_autosummary/enlace.manifest.html.md#enlace.manifest.header_value)(value)                              | Encode *value* for an HTTP header: ASCII as-is, the rest percent-encoded.   |
+|---------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`load_manifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.load_manifest)(app_name, manifest_dir, \*[, ...]) | Load the deploy manifest for one app, or return a minimal stub.             |
+| [`load_platform_manifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.load_platform_manifest)(manifest_dir, \*[, ...])  | Load the platform-level deploy manifest (or a minimal stub).                |
+| [`resolve_manifest_dir`](_autosummary/enlace.manifest.html.md#enlace.manifest.resolve_manifest_dir)([config_manifest_dir])      | Resolve the manifest directory from env var or config.                      |
 
 ### Classes
 
@@ -2871,7 +2873,8 @@ The header values come from the manifest matching the longest registered
 prefix (route_prefix or frontend mount path) for the request path. If no
 per-app prefix matches, the platform manifest fills in. Headers are only
 added when the underlying value is present — a stub manifest produces a
-short header set (just `X-Deploy-App`), not bogus SHAs.
+short header set (just `X-Deploy-App`), not bogus SHAs. Values are
+percent-encoded where they are not plain ASCII (see [`header_value()`](_autosummary/enlace.manifest.html.md#enlace.manifest.header_value)).
 
 ### *class* enlace.manifest.DeployManifest(\*\*data)
 
@@ -2930,6 +2933,22 @@ Git identity for a single source tree (app or platform).
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {}*
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+### enlace.manifest.header_value(value)
+
+Encode *value* for an HTTP header: ASCII as-is, the rest percent-encoded.
+
+Header values must be ASCII (latin-1 at most); an app directory named
+`café` would otherwise reach clients as raw UTF-8, which httpx refuses.
+Decode with `urllib.parse.unquote`.
+
+* **Return type:**
+  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
+
+```pycon
+>>> header_value("reelee-web"), header_value("café"), header_value("a b%")
+(b'reelee-web', b'caf%C3%A9', b'a%20b%25')
+```
 
 ### enlace.manifest.load_manifest(app_name, manifest_dir, , enlace_version=None)
 
@@ -3002,9 +3021,11 @@ boundary.
 
 ### Functions
 
-| [`make_proxy_app`](_autosummary/enlace.proxy.html.md#enlace.proxy.make_proxy_app)(\*, upstream[, strip_prefix, ...])   | Create an ASGI app that proxies requests to *upstream*.            |
-|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| [`platform_cookie_filter`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_cookie_filter)(\*[, names, prefixes])       | Return a filter that keeps every cookie except the platform's own. |
+| [`make_proxy_app`](_autosummary/enlace.proxy.html.md#enlace.proxy.make_proxy_app)(\*, upstream[, strip_prefix, ...])   | Create an ASGI app that proxies requests to *upstream*.                                                                  |
+|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| [`platform_cookie_filter`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_cookie_filter)(\*[, names, prefixes])       | Return a filter that keeps every cookie except the platform's own.                                                       |
+| [`platform_cookie_names`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_cookie_names)([platform])                   | The platform's own cookie names, honouring a custom session cookie name.                                                 |
+| [`platform_proxy_filters`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_proxy_filters)([platform, ...])             | [`make_proxy_app()`](_autosummary/enlace.proxy.html.md#enlace.proxy.make_proxy_app) keyword arguments that keep platform credentials home. |
 
 ### enlace.proxy.PLATFORM_COOKIE_NAMES *= ('enlace_session', 'enlace_csrf', 'enlace_oauth_state')*
 
@@ -3045,7 +3066,8 @@ Create an ASGI app that proxies requests to *upstream*.
     *cookie_filter*.
   * **drop_response_headers** ([`Iterable`](https://docs.python.org/3/library/typing.html#typing.Iterable)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]) – header names
     (case-insensitive) never forwarded upstream / never passed back
-    to the client. See `EXTERNAL_DROP_*` for what external apps use.
+    to the client. [`platform_proxy_filters()`](_autosummary/enlace.proxy.html.md#enlace.proxy.platform_proxy_filters) gives all four
+    filters as every enlace strategy applies them.
 * **Returns:**
   An ASGI callable.
 
@@ -3069,6 +3091,45 @@ shadow the day any reader matched names loosely.
 >>> keep = platform_cookie_filter()
 >>> [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]
 [True, False, False]
+```
+
+### enlace.proxy.platform_cookie_names(platform=None)
+
+The platform’s own cookie names, honouring a custom session cookie name.
+
+`[auth]` is opaque to enlace core (enlace_auth owns its schema), so this
+reads only the one key that renames a platform cookie.
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
+
+```pycon
+>>> from types import SimpleNamespace
+>>> platform_cookie_names(SimpleNamespace(auth={"session_cookie_name": "s"}))[-1]
+'s'
+```
+
+### enlace.proxy.platform_proxy_filters(platform=None, , forward_credentials=False)
+
+[`make_proxy_app()`](_autosummary/enlace.proxy.html.md#enlace.proxy.make_proxy_app) keyword arguments that keep platform credentials home.
+
+The one policy for every proxied app, whatever runs it (an external server,
+a local process, a container from `enlace_docker`): the upstream does not
+see the visitor’s platform cookies or `X-CSRF-Token` unless the caller
+passes *forward_credentials* (process and docker modes pass an app’s
+`forward_platform_credentials`; external mode never does), and it may
+never set a platform cookie or send [`PLATFORM_UNSAFE_RESPONSE_HEADERS`](_autosummary/enlace.proxy.html.md#enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS),
+whatever it is granted.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+```pycon
+>>> filters = platform_proxy_filters()
+>>> filters["cookie_filter"]("enlace_session"), filters["cookie_filter"]("theme")
+(False, True)
+>>> platform_proxy_filters(forward_credentials=True)["cookie_filter"] is None
+True
 ```
 
 
@@ -3495,16 +3556,18 @@ False
 
 # About this build
 
-This documentation was built on **2026-10-13 06:42 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/b0846e28c82ca9ae6a98a218b7c45237c6b674dd"><code>b0846e2</code></a> on branch <code>main</code>, for **enlace 0.1.45** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 06:48 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/5957baf08c20576da79419a75bae6f5ec3a50fb2"><code>5957baf</code></a> on branch <code>main</code>, for **enlace 0.1.46** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.46) is behind the latest release on PyPI (0.1.47): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/b0846e28c82ca9ae6a98a218b7c45237c6b674dd"><code>b0846e28c82ca9ae6a98a218b7c45237c6b674dd</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/5957baf08c20576da79419a75bae6f5ec3a50fb2"><code>5957baf08c20576da79419a75bae6f5ec3a50fb2</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3515,9 +3578,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38358085876">38358085876</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38358615990">38358615990</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>b0846e28c82ca9ae6a98a218b7c45237c6b674dd</code> (in the history of the built commit) |
+| Event commit | <code>16ba8e9b3c4848f824a74520a4c4f5007c4d487d</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -3542,13 +3605,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.45/">0.1.45</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.47/">0.1.47</a>, newer than the documented version (0.1.46).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout b0846e28c82ca9ae6a98a218b7c45237c6b674dd
+git checkout 5957baf08c20576da79419a75bae6f5ec3a50fb2
 pip install "epythet==0.2.14"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

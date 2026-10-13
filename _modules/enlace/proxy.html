@@ -341,6 +341,55 @@
 
 
 
+<div class="viewcode-block" id="platform_cookie_names">
+<a class="viewcode-back" href="../../_autosummary/enlace.proxy.html#enlace.proxy.platform_cookie_names">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">platform_cookie_names</span><span class="p">(</span><span class="n">platform</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The platform's own cookie names, honouring a custom session cookie name.</span>
+
+<span class="sd">    ``[auth]`` is opaque to enlace core (enlace_auth owns its schema), so this</span>
+<span class="sd">    reads only the one key that renames a platform cookie.</span>
+
+<span class="sd">    &gt;&gt;&gt; from types import SimpleNamespace</span>
+<span class="sd">    &gt;&gt;&gt; platform_cookie_names(SimpleNamespace(auth={"session_cookie_name": "s"}))[-1]</span>
+<span class="sd">    's'</span>
+<span class="sd">    """</span>
+    <span class="n">auth</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">platform</span><span class="p">,</span> <span class="s2">"auth"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">custom</span> <span class="o">=</span> <span class="n">auth</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"session_cookie_name"</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">auth</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">PLATFORM_COOKIE_NAMES</span> <span class="o">+</span> <span class="p">((</span><span class="n">custom</span><span class="p">,)</span> <span class="k">if</span> <span class="n">custom</span> <span class="k">else</span> <span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="platform_proxy_filters">
+<a class="viewcode-back" href="../../_autosummary/enlace.proxy.html#enlace.proxy.platform_proxy_filters">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">platform_proxy_filters</span><span class="p">(</span><span class="n">platform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">forward_credentials</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""":func:`make_proxy_app` keyword arguments that keep platform credentials home.</span>
+
+<span class="sd">    The one policy for every proxied app, whatever runs it (an external server,</span>
+<span class="sd">    a local process, a container from ``enlace_docker``): the upstream does not</span>
+<span class="sd">    see the visitor's platform cookies or ``X-CSRF-Token`` unless the caller</span>
+<span class="sd">    passes *forward_credentials* (process and docker modes pass an app's</span>
+<span class="sd">    ``forward_platform_credentials``; external mode never does), and it may</span>
+<span class="sd">    never set a platform cookie or send :data:`PLATFORM_UNSAFE_RESPONSE_HEADERS`,</span>
+<span class="sd">    whatever it is granted.</span>
+
+<span class="sd">    &gt;&gt;&gt; filters = platform_proxy_filters()</span>
+<span class="sd">    &gt;&gt;&gt; filters["cookie_filter"]("enlace_session"), filters["cookie_filter"]("theme")</span>
+<span class="sd">    (False, True)</span>
+<span class="sd">    &gt;&gt;&gt; platform_proxy_filters(forward_credentials=True)["cookie_filter"] is None</span>
+<span class="sd">    True</span>
+<span class="sd">    """</span>
+    <span class="n">platform_cookies</span> <span class="o">=</span> <span class="n">platform_cookie_filter</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="n">platform_cookie_names</span><span class="p">(</span><span class="n">platform</span><span class="p">))</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">cookie_filter</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">forward_credentials</span> <span class="k">else</span> <span class="n">platform_cookies</span><span class="p">,</span>
+        <span class="n">set_cookie_filter</span><span class="o">=</span><span class="n">platform_cookies</span><span class="p">,</span>
+        <span class="n">drop_request_headers</span><span class="o">=</span><span class="p">(</span>
+            <span class="p">()</span> <span class="k">if</span> <span class="n">forward_credentials</span> <span class="k">else</span> <span class="n">PLATFORM_CREDENTIAL_REQUEST_HEADERS</span>
+        <span class="p">),</span>
+        <span class="n">drop_response_headers</span><span class="o">=</span><span class="n">PLATFORM_UNSAFE_RESPONSE_HEADERS</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_filter_cookie_header</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">keep</span><span class="p">:</span> <span class="n">CookieFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Drop the cookies *keep* rejects from a request ``Cookie`` header value."""</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
@@ -417,7 +466,8 @@
 <span class="sd">            *cookie_filter*.</span>
 <span class="sd">        drop_request_headers / drop_response_headers: header names</span>
 <span class="sd">            (case-insensitive) never forwarded upstream / never passed back</span>
-<span class="sd">            to the client. See ``EXTERNAL_DROP_*`` for what external apps use.</span>
+<span class="sd">            to the client. :func:`platform_proxy_filters` gives all four</span>
+<span class="sd">            filters as every enlace strategy applies them.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        An ASGI callable.</span>
@@ -632,7 +682,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=03b6484e"></script>
+</div><script src="../../_static/documentation_options.js?v=2307d2a5"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

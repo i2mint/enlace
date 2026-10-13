@@ -303,13 +303,16 @@ hidden from end users by default — apps can opt to surface the data visibly
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.manifest.load_manifest" title="enlace.manifest.load_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_manifest</span></code></a>(app_name, manifest_dir, *[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.manifest.header_value" title="enlace.manifest.header_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">header_value</span></code></a>(value)</p></td>
+<td><p>Encode <em>value</em> for an HTTP header: ASCII as-is, the rest percent-encoded.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.manifest.load_manifest" title="enlace.manifest.load_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_manifest</span></code></a>(app_name, manifest_dir, *[, ...])</p></td>
 <td><p>Load the deploy manifest for one app, or return a minimal stub.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.manifest.load_platform_manifest" title="enlace.manifest.load_platform_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_platform_manifest</span></code></a>(manifest_dir, *[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.manifest.load_platform_manifest" title="enlace.manifest.load_platform_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_platform_manifest</span></code></a>(manifest_dir, *[, ...])</p></td>
 <td><p>Load the platform-level deploy manifest (or a minimal stub).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.manifest.resolve_manifest_dir" title="enlace.manifest.resolve_manifest_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_manifest_dir</span></code></a>([config_manifest_dir])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.manifest.resolve_manifest_dir" title="enlace.manifest.resolve_manifest_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolve_manifest_dir</span></code></a>([config_manifest_dir])</p></td>
 <td><p>Resolve the manifest directory from env var or config.</p></td>
 </tr>
 </tbody>
@@ -346,7 +349,8 @@ hidden from end users by default — apps can opt to surface the data visibly
 prefix (route_prefix or frontend mount path) for the request path. If no
 per-app prefix matches, the platform manifest fills in. Headers are only
 added when the underlying value is present — a stub manifest produces a
-short header set (just <code class="docutils literal notranslate"><span class="pre">X-Deploy-App</span></code>), not bogus SHAs.</p>
+short header set (just <code class="docutils literal notranslate"><span class="pre">X-Deploy-App</span></code>), not bogus SHAs. Values are
+percent-encoded where they are not plain ASCII (see <a class="reference internal" href="#enlace.manifest.header_value" title="enlace.manifest.header_value"><code class="xref py py-func docutils literal notranslate"><span class="pre">header_value()</span></code></a>).</p>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -424,6 +428,24 @@ one cannot be mistaken for “no manifest was ever written”.</p>
 <dd><p>Configuration for the model, should be a dictionary conforming to [<code class="code docutils literal notranslate"><span class="pre">ConfigDict</span></code>][pydantic.config.ConfigDict].</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.manifest.header_value">
+<span class="sig-prename descclassname"><span class="pre">enlace.manifest.</span></span><span class="sig-name descname"><span class="pre">header_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/manifest.html#header_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.manifest.header_value" title="Link to this definition">¶</a></dt>
+<dd><p>Encode <em>value</em> for an HTTP header: ASCII as-is, the rest percent-encoded.</p>
+<p>Header values must be ASCII (latin-1 at most); an app directory named
+<code class="docutils literal notranslate"><span class="pre">café</span></code> would otherwise reach clients as raw UTF-8, which httpx refuses.
+Decode with <code class="docutils literal notranslate"><span class="pre">urllib.parse.unquote</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#bytes" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a></span></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">header_value</span><span class="p">(</span><span class="s2">"reelee-web"</span><span class="p">),</span> <span class="n">header_value</span><span class="p">(</span><span class="s2">"café"</span><span class="p">),</span> <span class="n">header_value</span><span class="p">(</span><span class="s2">"a b%"</span><span class="p">)</span>
+<span class="go">(b'reelee-web', b'caf%C3%A9', b'a%20b%25')</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -539,6 +561,7 @@ available; serve minimal stubs”.</p>
 <li><a class="reference internal" href="#enlace.manifest.SourceRef.model_config"><code class="docutils literal notranslate"><span class="pre">SourceRef.model_config</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#enlace.manifest.header_value"><code class="docutils literal notranslate"><span class="pre">header_value()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.manifest.load_manifest"><code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.manifest.load_platform_manifest"><code class="docutils literal notranslate"><span class="pre">load_platform_manifest()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.manifest.resolve_manifest_dir"><code class="docutils literal notranslate"><span class="pre">resolve_manifest_dir()</span></code></a></li>
@@ -553,7 +576,7 @@ available; serve minimal stubs”.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=03b6484e"></script>
+</div><script src="../_static/documentation_options.js?v=2307d2a5"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

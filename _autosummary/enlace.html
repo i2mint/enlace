@@ -581,7 +581,8 @@ this treats app_dir itself as the app directory.</p>
 prefix (route_prefix or frontend mount path) for the request path. If no
 per-app prefix matches, the platform manifest fills in. Headers are only
 added when the underlying value is present — a stub manifest produces a
-short header set (just <code class="docutils literal notranslate"><span class="pre">X-Deploy-App</span></code>), not bogus SHAs.</p>
+short header set (just <code class="docutils literal notranslate"><span class="pre">X-Deploy-App</span></code>), not bogus SHAs. Values are
+percent-encoded where they are not plain ASCII (see <code class="xref py py-func docutils literal notranslate"><span class="pre">header_value()</span></code>).</p>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -1292,7 +1293,7 @@ present, has a <code class="docutils literal notranslate"><span class="pre">buil
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=03b6484e"></script>
+</div><script src="../_static/documentation_options.js?v=2307d2a5"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
