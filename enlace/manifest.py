@@ -109,6 +109,14 @@ def resolve_manifest_dir(
 #: one cannot be mistaken for "no manifest was ever written".
 MANIFEST_ERROR_KEY = "manifest_error"
 
+#: ``/_meta`` key carrying the enlace version the gateway is *running*, added at
+#: serve time. ``enlace_version`` is what the deploy recorded in the manifest and
+#: wins over the runtime when present, so after an engine-only upgrade (a new
+#: wheel and a restart, no redeploy) it names the old version. This key never
+#: does. ``None`` when enlace's distribution metadata is unavailable.
+#: See https://github.com/i2mint/enlace/issues/78.
+RUNTIME_VERSION_KEY = "enlace_runtime_version"
+
 
 def _manifest_error_summary(error: Exception) -> str:
     """A short, path-free description of why a manifest file was rejected.

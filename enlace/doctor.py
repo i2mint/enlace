@@ -19,7 +19,7 @@ Design:
   ``on_import_error``. A health tool that dies on the failure it exists to
   detect reports nothing about the thirty apps that are fine.
 - An app the *running* gateway could not load is serving a 500 stub
-  (:mod:`enlace.degraded`); ``_check_live_degraded`` reads the live
+  (:mod:`enlace.degraded`); ``_check_live_meta`` reads the live
   ``/_meta`` and FAILs once per stubbed app. That is the gateway's own
   answer, so it also catches a failure only the server's identity hits
   (a file the service user cannot read) that the doctor's local discovery
@@ -218,33 +218,42 @@ def _http_get(
         return None, {}, None, f"unexpected error: {e}"
 
 
-def _check_live_degraded(base_url: str, timeout: float) -> list[Check]:
-    """FAIL once per app the live gateway is serving a 500 stub for.
+def _check_live_meta(base_url: str, timeout: float) -> list[Check]:
+    """What the live gateway's own ``/_meta`` says about itself.
 
-    Reads ``degraded_apps`` from the platform ``/_meta`` (see
-    :mod:`enlace.degraded`). One PASS when the gateway reports none; a WARN
-    when ``/_meta`` cannot be read as JSON, since then nothing can be said
-    either way (the per-app HTTP probes still FAIL on a stub's 500).
+    - ``degraded:<app>`` FAIL once per app it is serving a 500 stub for
+      (:mod:`enlace.degraded`); one ``meta:degraded_apps`` PASS when none is.
+    - ``meta:degraded_apps`` FAIL when ``/_meta`` cannot be read as a JSON
+      object: this is the only check that sees a stub hidden behind an auth
+      gate (which answers the per-app probes 401), so a blind read must not
+      pass for a healthy one.
+    - ``meta:enlace_version`` WARN when the running enlace differs from the
+      version the deploy manifest recorded (an engine upgraded since the last
+      deploy; https://github.com/i2mint/enlace/issues/78).
     """
     from enlace.degraded import DEGRADED_APPS_KEY
+    from enlace.manifest import RUNTIME_VERSION_KEY
 
     url = f"{base_url.rstrip('/')}/_meta"
     status, _headers, body, err = _http_get(url, timeout=timeout)
     name = "meta:degraded_apps"
+    blind = "load-failure stubs behind an auth gate cannot be seen"
     if err:
-        return [Check(name, WARN, f"could not read /_meta: {err}")]
+        return [Check(name, FAIL, f"could not read /_meta ({err}); {blind}")]
     try:
         payload = json.loads(body or b"")
     except ValueError:
         payload = None
     if status != 200 or not isinstance(payload, dict):
-        return [Check(name, WARN, f"/_meta status={status}, not a JSON object")]
+        return [
+            Check(name, FAIL, f"/_meta status={status}, not a JSON object; {blind}")
+        ]
+    out = _version_drift(payload, RUNTIME_VERSION_KEY)
     degraded = payload.get(DEGRADED_APPS_KEY) or {}
     if not isinstance(degraded, dict):
-        return [Check(name, WARN, f"/_meta {DEGRADED_APPS_KEY} is not a mapping")]
+        return out + [Check(name, FAIL, f"/_meta {DEGRADED_APPS_KEY} is not a mapping")]
     if not degraded:
-        return [Check(name, PASS, "no app is serving a load-failure stub")]
-    out = []
+        return out + [Check(name, PASS, "no app is serving a load-failure stub")]
     for app_name, info in sorted(degraded.items()):
         info = info if isinstance(info, dict) else {}
         exc_type = info.get("exception_type", "?")
@@ -259,6 +268,23 @@ def _check_live_degraded(base_url: str, timeout: float) -> list[Check]:
             )
         )
     return out
+
+
+def _version_drift(payload: dict, runtime_key: str) -> list[Check]:
+    """WARN when the running enlace is not the one the manifest recorded."""
+    running = payload.get(runtime_key)
+    recorded = payload.get("enlace_version")
+    if not running or not recorded or running == recorded:
+        return []
+    return [
+        Check(
+            "meta:enlace_version",
+            WARN,
+            f"running enlace {running}, but the deploy manifest records {recorded} "
+            "(engine upgraded since the last deploy)",
+            extra={"running": running, "recorded": recorded},
+        )
+    ]
 
 
 def _check_frontend_mount(base_url: str, app_name: str, timeout: float) -> Check:
@@ -405,7 +431,7 @@ def run_doctor(
 
     # HTTP probes — only when a base URL is provided.
     if base_url:
-        report.checks.extend(_check_live_degraded(base_url, timeout))
+        report.checks.extend(_check_live_meta(base_url, timeout))
         for fn in extra_http_checks:
             report.checks.extend(fn(config, base_url, timeout))
 

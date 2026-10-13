@@ -600,3 +600,29 @@ def test_deploy_headers_percent_encode_a_non_ascii_app_name(tmp_path, manifest_d
     assert resp.headers["x-deploy-app"] == "caf%C3%A9"
     assert unquote(resp.headers["x-deploy-app"]) == "café"
     assert resp.headers["x-deploy-time"] == "2026-05-26T18:00:00Z"
+
+
+# --- the running enlace version (#78) ----------------------------------------
+
+
+def test_meta_reports_the_running_enlace_even_when_the_manifest_is_stale(
+    single_app_dir, manifest_dir, monkeypatch
+):
+    """The deploy manifest's enlace_version is what was deployed; after an
+    engine-only upgrade it names the old version. enlace_runtime_version is
+    always what is running, on the platform and the per-app /_meta."""
+    from enlace import compose
+    from enlace.manifest import RUNTIME_VERSION_KEY
+
+    monkeypatch.setattr(compose, "_detect_enlace_version", lambda: "9.9.9")
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, enlace_version="0.0.1")
+    _write(manifest_dir, "foo", enlace_version="0.0.1")
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+
+    for path in ("/_meta", "/api/foo/_meta", "/foo/_meta"):
+        payload = client.get(path).json()
+        assert payload["enlace_version"] == "0.0.1", path  # the record is kept
+        assert payload[RUNTIME_VERSION_KEY] == "9.9.9", path  # the truth is added

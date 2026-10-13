@@ -38,6 +38,7 @@ from enlace.frontend import (
 from enlace.gzip_selective import SelectiveGZipMiddleware
 from enlace.manifest import (
     PLATFORM_MANIFEST_NAME,
+    RUNTIME_VERSION_KEY,
     DeployHeadersMiddleware,
     DeployManifest,
     DeployMetaTagMiddleware,
@@ -434,6 +435,7 @@ def _add_meta_routes(
     @parent.get("/_meta", include_in_schema=False)
     async def _platform_meta() -> dict:
         payload = platform_meta.payload()
+        payload[RUNTIME_VERSION_KEY] = enlace_version
         if degraded:
             payload[DEGRADED_APPS_KEY] = degraded
         return payload
@@ -442,11 +444,9 @@ def _add_meta_routes(
         manifest = per_app_manifests.get(app_config.name)
         if manifest is None:
             continue
-        extra = (
-            {DEGRADED_KEY: degraded[app_config.name]}
-            if app_config.name in degraded
-            else {}
-        )
+        extra = {RUNTIME_VERSION_KEY: enlace_version}
+        if app_config.name in degraded:
+            extra[DEGRADED_KEY] = degraded[app_config.name]
         _register_app_meta(
             parent, app_config.route_prefix + "/_meta", manifest, extra=extra
         )
