@@ -78,6 +78,7 @@ def test_unreadable_envfile_warns_and_skips(tmp_path, monkeypatch, capsys):
 
 # -- doctor's envfile default (#64) -------------------------------------------
 
+
 def test_auto_envfile_is_the_dotenv_beside_platform_toml(tmp_path):
     toml = tmp_path / "platform.toml"
     assert _resolve_envfile("auto", toml_path=toml) is None  # no toml
@@ -144,9 +145,7 @@ def test_auto_envfile_does_not_follow_a_symlinked_platform_toml(tmp_path):
     here.mkdir()
     (here / "platform.toml").symlink_to(target / "platform.toml")
     (here / ".env").write_text("A=here\n")
-    assert _resolve_envfile("auto", toml_path=here / "platform.toml") == (
-        here / ".env"
-    )
+    assert _resolve_envfile("auto", toml_path=here / "platform.toml") == (here / ".env")
 
 
 def test_doctor_envfile_empty_string_loads_nothing(tmp_path, monkeypatch, capsys):
