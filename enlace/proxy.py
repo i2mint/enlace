@@ -99,10 +99,11 @@ def platform_proxy_filters(platform=None, *, forward_credentials: bool = False) 
 
     The one policy for every proxied app, whatever runs it (an external server,
     a local process, a container from ``enlace_docker``): the upstream does not
-    see the visitor's platform cookies or ``X-CSRF-Token`` unless
-    *forward_credentials* (an app's ``forward_platform_credentials``) grants
-    that, and it may never set a platform cookie or send
-    :data:`PLATFORM_UNSAFE_RESPONSE_HEADERS`, whatever it is granted.
+    see the visitor's platform cookies or ``X-CSRF-Token`` unless the caller
+    passes *forward_credentials* (process and docker modes pass an app's
+    ``forward_platform_credentials``; external mode never does), and it may
+    never set a platform cookie or send :data:`PLATFORM_UNSAFE_RESPONSE_HEADERS`,
+    whatever it is granted.
 
     >>> filters = platform_proxy_filters()
     >>> filters["cookie_filter"]("enlace_session"), filters["cookie_filter"]("theme")
