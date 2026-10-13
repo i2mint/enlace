@@ -247,3 +247,18 @@ def test_the_social_login_state_cookie_is_a_platform_cookie():
     """A proxied app setting a second ``enlace_oauth_state`` would block sign-in."""
     keep = platform_cookie_filter()
     assert not keep("enlace_oauth_state")
+
+
+def test_a_repeated_request_header_is_joined_not_overwritten():
+    """RFC 9110 §5.3: two fields with one name are one comma-joined field.
+
+    Keeping only the last would let a client smuggle a second value past
+    whatever inspected the first (#60 review).
+    """
+    seen: dict = {}
+    proxy = make_proxy_app(upstream="http://127.0.0.1:9", strip_prefix="/typola")
+    _client(proxy, seen).get(
+        "/typola/x",
+        headers=[("authorization", "Bearer one"), ("authorization", "Bearer two")],
+    )
+    assert seen["authorization"] == "Bearer one, Bearer two"
