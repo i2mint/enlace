@@ -42,11 +42,11 @@ from enlace.frontend import (
 )
 from enlace.gzip_selective import SelectiveGZipMiddleware
 from enlace.manifest import (
+    MANIFEST_ERROR_KEY,
     PLATFORM_MANIFEST_NAME,
     RUNTIME_VERSION_KEY,
     DeployHeadersMiddleware,
     DeployManifest,
-    MANIFEST_ERROR_KEY,
     DeployMetaTagMiddleware,
     load_manifest,
     load_platform_manifest,

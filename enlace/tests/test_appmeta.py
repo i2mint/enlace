@@ -622,7 +622,8 @@ def test_a_metadata_edit_reports_the_live_manifest_without_a_listing(tmp_path):
     os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
 
     refresh_updated_at(app, readers)
-    assert build_launcher_item(app, cfg, {})["updated_at"] == "2026-10-14T00:00:00+00:00"
+    item = build_launcher_item(app, cfg, {})
+    assert item["updated_at"] == "2026-10-14T00:00:00+00:00"
 
 
 def test_refresh_updated_at_without_a_reader_keeps_the_stamp():
@@ -636,7 +637,7 @@ def test_refresh_updated_at_without_a_reader_keeps_the_stamp():
 
 
 def test_refresh_updated_at_keeps_a_known_date_over_a_corrupt_manifest(tmp_path):
-    """A half-written manifest degrades to a stub; that is a read error, not "no date"."""
+    """A half-written manifest degrades to a stub: a read error, not "no date"."""
     import os
 
     from enlace.compose import refresh_updated_at
