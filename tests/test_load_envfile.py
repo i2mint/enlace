@@ -15,7 +15,6 @@ had succeeded. These tests pin the new contract:
 
 import json as _json
 import os
-import sys
 from pathlib import Path
 
 import pytest

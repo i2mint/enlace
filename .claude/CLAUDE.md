@@ -47,7 +47,7 @@ const API_BASE = "/api/s_conditions";
 ### Zero coupling
 
 Apps do not import enlace. The dependency graph:
-- enlace depends on FastAPI, Uvicorn, Pydantic, argh
+- enlace depends on FastAPI, Uvicorn, Pydantic, cw (httpx and Pillow are optional extras)
 - Apps depend on their own domain libs (FastAPI, numpy, etc.)
 - There is NO dependency from apps to enlace
 
@@ -65,24 +65,29 @@ enlace/
 ├── base.py        # Pydantic models: AppConfig (mode, process fields), PlatformConfig
 ├── util.py        # Pure helpers: derive_display_name, derive_route_prefix, is_skippable
 ├── discover.py    # ConventionDiscoverer: walks apps/, reads app.toml, detects types
+├── strategies.py  # BackendStrategy registry: one strategy per mode, register_strategy for plugins
 ├── compose.py     # build_backend(): mounts ASGI sub-apps, proxy routes, static files
 ├── degraded.py    # load_or_stub(): loud-and-local 500 stub for an asgi app that fails to load
 ├── access.py      # can_see_app / is_user_allowed: the ONE visibility predicate (launcher + auth gate)
 ├── proxy.py       # Lightweight ASGI reverse proxy for process/external backends (httpx)
 ├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)
+├── frontend.py    # SPA-aware static files; HTML documents get Cache-Control: no-cache
+├── appmeta.py     # Launcher metadata (titles, descriptions, keywords, icons); app_icons.py serves icons
+├── build.py       # Declarative app.toml [build] runs (`enlace build`)
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
+├── doctor.py      # Post-deploy smoke checks against a running gateway (`enlace doctor`)
 ├── manifest.py    # DeployManifest schema + /_meta endpoint + X-Deploy-* headers
 ├── analytics.py   # Opt-in, cookie-free page-view counts: PageViewMiddleware, store, report
 ├── serve.py       # Orchestrates gateway Uvicorn + supervised process-mode children
-├── __main__.py    # CLI via argh.dispatch_commands
+├── __main__.py    # CLI: the COMMANDS list is the SSOT for verbs, dispatched by cw
 ├── __init__.py    # Public API facade
-└── tests/         # Unit tests (test_base, test_discover, test_compose, test_supervise)
+└── data/skills/   # Agent skills, shipped with the package; .claude/skills/* symlink here
 ```
 
-**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover()` →
+**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover_apps()` →
 `check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
 
-**Data flow (mixed-mode):** `discover()` → partition by `mode` →
+**Data flow (mixed-mode):** `discover_apps()` → partition by `mode` →
 gateway Uvicorn (asgi + proxy routes) + `ProcessSupervisor` (process-mode children)
 
 ### App Modes
@@ -144,6 +149,13 @@ Consult these before modifying subsystems:
 ## Testing
 
 ```bash
+pip install -e ".[dev]"            # dev extra carries httpx, pytest, Pillow
+python -m pytest --doctest-modules  # what CI runs: enlace/tests + tests + doctests
 pytest enlace/tests/     # Unit tests
 pytest tests/            # Integration tests
+ruff check . && ruff format --check .
 ```
+
+Skills: edit the real files under `enlace/data/skills/<name>/`. The entries in
+`.claude/skills/` are relative symlinks to them, and `tests/test_skills_layout.py`
+fails if one becomes a copy again.

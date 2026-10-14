@@ -10,6 +10,8 @@ description: >
   this app", or when onboarding any new app. Also triggers on: "compatibility
   check", "what needs to change", "analyze this app for enlace", or when the
   user points at an app directory and asks about integration.
+metadata:
+  audience: users
 ---
 
 # Diagnose App Compatibility with enlace

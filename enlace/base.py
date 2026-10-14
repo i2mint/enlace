@@ -29,7 +29,7 @@ import os
 import shlex
 import sys
 from pathlib import Path
-from typing import Any, Iterable, Literal, Optional
+from typing import Any, Iterable, Literal, Optional, Union
 
 from pydantic import (
     BaseModel,
@@ -491,7 +491,9 @@ class PlatformConfig(BaseModel):
         return list(self.apps_dirs) + list(self.app_dirs)
 
     @classmethod
-    def from_toml(cls, path: Path = Path("platform.toml")) -> "PlatformConfig":
+    def from_toml(
+        cls, path: Union[str, Path] = Path("platform.toml")
+    ) -> "PlatformConfig":
         """Load configuration from a TOML file, falling back to defaults.
 
         Relative ``apps_dirs`` / ``app_dirs`` / ``shared_assets_dir`` entries
@@ -514,9 +516,10 @@ class PlatformConfig(BaseModel):
         tables for other tools.
 
         Args:
-            path: Path to platform.toml. If the file doesn't exist, returns
-                  a PlatformConfig with all default values.
+            path: Path to platform.toml (a ``str`` or ``Path``). If the file
+                  doesn't exist, returns a PlatformConfig with all default values.
         """
+        path = Path(path)
         if not path.exists():
             data = {}
         else:

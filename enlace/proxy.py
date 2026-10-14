@@ -331,10 +331,12 @@ class _HttpxProxy:
         return self._client
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
+        if scope["type"] == "websocket":
             # WebSocket proxying deferred to a future release
-            await _send_error(send, 501, b"WebSocket proxying not yet supported")
+            await _refuse_websocket(scope, receive, send)
             return
+        if scope["type"] != "http":
+            return  # e.g. lifespan: the proxy has no startup or shutdown work
 
         client = await self._get_client()
 
@@ -436,6 +438,25 @@ class _HttpxProxy:
             )
         finally:
             await response.aclose()
+
+
+#: Close code for a refused websocket: "unexpected condition" (RFC 6455
+#: §7.4.1), as the degraded-app stub uses. Before accept, servers turn any
+#: close into an HTTP 403 for the client.
+_WS_REFUSED_CLOSE_CODE = 1011
+
+
+async def _refuse_websocket(scope, receive, send) -> None:
+    """Refuse a websocket handshake with a ``websocket.close`` before accept.
+
+    An ``http.response.*`` message on a websocket scope breaks the ASGI
+    protocol and is logged as a server error (enlace#61). A denial response
+    (the ``websocket.http.response`` extension) would carry a 501, but
+    uvicorn's default websocket implementation logs "returned without
+    completing handshake" after one, so a plain close it is.
+    """
+    await receive()  # websocket.connect
+    await send({"type": "websocket.close", "code": _WS_REFUSED_CLOSE_CODE})
 
 
 async def _send_error(send, status: int, body: bytes) -> None:
