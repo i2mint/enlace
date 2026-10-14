@@ -10,6 +10,18 @@ readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["web", "platform", "fastapi", "asgi", "multi-app", "composition"]
 authors = [{ name = "Thor Whalen" }]
+classifiers = [
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: Proxy Servers",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+]
 dependencies = [
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.23.0",
@@ -22,6 +34,8 @@ text = "Apache-2.0"
 
 [project.urls]
 Homepage = "https://github.com/i2mint/enlace"
+Repository = "https://github.com/i2mint/enlace"
+Issues = "https://github.com/i2mint/enlace/issues"
 
 [project.scripts]
 enlace = "enlace.__main__:main"
@@ -39,7 +53,10 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["enlace/tests", "tests"]
+# The package dir, not just enlace/tests: wads CI runs `pytest --doctest-modules`
+# with no path, so testpaths decides collection. Pointing at enlace/tests alone
+# silently skipped every doctest in the package's own modules.
+testpaths = ["enlace", "tests"]
 
 [tool.ruff]
 line-length = 88
