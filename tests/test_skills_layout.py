@@ -20,7 +20,8 @@ CLAUDE_SKILLS = REPO / ".claude" / "skills"
 PACKAGED = sorted(p.parent.name for p in skills_dir().glob("*/SKILL.md"))
 
 pytestmark = pytest.mark.skipif(
-    not CLAUDE_SKILLS.is_dir(), reason="not a source checkout (no .claude/skills)"
+    not (CLAUDE_SKILLS.is_dir() and (REPO / ".git").exists()),
+    reason="not a git checkout (an sdist carries no .claude/skills)",
 )
 
 

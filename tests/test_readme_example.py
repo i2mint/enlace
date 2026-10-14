@@ -9,6 +9,7 @@ from __future__ import annotations
 import contextlib
 import io
 import re
+import tempfile
 from pathlib import Path
 
 README = Path(__file__).resolve().parents[1] / "README.md"
@@ -23,7 +24,13 @@ def _example_block() -> str:
     return m.group(1)
 
 
-def test_readme_minimal_example_runs_and_prints_its_expected_output():
+def test_readme_minimal_example_runs_and_prints_its_expected_output(
+    tmp_path, monkeypatch
+):
+    # Env vars override platform.toml by design; the example assumes none set.
+    for var in ("ENLACE_APPS_DIRS", "ENLACE_APP_DIRS", "ENLACE_APPS_DIR"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))  # mkdtemp lands here
     code = _example_block()
     expected = code.rstrip().splitlines()[-1]
     assert expected.startswith("# "), "last line must be '# <expected output>'"

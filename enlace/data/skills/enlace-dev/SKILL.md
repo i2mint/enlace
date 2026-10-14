@@ -80,10 +80,10 @@ enlace/
 └── tests/         # Unit tests (one test_<module>.py per area)
 ```
 
-**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover()` →
+**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover_apps()` →
 `check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
 
-**Data flow (mixed-mode):** `discover()` → partition by `mode` →
+**Data flow (mixed-mode):** `discover_apps()` → partition by `mode` →
 gateway Uvicorn (asgi + proxy) + `ProcessSupervisor` (process children)
 
 ## Critical Rules

@@ -8,7 +8,7 @@ enlace serves all your web apps from one gateway: it discovers them by conventio
 
 ### Skills
 
-enlace ships three agent skills. The real files live in [`enlace/data/skills/`](enlace/data/skills), so they come with `pip install enlace` and `gh skill` finds them in this repo.
+enlace ships three agent skills. The real files live in [`enlace/data/skills/`](enlace/data/skills), so they come with `pip install enlace`, and `gh skill` (which looks for any `skills/*/SKILL.md` in a repo) can install them from GitHub.
 
 | Skill | Audience | What it does | Trigger phrases |
 |-------|----------|--------------|-----------------|
@@ -19,7 +19,7 @@ enlace ships three agent skills. The real files live in [`enlace/data/skills/`](
 Enable them in one of these ways:
 
 ```bash
-# Cross-agent and versioned, with a gh that has the `skill` command:
+# Cross-agent and versioned, with a GitHub CLI that has `gh skill`:
 gh skill install i2mint/enlace enlace
 
 # From the installed package (offline). Links into ~/.claude/skills by default;

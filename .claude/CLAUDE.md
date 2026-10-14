@@ -84,10 +84,10 @@ enlace/
 └── data/skills/   # Agent skills, shipped with the package; .claude/skills/* symlink here
 ```
 
-**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover()` →
+**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover_apps()` →
 `check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
 
-**Data flow (mixed-mode):** `discover()` → partition by `mode` →
+**Data flow (mixed-mode):** `discover_apps()` → partition by `mode` →
 gateway Uvicorn (asgi + proxy routes) + `ProcessSupervisor` (process-mode children)
 
 ### App Modes
