@@ -272,12 +272,15 @@
 <p>Builds a single FastAPI application by mounting discovered sub-apps and applying
 cross-cutting middleware. Handles lifespan cascading to mounted sub-apps
 (Starlette does not do this natively).</p>
-<dl class="simple">
+<dl>
 <dt>Plugins:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">build_backend</span></code> accepts a <code class="docutils literal notranslate"><span class="pre">plugins</span></code> argument — a sequence of callables
 <code class="docutils literal notranslate"><span class="pre">(parent:</span> <span class="pre">FastAPI,</span> <span class="pre">config:</span> <span class="pre">PlatformConfig)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> invoked once after
 sub-apps are mounted. <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code> is the canonical example:
 when installed, it adds auth, sessions, the admin dashboard, and per-user
 stores. enlace itself is auth-agnostic.</p>
+<p><code class="docutils literal notranslate"><span class="pre">build_backend</span></code> publishes <code class="docutils literal notranslate"><span class="pre">parent.state.app_manifest_readers</span></code> (one live
+manifest reader per app) for plugins that build launcher items themselves;
+pass it to <code class="docutils literal notranslate"><span class="pre">refresh_updated_at</span></code> first.</p>
 </dd>
 </dl>
 <p class="rubric">Functions</p>
@@ -292,6 +295,9 @@ stores. enlace itself is auth-agnostic.</p>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.compose.create_app" title="enlace.compose.create_app"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_app</span></code></a>()</p></td>
 <td><p>App factory for Uvicorn's --factory flag.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.compose.refresh_updated_at" title="enlace.compose.refresh_updated_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refresh_updated_at</span></code></a>(app, readers)</p></td>
+<td><p>Re-stamp <code class="docutils literal notranslate"><span class="pre">app.updated_at</span></code> from its live manifest reader, if it has one.</p></td>
 </tr>
 </tbody>
 </table>
@@ -394,6 +400,26 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.compose.refresh_updated_at">
+<span class="sig-prename descclassname"><span class="pre">enlace.compose.</span></span><span class="sig-name descname"><span class="pre">refresh_updated_at</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/compose.html#refresh_updated_at"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.compose.refresh_updated_at" title="Link to this definition">¶</a></dt>
+<dd><p>Re-stamp <code class="docutils literal notranslate"><span class="pre">app.updated_at</span></code> from its live manifest reader, if it has one.</p>
+<p><em>readers</em> maps app names to objects with a <code class="docutils literal notranslate"><span class="pre">current()</span> <span class="pre">-&gt;</span> <span class="pre">DeployManifest</span></code>
+method: <code class="docutils literal notranslate"><span class="pre">parent.state.app_manifest_readers</span></code>, which <code class="docutils literal notranslate"><span class="pre">build_backend</span></code> sets
+(one mtime-cached reader per app manifest). <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/_apps</span></code> calls this for
+each listed app; a plugin that builds a launcher item itself (the
+<code class="docutils literal notranslate"><span class="pre">enlace_auth</span></code> metadata edit) calls it first, so its item carries the date
+in the file, not the date the last listing stamped (#87). An app without a
+reader, or no readers at all, keeps its current stamp, and so does one whose
+manifest cannot be read right now (corrupt or half-written): a known date is
+not replaced by “unknown” over a read error.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
         </article>
@@ -452,6 +478,7 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
 <li><a class="reference internal" href="#enlace.compose.build_backend"><code class="docutils literal notranslate"><span class="pre">build_backend()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.compose.build_launcher_item"><code class="docutils literal notranslate"><span class="pre">build_launcher_item()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.compose.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.compose.refresh_updated_at"><code class="docutils literal notranslate"><span class="pre">refresh_updated_at()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -463,7 +490,7 @@ list of <code class="docutils literal notranslate"><span class="pre">module:attr
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=a7cecc57"></script>
+</div><script src="../_static/documentation_options.js?v=877f56bc"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

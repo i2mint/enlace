@@ -12,6 +12,10 @@ Plugins:
   sub-apps are mounted. `enlace_auth.plugin` is the canonical example:
   when installed, it adds auth, sessions, the admin dashboard, and per-user
   stores. enlace itself is auth-agnostic.
+  <br/>
+  `build_backend` publishes `parent.state.app_manifest_readers` (one live
+  manifest reader per app) for plugins that build launcher items themselves;
+  pass it to `refresh_updated_at` first.
 
 ### Functions
 
@@ -19,6 +23,7 @@ Plugins:
 |----------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | [`build_launcher_item`](#enlace.compose.build_launcher_item)(app, config, overlay)   | Build one `/_apps` item: resolved metadata + launchability, for an app. |
 | [`create_app`](#enlace.compose.create_app)()                                | App factory for Uvicorn's --factory flag.                               |
+| [`refresh_updated_at`](#enlace.compose.refresh_updated_at)(app, readers)            | Re-stamp `app.updated_at` from its live manifest reader, if it has one. |
 
 ### Exceptions
 
@@ -104,3 +109,20 @@ Each resolved object must be a callable
 
 * **Return type:**
   `FastAPI`
+
+### enlace.compose.refresh_updated_at(app, readers)
+
+Re-stamp `app.updated_at` from its live manifest reader, if it has one.
+
+*readers* maps app names to objects with a `current() -> DeployManifest`
+method: `parent.state.app_manifest_readers`, which `build_backend` sets
+(one mtime-cached reader per app manifest). `GET /_apps` calls this for
+each listed app; a plugin that builds a launcher item itself (the
+`enlace_auth` metadata edit) calls it first, so its item carries the date
+in the file, not the date the last listing stamped (#87). An app without a
+reader, or no readers at all, keeps its current stamp, and so does one whose
+manifest cannot be read right now (corrupt or half-written): a known date is
+not replaced by “unknown” over a read error.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)

@@ -11,6 +11,7 @@ enlace.compose
       build_backend
       build_launcher_item
       create_app
+      refresh_updated_at
    
    .. rubric:: Exceptions
 

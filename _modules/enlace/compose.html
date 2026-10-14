@@ -270,6 +270,10 @@
 <span class="sd">    sub-apps are mounted. ``enlace_auth.plugin`` is the canonical example:</span>
 <span class="sd">    when installed, it adds auth, sessions, the admin dashboard, and per-user</span>
 <span class="sd">    stores. enlace itself is auth-agnostic.</span>
+
+<span class="sd">    ``build_backend`` publishes ``parent.state.app_manifest_readers`` (one live</span>
+<span class="sd">    manifest reader per app) for plugins that build launcher items themselves;</span>
+<span class="sd">    pass it to ``refresh_updated_at`` first.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
@@ -282,7 +286,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">asynccontextmanager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">HTMLResponse</span><span class="p">,</span> <span class="n">RedirectResponse</span><span class="p">,</span> <span class="n">Response</span>
@@ -298,6 +302,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.gzip_selective</span><span class="w"> </span><span class="kn">import</span> <span class="n">SelectiveGZipMiddleware</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MANIFEST_ERROR_KEY</span><span class="p">,</span>
     <span class="n">PLATFORM_MANIFEST_NAME</span><span class="p">,</span>
     <span class="n">RUNTIME_VERSION_KEY</span><span class="p">,</span>
     <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
@@ -467,6 +472,12 @@
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="p">}</span>
+
+    <span class="c1"># Published for plugins that build launcher items themselves (enlace_auth's</span>
+    <span class="c1"># metadata edit), so they re-stamp ``updated_at`` from the live manifest</span>
+    <span class="c1"># rather than from whatever the last GET /_apps left (#87). See</span>
+    <span class="c1"># ``refresh_updated_at``.</span>
+    <span class="n">parent</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">app_manifest_readers</span> <span class="o">=</span> <span class="n">app_metas</span>
 
     <span class="c1"># JSON listing is always on (cheap, useful for frontends even when the</span>
     <span class="c1"># HTML index_page is disabled).</span>
@@ -901,6 +912,31 @@
     <span class="k">return</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">committed_at</span> <span class="ow">or</span> <span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span>
 
 
+<div class="viewcode-block" id="refresh_updated_at">
+<a class="viewcode-back" href="../../_autosummary/enlace.compose.html#enlace.refresh_updated_at">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">refresh_updated_at</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">readers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Re-stamp ``app.updated_at`` from its live manifest reader, if it has one.</span>
+
+<span class="sd">    *readers* maps app names to objects with a ``current() -&gt; DeployManifest``</span>
+<span class="sd">    method: ``parent.state.app_manifest_readers``, which ``build_backend`` sets</span>
+<span class="sd">    (one mtime-cached reader per app manifest). ``GET /_apps`` calls this for</span>
+<span class="sd">    each listed app; a plugin that builds a launcher item itself (the</span>
+<span class="sd">    ``enlace_auth`` metadata edit) calls it first, so its item carries the date</span>
+<span class="sd">    in the file, not the date the last listing stamped (#87). An app without a</span>
+<span class="sd">    reader, or no readers at all, keeps its current stamp, and so does one whose</span>
+<span class="sd">    manifest cannot be read right now (corrupt or half-written): a known date is</span>
+<span class="sd">    not replaced by "unknown" over a read error.</span>
+<span class="sd">    """</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">(</span><span class="n">readers</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">MANIFEST_ERROR_KEY</span> <span class="ow">in</span> <span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">extra</span> <span class="ow">or</span> <span class="p">{}):</span>
+        <span class="k">return</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span> <span class="o">=</span> <span class="n">_updated_at</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_can_access</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Whether the caller of ``request`` may see ``app`` in /_apps.</span>
 
@@ -1076,9 +1112,7 @@
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
                 <span class="k">continue</span>
-            <span class="n">meta</span> <span class="o">=</span> <span class="n">app_metas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span> <span class="o">=</span> <span class="n">_updated_at</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">current</span><span class="p">())</span>
+            <span class="n">refresh_updated_at</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">app_metas</span><span class="p">)</span>
             <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">build_launcher_item</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
             <span class="p">)</span>
@@ -1429,7 +1463,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=a7cecc57"></script>
+</div><script src="../../_static/documentation_options.js?v=877f56bc"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
