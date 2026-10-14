@@ -10,6 +10,10 @@ Plugins:
     sub-apps are mounted. ``enlace_auth.plugin`` is the canonical example:
     when installed, it adds auth, sessions, the admin dashboard, and per-user
     stores. enlace itself is auth-agnostic.
+
+    ``build_backend`` publishes ``parent.state.app_manifest_readers`` (one live
+    manifest reader per app) for plugins that build launcher items themselves;
+    pass it to ``refresh_updated_at`` first.
 """
 
 import contextlib
@@ -22,7 +26,7 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, MutableMapping, Optional, Sequence
+from typing import Any, Callable, Mapping, MutableMapping, Optional, Sequence
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -38,6 +42,7 @@ from enlace.frontend import (
 )
 from enlace.gzip_selective import SelectiveGZipMiddleware
 from enlace.manifest import (
+    MANIFEST_ERROR_KEY,
     PLATFORM_MANIFEST_NAME,
     RUNTIME_VERSION_KEY,
     DeployHeadersMiddleware,
@@ -202,6 +207,12 @@ def build_backend(
         )
         for name, manifest in per_app_manifests.items()
     }
+
+    # Published for plugins that build launcher items themselves (enlace_auth's
+    # metadata edit), so they re-stamp ``updated_at`` from the live manifest
+    # rather than from whatever the last GET /_apps left (#87). See
+    # ``refresh_updated_at``.
+    parent.state.app_manifest_readers = app_metas
 
     # JSON listing is always on (cheap, useful for frontends even when the
     # HTML index_page is disabled).
@@ -635,6 +646,28 @@ def _updated_at(manifest: DeployManifest) -> Optional[str]:
     return manifest.app_source.committed_at or manifest.deployed_at
 
 
+def refresh_updated_at(app: AppConfig, readers: Optional[Mapping[str, Any]]) -> None:
+    """Re-stamp ``app.updated_at`` from its live manifest reader, if it has one.
+
+    *readers* maps app names to objects with a ``current() -> DeployManifest``
+    method: ``parent.state.app_manifest_readers``, which ``build_backend`` sets
+    (one mtime-cached reader per app manifest). ``GET /_apps`` calls this for
+    each listed app; a plugin that builds a launcher item itself (the
+    ``enlace_auth`` metadata edit) calls it first, so its item carries the date
+    in the file, not the date the last listing stamped (#87). An app without a
+    reader, or no readers at all, keeps its current stamp, and so does one whose
+    manifest cannot be read right now (corrupt or half-written): a known date is
+    not replaced by "unknown" over a read error.
+    """
+    meta = (readers or {}).get(app.name)
+    if meta is None:
+        return
+    manifest = meta.current()
+    if MANIFEST_ERROR_KEY in (manifest.extra or {}):
+        return
+    app.updated_at = _updated_at(manifest)
+
+
 def _can_access(app: AppConfig, request: Request) -> bool:
     """Whether the caller of ``request`` may see ``app`` in /_apps.
 
@@ -807,9 +840,7 @@ def _add_apps_listing_route(
                 continue
             if not _can_access(app, request):
                 continue
-            meta = app_metas.get(app.name)
-            if meta is not None:
-                app.updated_at = _updated_at(meta.current())
+            refresh_updated_at(app, app_metas)
             items.append(
                 build_launcher_item(app, config, _overlay_entry(request, app.name))
             )
