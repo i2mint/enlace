@@ -7,6 +7,8 @@ description: >
   structures, platform.toml/app.toml files, multi-app ASGI composition, process
   supervision, or when the user mentions enlace, app discovery, app mounting, or
   personal app platform.
+metadata:
+  audience: users
 ---
 
 # enlace — Multi-App Platform

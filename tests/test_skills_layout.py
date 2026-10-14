@@ -54,6 +54,7 @@ def test_skill_frontmatter_is_spec_valid(name):
     front = m.group(1)
     assert re.search(rf"^name: {re.escape(name)}$", front, re.M), "name == folder"
     assert re.fullmatch(r"[a-z0-9-]+", name)
-    desc = front.split("description:", 1)[1]
-    desc = " ".join(line.strip() for line in desc.splitlines() if line.strip() != ">")
+    desc = re.search(r"^description:(.*?)(?=^\S|\Z)", front, re.M | re.S).group(1)
+    desc = " ".join(w for w in desc.split() if w != ">")
     assert 0 < len(desc) <= 1024, len(desc)
+    assert not re.search(r"^audience:", front, re.M), "audience goes under metadata:"

@@ -7,6 +7,8 @@ description: >
   on: editing enlace source files (base.py, discover.py, compose.py, serve.py,
   supervise.py, proxy.py, strategies.py, degraded.py), implementing spec phases
   2-4, or when the user says "add X to enlace" or "implement Y in enlace".
+metadata:
+  audience: developers
 ---
 
 # Developing enlace
