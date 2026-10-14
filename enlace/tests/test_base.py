@@ -334,3 +334,15 @@ def test_unknown_tables_survive_model_copy(tmp_path):
 
 def test_config_built_in_code_has_no_unknown_tables():
     assert PlatformConfig().unknown_tables == []
+
+
+def test_from_toml_accepts_a_str_path(tmp_path, monkeypatch):
+    """A plain string works like a Path, as the spec documents (enlace#90)."""
+    (tmp_path / "papp").mkdir()
+    toml = _write_toml(tmp_path / "cfg" / "platform.toml", 'apps_dirs = ["../papp"]\n')
+    monkeypatch.chdir(tmp_path / "papp")
+
+    config = PlatformConfig.from_toml(str(toml))
+
+    assert config.apps_dirs == [(tmp_path / "papp").resolve()]
+    assert PlatformConfig.from_toml(str(tmp_path / "missing.toml")).apps_dirs
