@@ -633,3 +633,22 @@ def test_refresh_updated_at_without_a_reader_keeps_the_stamp():
     refresh_updated_at(app, None)
     refresh_updated_at(app, {})
     assert app.updated_at == "2026-01-01T00:00:00+00:00"
+
+
+def test_refresh_updated_at_keeps_a_known_date_over_a_corrupt_manifest(tmp_path):
+    """A half-written manifest degrades to a stub; that is a read error, not "no date"."""
+    import os
+
+    from enlace.compose import refresh_updated_at
+
+    manifests = tmp_path / "manifests"
+    _write_manifest(manifests, "pubapp", committed_at="2026-04-28T12:16:50+02:00")
+    app = _make_public_app()
+    backend = build_backend(PlatformConfig(apps=[app], manifest_dir=manifests))
+    path = manifests / "pubapp.json"
+    path.write_text("{ not json")
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+
+    refresh_updated_at(app, backend.state.app_manifest_readers)
+    assert app.updated_at == "2026-04-28T12:16:50+02:00"
