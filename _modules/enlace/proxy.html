@@ -603,10 +603,12 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http"</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"websocket"</span><span class="p">:</span>
             <span class="c1"># WebSocket proxying deferred to a future release</span>
-            <span class="k">await</span> <span class="n">_send_error</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="mi">501</span><span class="p">,</span> <span class="sa">b</span><span class="s2">"WebSocket proxying not yet supported"</span><span class="p">)</span>
+            <span class="k">await</span> <span class="n">_refuse_websocket</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span>
             <span class="k">return</span>
+        <span class="k">if</span> <span class="n">scope</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"http"</span><span class="p">:</span>
+            <span class="k">return</span>  <span class="c1"># e.g. lifespan: the proxy has no startup or shutdown work</span>
 
         <span class="n">client</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_client</span><span class="p">()</span>
 
@@ -710,6 +712,25 @@
             <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">aclose</span><span class="p">()</span>
 
 
+<span class="c1">#: Close code for a refused websocket: "unexpected condition" (RFC 6455</span>
+<span class="c1">#: §7.4.1), as the degraded-app stub uses. Before accept, servers turn any</span>
+<span class="c1">#: close into an HTTP 403 for the client.</span>
+<span class="n">_WS_REFUSED_CLOSE_CODE</span> <span class="o">=</span> <span class="mi">1011</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_refuse_websocket</span><span class="p">(</span><span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Refuse a websocket handshake with a ``websocket.close`` before accept.</span>
+
+<span class="sd">    An ``http.response.*`` message on a websocket scope breaks the ASGI</span>
+<span class="sd">    protocol and is logged as a server error (enlace#61). A denial response</span>
+<span class="sd">    (the ``websocket.http.response`` extension) would carry a 501, but</span>
+<span class="sd">    uvicorn's default websocket implementation logs "returned without</span>
+<span class="sd">    completing handshake" after one, so a plain close it is.</span>
+<span class="sd">    """</span>
+    <span class="k">await</span> <span class="n">receive</span><span class="p">()</span>  <span class="c1"># websocket.connect</span>
+    <span class="k">await</span> <span class="n">send</span><span class="p">({</span><span class="s2">"type"</span><span class="p">:</span> <span class="s2">"websocket.close"</span><span class="p">,</span> <span class="s2">"code"</span><span class="p">:</span> <span class="n">_WS_REFUSED_CLOSE_CODE</span><span class="p">})</span>
+
+
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_send_error</span><span class="p">(</span><span class="n">send</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Send a simple error response."""</span>
     <span class="k">await</span> <span class="n">send</span><span class="p">(</span>
@@ -754,7 +775,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=877f56bc"></script>
+</div><script src="../../_static/documentation_options.js?v=2e3f22da"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -277,7 +277,7 @@ machine-readable copies of this documentation.</p>
 <p>Skills are folders holding a <code class="docutils literal notranslate"><span class="pre">SKILL.md</span></code> (the <a class="reference external" href="https://agentskills.io">Agent Skills</a> format): a description that tells an agent when to use it and a body with the procedure. Install one into your agent with <code class="docutils literal notranslate"><span class="pre">gh</span> <span class="pre">skill</span></code> (any host: <code class="docutils literal notranslate"><span class="pre">--agent</span> <span class="pre">claude-code</span></code>, <code class="docutils literal notranslate"><span class="pre">copilot</span></code>, <code class="docutils literal notranslate"><span class="pre">cursor</span></code>, <code class="docutils literal notranslate"><span class="pre">codex</span></code>, <code class="docutils literal notranslate"><span class="pre">gemini</span></code>), or use the copy bundled in the wheel.</p>
 <section id="enlace">
 <h3><code class="docutils literal notranslate"><span class="pre">enlace</span></code><a class="headerlink" href="#enlace" title="Link to this heading">¶</a></h3>
-<p>Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, or when the user mentions enlace, app discovery, app mounting, or personal app platform.</p>
+<p>Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, process supervision, or when the user mentions enlace, app discovery, app mounting, or personal app platform.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gh<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>i2mint/enlace<span class="w"> </span>enlace<span class="w"> </span>--agent<span class="w"> </span>claude-code
 </pre></div>
 </div>
@@ -285,7 +285,7 @@ machine-readable copies of this documentation.</p>
 </section>
 <section id="enlace-dev">
 <h3><code class="docutils literal notranslate"><span class="pre">enlace-dev</span></code><a class="headerlink" href="#enlace-dev" title="Link to this heading">¶</a></h3>
-<p>Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, auth.py, stores.py), implementing spec phases 2-4, or when the user says “add X to enlace” or “implement Y in enlace”.</p>
+<p>Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, process supervision, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, supervise.py, proxy.py, strategies.py, degraded.py), implementing spec phases 2-4, or when the user says “add X to enlace” or “implement Y in enlace”.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gh<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>i2mint/enlace<span class="w"> </span>enlace-dev<span class="w"> </span>--agent<span class="w"> </span>claude-code
 </pre></div>
 </div>
@@ -298,21 +298,6 @@ machine-readable copies of this documentation.</p>
 </pre></div>
 </div>
 <p>Source: <a class="reference external" href="https://github.com/i2mint/enlace/tree/HEAD/enlace/data/skills/enlace-diagnose"><code class="docutils literal notranslate"><span class="pre">enlace/data/skills/enlace-diagnose</span></code></a> (bundled with the pip package).</p>
-</section>
-<section id="id1">
-<h3><code class="docutils literal notranslate"><span class="pre">enlace</span></code><a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
-<p>Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, process supervision, or when the user mentions enlace, app discovery, app mounting, or personal app platform.</p>
-<p>Source: <a class="reference external" href="https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace"><code class="docutils literal notranslate"><span class="pre">.claude/skills/enlace</span></code></a>.</p>
-</section>
-<section id="id2">
-<h3><code class="docutils literal notranslate"><span class="pre">enlace-dev</span></code><a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
-<p>Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, process supervision, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, supervise.py, proxy.py, auth.py, stores.py), implementing spec phases 2-4, or when the user says “add X to enlace” or “implement Y in enlace”.</p>
-<p>Source: <a class="reference external" href="https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace-dev"><code class="docutils literal notranslate"><span class="pre">.claude/skills/enlace-dev</span></code></a>.</p>
-</section>
-<section id="id3">
-<h3><code class="docutils literal notranslate"><span class="pre">enlace-diagnose</span></code><a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
-<p>Diagnose whether an app can be “enlaced” (mounted under the enlace multi-app platform). Identifies hardcoded URLs, CORS issues, SSR requirements, missing entry points, and other compatibility blockers. Produces a report with severity levels and actionable fix suggestions that preserve the app’s ability to run standalone. Use when the user wants to bring an existing app into enlace, asks “can this app be enlaced?”, “why won’t my app work with enlace?”, “diagnose this app”, or when onboarding any new app. Also triggers on: “compatibility check”, “what needs to change”, “analyze this app for enlace”, or when the user points at an app directory and asks about integration.</p>
-<p>Source: <a class="reference external" href="https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace-diagnose"><code class="docutils literal notranslate"><span class="pre">.claude/skills/enlace-diagnose</span></code></a>.</p>
 <p>The bundled skills are also on disk after <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">enlace</span></code>, under the package’s <code class="docutils literal notranslate"><span class="pre">data/skills/</span></code> directory; link them into an agent without network access with <code class="docutils literal notranslate"><span class="pre">skill</span> <span class="pre">link-skills</span> <span class="pre">&lt;that</span> <span class="pre">directory&gt;</span></code>.</p>
 </section>
 </section>
@@ -383,9 +368,6 @@ machine-readable copies of this documentation.</p>
 <li><a class="reference internal" href="#enlace"><code class="docutils literal notranslate"><span class="pre">enlace</span></code></a></li>
 <li><a class="reference internal" href="#enlace-dev"><code class="docutils literal notranslate"><span class="pre">enlace-dev</span></code></a></li>
 <li><a class="reference internal" href="#enlace-diagnose"><code class="docutils literal notranslate"><span class="pre">enlace-diagnose</span></code></a></li>
-<li><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">enlace</span></code></a></li>
-<li><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">enlace-dev</span></code></a></li>
-<li><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">enlace-diagnose</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#instruction-files">Instruction files</a></li>
@@ -401,7 +383,7 @@ machine-readable copies of this documentation.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=877f56bc"></script>
+</div><script src="_static/documentation_options.js?v=2e3f22da"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

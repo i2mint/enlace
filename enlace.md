@@ -1,4 +1,4 @@
-> built 2026-10-14 01:56 UTC from 9efdcf2 (main) · enlace 0.1.56. Details: build_info.json
+> built 2026-10-14 21:46 UTC from c09076c (main) · enlace 0.1.57. Details: build_info.json
 
 # index.html.md
 
@@ -6,120 +6,89 @@
 
 # enlace
 
-Serve all your web apps from a single command.
-They don’t import it. They don’t know it’s there.
+enlace serves all your web apps from one gateway: it discovers them by convention in a directory, mounts Python ASGI apps in-process, runs Node/Go/anything else as supervised child processes behind a reverse proxy, and serves static sites and external services under the same domain. Your apps don’t import it, don’t know it’s there, and keep working standalone.
 
-Tired of launching a separate server for each app? Register your
-apps with `enlace` — point it at where they live — and serve them
-all with one command. Python ASGI apps get mounted in-process.
-Non-Python apps (Node.js, Go, etc.) get spawned as supervised
-child processes and routed via reverse proxy. External services
-and static sites work too. Your apps stay independent — no code
-changes, no shared dependencies.
-For more details, see the [Philosophy]() section.
+🦖 Writing code by hand? Skip to [For developers with opposable thumbs]().
 
-## Quick start
+## For AI agents
 
-The quickest way to start is to use enlace via AI.
-That’s what we’ll demo here.
-For those who want to work in the CLI or Python directly, see the later [Under the hood]() section.
+### Skills
 
-### Install
+enlace ships three agent skills. The real files live in [`enlace/data/skills/`](), so they come with `pip install enlace`, and `gh skill` (which looks for any `skills/*/SKILL.md` in a repo) can install them from GitHub.
+
+| Skill               | Audience   | What it does                                                                               | Trigger phrases                                                      |
+|---------------------|------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| **enlace**          | users      | Create apps, configure `platform.toml`/`app.toml`, understand conventions and modes, serve | “add an app”, “serve my apps”, “configure enlace”                    |
+| **enlace-diagnose** | users      | Analyze an app for compatibility and suggest fixes that preserve standalone operation      | “can this be enlaced?”, “diagnose this app”, “what needs to change?” |
+| **enlace-dev**      | developers | Modify the enlace package itself: features, bugs, middleware, process supervision          | “add X to enlace”, “implement Y in enlace”                           |
+
+Enable them in one of these ways:
 
 ```bash
-pip install enlace
-```
+# Cross-agent and versioned, with a GitHub CLI that has `gh skill`:
+gh skill install i2mint/enlace enlace
 
-Skills are bundled with the package. To make them available to Claude Code:
+# From the installed package (offline). Links into ~/.claude/skills by default;
+# pass --target .claude/skills to link into the current project instead.
+pip install enlace skill
+skill link-skills "$(python -c 'from enlace import skills_dir; print(skills_dir())')"
 
-```bash
-# Link enlace's skills into your project (or globally)
-skill link-skills "$(python -c 'import enlace; print(enlace.__path__[0])')"
-
-# Or symlink manually
+# Or symlink by hand into a project:
+mkdir -p .claude/skills
 ln -s "$(python -c 'from enlace import skills_dir; print(skills_dir())')"/* .claude/skills/
 ```
 
-### Using `enlace` with an AI agent
+Working on enlace itself? Read [`.claude/CLAUDE.md`]() first: it holds the two core principles, the architecture, and the critical rules (pure ASGI middleware only, loud-and-local load failures, CORS on the parent only). In a checkout, `.claude/skills/` already links to the three skills.
 
-`enlace` ships with AI agent skills that let Claude Code (or any compatible
-agent) handle the entire workflow through natural language:
+### What an agent can do with enlace
+
+Ask in plain language:
 
 ```default
 "Add my_app to the platform"
 "Can my_app be enlaced?"
 "Diagnose /path/to/my_app and fix what you can"
 "List my apps"
-"List the apps configurations"
 "Serve all my apps"
 ```
 
-### Available skills
+- **Onboarding an existing app.** The agent runs `enlace diagnose`, reads the report, and presents findings in three tiers: enlace-side fixes (no app changes), app changes that preserve standalone operation, and warnings. It proposes specific code changes and applies them with your approval.
+- **Creating a new app.** The agent scaffolds the directory, writes `server.py` with a FastAPI app, optionally creates `frontend/index.html`, registers it in `platform.toml`, runs `enlace check`, and starts serving.
+- **Day-to-day operations.** The agent runs `enlace serve`, `enlace check`, `enlace show-config` and `enlace doctor`, interprets the output, and explains what’s happening.
 
-| Skill               | What it does                                                                       | Trigger phrases                                                      |
-|---------------------|------------------------------------------------------------------------------------|----------------------------------------------------------------------|
-| **enlace**          | Create apps, configure platform.toml, understand conventions, serve                | “add an app”, “serve my apps”, “configure enlace”                    |
-| **enlace-diagnose** | Analyze an app for compatibility, suggest fixes that preserve standalone operation | “can this be enlaced?”, “diagnose this app”, “what needs to change?” |
-| **enlace-dev**      | Modify the enlace package itself — add features, fix bugs, extend middleware       | “add X to enlace”, “implement Y in enlace”                           |
+### A minimal runnable example
 
-### What the AI does for you
+Discover an app, check it, and call it through the gateway, all in-process (`pip install "enlace[dev]"` provides the test client’s `httpx`):
 
-**Onboarding an existing app:**
-The agent runs `enlace diagnose`, reads the report, and presents findings in
-three tiers: `enlace`-side fixes (no app changes), app changes that preserve
-standalone, and warnings. It proposes specific code changes and applies them
-with your approval.
+<!-- tested by tests/test_readme_example.py: keep this block self-contained -->
+```python
+import tempfile
+from pathlib import Path
 
-**Creating a new app:**
-The agent scaffolds the directory structure, writes `server.py` with a FastAPI
-app, optionally creates `frontend/index.html`, registers it in `platform.toml`,
-runs `enlace check`, and starts serving.
+from starlette.testclient import TestClient
 
-**Day-to-day operations:**
-The agent runs `enlace serve`, `enlace check`, `enlace show-config` as needed,
-interprets the output, and explains what’s happening.
+from enlace import PlatformConfig, build_backend, diagnose_app, discover_apps
 
-## Philosophy
+root = Path(tempfile.mkdtemp())
+app_dir = root / "apps" / "hello"
+app_dir.mkdir(parents=True)
+(app_dir / "server.py").write_text(
+    "from fastapi import FastAPI\n"
+    "app = FastAPI()\n"
+    "@app.get('/greet')\n"
+    "def greet(name: str = 'world'):\n"
+    "    return {'message': f'Hello, {name}!'}\n"
+)
+(root / "platform.toml").write_text('[platform]\napps_dirs = ["apps"]\n')
 
-**Apps don’t depend on `enlace`.** `enlace` is an operator’s tool, not a library
-your app imports. Your app is a standard Python module with `app = FastAPI()`.
-It runs standalone with `uvicorn server:app`. `enlace` just happens to know how
-to find it, mount it at a route prefix, and serve it alongside other apps.
-(See [Zero Coupling](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#1-zero-coupling-apps-dont-import-enlace)
-for how `enlace` provides services like auth and storage without creating a
-dependency.)
-
-```default
-enlace (the platform)          your app (Python, Node, Go, ...)
-├── fastapi                    ├── fastapi (or express, gin, ...)
-├── uvicorn                    ├── pandas (or whatever you need)
-├── pydantic                   └── ... your domain libs
-├── cw
-└── httpx (optional, for proxy)
-                               ← no arrow here: your app does NOT import enlace
+assert diagnose_app(app_dir).is_enlaceable
+config = discover_apps(PlatformConfig.from_toml(root / "platform.toml"))
+client = TestClient(build_backend(config))
+print(client.get("/api/hello/greet", params={"name": "agent"}).json())
+# {'message': 'Hello, agent!'}
 ```
 
-**Two principles in tension:**
-
-1. **Apps should not need to change.** All aggregation logic lives in `enlace`.
-   When an app is hard to mount, prefer `enlace`-side config (app.toml, env vars)
-   over app code changes.
-2. **Enlaced apps must still work alone.** When changes are suggested, they
-   preserve standalone operation. The pattern: env-var with current value as
-   default — standalone uses the original, `enlace` overrides at build time.
-   (See [Standalone Preservation](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#2-standalone-preservation-enlaced-apps-must-still-work-alone)
-   for the env-var-with-default pattern and fix classification.)
-
-For the full rationale — including how these principles interact, where the
-balance sits today, and what `enlace` aspires to handle better — see the
-[Design Principles](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md) document.
-
-## Under the hood
-
-For those who want direct control, here’s the CLI, Python API, and
-configuration system that the skills use internally.
-
-### Simple FastAPI example
+## Quick start
 
 ```bash
 pip install enlace
@@ -142,14 +111,43 @@ enlace serve
 # → http://localhost:8000/api/hello/greet?name=Thor
 ```
 
+With no `platform.toml`, enlace serves the apps in `./apps`.
+
+## Philosophy
+
+**Apps don’t depend on enlace.** enlace is an operator’s tool, not a library your app imports. Your app is a standard Python module with `app = FastAPI()`. It runs standalone with `uvicorn server:app`. enlace just happens to know how to find it, mount it at a route prefix, and serve it alongside other apps. (See [Zero Coupling](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#1-zero-coupling-apps-dont-import-enlace) for how enlace provides services like auth and storage without creating a dependency.)
+
+```default
+enlace (the platform)          your app (Python, Node, Go, ...)
+├── fastapi                    ├── fastapi (or express, gin, ...)
+├── uvicorn                    ├── pandas (or whatever you need)
+├── pydantic                   └── ... your domain libs
+├── cw
+└── httpx (optional, for proxy)
+                               ← no arrow here: your app does NOT import enlace
+```
+
+**Two principles in tension:**
+
+1. **Apps should not need to change.** All aggregation logic lives in enlace. When an app is hard to mount, prefer enlace-side config (app.toml, env vars) over app code changes.
+2. **Enlaced apps must still work alone.** When changes are suggested, they preserve standalone operation. The pattern: env-var with current value as default — standalone uses the original, enlace overrides at build time. (See [Standalone Preservation](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md#2-standalone-preservation-enlaced-apps-must-still-work-alone) for the env-var-with-default pattern and fix classification.)
+
+For the full rationale — including how these principles interact, where the balance sits today, and what enlace aspires to handle better — see the [Design Principles](https://github.com/i2mint/enlace/blob/main/misc/docs/design_principles__Zero_coupling_and_standalone_preservation_in_multi_app_composition.md) document.
+
+## Under the hood
+
+The CLI, Python API, and configuration system that the skills use internally.
+
 ### CLI
 
 ```bash
-enlace serve              # Start backend (dev mode, hot reload)
-enlace show-config        # Resolved config with provenance
+enlace serve              # Start backend (dev mode, hot reload); --mode prod for 2 workers
+enlace show-config        # Resolved config with provenance (--verbose, --json)
 enlace check              # Validate config, check route conflicts
-enlace list-apps          # Table: name, route, type, access
-enlace build [app_name]   # Run declarative frontend builds (apps with a
+enlace list-apps          # Table: name, route, type, access (+ mode when mixed)
+enlace app-meta           # Launcher metadata (title, description, icon) per app
+enlace build [--app-name NAME]
+                          # Run declarative frontend builds (apps with a
                           # [build] section); explicit pre-deploy step,
                           # never builds at request time. --dry-run to preview.
 enlace diagnose <dir>     # Analyze an app for enlace compatibility
@@ -164,7 +162,7 @@ enlace analytics [--app-name kids] [--days 30] [--json]
 ### Python API
 
 ```python
-from enlace import diagnose_app, discover_apps, build_backend
+from enlace import build_backend, diagnose_app, discover_apps
 
 # Diagnose an app
 report = diagnose_app("/path/to/my_app")
@@ -172,7 +170,7 @@ print(report)  # Human-readable report
 print(report.is_enlaceable)  # True if no critical blockers
 
 # Discover and compose
-config = discover_apps()
+config = discover_apps()  # reads ./platform.toml, or defaults to ./apps
 app = build_backend(config)  # FastAPI app with all sub-apps mounted
 ```
 
@@ -206,32 +204,20 @@ apps/
 | ASGI app object | Attribute named `app`                     | `app_attr`                                       |
 | Frontend assets | `frontend/index.html`                     | `frontend_dir`                                   |
 
-Everything enlace infers is inspectable (`enlace show-config --verbose`) and
-overridable via `app.toml`, `platform.toml`, environment variables, or CLI flags.
+Everything enlace infers is inspectable (`enlace show-config --verbose`) and overridable via `app.toml`, `platform.toml`, environment variables, or CLI flags.
 
 #### When an app won’t import
 
-Discovering an `asgi`-mode app *imports* its entry module, so a missing
-dependency — or any exception raised at module scope — is a discovery failure.
-What happens next is a policy you choose:
+Discovering an `asgi`-mode app *imports* its entry module, so a missing dependency — or any exception raised at module scope — is a discovery failure. What happens next is a policy you choose:
 
 ```python
 discover_apps(config)  # raise (default)
 discover_apps(config, on_import_error="record")  # record and carry on
 ```
 
-The diagnostic verbs (`doctor`, `check`, `list-apps`, `show-config`,
-`app-meta`) record, so one broken app no longer hides the health of every other
-one — `enlace doctor --json` still exits nonzero, but now with a parseable
-`FAIL` naming the app and its exception class, on `AppConfig.import_error`.
+The diagnostic verbs (`doctor`, `check`, `list-apps`, `show-config`, `app-meta`) record, so one broken app no longer hides the health of every other one — `enlace doctor --json` still exits nonzero, but now with a parseable `FAIL` naming the app and its exception class, on `AppConfig.import_error`.
 
-The gateway (`create_app`, which gunicorn loads, and `enlace serve`) records
-too, and is **loud and local**: the broken app’s route prefix gets a 500 stub
-naming the app and the exception class, and every other app serves. A stub is
-never silent: one ERROR log line with the traceback, `degraded_apps` in
-`/_meta`, `degraded: true` (and not launchable) in `/_apps`, and a `FAIL` in
-`enlace doctor` read from the live gateway’s `/_meta`. Platform configuration
-errors still refuse to boot. To refuse to boot on an app’s failure too:
+The gateway (`create_app`, which gunicorn loads, and `enlace serve`) records too, and is **loud and local**: the broken app’s route prefix gets a 500 stub naming the app and the exception class, and every other app serves. A stub is never silent: one ERROR log line with the traceback, `degraded_apps` in `/_meta`, `degraded: true` (and not launchable) in `/_apps`, and a `FAIL` in `enlace doctor` read from the live gateway’s `/_meta`. Platform configuration errors still refuse to boot. To refuse to boot on an app’s failure too:
 
 ```toml
 # app.toml — this app would rather be absent than serve a 500
@@ -244,8 +230,7 @@ fail_hard = true
 app_load_failure = "raise"
 ```
 
-The decision and its limits are in
-[ADR-0001]().
+The decision and its limits are in [ADR-0001]().
 
 ### Configuration
 
@@ -300,12 +285,7 @@ env_vars = ["VITE_API_BASE"]        # vars the build honours; deployers inject v
 outputs = ["dist"]                  # optional hint of produced paths
 ```
 
-`enlace build` runs these as an explicit pre-deploy step (`enlace build my_app`,
-or all apps with a `[build]` section). enlace never builds at request time and
-does not assume a toolchain — it just runs the argv the app declares, in the
-app directory, with the caller’s environment plus any injected overrides
-(e.g. `VITE_API_BASE`). The app keeps a normal build whether or not enlace
-serves it, so the “apps don’t know about enlace” principle holds.
+`enlace build` runs these as an explicit pre-deploy step (`enlace build --app-name my_app`, or all apps with a `[build]` section). enlace never builds at request time and does not assume a toolchain — it just runs the argv the app declares, in the app directory, with the caller’s environment plus any injected overrides (e.g. `VITE_API_BASE`). The app keeps a normal build whether or not enlace serves it, so the “apps don’t know about enlace” principle holds.
 
 For process/external modes: `pip install enlace[process]`
 
@@ -324,6 +304,8 @@ defaults → filesystem conventions → app.toml → platform.toml → env vars 
 | `external`       | Pre-existing upstream      | Proxied, no lifecycle management         |
 | `static`         | Static file directory      | Served directly                          |
 
+The reverse proxy carries HTTP, including server-sent events. It does not carry websockets yet: a websocket to a `process` or `external` app is refused with a close (clients see an HTTP 403).
+
 Within `asgi` mode, apps are further classified:
 
 | Type            | How detected                                | How mounted                     |
@@ -334,10 +316,7 @@ Within `asgi` mode, apps are further classified:
 
 ### Auth, sessions & plugins
 
-enlace itself is auth-agnostic. Cross-cutting concerns like authentication,
-sessions, and per-user storage are added by **plugins** — callables
-`(parent: FastAPI, config: PlatformConfig) -> None` invoked once after sub-apps
-are mounted:
+enlace itself is auth-agnostic. Cross-cutting concerns like authentication, sessions, and per-user storage are added by **plugins** — callables `(parent: FastAPI, config: PlatformConfig) -> None` invoked once after sub-apps are mounted:
 
 ```python
 from enlace import build_backend, discover_apps
@@ -345,13 +324,7 @@ from enlace import build_backend, discover_apps
 app = build_backend(discover_apps(), plugins=[my_plugin])
 ```
 
-Plugins can also be loaded by name from the `ENLACE_PLUGINS` env var
-(comma-separated). The canonical example is `enlace_auth.plugin`, which adds
-auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps
-without coupling: services are injected into the ASGI scope, so apps read
-`request.state.store` rather than importing anything from enlace. Apps can also
-condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but
-never have to.
+Plugins can also be loaded by name from the `ENLACE_PLUGINS` env var (comma-separated). The canonical example is `enlace_auth.plugin`, which adds auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps without coupling: services are injected into the ASGI scope, so apps read `request.state.store` rather than importing anything from enlace. Apps can also condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but never have to.
 
 ### HTML caching
 
@@ -359,28 +332,17 @@ Every static mount (app frontends, the landing app, `mode="static"` apps, shared
 
 ### App icons (tab, home screen, launcher)
 
-Every app gets one icon, served in every form a browser or phone asks for:
-`/_apps/{name}/icon` (as-is), `/_apps/{name}/icon-{32,180,192,512}.png`
-(square PNGs, needs `pip install enlace[icons]`), and a generated
-`/_apps/{name}/manifest.webmanifest`. enlace adds the matching `<link rel="icon">`,
-`<link rel="apple-touch-icon">` and `<link rel="manifest">` to each app’s HTML
-wherever the app’s own `<head>` lacks them, so the launcher tile, the browser tab
-and “Add to Home Screen” (iOS and Android) all show the same image.
+Every app gets one icon, served in every form a browser or phone asks for: `/_apps/{name}/icon` (as-is), `/_apps/{name}/icon-{32,180,192,512}.png` (square PNGs, needs `pip install enlace[icons]`), and a generated `/_apps/{name}/manifest.webmanifest`. enlace adds the matching `<link rel="icon">`, `<link rel="apple-touch-icon">` and `<link rel="manifest">` to each app’s HTML wherever the app’s own `<head>` lacks them, so the launcher tile, the browser tab and “Add to Home Screen” (iOS and Android) all show the same image.
 
-The icon is picked once per app: live launcher edit > `[app_meta.apps.<name>].icon`
+The icon is picked once per app: live launcher edit > `[app_meta.apps.<name>].icon` > `<name>.png` in `[app_meta].icons_dir` > the app’s own icon (from its `<head>`, manifest or `icon.png`) > a letter monogram. An icon from the platform tiers replaces the page’s own icon links; an app’s own icon only fills gaps.
 
-> `<name>.png` in `[app_meta].icons_dir` > the app’s own icon (from its
-> `<head>`, manifest or `icon.png`) > a letter monogram. An icon from the platform
-> tiers replaces the page’s own icon links; an app’s own icon only fills gaps.
 ```toml
 [app_meta]
 icons_dir = "static/app_icons"   # one folder of <app>.png, owned by the platform
 manifest_display = "browser"     # or "standalone"
 ```
 
-Home-screen icons must be raster: an app whose icon is only an SVG, emoji or
-monogram gets a favicon but no PNG. `enlace.app_icons.home_screen_gaps(config)`
-lists those apps.
+Home-screen icons must be raster: an app whose icon is only an SVG, emoji or monogram gets a favicon but no PNG. `enlace.app_icons.home_screen_gaps(config)` lists those apps.
 
 ### Privacy-first analytics
 
@@ -406,19 +368,30 @@ The design and how it maps onto the CNIL’s consent exemption for audience meas
 
 ### Deploy manifest (`/_meta`)
 
-enlace answers “what is actually deployed?” via an always-on, cheap manifest
-layer. Every mounted app gets a `/_meta` endpoint (plus a platform-level
-`/_meta`), and every response carries `X-Deploy-*` headers. A deploy tool
-snapshots build identity (git SHA, deploy time, externals) at deploy time into
-`{manifest_dir}/{app}.json`; enlace owns the read paths and schema. This lets
-you tell whether the server is serving the SHA you think it is and whether the
-browser rendered the current build or a stale cache.
+enlace answers “what is actually deployed?” via an always-on, cheap manifest layer. Every mounted app gets a `/_meta` endpoint (plus a platform-level `/_meta`), and every response carries `X-Deploy-*` headers. A deploy tool snapshots build identity (git SHA, deploy time, externals) at deploy time into `{manifest_dir}/{app}.json`; enlace owns the read paths and schema. This lets you tell whether the server is serving the SHA you think it is and whether the browser rendered the current build or a stale cache.
 
-`enlace_version` is what the deploy recorded (or, when the manifest records
-none, the running version); `enlace_runtime_version` is always the enlace
-actually running, added at serve time. They differ after an engine-only
-upgrade (a new wheel and a restart, no redeploy), and `enlace doctor` warns
-when they do.
+`enlace_version` is what the deploy recorded (or, when the manifest records none, the running version); `enlace_runtime_version` is always the enlace actually running, added at serve time. They differ after an engine-only upgrade (a new wheel and a restart, no redeploy), and `enlace doctor` warns when they do.
+
+## For developers with opposable thumbs
+
+Everything above works for you too. This section holds what only matters when you change enlace itself.
+
+**Dev setup.**
+
+```bash
+git clone https://github.com/i2mint/enlace && cd enlace
+pip install -e ".[dev]"                 # dev carries pytest, httpx, Pillow
+python -m pytest --doctest-modules      # what CI runs: enlace/ (tests + doctests) and tests/
+ruff check . && ruff format --check .
+```
+
+**Where the reasoning lives.** [`misc/docs/enlace_spec.md`]() is the architecture. The research documents in [`misc/docs/`]() explain each subsystem (ASGI composition, auth, discovery, frontend serving, process orchestration), and [`misc/docs/decisions/`]() holds the ADRs. Read the relevant one before changing a subsystem; the table in [`.claude/CLAUDE.md`]() maps modules to documents.
+
+**House rules that bite.** Middleware is pure ASGI, never `BaseHTTPMiddleware`. Sub-apps mount on `FastAPI()` directly, never on an `APIRouter`. Any suggestion to an app author must keep the app runnable on its own (the env-var-with-default pattern). The CLI surface is the `COMMANDS` list at the bottom of `enlace/__main__.py`, and the `cw` dispatcher keeps its default convention on purpose.
+
+**Skills.** Edit the real files under `enlace/data/skills/`. The entries in `.claude/skills/` are symlinks to them, and a test fails if one turns back into a copy.
+
+**Releases.** CI (the reusable wads workflow) runs on every push and publishes to PyPI when a change lands on `main`; it also bumps the version, so don’t edit it by hand. Questions and proposals go to [the issue tracker](https://github.com/i2mint/enlace/issues).
 
 <p class="epythet-aggregates">This documentation as a single file: <a href="enlace.md">enlace.md</a> (Markdown, for agents).</p>
 
@@ -1507,8 +1480,8 @@ lists them; they are never an error, since a platform.toml may carry
 tables for other tools.
 
 * **Parameters:**
-  **path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Path to platform.toml. If the file doesn’t exist, returns
-  a PlatformConfig with all default values.
+  **path** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
+  doesn’t exist, returns a PlatformConfig with all default values.
 * **Return type:**
   [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)
 
@@ -2872,8 +2845,8 @@ lists them; they are never an error, since a platform.toml may carry
 tables for other tools.
 
 * **Parameters:**
-  **path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Path to platform.toml. If the file doesn’t exist, returns
-  a PlatformConfig with all default values.
+  **path** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
+  doesn’t exist, returns a PlatformConfig with all default values.
 * **Return type:**
   [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)
 
@@ -3955,18 +3928,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-14 01:56 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/9efdcf2b3c53e3aa094d9b2543424403b39041d7"><code>9efdcf2</code></a> on branch <code>main</code>, for **enlace 0.1.56** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-14 21:46 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/c09076c7e503bd4b779c02f98b576b0216a566d8"><code>c09076c</code></a> on branch <code>main</code>, for **enlace 0.1.57** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.56) is behind the latest release on PyPI (0.1.57): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.57) is behind the latest release on PyPI (0.1.58): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/9efdcf2b3c53e3aa094d9b2543424403b39041d7"><code>9efdcf2b3c53e3aa094d9b2543424403b39041d7</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/c09076c7e503bd4b779c02f98b576b0216a566d8"><code>c09076c7e503bd4b779c02f98b576b0216a566d8</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3977,9 +3950,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38498265918">38498265918</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38642534286">38642534286</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>9efdcf2b3c53e3aa094d9b2543424403b39041d7</code> (in the history of the built commit) |
+| Event commit | <code>c09076c7e503bd4b779c02f98b576b0216a566d8</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -4004,13 +3977,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.57/">0.1.57</a>, newer than the documented version (0.1.56).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.58/">0.1.58</a>, newer than the documented version (0.1.57).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 9efdcf2b3c53e3aa094d9b2543424403b39041d7
+git checkout c09076c7e503bd4b779c02f98b576b0216a566d8
 pip install "epythet==0.2.17"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
@@ -4034,7 +4007,7 @@ Skills are folders holding a `SKILL.md` (the [Agent Skills](https://agentskills.
 
 ### `enlace`
 
-Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, or when the user mentions enlace, app discovery, app mounting, or personal app platform.
+Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, process supervision, or when the user mentions enlace, app discovery, app mounting, or personal app platform.
 
 ```bash
 gh skill install i2mint/enlace enlace --agent claude-code
@@ -4044,7 +4017,7 @@ Source: [`enlace/data/skills/enlace`](https://github.com/i2mint/enlace/tree/HEAD
 
 ### `enlace-dev`
 
-Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, auth.py, stores.py), implementing spec phases 2-4, or when the user says “add X to enlace” or “implement Y in enlace”.
+Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, process supervision, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, supervise.py, proxy.py, strategies.py, degraded.py), implementing spec phases 2-4, or when the user says “add X to enlace” or “implement Y in enlace”.
 
 ```bash
 gh skill install i2mint/enlace enlace-dev --agent claude-code
@@ -4061,24 +4034,6 @@ gh skill install i2mint/enlace enlace-diagnose --agent claude-code
 ```
 
 Source: [`enlace/data/skills/enlace-diagnose`](https://github.com/i2mint/enlace/tree/HEAD/enlace/data/skills/enlace-diagnose) (bundled with the pip package).
-
-### `enlace`
-
-Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, process supervision, or when the user mentions enlace, app discovery, app mounting, or personal app platform.
-
-Source: [`.claude/skills/enlace`](https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace).
-
-### `enlace-dev`
-
-Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, process supervision, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, supervise.py, proxy.py, auth.py, stores.py), implementing spec phases 2-4, or when the user says “add X to enlace” or “implement Y in enlace”.
-
-Source: [`.claude/skills/enlace-dev`](https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace-dev).
-
-### `enlace-diagnose`
-
-Diagnose whether an app can be “enlaced” (mounted under the enlace multi-app platform). Identifies hardcoded URLs, CORS issues, SSR requirements, missing entry points, and other compatibility blockers. Produces a report with severity levels and actionable fix suggestions that preserve the app’s ability to run standalone. Use when the user wants to bring an existing app into enlace, asks “can this app be enlaced?”, “why won’t my app work with enlace?”, “diagnose this app”, or when onboarding any new app. Also triggers on: “compatibility check”, “what needs to change”, “analyze this app for enlace”, or when the user points at an app directory and asks about integration.
-
-Source: [`.claude/skills/enlace-diagnose`](https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace-diagnose).
 
 The bundled skills are also on disk after `pip install enlace`, under the package’s `data/skills/` directory; link them into an agent without network access with `skill link-skills <that directory>`.
 

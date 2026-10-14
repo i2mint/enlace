@@ -289,7 +289,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">shlex</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseModel</span><span class="p">,</span>
@@ -776,7 +776,9 @@
 <div class="viewcode-block" id="PlatformConfig.from_toml">
 <a class="viewcode-back" href="../../_autosummary/enlace.base.html#enlace.PlatformConfig.from_toml">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_toml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"platform.toml"</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="s2">"PlatformConfig"</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_toml</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"platform.toml"</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PlatformConfig"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Load configuration from a TOML file, falling back to defaults.</span>
 
 <span class="sd">        Relative ``apps_dirs`` / ``app_dirs`` / ``shared_assets_dir`` entries</span>
@@ -799,9 +801,10 @@
 <span class="sd">        tables for other tools.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            path: Path to platform.toml. If the file doesn't exist, returns</span>
-<span class="sd">                  a PlatformConfig with all default values.</span>
+<span class="sd">            path: Path to platform.toml (a ``str`` or ``Path``). If the file</span>
+<span class="sd">                  doesn't exist, returns a PlatformConfig with all default values.</span>
 <span class="sd">        """</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">else</span><span class="p">:</span>
@@ -963,7 +966,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=877f56bc"></script>
+</div><script src="../../_static/documentation_options.js?v=2e3f22da"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

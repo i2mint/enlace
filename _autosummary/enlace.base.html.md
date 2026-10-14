@@ -224,8 +224,8 @@ lists them; they are never an error, since a platform.toml may carry
 tables for other tools.
 
 * **Parameters:**
-  **path** ([`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)) – Path to platform.toml. If the file doesn’t exist, returns
-  a PlatformConfig with all default values.
+  **path** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
+  doesn’t exist, returns a PlatformConfig with all default values.
 * **Return type:**
   [`PlatformConfig`](#enlace.base.PlatformConfig)
 

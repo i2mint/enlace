@@ -13,7 +13,7 @@ Skills are folders holding a `SKILL.md` (the [Agent Skills](https://agentskills.
 
 ### `enlace`
 
-Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, or when the user mentions enlace, app discovery, app mounting, or personal app platform.
+Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, process supervision, or when the user mentions enlace, app discovery, app mounting, or personal app platform.
 
 ```bash
 gh skill install i2mint/enlace enlace --agent claude-code
@@ -23,7 +23,7 @@ Source: [`enlace/data/skills/enlace`](https://github.com/i2mint/enlace/tree/HEAD
 
 ### `enlace-dev`
 
-Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, auth.py, stores.py), implementing spec phases 2-4, or when the user says "add X to enlace" or "implement Y in enlace".
+Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, process supervision, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, supervise.py, proxy.py, strategies.py, degraded.py), implementing spec phases 2-4, or when the user says "add X to enlace" or "implement Y in enlace".
 
 ```bash
 gh skill install i2mint/enlace enlace-dev --agent claude-code
@@ -40,24 +40,6 @@ gh skill install i2mint/enlace enlace-diagnose --agent claude-code
 ```
 
 Source: [`enlace/data/skills/enlace-diagnose`](https://github.com/i2mint/enlace/tree/HEAD/enlace/data/skills/enlace-diagnose) (bundled with the pip package).
-
-### `enlace`
-
-Use when working with the enlace multi-app platform — creating apps, configuring platform.toml or app.toml, diagnosing discovery issues, understanding conventions, or serving/deploying apps. Triggers on: enlace CLI commands, apps/ directory structures, platform.toml/app.toml files, multi-app ASGI composition, process supervision, or when the user mentions enlace, app discovery, app mounting, or personal app platform.
-
-Source: [`.claude/skills/enlace`](https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace).
-
-### `enlace-dev`
-
-Use when developing or modifying the enlace package itself — adding features, fixing bugs, extending the ASGI composition, adding middleware, process supervision, or working on any module in the enlace/ source directory. Triggers on: editing enlace source files (base.py, discover.py, compose.py, serve.py, supervise.py, proxy.py, auth.py, stores.py), implementing spec phases 2-4, or when the user says "add X to enlace" or "implement Y in enlace".
-
-Source: [`.claude/skills/enlace-dev`](https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace-dev).
-
-### `enlace-diagnose`
-
-Diagnose whether an app can be "enlaced" (mounted under the enlace multi-app platform). Identifies hardcoded URLs, CORS issues, SSR requirements, missing entry points, and other compatibility blockers. Produces a report with severity levels and actionable fix suggestions that preserve the app's ability to run standalone. Use when the user wants to bring an existing app into enlace, asks "can this app be enlaced?", "why won't my app work with enlace?", "diagnose this app", or when onboarding any new app. Also triggers on: "compatibility check", "what needs to change", "analyze this app for enlace", or when the user points at an app directory and asks about integration.
-
-Source: [`.claude/skills/enlace-diagnose`](https://github.com/i2mint/enlace/tree/HEAD/.claude/skills/enlace-diagnose).
 
 The bundled skills are also on disk after `pip install enlace`, under the package's `data/skills/` directory; link them into an agent without network access with `skill link-skills <that directory>`.
 
