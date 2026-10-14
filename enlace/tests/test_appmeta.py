@@ -574,3 +574,27 @@ def test_updated_at_survives_a_metadata_edit(tmp_path):
     item = build_launcher_item(app, cfg, {"description": "edited"})
     assert item["description"] == "edited"
     assert item["updated_at"] == "2026-04-28T12:16:50+02:00"
+
+
+def test_updated_at_follows_a_manifest_rewritten_while_running(tmp_path):
+    """`/_apps` used to report the compose-time date until a restart (#84)."""
+    import os
+
+    manifests = tmp_path / "manifests"
+    _write_manifest(manifests, "pubapp", committed_at="2026-04-28T12:16:50+02:00")
+    app = _make_public_app()
+    cfg = PlatformConfig(apps=[app], manifest_dir=manifests)
+    client = TestClient(build_backend(cfg))
+
+    def listed():
+        return client.get("/_apps").json()["apps"][0]["updated_at"]
+
+    assert listed() == "2026-04-28T12:16:50+02:00"
+    _write_manifest(manifests, "pubapp", committed_at="2026-10-14T00:00:00+00:00")
+    path = manifests / "pubapp.json"
+    st = path.stat()  # out of the same mtime tick, so the reader must re-read
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+
+    assert listed() == "2026-10-14T00:00:00+00:00", "stale until a restart"
+    # Carried on the AppConfig, so the enlace_auth metadata edit sees it too.
+    assert app.updated_at == "2026-10-14T00:00:00+00:00"

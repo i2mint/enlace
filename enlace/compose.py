@@ -175,22 +175,8 @@ def build_backend(
     for plug in plugins:
         plug(parent, config)
 
-    # JSON listing is always on (cheap, useful for frontends even when the
-    # HTML index_page is disabled).
-    _add_apps_listing_route(parent, config)
-
-    # Privacy-first analytics, only when some app opted in. Its routes (the
-    # opt-out page) go in now, before any catch-all "/" mount can shadow them;
-    # its middleware goes in with the others below.
-    from enlace.analytics import make_analytics
-
-    analytics = make_analytics(config, store=analytics_store)
-    if analytics is not None:
-        analytics.add_routes(parent)
-
-    # Deploy manifest endpoints + response headers. Built once at startup;
-    # cheap (one HTTP route per app + a small middleware). Endpoints are
-    # registered BEFORE sub-app mounts so they win the path match.
+    # Deploy manifests, read once here. Built before /_apps, whose "last
+    # updated" reads them too (#84).
     manifest_dir = resolve_manifest_dir(config.manifest_dir)
     enlace_version = _detect_enlace_version()
     platform_manifest = load_platform_manifest(
@@ -201,7 +187,7 @@ def build_backend(
         for app in config.apps
     }
     _stamp_updated_at(config, per_app_manifests)
-    # One reader per manifest file, shared by the /_meta routes and the
+    # One reader per manifest file, shared by /_apps, the /_meta routes and the
     # deploy-identity middlewares below, so a manifest rewritten while the
     # backend runs shows up everywhere on the next request (#49, #81).
     platform_meta = _MtimeCachedManifest(
@@ -216,6 +202,23 @@ def build_backend(
         )
         for name, manifest in per_app_manifests.items()
     }
+
+    # JSON listing is always on (cheap, useful for frontends even when the
+    # HTML index_page is disabled).
+    _add_apps_listing_route(parent, config, app_metas)
+
+    # Privacy-first analytics, only when some app opted in. Its routes (the
+    # opt-out page) go in now, before any catch-all "/" mount can shadow them;
+    # its middleware goes in with the others below.
+    from enlace.analytics import make_analytics
+
+    analytics = make_analytics(config, store=analytics_store)
+    if analytics is not None:
+        analytics.add_routes(parent)
+
+    # Deploy manifest endpoints + response headers. Built once at startup;
+    # cheap (one HTTP route per app + a small middleware). Endpoints are
+    # registered BEFORE sub-app mounts so they win the path match.
     _add_meta_routes(
         parent, config, platform_meta, app_metas, enlace_version=enlace_version
     )
@@ -624,7 +627,12 @@ def _stamp_updated_at(
         manifest = manifests.get(app.name)
         if manifest is None:
             continue
-        app.updated_at = manifest.app_source.committed_at or manifest.deployed_at
+        app.updated_at = _updated_at(manifest)
+
+
+def _updated_at(manifest: DeployManifest) -> Optional[str]:
+    """An app's "last updated", from its manifest -- see ``_stamp_updated_at``."""
+    return manifest.app_source.committed_at or manifest.deployed_at
 
 
 def _can_access(app: AppConfig, request: Request) -> bool:
@@ -759,7 +767,11 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
     }
 
 
-def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
+def _add_apps_listing_route(
+    parent: FastAPI,
+    config: PlatformConfig,
+    app_metas: Optional[dict[str, "_MtimeCachedManifest"]] = None,
+) -> None:
     """Add GET /_apps (+ per-app icon route) for the launcher UI.
 
     ``/_apps`` returns the resolved launcher metadata for every app the caller
@@ -768,7 +780,14 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
     that even an auth-gated app's icon renders for an anonymous viewer who is
     allowed to *see* the app in the list. New fields are purely additive, so an
     older landing UI keeps working.
+
+    Each listed app's ``updated_at`` is re-stamped from its *app_metas* reader
+    on every request (one ``stat`` per app), so a manifest rewritten while the
+    backend runs moves the launcher's "last updated" without a restart (#84).
+    The stamp lands on the ``AppConfig``, so ``build_launcher_item`` callers
+    elsewhere (the ``enlace_auth`` metadata edit) see it too.
     """
+    app_metas = app_metas or {}
     apps = config.apps
     landing_name = config.landing_app
     apps_by_name = {a.name: a for a in apps}
@@ -788,6 +807,9 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
                 continue
             if not _can_access(app, request):
                 continue
+            meta = app_metas.get(app.name)
+            if meta is not None:
+                app.updated_at = _updated_at(meta.current())
             items.append(
                 build_launcher_item(app, config, _overlay_entry(request, app.name))
             )
