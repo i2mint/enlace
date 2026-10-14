@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-13T23:26:45Z",
+  "built_at": "2026-10-14T00:54:13Z",
   "package": {
     "name": "enlace",
-    "version": "0.1.54",
+    "version": "0.1.55",
     "display_name": "enlace",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "b339a517d344a884b1dbdeace6ded267e387dae4",
-    "short_commit": "b339a51",
+    "commit": "ec097b89e54fb6fe4dd1a020ceab88ff45dc11df",
+    "short_commit": "ec097b8",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/i2mint/enlace",
-    "commit_url": "https://github.com/i2mint/enlace/commit/b339a517d344a884b1dbdeace6ded267e387dae4",
+    "commit_url": "https://github.com/i2mint/enlace/commit/ec097b89e54fb6fe4dd1a020ceab88ff45dc11df",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "i2mint/enlace",
-    "sha": "b339a517d344a884b1dbdeace6ded267e387dae4",
+    "sha": "ec097b89e54fb6fe4dd1a020ceab88ff45dc11df",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "38484094691",
-    "run_url": "https://github.com/i2mint/enlace/actions/runs/38484094691",
+    "run_id": "38492590371",
+    "run_url": "https://github.com/i2mint/enlace/actions/runs/38492590371",
     "server_url": "https://github.com"
   },
   "tools": {
@@ -61,15 +61,13 @@
   "pypi": {
     "checked": true,
     "latest": "0.1.55",
-    "relation": "behind",
+    "relation": "same",
     "error": null
   },
-  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout b339a517d344a884b1dbdeace6ded267e387dae4\npip install \"epythet==0.2.17\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout ec097b89e54fb6fe4dd1a020ceab88ff45dc11df\npip install \"epythet==0.2.17\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
-    "aligned": false,
-    "notes": [
-      "The documented version (0.1.54) is behind the latest release on PyPI (0.1.55): `pip install enlace` gives newer code than these docs describe."
-    ]
+    "aligned": true,
+    "notes": []
   }
 }

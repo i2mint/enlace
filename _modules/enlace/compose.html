@@ -440,22 +440,8 @@
     <span class="k">for</span> <span class="n">plug</span> <span class="ow">in</span> <span class="n">plugins</span><span class="p">:</span>
         <span class="n">plug</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
-    <span class="c1"># JSON listing is always on (cheap, useful for frontends even when the</span>
-    <span class="c1"># HTML index_page is disabled).</span>
-    <span class="n">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-
-    <span class="c1"># Privacy-first analytics, only when some app opted in. Its routes (the</span>
-    <span class="c1"># opt-out page) go in now, before any catch-all "/" mount can shadow them;</span>
-    <span class="c1"># its middleware goes in with the others below.</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.analytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_analytics</span>
-
-    <span class="n">analytics</span> <span class="o">=</span> <span class="n">make_analytics</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="n">analytics_store</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">analytics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">analytics</span><span class="o">.</span><span class="n">add_routes</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
-
-    <span class="c1"># Deploy manifest endpoints + response headers. Built once at startup;</span>
-    <span class="c1"># cheap (one HTTP route per app + a small middleware). Endpoints are</span>
-    <span class="c1"># registered BEFORE sub-app mounts so they win the path match.</span>
+    <span class="c1"># Deploy manifests, read once here. Built before /_apps, whose "last</span>
+    <span class="c1"># updated" reads them too (#84).</span>
     <span class="n">manifest_dir</span> <span class="o">=</span> <span class="n">resolve_manifest_dir</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">manifest_dir</span><span class="p">)</span>
     <span class="n">enlace_version</span> <span class="o">=</span> <span class="n">_detect_enlace_version</span><span class="p">()</span>
     <span class="n">platform_manifest</span> <span class="o">=</span> <span class="n">load_platform_manifest</span><span class="p">(</span>
@@ -466,7 +452,7 @@
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
     <span class="p">}</span>
     <span class="n">_stamp_updated_at</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">per_app_manifests</span><span class="p">)</span>
-    <span class="c1"># One reader per manifest file, shared by the /_meta routes and the</span>
+    <span class="c1"># One reader per manifest file, shared by /_apps, the /_meta routes and the</span>
     <span class="c1"># deploy-identity middlewares below, so a manifest rewritten while the</span>
     <span class="c1"># backend runs shows up everywhere on the next request (#49, #81).</span>
     <span class="n">platform_meta</span> <span class="o">=</span> <span class="n">_MtimeCachedManifest</span><span class="p">(</span>
@@ -481,6 +467,23 @@
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">per_app_manifests</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
     <span class="p">}</span>
+
+    <span class="c1"># JSON listing is always on (cheap, useful for frontends even when the</span>
+    <span class="c1"># HTML index_page is disabled).</span>
+    <span class="n">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">app_metas</span><span class="p">)</span>
+
+    <span class="c1"># Privacy-first analytics, only when some app opted in. Its routes (the</span>
+    <span class="c1"># opt-out page) go in now, before any catch-all "/" mount can shadow them;</span>
+    <span class="c1"># its middleware goes in with the others below.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.analytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_analytics</span>
+
+    <span class="n">analytics</span> <span class="o">=</span> <span class="n">make_analytics</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">store</span><span class="o">=</span><span class="n">analytics_store</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">analytics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">analytics</span><span class="o">.</span><span class="n">add_routes</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+
+    <span class="c1"># Deploy manifest endpoints + response headers. Built once at startup;</span>
+    <span class="c1"># cheap (one HTTP route per app + a small middleware). Endpoints are</span>
+    <span class="c1"># registered BEFORE sub-app mounts so they win the path match.</span>
     <span class="n">_add_meta_routes</span><span class="p">(</span>
         <span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">platform_meta</span><span class="p">,</span> <span class="n">app_metas</span><span class="p">,</span> <span class="n">enlace_version</span><span class="o">=</span><span class="n">enlace_version</span>
     <span class="p">)</span>
@@ -890,7 +893,12 @@
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">manifests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">manifest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">committed_at</span> <span class="ow">or</span> <span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span> <span class="o">=</span> <span class="n">_updated_at</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_updated_at</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">DeployManifest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""An app's "last updated", from its manifest -- see ``_stamp_updated_at``."""</span>
+    <span class="k">return</span> <span class="n">manifest</span><span class="o">.</span><span class="n">app_source</span><span class="o">.</span><span class="n">committed_at</span> <span class="ow">or</span> <span class="n">manifest</span><span class="o">.</span><span class="n">deployed_at</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_can_access</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1028,7 +1036,11 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_add_apps_listing_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_apps_listing_route</span><span class="p">(</span>
+    <span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">,</span>
+    <span class="n">app_metas</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">"_MtimeCachedManifest"</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Add GET /_apps (+ per-app icon route) for the launcher UI.</span>
 
 <span class="sd">    ``/_apps`` returns the resolved launcher metadata for every app the caller</span>
@@ -1037,7 +1049,14 @@
 <span class="sd">    that even an auth-gated app's icon renders for an anonymous viewer who is</span>
 <span class="sd">    allowed to *see* the app in the list. New fields are purely additive, so an</span>
 <span class="sd">    older landing UI keeps working.</span>
+
+<span class="sd">    Each listed app's ``updated_at`` is re-stamped from its *app_metas* reader</span>
+<span class="sd">    on every request (one ``stat`` per app), so a manifest rewritten while the</span>
+<span class="sd">    backend runs moves the launcher's "last updated" without a restart (#84).</span>
+<span class="sd">    The stamp lands on the ``AppConfig``, so ``build_launcher_item`` callers</span>
+<span class="sd">    elsewhere (the ``enlace_auth`` metadata edit) see it too.</span>
 <span class="sd">    """</span>
+    <span class="n">app_metas</span> <span class="o">=</span> <span class="n">app_metas</span> <span class="ow">or</span> <span class="p">{}</span>
     <span class="n">apps</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
     <span class="n">landing_name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">landing_app</span>
     <span class="n">apps_by_name</span> <span class="o">=</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">}</span>
@@ -1057,6 +1076,9 @@
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
                 <span class="k">continue</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">app_metas</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">meta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span> <span class="o">=</span> <span class="n">_updated_at</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">current</span><span class="p">())</span>
             <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">build_launcher_item</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">_overlay_entry</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
             <span class="p">)</span>
@@ -1407,7 +1429,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=0e8eb831"></script>
+</div><script src="../../_static/documentation_options.js?v=a7cecc57"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
