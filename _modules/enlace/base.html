@@ -10,6 +10,7 @@
         <title>enlace.base - enlace</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -563,6 +564,17 @@
     <span class="n">keywords</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">icon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
     <span class="n">launchable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">listed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"Whether the app appears in the launcher listing (``GET /_apps`` and "</span>
+            <span class="s2">"the built-in ``/`` index). ``listed = false`` in app.toml makes the "</span>
+            <span class="s2">"app link-only: it is still served at its URL exactly as before "</span>
+            <span class="s2">"(access is governed by ``access`` alone), it is just not advertised. "</span>
+            <span class="s2">"Launcher-metadata editors (``can_edit_meta``) still see it in "</span>
+            <span class="s1">'``/_apps``, flagged ``"listed": false``.'</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
     <span class="c1"># When this app's source last changed (ISO-8601), for the launcher's "last</span>
     <span class="c1"># updated" sort. NOT declared in app.toml — it is stamped onto the config at</span>
@@ -966,7 +978,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=2e3f22da"></script>
+</div><script src="../../_static/documentation_options.js?v=8c48d39d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -19,7 +19,7 @@ Production process management is delegated to systemd.
 | [`ManagedProcess`](#enlace.supervise.ManagedProcess)(name, command, cwd[, port, ...])   | A supervised child process with health checking and restart logic.   |
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
 
-### *class* enlace.supervise.ManagedProcess(name, command, cwd, port=None, socket_path=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, color='', state='stopped', process=None, \_consecutive_failures=0, \_started_at=None)
+### *class* enlace.supervise.ManagedProcess(name, command, cwd, port=None, socket_path=None, env=dict(), health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, color='', state='stopped', process=None, \_consecutive_failures=0, \_started_at=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 

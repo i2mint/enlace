@@ -78,12 +78,12 @@ and compacts each finished day’s writer records into one.
 
 | [`Analytics`](#enlace.analytics.Analytics)(config, counter, \*[, collecting])      | The analytics feature for one platform: counter, attribution, routes.   |
 |----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| [`AppAnalyticsConfig`](#enlace.analytics.AppAnalyticsConfig)(\*\*data)                      | An app's `[analytics]` table in `app.toml`.                             |
+| [`AppAnalyticsConfig`](#enlace.analytics.AppAnalyticsConfig)(\*[, mode])                    | An app's `[analytics]` table in `app.toml`.                             |
 | [`JsonFileStore`](#enlace.analytics.JsonFileStore)(root)                               | `key -> dict`, one JSON file per key at `{root}/{key}.json`.            |
 | [`PageAttribution`](#enlace.analytics.PageAttribution)(apps, \*[, landing_app, ...])     | Maps a request path to `(app, app-relative path)`, or `None`.           |
 | [`PageViewCounter`](#enlace.analytics.PageViewCounter)(store, \*[, retention_days, ...]) | Buffers one worker's daily aggregates and maintains the `store`.        |
 | [`PageViewMiddleware`](#enlace.analytics.PageViewMiddleware)(app, \*, counter, attribute)   | Pure-ASGI middleware counting page views of the apps that opted in.     |
-| [`PlatformAnalyticsConfig`](#enlace.analytics.PlatformAnalyticsConfig)(\*\*data)                 | The platform's `[analytics]` table in `platform.toml`.                  |
+| [`PlatformAnalyticsConfig`](#enlace.analytics.PlatformAnalyticsConfig)(\*[, store_path, ...])    | The platform's `[analytics]` table in `platform.toml`.                  |
 
 ### enlace.analytics.ANALYTICS_ROUTE_PREFIX *= '/_analytics'*
 
@@ -113,7 +113,7 @@ Register the opt-out page. Call before any catch-all `/` mount.
 * **Return type:**
   [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
-### *class* enlace.analytics.AppAnalyticsConfig(\*\*data)
+### *class* enlace.analytics.AppAnalyticsConfig(, mode='none')
 
 Bases: `BaseModel`
 
@@ -296,7 +296,7 @@ nothing is added to the page. It also owns the counter’s lifetime: the
 background flush/maintenance task starts with the server’s lifespan and
 the last flush happens at shutdown.
 
-### *class* enlace.analytics.PlatformAnalyticsConfig(\*\*data)
+### *class* enlace.analytics.PlatformAnalyticsConfig(, store_path=None, retention_days=395, timezone='UTC', flush_interval_seconds=10.0, max_values_per_dimension=500, honor_opt_out_signals=True, exclude_prefixes=('/_', '/auth/'), opt_out_cookie='enlace_analytics_opt_out')
 
 Bases: `BaseModel`
 

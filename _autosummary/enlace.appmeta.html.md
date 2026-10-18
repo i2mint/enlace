@@ -39,12 +39,12 @@ metadata. Core only *reads* an injected overlay mapping via `request.app.state`
 
 ### Classes
 
-| [`AppMetaConfig`](#enlace.appmeta.AppMetaConfig)(\*\*data)                      | The `[app_meta]` table of `platform.toml`.                               |
-|-----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
-| [`AppMetaEntry`](#enlace.appmeta.AppMetaEntry)(\*\*data)                       | Per-app static override from `platform.toml` (`[app_meta.apps.<name>]`). |
-| [`IconResult`](#enlace.appmeta.IconResult)(content_type, token[, body, ...]) | The outcome of resolving an icon spec.                                   |
+| [`AppMetaConfig`](#enlace.appmeta.AppMetaConfig)(\*[, default_icon, apps, ...])       | The `[app_meta]` table of `platform.toml`.                               |
+|-----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| [`AppMetaEntry`](#enlace.appmeta.AppMetaEntry)(\*[, display_name, description, ...]) | Per-app static override from `platform.toml` (`[app_meta.apps.<name>]`). |
+| [`IconResult`](#enlace.appmeta.IconResult)(content_type, token[, body, ...])       | The outcome of resolving an icon spec.                                   |
 
-### *class* enlace.appmeta.AppMetaConfig(\*\*data)
+### *class* enlace.appmeta.AppMetaConfig(\*, default_icon='', apps=<factory>, editors=<factory>, store_path=None, icons_dir=None, manifest_display='browser')
 
 Bases: `BaseModel`
 
@@ -60,7 +60,7 @@ plugin without core interpreting them.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.appmeta.AppMetaEntry(\*\*data)
+### *class* enlace.appmeta.AppMetaEntry(\*, display_name=None, description=None, keywords=<factory>, icon=None)
 
 Bases: `BaseModel`
 
@@ -113,15 +113,15 @@ external/process apps (which have no frontend on disk) are covered too. Every
 harvester is a no-op when its source file is missing, so an app with only an
 `app.toml` — or nothing — resolves cleanly without raising.
 
-* **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
-
 Precedence (first non-empty wins for scalars; keywords union across all):
 : Tier C.1 app.toml (already on `config`, gated by provenance for the title)
   Tier C.2 manifest → C.3 <head> → C.4 package.json → C.5 pyproject → C.6 fs
   Tier D   derived (title = auto-derived name; icon = “” ⇒ monogram at render)
 
 Returns only the fields that changed, suitable for `model_copy(update=...)`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### enlace.appmeta.resolve_icon(spec, , app_name, display_name, app_dir, token_only=False)
 

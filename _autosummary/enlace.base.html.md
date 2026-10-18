@@ -37,14 +37,14 @@ owned by another tool, and `enlace doctor` reports the same list.
 
 ### Classes
 
-| [`AppConfig`](#enlace.base.AppConfig)(\*\*data)         | Resolved configuration for a single discovered app.            |
-|------------------------------------------------------------------------------|----------------------------------------------------------------|
-| [`AppImportError`](#enlace.base.AppImportError)(\*\*data)    | Why an app could not be loaded, recorded instead of raised.    |
-| [`BuildConfig`](#enlace.base.BuildConfig)(\*\*data)       | Declarative build instructions for an app's compiled frontend. |
-| [`ConventionsConfig`](#enlace.base.ConventionsConfig)(\*\*data) | Meta-conventions controlling how apps are discovered.          |
-| [`PlatformConfig`](#enlace.base.PlatformConfig)(\*\*data)    | Resolved configuration for the entire platform.                |
+| [`AppConfig`](#enlace.base.AppConfig)(\*, name, route_prefix[, ...])           | Resolved configuration for a single discovered app.            |
+|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| [`AppImportError`](#enlace.base.AppImportError)(\*, exception_type, message[, ...]) | Why an app could not be loaded, recorded instead of raised.    |
+| [`BuildConfig`](#enlace.base.BuildConfig)(\*[, cwd, install, build, ...])        | Declarative build instructions for an app's compiled frontend. |
+| [`ConventionsConfig`](#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
+| [`PlatformConfig`](#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*\*data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -69,7 +69,7 @@ either way.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.base.AppImportError(\*\*data)
+### *class* enlace.base.AppImportError(, exception_type, message, entry_module_path=None, stage='discover')
 
 Bases: `BaseModel`
 
@@ -89,7 +89,7 @@ The exception object itself is kept privately ([`exception`](#enlace.base.AppImp
 caller that must refuse to boot can re-raise it with its real traceback.
 It is never serialized.
 
-#### *property* exception *: [BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### *property* exception *: [Optional](https://docs.python.org/3/library/typing.html#typing.Optional)[[BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException)]*
 
 The original exception, when this record was built from one.
 
@@ -137,7 +137,7 @@ while the gateway ran the sub-app’s lifespan startup.
 
 alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’, ‘lifespan’]
 
-### *class* enlace.base.BuildConfig(\*\*data)
+### *class* enlace.base.BuildConfig(\*, cwd=None, install=None, build=None, env_vars=<factory>, outputs=<factory>)
 
 Bases: `BaseModel`
 
@@ -169,7 +169,7 @@ broken app, and under a pre-forking server an uncaught one ends the worker
 and with it every other app. `KeyboardInterrupt` is not caught: Ctrl-C
 must still stop a dev server mid-boot.
 
-### *class* enlace.base.ConventionsConfig(\*\*data)
+### *class* enlace.base.ConventionsConfig(, entry_points=['server.py', 'app.py', 'main.py'], app_attr='app', frontend_dir='frontend')
 
 Bases: `BaseModel`
 
@@ -179,7 +179,7 @@ Meta-conventions controlling how apps are discovered.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.base.PlatformConfig(\*\*data)
+### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 
@@ -224,7 +224,7 @@ lists them; they are never an error, since a platform.toml may carry
 tables for other tools.
 
 * **Parameters:**
-  **path** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
+  **path** ([`Union`](https://docs.python.org/3/library/typing.html#typing.Union)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
   doesn’t exist, returns a PlatformConfig with all default values.
 * **Return type:**
   [`PlatformConfig`](#enlace.base.PlatformConfig)
@@ -257,11 +257,11 @@ A key is claimed when enlace reads it (`ENLACE_TABLES`) or when the
 config declares it in `foreign_tables`. Each message names the key and,
 when one is close, the enlace table it was probably meant to be.
 
-* **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
-
 ```pycon
 >>> unknown_toml_tables({"platform": {}, "deploy": {}, "stores_": {}},
 ...                     foreign_tables=["deploy"])
 ['[stores_] is not an enlace table and is ignored (did you mean [stores]?)']
 ```
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]

@@ -13,6 +13,7 @@
         <title>enlace.analytics - enlace</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -384,7 +385,7 @@ and compacts each finished day’s writer records into one.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.analytics.Analytics" title="enlace.analytics.Analytics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Analytics</span></code></a>(config, counter, *[, collecting])</p></td>
 <td><p>The analytics feature for one platform: counter, attribution, routes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.analytics.AppAnalyticsConfig" title="enlace.analytics.AppAnalyticsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppAnalyticsConfig</span></code></a>(**data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.analytics.AppAnalyticsConfig" title="enlace.analytics.AppAnalyticsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppAnalyticsConfig</span></code></a>(*[, mode])</p></td>
 <td><p>An app's <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">app.toml</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.analytics.JsonFileStore" title="enlace.analytics.JsonFileStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JsonFileStore</span></code></a>(root)</p></td>
@@ -399,7 +400,7 @@ and compacts each finished day’s writer records into one.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.analytics.PageViewMiddleware" title="enlace.analytics.PageViewMiddleware"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PageViewMiddleware</span></code></a>(app, *, counter, attribute)</p></td>
 <td><p>Pure-ASGI middleware counting page views of the apps that opted in.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.analytics.PlatformAnalyticsConfig" title="enlace.analytics.PlatformAnalyticsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlatformAnalyticsConfig</span></code></a>(**data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.analytics.PlatformAnalyticsConfig" title="enlace.analytics.PlatformAnalyticsConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlatformAnalyticsConfig</span></code></a>(*[, store_path, ...])</p></td>
 <td><p>The platform's <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>.</p></td>
 </tr>
 </tbody>
@@ -427,7 +428,7 @@ app has turned analytics off.</p>
 <dd><p>Install the counting (and lifespan-owning) middleware.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -438,7 +439,7 @@ app has turned analytics off.</p>
 <dd><p>Register the opt-out page. Call before any catch-all <code class="docutils literal notranslate"><span class="pre">/</span></code> mount.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -447,7 +448,7 @@ app has turned analytics off.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.analytics.AppAnalyticsConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.analytics.</span></span><span class="sig-name descname"><span class="pre">AppAnalyticsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#AppAnalyticsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.analytics.AppAnalyticsConfig" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.analytics.</span></span><span class="sig-name descname"><span class="pre">AppAnalyticsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#AppAnalyticsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.analytics.AppAnalyticsConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
 <p>An app’s <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">app.toml</span></code>. Absent means <code class="docutils literal notranslate"><span class="pre">none</span></code>.</p>
 <p>Strict (unknown keys and modes are errors), so a typo fails at discovery
@@ -570,7 +571,7 @@ the store’s exclusive lock. Returns how many records were folded.</p>
 <dd><p>Write every changed record, and forget days that are over.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -584,7 +585,7 @@ it runs only under the store’s <code class="docutils literal notranslate"><spa
 least two days old, which no writer touches any more.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -595,7 +596,7 @@ least two days old, which no writer touches any more.</p>
 <dd><p>Flush if the flush interval has elapsed since the last one.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -618,7 +619,7 @@ least two days old, which no writer touches any more.</p>
 <dd><p>Count a request from a crawler or scanner, and nothing else about it.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -629,7 +630,7 @@ least two days old, which no writer touches any more.</p>
 <dd><p>Count one page view of <code class="docutils literal notranslate"><span class="pre">app</span></code> (a <code class="docutils literal notranslate"><span class="pre">bot</span></code> device counts as a bot hit).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -640,7 +641,7 @@ least two days old, which no writer touches any more.</p>
 <dd><p>The server-lifetime loop: <a class="reference internal" href="#enlace.analytics.PageViewCounter.tick" title="enlace.analytics.PageViewCounter.tick"><code class="xref py py-meth docutils literal notranslate"><span class="pre">tick()</span></code></a> in a thread, forever.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -651,7 +652,7 @@ least two days old, which no writer touches any more.</p>
 <dd><p>One background round: flush when due, maintain once per day.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -695,7 +696,7 @@ the last flush happens at shutdown.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.analytics.PlatformAnalyticsConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.analytics.</span></span><span class="sig-name descname"><span class="pre">PlatformAnalyticsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#PlatformAnalyticsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.analytics.PlatformAnalyticsConfig" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.analytics.</span></span><span class="sig-name descname"><span class="pre">PlatformAnalyticsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retention_days</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">395</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timezone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'UTC'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flush_interval_seconds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_values_per_dimension</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">honor_opt_out_signals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_prefixes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('/_',</span> <span class="pre">'/auth/')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_out_cookie</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'enlace_analytics_opt_out'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/analytics.html#PlatformAnalyticsConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.analytics.PlatformAnalyticsConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
 <p>The platform’s <code class="docutils literal notranslate"><span class="pre">[analytics]</span></code> table in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>.</p>
 <p>Every field has a working default; the table is only needed to change one.
@@ -1019,7 +1020,7 @@ a plain host name.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=2e3f22da"></script>
+</div><script src="../_static/documentation_options.js?v=8c48d39d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

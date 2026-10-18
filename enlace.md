@@ -1,4 +1,4 @@
-> built 2026-10-14 21:46 UTC from c09076c (main) · enlace 0.1.57. Details: build_info.json
+> built 2026-10-18 06:41 UTC from 76f4f6e (main) · enlace 0.1.58. Details: build_info.json
 
 # index.html.md
 
@@ -260,6 +260,16 @@ route = "/api/custom-route"
 entry_point = "backend/main.py"
 access = "public"
 display_name = "My App"
+```
+
+```toml
+# Launcher metadata (all optional; harvested from manifest / index.html if absent)
+description = "What it does, in one line"
+keywords = ["music", "tools"]
+icon = "icon.svg"                   # app-relative path, emoji:🎸, data: URI, or https URL
+listed = false                      # link-only: served at its URL as usual, but omitted
+                                    # from the launcher (/_apps and /). Launcher-metadata
+                                    # editors still see it there, flagged "listed": false.
 ```
 
 ```toml
@@ -557,12 +567,12 @@ and compacts each finished day’s writer records into one.
 
 | [`Analytics`](_autosummary/enlace.analytics.html.md#enlace.analytics.Analytics)(config, counter, \*[, collecting])      | The analytics feature for one platform: counter, attribution, routes.   |
 |----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| [`AppAnalyticsConfig`](_autosummary/enlace.analytics.html.md#enlace.analytics.AppAnalyticsConfig)(\*\*data)                      | An app's `[analytics]` table in `app.toml`.                             |
+| [`AppAnalyticsConfig`](_autosummary/enlace.analytics.html.md#enlace.analytics.AppAnalyticsConfig)(\*[, mode])                    | An app's `[analytics]` table in `app.toml`.                             |
 | [`JsonFileStore`](_autosummary/enlace.analytics.html.md#enlace.analytics.JsonFileStore)(root)                               | `key -> dict`, one JSON file per key at `{root}/{key}.json`.            |
 | [`PageAttribution`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageAttribution)(apps, \*[, landing_app, ...])     | Maps a request path to `(app, app-relative path)`, or `None`.           |
 | [`PageViewCounter`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewCounter)(store, \*[, retention_days, ...]) | Buffers one worker's daily aggregates and maintains the `store`.        |
 | [`PageViewMiddleware`](_autosummary/enlace.analytics.html.md#enlace.analytics.PageViewMiddleware)(app, \*, counter, attribute)   | Pure-ASGI middleware counting page views of the apps that opted in.     |
-| [`PlatformAnalyticsConfig`](_autosummary/enlace.analytics.html.md#enlace.analytics.PlatformAnalyticsConfig)(\*\*data)                 | The platform's `[analytics]` table in `platform.toml`.                  |
+| [`PlatformAnalyticsConfig`](_autosummary/enlace.analytics.html.md#enlace.analytics.PlatformAnalyticsConfig)(\*[, store_path, ...])    | The platform's `[analytics]` table in `platform.toml`.                  |
 
 ### enlace.analytics.ANALYTICS_ROUTE_PREFIX *= '/_analytics'*
 
@@ -592,7 +602,7 @@ Register the opt-out page. Call before any catch-all `/` mount.
 * **Return type:**
   [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
-### *class* enlace.analytics.AppAnalyticsConfig(\*\*data)
+### *class* enlace.analytics.AppAnalyticsConfig(, mode='none')
 
 Bases: `BaseModel`
 
@@ -775,7 +785,7 @@ nothing is added to the page. It also owns the counter’s lifetime: the
 background flush/maintenance task starts with the server’s lifespan and
 the last flush happens at shutdown.
 
-### *class* enlace.analytics.PlatformAnalyticsConfig(\*\*data)
+### *class* enlace.analytics.PlatformAnalyticsConfig(, store_path=None, retention_days=395, timezone='UTC', flush_interval_seconds=10.0, max_values_per_dimension=500, honor_opt_out_signals=True, exclude_prefixes=('/_', '/auth/'), opt_out_cookie='enlace_analytics_opt_out')
 
 Bases: `BaseModel`
 
@@ -1135,12 +1145,12 @@ metadata. Core only *reads* an injected overlay mapping via `request.app.state`
 
 ### Classes
 
-| [`AppMetaConfig`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.AppMetaConfig)(\*\*data)                      | The `[app_meta]` table of `platform.toml`.                               |
-|-----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
-| [`AppMetaEntry`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.AppMetaEntry)(\*\*data)                       | Per-app static override from `platform.toml` (`[app_meta.apps.<name>]`). |
-| [`IconResult`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.IconResult)(content_type, token[, body, ...]) | The outcome of resolving an icon spec.                                   |
+| [`AppMetaConfig`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.AppMetaConfig)(\*[, default_icon, apps, ...])       | The `[app_meta]` table of `platform.toml`.                               |
+|-----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| [`AppMetaEntry`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.AppMetaEntry)(\*[, display_name, description, ...]) | Per-app static override from `platform.toml` (`[app_meta.apps.<name>]`). |
+| [`IconResult`](_autosummary/enlace.appmeta.html.md#enlace.appmeta.IconResult)(content_type, token[, body, ...])       | The outcome of resolving an icon spec.                                   |
 
-### *class* enlace.appmeta.AppMetaConfig(\*\*data)
+### *class* enlace.appmeta.AppMetaConfig(\*, default_icon='', apps=<factory>, editors=<factory>, store_path=None, icons_dir=None, manifest_display='browser')
 
 Bases: `BaseModel`
 
@@ -1156,7 +1166,7 @@ plugin without core interpreting them.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.appmeta.AppMetaEntry(\*\*data)
+### *class* enlace.appmeta.AppMetaEntry(\*, display_name=None, description=None, keywords=<factory>, icon=None)
 
 Bases: `BaseModel`
 
@@ -1209,15 +1219,15 @@ external/process apps (which have no frontend on disk) are covered too. Every
 harvester is a no-op when its source file is missing, so an app with only an
 `app.toml` — or nothing — resolves cleanly without raising.
 
-* **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
-
 Precedence (first non-empty wins for scalars; keywords union across all):
 : Tier C.1 app.toml (already on `config`, gated by provenance for the title)
   Tier C.2 manifest → C.3 <head> → C.4 package.json → C.5 pyproject → C.6 fs
   Tier D   derived (title = auto-derived name; icon = “” ⇒ monogram at render)
 
 Returns only the fields that changed, suitable for `model_copy(update=...)`.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 ### enlace.appmeta.resolve_icon(spec, , app_name, display_name, app_dir, token_only=False)
 
@@ -1293,14 +1303,14 @@ owned by another tool, and `enlace doctor` reports the same list.
 
 ### Classes
 
-| [`AppConfig`](_autosummary/enlace.base.html.md#enlace.base.AppConfig)(\*\*data)         | Resolved configuration for a single discovered app.            |
-|------------------------------------------------------------------------------|----------------------------------------------------------------|
-| [`AppImportError`](_autosummary/enlace.base.html.md#enlace.base.AppImportError)(\*\*data)    | Why an app could not be loaded, recorded instead of raised.    |
-| [`BuildConfig`](_autosummary/enlace.base.html.md#enlace.base.BuildConfig)(\*\*data)       | Declarative build instructions for an app's compiled frontend. |
-| [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*\*data) | Meta-conventions controlling how apps are discovered.          |
-| [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*\*data)    | Resolved configuration for the entire platform.                |
+| [`AppConfig`](_autosummary/enlace.base.html.md#enlace.base.AppConfig)(\*, name, route_prefix[, ...])           | Resolved configuration for a single discovered app.            |
+|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| [`AppImportError`](_autosummary/enlace.base.html.md#enlace.base.AppImportError)(\*, exception_type, message[, ...]) | Why an app could not be loaded, recorded instead of raised.    |
+| [`BuildConfig`](_autosummary/enlace.base.html.md#enlace.base.BuildConfig)(\*[, cwd, install, build, ...])        | Declarative build instructions for an app's compiled frontend. |
+| [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
+| [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*\*data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -1325,7 +1335,7 @@ either way.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.base.AppImportError(\*\*data)
+### *class* enlace.base.AppImportError(, exception_type, message, entry_module_path=None, stage='discover')
 
 Bases: `BaseModel`
 
@@ -1345,7 +1355,7 @@ The exception object itself is kept privately ([`exception`](_autosummary/enlace
 caller that must refuse to boot can re-raise it with its real traceback.
 It is never serialized.
 
-#### *property* exception *: [BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### *property* exception *: [Optional](https://docs.python.org/3/library/typing.html#typing.Optional)[[BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException)]*
 
 The original exception, when this record was built from one.
 
@@ -1393,7 +1403,7 @@ while the gateway ran the sub-app’s lifespan startup.
 
 alias of [`Literal`](https://docs.python.org/3/library/typing.html#typing.Literal)[‘discover’, ‘compose’, ‘lifespan’]
 
-### *class* enlace.base.BuildConfig(\*\*data)
+### *class* enlace.base.BuildConfig(\*, cwd=None, install=None, build=None, env_vars=<factory>, outputs=<factory>)
 
 Bases: `BaseModel`
 
@@ -1425,7 +1435,7 @@ broken app, and under a pre-forking server an uncaught one ends the worker
 and with it every other app. `KeyboardInterrupt` is not caught: Ctrl-C
 must still stop a dev server mid-boot.
 
-### *class* enlace.base.ConventionsConfig(\*\*data)
+### *class* enlace.base.ConventionsConfig(, entry_points=['server.py', 'app.py', 'main.py'], app_attr='app', frontend_dir='frontend')
 
 Bases: `BaseModel`
 
@@ -1435,7 +1445,7 @@ Meta-conventions controlling how apps are discovered.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.base.PlatformConfig(\*\*data)
+### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 
@@ -1480,7 +1490,7 @@ lists them; they are never an error, since a platform.toml may carry
 tables for other tools.
 
 * **Parameters:**
-  **path** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
+  **path** ([`Union`](https://docs.python.org/3/library/typing.html#typing.Union)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
   doesn’t exist, returns a PlatformConfig with all default values.
 * **Return type:**
   [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)
@@ -1513,14 +1523,14 @@ A key is claimed when enlace reads it (`ENLACE_TABLES`) or when the
 config declares it in `foreign_tables`. Each message names the key and,
 when one is close, the enlace table it was probably meant to be.
 
-* **Return type:**
-  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
-
 ```pycon
 >>> unknown_toml_tables({"platform": {}, "deploy": {}, "stores_": {}},
 ...                     foreign_tables=["deploy"])
 ['[stores_] is not an enlace table and is ignored (did you mean [stores]?)']
 ```
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 
 # _autosummary/enlace.build.html.md
@@ -1554,7 +1564,7 @@ caller’s environment plus any injected overrides.
 | [`BuildResult`](_autosummary/enlace.build.html.md#enlace.build.BuildResult)(app, cwd[, commands, ran, ...])   | Outcome of building one app.   |
 |------------------------------------------------------------------------------------------------|--------------------------------|
 
-### *class* enlace.build.BuildResult(app, cwd, commands=<factory>, ran=False, returncode=0)
+### *class* enlace.build.BuildResult(app, cwd, commands=list(), ran=False, returncode=0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -1853,13 +1863,13 @@ passes it by.
 
 The apps that failed to load, by name, with their public summary.
 
-* **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
-
 ```pycon
 >>> degraded_apps(PlatformConfig())
 {}
 ```
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
 
 ### *async* enlace.degraded.enter_lifespan_or_stub(stack, mount, app, platform)
 
@@ -1962,7 +1972,7 @@ Bases: [`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Enum`](h
 
 Issue categories.
 
-### *class* enlace.diagnose.DiagnosticReport(app_dir, app_name, issues=<factory>, has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
+### *class* enlace.diagnose.DiagnosticReport(app_dir, app_name, issues=list(), has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -2197,13 +2207,13 @@ Design:
 |-------------------------------------------------------------------------------------------|---------------------------------------------|
 | [`Report`](_autosummary/enlace.doctor.html.md#enlace.doctor.Report)(base_url[, checks, envfile, ...]) | Aggregate report for one run of the doctor. |
 
-### *class* enlace.doctor.Check(name, status, detail='', extra=<factory>)
+### *class* enlace.doctor.Check(name, status, detail='', extra=dict())
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
 Result of a single probe.
 
-### *class* enlace.doctor.Report(base_url, checks=<factory>, envfile=None, envfile_status='')
+### *class* enlace.doctor.Report(base_url, checks=list(), envfile=None, envfile_status='')
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -2462,31 +2472,31 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 ### Classes
 
-| [`AppAnalyticsConfig`](_autosummary/enlace.html.md#enlace.AppAnalyticsConfig)(\*\*data)                 | An app's `[analytics]` table in `app.toml`.                                 |
-|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| [`AppConfig`](_autosummary/enlace.html.md#enlace.AppConfig)(\*\*data)                          | Resolved configuration for a single discovered app.                         |
-| [`AppImportError`](_autosummary/enlace.html.md#enlace.AppImportError)(\*\*data)                     | Why an app could not be loaded, recorded instead of raised.                 |
-| [`BuildConfig`](_autosummary/enlace.html.md#enlace.BuildConfig)(\*\*data)                        | Declarative build instructions for an app's compiled frontend.              |
-| [`BuildResult`](_autosummary/enlace.html.md#enlace.BuildResult)(app, cwd[, commands, ran, ...])  | Outcome of building one app.                                                |
-| [`ConventionsConfig`](_autosummary/enlace.html.md#enlace.ConventionsConfig)(\*\*data)                  | Meta-conventions controlling how apps are discovered.                       |
-| [`DeployHeadersMiddleware`](_autosummary/enlace.html.md#enlace.DeployHeadersMiddleware)(app, \*, ...[, ...]) | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
-| [`DeployManifest`](_autosummary/enlace.html.md#enlace.DeployManifest)(\*\*data)                     | What was deployed for one app (or the platform itself).                     |
-| [`DeployMetaTagMiddleware`](_autosummary/enlace.html.md#enlace.DeployMetaTagMiddleware)(app, \*, ...[, ...]) | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
-| [`DiagnosticReport`](_autosummary/enlace.html.md#enlace.DiagnosticReport)(app_dir, app_name[, ...])   | Full diagnostic report for an app directory.                                |
-| [`ExternalRef`](_autosummary/enlace.html.md#enlace.ExternalRef)(\*\*data)                        | Identity for an externally-installed dependency (e.g. an editable sibling). |
-| [`Issue`](_autosummary/enlace.html.md#enlace.Issue)(severity, category, summary[, ...])    | A single compatibility issue found during diagnosis.                        |
-| [`JsonFileStore`](_autosummary/enlace.html.md#enlace.JsonFileStore)(root)                          | `key -> dict`, one JSON file per key at `{root}/{key}.json`.                |
-| [`PlatformAnalyticsConfig`](_autosummary/enlace.html.md#enlace.PlatformAnalyticsConfig)(\*\*data)            | The platform's `[analytics]` table in `platform.toml`.                      |
-| [`PlatformConfig`](_autosummary/enlace.html.md#enlace.PlatformConfig)(\*\*data)                     | Resolved configuration for the entire platform.                             |
-| [`ConventionDiscoverer`](_autosummary/enlace.html.md#enlace.ConventionDiscoverer)([conventions, ...])     | Discovers apps by filesystem conventions.                                   |
-| [`SourceRef`](_autosummary/enlace.html.md#enlace.SourceRef)(\*\*data)                          | Git identity for a single source tree (app or platform).                    |
+| [`AppAnalyticsConfig`](_autosummary/enlace.html.md#enlace.AppAnalyticsConfig)(\*[, mode])                     | An app's `[analytics]` table in `app.toml`.                                 |
+|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`AppConfig`](_autosummary/enlace.html.md#enlace.AppConfig)(\*, name, route_prefix[, ...])           | Resolved configuration for a single discovered app.                         |
+| [`AppImportError`](_autosummary/enlace.html.md#enlace.AppImportError)(\*, exception_type, message[, ...]) | Why an app could not be loaded, recorded instead of raised.                 |
+| [`BuildConfig`](_autosummary/enlace.html.md#enlace.BuildConfig)(\*[, cwd, install, build, ...])        | Declarative build instructions for an app's compiled frontend.              |
+| [`BuildResult`](_autosummary/enlace.html.md#enlace.BuildResult)(app, cwd[, commands, ran, ...])        | Outcome of building one app.                                                |
+| [`ConventionsConfig`](_autosummary/enlace.html.md#enlace.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.                       |
+| [`DeployHeadersMiddleware`](_autosummary/enlace.html.md#enlace.DeployHeadersMiddleware)(app, \*, ...[, ...])       | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
+| [`DeployManifest`](_autosummary/enlace.html.md#enlace.DeployManifest)(\*[, schema_version, ...])          | What was deployed for one app (or the platform itself).                     |
+| [`DeployMetaTagMiddleware`](_autosummary/enlace.html.md#enlace.DeployMetaTagMiddleware)(app, \*, ...[, ...])       | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
+| [`DiagnosticReport`](_autosummary/enlace.html.md#enlace.DiagnosticReport)(app_dir, app_name[, ...])         | Full diagnostic report for an app directory.                                |
+| [`ExternalRef`](_autosummary/enlace.html.md#enlace.ExternalRef)(\*[, sha, version])                    | Identity for an externally-installed dependency (e.g. an editable sibling). |
+| [`Issue`](_autosummary/enlace.html.md#enlace.Issue)(severity, category, summary[, ...])          | A single compatibility issue found during diagnosis.                        |
+| [`JsonFileStore`](_autosummary/enlace.html.md#enlace.JsonFileStore)(root)                                | `key -> dict`, one JSON file per key at `{root}/{key}.json`.                |
+| [`PlatformAnalyticsConfig`](_autosummary/enlace.html.md#enlace.PlatformAnalyticsConfig)(\*[, store_path, ...])     | The platform's `[analytics]` table in `platform.toml`.                      |
+| [`PlatformConfig`](_autosummary/enlace.html.md#enlace.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                             |
+| [`ConventionDiscoverer`](_autosummary/enlace.html.md#enlace.ConventionDiscoverer)([conventions, ...])           | Discovers apps by filesystem conventions.                                   |
+| [`SourceRef`](_autosummary/enlace.html.md#enlace.SourceRef)(\*[, sha, ref, dirty, local_path, ...])  | Git identity for a single source tree (app or platform).                    |
 
 ### Exceptions
 
 | [`EnlaceConfigError`](_autosummary/enlace.html.md#enlace.EnlaceConfigError)   | Raised when platform configuration is unusable at startup.   |
 |----------------------------------------------------------------------|--------------------------------------------------------------|
 
-### *class* enlace.AppAnalyticsConfig(\*\*data)
+### *class* enlace.AppAnalyticsConfig(, mode='none')
 
 Bases: `BaseModel`
 
@@ -2503,7 +2513,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*\*data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -2528,7 +2538,7 @@ either way.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppImportError(\*\*data)
+### *class* enlace.AppImportError(, exception_type, message, entry_module_path=None, stage='discover')
 
 Bases: `BaseModel`
 
@@ -2548,7 +2558,7 @@ The exception object itself is kept privately ([`exception`](_autosummary/enlace
 caller that must refuse to boot can re-raise it with its real traceback.
 It is never serialized.
 
-#### *property* exception *: [BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### *property* exception *: [Optional](https://docs.python.org/3/library/typing.html#typing.Optional)[[BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException)]*
 
 The original exception, when this record was built from one.
 
@@ -2585,7 +2595,7 @@ Never the message — it can carry server paths or configuration values
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### *class* enlace.BuildConfig(\*\*data)
+### *class* enlace.BuildConfig(\*, cwd=None, install=None, build=None, env_vars=<factory>, outputs=<factory>)
 
 Bases: `BaseModel`
 
@@ -2608,7 +2618,7 @@ not choose values. `outputs` is an optional hint of produced paths.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.BuildResult(app, cwd, commands=<factory>, ran=False, returncode=0)
+### *class* enlace.BuildResult(app, cwd, commands=list(), ran=False, returncode=0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -2655,7 +2665,7 @@ this treats app_dir itself as the app directory.
 * **Returns:**
   AppConfig if the directory is a valid app, None otherwise.
 
-### *class* enlace.ConventionsConfig(\*\*data)
+### *class* enlace.ConventionsConfig(, entry_points=['server.py', 'app.py', 'main.py'], app_attr='app', frontend_dir='frontend')
 
 Bases: `BaseModel`
 
@@ -2678,7 +2688,7 @@ added when the underlying value is present — a stub manifest produces a
 short header set (just `X-Deploy-App`), not bogus SHAs. Values are
 percent-encoded where they are not plain ASCII (see `header_value()`).
 
-### *class* enlace.DeployManifest(\*\*data)
+### *class* enlace.DeployManifest(\*, schema_version=1, app, deployed_at=None, deployer=None, platform=None, app_source=<factory>, platform_source=<factory>, externals=<factory>, enlace_version=None, extra=<factory>)
 
 Bases: `BaseModel`
 
@@ -2710,7 +2720,7 @@ untouched (and carry the `X-Deploy-*` headers instead). Because it
 rewrites the body it must run **inside** any compression middleware
 (e.g. GZip), so it sees and edits uncompressed bytes.
 
-### *class* enlace.DiagnosticReport(app_dir, app_name, issues=<factory>, has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
+### *class* enlace.DiagnosticReport(app_dir, app_name, issues=list(), has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -2736,7 +2746,7 @@ Raised when platform configuration is unusable at startup.
 Distinct from `ValueError` / `RuntimeError` so callers and tests can
 target this specific class.
 
-### *class* enlace.ExternalRef(\*\*data)
+### *class* enlace.ExternalRef(, sha=None, version=None)
 
 Bases: `BaseModel`
 
@@ -2786,7 +2796,7 @@ Delete temp files a killed write left behind; return how many.
 * **Return type:**
   [`int`](https://docs.python.org/3/builtins/functions.html#int)
 
-### *class* enlace.PlatformAnalyticsConfig(\*\*data)
+### *class* enlace.PlatformAnalyticsConfig(, store_path=None, retention_days=395, timezone='UTC', flush_interval_seconds=10.0, max_values_per_dimension=500, honor_opt_out_signals=True, exclude_prefixes=('/_', '/auth/'), opt_out_cookie='enlace_analytics_opt_out')
 
 Bases: `BaseModel`
 
@@ -2800,7 +2810,7 @@ boot does.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.PlatformConfig(\*\*data)
+### *class* enlace.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 
@@ -2845,7 +2855,7 @@ lists them; they are never an error, since a platform.toml may carry
 tables for other tools.
 
 * **Parameters:**
-  **path** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
+  **path** ([`Union`](https://docs.python.org/3/library/typing.html#typing.Union)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
   doesn’t exist, returns a PlatformConfig with all default values.
 * **Return type:**
   [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)
@@ -2870,7 +2880,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 Unclaimed top-level tables in the loaded platform.toml, as messages.
 
-### *class* enlace.SourceRef(\*\*data)
+### *class* enlace.SourceRef(, sha=None, ref=None, dirty=None, local_path=None, committed_at=None)
 
 Bases: `BaseModel`
 
@@ -3195,12 +3205,12 @@ See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlac
 
 ### Classes
 
-| [`DeployHeadersMiddleware`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployHeadersMiddleware)(app, \*, ...[, ...])   | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
-|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| [`DeployManifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployManifest)(\*\*data)                       | What was deployed for one app (or the platform itself).                     |
-| [`DeployMetaTagMiddleware`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployMetaTagMiddleware)(app, \*, ...[, ...])   | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
-| [`ExternalRef`](_autosummary/enlace.manifest.html.md#enlace.manifest.ExternalRef)(\*\*data)                          | Identity for an externally-installed dependency (e.g. an editable sibling). |
-| [`SourceRef`](_autosummary/enlace.manifest.html.md#enlace.manifest.SourceRef)(\*\*data)                            | Git identity for a single source tree (app or platform).                    |
+| [`DeployHeadersMiddleware`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployHeadersMiddleware)(app, \*, ...[, ...])      | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
+|----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`DeployManifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployManifest)(\*[, schema_version, ...])         | What was deployed for one app (or the platform itself).                     |
+| [`DeployMetaTagMiddleware`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployMetaTagMiddleware)(app, \*, ...[, ...])      | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
+| [`ExternalRef`](_autosummary/enlace.manifest.html.md#enlace.manifest.ExternalRef)(\*[, sha, version])                   | Identity for an externally-installed dependency (e.g. an editable sibling). |
+| [`SourceRef`](_autosummary/enlace.manifest.html.md#enlace.manifest.SourceRef)(\*[, sha, ref, dirty, local_path, ...]) | Git identity for a single source tree (app or platform).                    |
 
 ### *class* enlace.manifest.DeployHeadersMiddleware(app, , manifests_by_prefix, platform_manifest=None)
 
@@ -3215,7 +3225,7 @@ added when the underlying value is present — a stub manifest produces a
 short header set (just `X-Deploy-App`), not bogus SHAs. Values are
 percent-encoded where they are not plain ASCII (see [`header_value()`](_autosummary/enlace.manifest.html.md#enlace.manifest.header_value)).
 
-### *class* enlace.manifest.DeployManifest(\*\*data)
+### *class* enlace.manifest.DeployManifest(\*, schema_version=1, app, deployed_at=None, deployer=None, platform=None, app_source=<factory>, platform_source=<factory>, externals=<factory>, enlace_version=None, extra=<factory>)
 
 Bases: `BaseModel`
 
@@ -3247,7 +3257,7 @@ untouched (and carry the `X-Deploy-*` headers instead). Because it
 rewrites the body it must run **inside** any compression middleware
 (e.g. GZip), so it sees and edits uncompressed bytes.
 
-### *class* enlace.manifest.ExternalRef(\*\*data)
+### *class* enlace.manifest.ExternalRef(, sha=None, version=None)
 
 Bases: `BaseModel`
 
@@ -3272,7 +3282,7 @@ wheel and a restart, no redeploy) it names the old version. This key never
 does. `None` when enlace’s distribution metadata is unavailable.
 See [https://github.com/i2mint/enlace/issues/78](https://github.com/i2mint/enlace/issues/78).
 
-### *class* enlace.manifest.SourceRef(\*\*data)
+### *class* enlace.manifest.SourceRef(, sha=None, ref=None, dirty=None, local_path=None, committed_at=None)
 
 Bases: `BaseModel`
 
@@ -3290,13 +3300,13 @@ Header values must be ASCII (latin-1 at most); an app directory named
 `café` would otherwise reach clients as raw UTF-8, which httpx refuses.
 Decode with `urllib.parse.unquote`.
 
-* **Return type:**
-  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
-
 ```pycon
 >>> header_value("reelee-web"), header_value("café"), header_value("a b%")
 (b'reelee-web', b'caf%C3%A9', b'a%20b%25')
 ```
+
+* **Return type:**
+  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
 
 ### enlace.manifest.load_manifest(app_name, manifest_dir, , enlace_version=None)
 
@@ -3432,14 +3442,14 @@ case-sensitive, so `Enlace_Session` is a different cookie today, but a
 case-variant of a platform name has no legitimate use and would become a
 shadow the day any reader matched names loosely.
 
-* **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
-
 ```pycon
 >>> keep = platform_cookie_filter()
 >>> [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]
 [True, False, False]
 ```
+
+* **Return type:**
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
 
 ### enlace.proxy.platform_cookie_names(platform=None)
 
@@ -3448,14 +3458,14 @@ The platform’s own cookie names, honouring a custom session cookie name.
 `[auth]` is opaque to enlace core (enlace_auth owns its schema), so this
 reads only the one key that renames a platform cookie.
 
-* **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
-
 ```pycon
 >>> from types import SimpleNamespace
 >>> platform_cookie_names(SimpleNamespace(auth={"session_cookie_name": "s"}))[-1]
 's'
 ```
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
 
 ### enlace.proxy.platform_proxy_filters(platform=None, , forward_credentials=False)
 
@@ -3469,9 +3479,6 @@ passes *forward_credentials* (process and docker modes pass an app’s
 never set a platform cookie or send [`PLATFORM_UNSAFE_RESPONSE_HEADERS`](_autosummary/enlace.proxy.html.md#enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS),
 whatever it is granted.
 
-* **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
-
 ```pycon
 >>> filters = platform_proxy_filters()
 >>> filters["cookie_filter"]("enlace_session"), filters["cookie_filter"]("theme")
@@ -3479,6 +3486,9 @@ whatever it is granted.
 >>> platform_proxy_filters(forward_credentials=True)["cookie_filter"] is None
 True
 ```
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
 
 
 # _autosummary/enlace.strategies.html.md
@@ -3752,7 +3762,7 @@ Production process management is delegated to systemd.
 | [`ManagedProcess`](_autosummary/enlace.supervise.html.md#enlace.supervise.ManagedProcess)(name, command, cwd[, port, ...])   | A supervised child process with health checking and restart logic.   |
 |----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
 
-### *class* enlace.supervise.ManagedProcess(name, command, cwd, port=None, socket_path=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, color='', state='stopped', process=None, \_consecutive_failures=0, \_started_at=None)
+### *class* enlace.supervise.ManagedProcess(name, command, cwd, port=None, socket_path=None, env=dict(), health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, color='', state='stopped', process=None, \_consecutive_failures=0, \_started_at=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -3856,9 +3866,6 @@ Internal helpers for enlace.
 
 Convert a directory name to a human-readable display name.
 
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
-
 ```pycon
 >>> derive_display_name("chord_analyzer")
 'Chord Analyzer'
@@ -3866,12 +3873,12 @@ Convert a directory name to a human-readable display name.
 'Todo'
 ```
 
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
 ### enlace.util.derive_route_prefix(dir_name)
 
 Derive an API route prefix from a directory name.
-
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ```pycon
 >>> derive_route_prefix("chord_analyzer")
@@ -3880,14 +3887,14 @@ Derive an API route prefix from a directory name.
 '/api/todo'
 ```
 
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
 ### enlace.util.is_skippable(name)
 
 Return True if a directory name should be skipped during discovery.
 
 Directories starting with ‘_’ or ‘.’ are skipped.
-
-* **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 ```pycon
 >>> is_skippable("_internal")
@@ -3898,6 +3905,9 @@ True
 False
 ```
 
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
 ### enlace.util.url_path(path)
 
 Percent-encode an app route or name for use in a URL enlace emits.
@@ -3906,9 +3916,6 @@ App names come from directory names, which may hold a space, `%`, `#`,
 `?` or non-ASCII letters. Mounting works on the decoded path either way, but
 a `Location`, an `href` or a launcher link must be a valid URL (#75). The
 names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
-
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ```pycon
 >>> url_path("/chord_analyzer/")
@@ -3921,6 +3928,9 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 '/caf%C3%A9/'
 ```
 
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
 
 # about-this-build.html.md
 
@@ -3928,18 +3938,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-14 21:46 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/c09076c7e503bd4b779c02f98b576b0216a566d8"><code>c09076c</code></a> on branch <code>main</code>, for **enlace 0.1.57** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-18 06:41 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/76f4f6e81911e8984de1c2c747fe25dd89bfa218"><code>76f4f6e</code></a> on branch <code>main</code>, for **enlace 0.1.58** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.57) is behind the latest release on PyPI (0.1.58): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.58) is behind the latest release on PyPI (0.1.59): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/c09076c7e503bd4b779c02f98b576b0216a566d8"><code>c09076c7e503bd4b779c02f98b576b0216a566d8</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/76f4f6e81911e8984de1c2c747fe25dd89bfa218"><code>76f4f6e81911e8984de1c2c747fe25dd89bfa218</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3950,9 +3960,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/38642534286">38642534286</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39104832038">39104832038</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>c09076c7e503bd4b779c02f98b576b0216a566d8</code> (in the history of the built commit) |
+| Event commit | <code>76f4f6e81911e8984de1c2c747fe25dd89bfa218</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -3977,13 +3987,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.58/">0.1.58</a>, newer than the documented version (0.1.57).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.59/">0.1.59</a>, newer than the documented version (0.1.58).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout c09076c7e503bd4b779c02f98b576b0216a566d8
+git checkout 76f4f6e81911e8984de1c2c747fe25dd89bfa218
 pip install "epythet==0.2.17"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

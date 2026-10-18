@@ -94,14 +94,14 @@ case-sensitive, so `Enlace_Session` is a different cookie today, but a
 case-variant of a platform name has no legitimate use and would become a
 shadow the day any reader matched names loosely.
 
-* **Return type:**
-  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
-
 ```pycon
 >>> keep = platform_cookie_filter()
 >>> [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]
 [True, False, False]
 ```
+
+* **Return type:**
+  [`Callable`](https://docs.python.org/3/library/typing.html#typing.Callable)[[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)], [`bool`](https://docs.python.org/3/builtins/functions.html#bool)]
 
 ### enlace.proxy.platform_cookie_names(platform=None)
 
@@ -110,14 +110,14 @@ The platform’s own cookie names, honouring a custom session cookie name.
 `[auth]` is opaque to enlace core (enlace_auth owns its schema), so this
 reads only the one key that renames a platform cookie.
 
-* **Return type:**
-  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
-
 ```pycon
 >>> from types import SimpleNamespace
 >>> platform_cookie_names(SimpleNamespace(auth={"session_cookie_name": "s"}))[-1]
 's'
 ```
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`...`](https://docs.python.org/3/builtins/constants.html#Ellipsis)]
 
 ### enlace.proxy.platform_proxy_filters(platform=None, , forward_credentials=False)
 
@@ -131,9 +131,6 @@ passes *forward_credentials* (process and docker modes pass an app’s
 never set a platform cookie or send [`PLATFORM_UNSAFE_RESPONSE_HEADERS`](#enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS),
 whatever it is granted.
 
-* **Return type:**
-  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
-
 ```pycon
 >>> filters = platform_proxy_filters()
 >>> filters["cookie_filter"]("enlace_session"), filters["cookie_filter"]("theme")
@@ -141,3 +138,6 @@ whatever it is granted.
 >>> platform_proxy_filters(forward_credentials=True)["cookie_filter"] is None
 True
 ```
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)

@@ -14,9 +14,6 @@ Internal helpers for enlace.
 
 Convert a directory name to a human-readable display name.
 
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
-
 ```pycon
 >>> derive_display_name("chord_analyzer")
 'Chord Analyzer'
@@ -24,12 +21,12 @@ Convert a directory name to a human-readable display name.
 'Todo'
 ```
 
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
 ### enlace.util.derive_route_prefix(dir_name)
 
 Derive an API route prefix from a directory name.
-
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ```pycon
 >>> derive_route_prefix("chord_analyzer")
@@ -38,14 +35,14 @@ Derive an API route prefix from a directory name.
 '/api/todo'
 ```
 
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
 ### enlace.util.is_skippable(name)
 
 Return True if a directory name should be skipped during discovery.
 
 Directories starting with ‘_’ or ‘.’ are skipped.
-
-* **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 ```pycon
 >>> is_skippable("_internal")
@@ -56,6 +53,9 @@ True
 False
 ```
 
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
 ### enlace.util.url_path(path)
 
 Percent-encode an app route or name for use in a URL enlace emits.
@@ -64,9 +64,6 @@ App names come from directory names, which may hold a space, `%`, `#`,
 `?` or non-ASCII letters. Mounting works on the decoded path either way, but
 a `Location`, an `href` or a launcher link must be a valid URL (#75). The
 names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
-
-* **Return type:**
-  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
 ```pycon
 >>> url_path("/chord_analyzer/")
@@ -78,3 +75,6 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 >>> url_path("/café/")
 '/caf%C3%A9/'
 ```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)

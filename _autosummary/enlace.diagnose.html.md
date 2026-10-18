@@ -43,7 +43,7 @@ Bases: [`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Enum`](h
 
 Issue categories.
 
-### *class* enlace.diagnose.DiagnosticReport(app_dir, app_name, issues=<factory>, has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
+### *class* enlace.diagnose.DiagnosticReport(app_dir, app_name, issues=list(), has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 

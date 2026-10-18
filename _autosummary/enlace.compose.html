@@ -13,6 +13,7 @@
         <title>enlace.compose - enlace</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -343,7 +344,7 @@ Platform configuration errors always refuse to boot.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a></span>) – Platform configuration with apps already discovered.</p></li>
-<li><p><strong>plugins</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code>, <a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a>], <a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]]</span>) – Compose-time plugins, e.g. <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code>.</p></li>
+<li><p><strong>plugins</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">FastAPI</span></code>, <a class="reference internal" href="enlace.base.html#enlace.base.PlatformConfig" title="enlace.base.PlatformConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlatformConfig</span></code></a>], <span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span>]]</span>) – Compose-time plugins, e.g. <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code>.</p></li>
 <li><p><strong>analytics_store</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.15)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.MutableMapping" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MutableMapping</span></code></a>]</span>) – Where page-view analytics go, for apps that opted in
 (any <code class="docutils literal notranslate"><span class="pre">MutableMapping[str,</span> <span class="pre">dict]</span></code>, e.g. a <code class="docutils literal notranslate"><span class="pre">dol</span></code> store). Default:
 JSON files under <code class="docutils literal notranslate"><span class="pre">[analytics].store_path</span></code>. See enlace.analytics.</p></li>
@@ -415,7 +416,7 @@ manifest cannot be read right now (corrupt or half-written): a known date is
 not replaced by “unknown” over a read error.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -490,7 +491,7 @@ not replaced by “unknown” over a read error.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=2e3f22da"></script>
+</div><script src="../_static/documentation_options.js?v=8c48d39d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

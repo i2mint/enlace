@@ -27,7 +27,7 @@ caller’s environment plus any injected overrides.
 | [`BuildResult`](#enlace.build.BuildResult)(app, cwd[, commands, ran, ...])   | Outcome of building one app.   |
 |------------------------------------------------------------------------------------------------|--------------------------------|
 
-### *class* enlace.build.BuildResult(app, cwd, commands=<factory>, ran=False, returncode=0)
+### *class* enlace.build.BuildResult(app, cwd, commands=list(), ran=False, returncode=0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 

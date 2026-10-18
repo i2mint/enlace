@@ -43,12 +43,12 @@ See [https://github.com/i2mint/enlace/issues/18](https://github.com/i2mint/enlac
 
 ### Classes
 
-| [`DeployHeadersMiddleware`](#enlace.manifest.DeployHeadersMiddleware)(app, \*, ...[, ...])   | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
-|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| [`DeployManifest`](#enlace.manifest.DeployManifest)(\*\*data)                       | What was deployed for one app (or the platform itself).                     |
-| [`DeployMetaTagMiddleware`](#enlace.manifest.DeployMetaTagMiddleware)(app, \*, ...[, ...])   | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
-| [`ExternalRef`](#enlace.manifest.ExternalRef)(\*\*data)                          | Identity for an externally-installed dependency (e.g. an editable sibling). |
-| [`SourceRef`](#enlace.manifest.SourceRef)(\*\*data)                            | Git identity for a single source tree (app or platform).                    |
+| [`DeployHeadersMiddleware`](#enlace.manifest.DeployHeadersMiddleware)(app, \*, ...[, ...])      | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
+|----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`DeployManifest`](#enlace.manifest.DeployManifest)(\*[, schema_version, ...])         | What was deployed for one app (or the platform itself).                     |
+| [`DeployMetaTagMiddleware`](#enlace.manifest.DeployMetaTagMiddleware)(app, \*, ...[, ...])      | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
+| [`ExternalRef`](#enlace.manifest.ExternalRef)(\*[, sha, version])                   | Identity for an externally-installed dependency (e.g. an editable sibling). |
+| [`SourceRef`](#enlace.manifest.SourceRef)(\*[, sha, ref, dirty, local_path, ...]) | Git identity for a single source tree (app or platform).                    |
 
 ### *class* enlace.manifest.DeployHeadersMiddleware(app, , manifests_by_prefix, platform_manifest=None)
 
@@ -63,7 +63,7 @@ added when the underlying value is present — a stub manifest produces a
 short header set (just `X-Deploy-App`), not bogus SHAs. Values are
 percent-encoded where they are not plain ASCII (see [`header_value()`](#enlace.manifest.header_value)).
 
-### *class* enlace.manifest.DeployManifest(\*\*data)
+### *class* enlace.manifest.DeployManifest(\*, schema_version=1, app, deployed_at=None, deployer=None, platform=None, app_source=<factory>, platform_source=<factory>, externals=<factory>, enlace_version=None, extra=<factory>)
 
 Bases: `BaseModel`
 
@@ -95,7 +95,7 @@ untouched (and carry the `X-Deploy-*` headers instead). Because it
 rewrites the body it must run **inside** any compression middleware
 (e.g. GZip), so it sees and edits uncompressed bytes.
 
-### *class* enlace.manifest.ExternalRef(\*\*data)
+### *class* enlace.manifest.ExternalRef(, sha=None, version=None)
 
 Bases: `BaseModel`
 
@@ -120,7 +120,7 @@ wheel and a restart, no redeploy) it names the old version. This key never
 does. `None` when enlace’s distribution metadata is unavailable.
 See [https://github.com/i2mint/enlace/issues/78](https://github.com/i2mint/enlace/issues/78).
 
-### *class* enlace.manifest.SourceRef(\*\*data)
+### *class* enlace.manifest.SourceRef(, sha=None, ref=None, dirty=None, local_path=None, committed_at=None)
 
 Bases: `BaseModel`
 
@@ -138,13 +138,13 @@ Header values must be ASCII (latin-1 at most); an app directory named
 `café` would otherwise reach clients as raw UTF-8, which httpx refuses.
 Decode with `urllib.parse.unquote`.
 
-* **Return type:**
-  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
-
 ```pycon
 >>> header_value("reelee-web"), header_value("café"), header_value("a b%")
 (b'reelee-web', b'caf%C3%A9', b'a%20b%25')
 ```
+
+* **Return type:**
+  [`bytes`](https://docs.python.org/3/builtins/stdtypes.html#bytes)
 
 ### enlace.manifest.load_manifest(app_name, manifest_dir, , enlace_version=None)
 

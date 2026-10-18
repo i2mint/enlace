@@ -23,31 +23,31 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 ### Classes
 
-| [`AppAnalyticsConfig`](#enlace.AppAnalyticsConfig)(\*\*data)                 | An app's `[analytics]` table in `app.toml`.                                 |
-|-----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| [`AppConfig`](#enlace.AppConfig)(\*\*data)                          | Resolved configuration for a single discovered app.                         |
-| [`AppImportError`](#enlace.AppImportError)(\*\*data)                     | Why an app could not be loaded, recorded instead of raised.                 |
-| [`BuildConfig`](#enlace.BuildConfig)(\*\*data)                        | Declarative build instructions for an app's compiled frontend.              |
-| [`BuildResult`](#enlace.BuildResult)(app, cwd[, commands, ran, ...])  | Outcome of building one app.                                                |
-| [`ConventionsConfig`](#enlace.ConventionsConfig)(\*\*data)                  | Meta-conventions controlling how apps are discovered.                       |
-| [`DeployHeadersMiddleware`](#enlace.DeployHeadersMiddleware)(app, \*, ...[, ...]) | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
-| [`DeployManifest`](#enlace.DeployManifest)(\*\*data)                     | What was deployed for one app (or the platform itself).                     |
-| [`DeployMetaTagMiddleware`](#enlace.DeployMetaTagMiddleware)(app, \*, ...[, ...]) | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
-| [`DiagnosticReport`](#enlace.DiagnosticReport)(app_dir, app_name[, ...])   | Full diagnostic report for an app directory.                                |
-| [`ExternalRef`](#enlace.ExternalRef)(\*\*data)                        | Identity for an externally-installed dependency (e.g. an editable sibling). |
-| [`Issue`](#enlace.Issue)(severity, category, summary[, ...])    | A single compatibility issue found during diagnosis.                        |
-| [`JsonFileStore`](#enlace.JsonFileStore)(root)                          | `key -> dict`, one JSON file per key at `{root}/{key}.json`.                |
-| [`PlatformAnalyticsConfig`](#enlace.PlatformAnalyticsConfig)(\*\*data)            | The platform's `[analytics]` table in `platform.toml`.                      |
-| [`PlatformConfig`](#enlace.PlatformConfig)(\*\*data)                     | Resolved configuration for the entire platform.                             |
-| [`ConventionDiscoverer`](#enlace.ConventionDiscoverer)([conventions, ...])     | Discovers apps by filesystem conventions.                                   |
-| [`SourceRef`](#enlace.SourceRef)(\*\*data)                          | Git identity for a single source tree (app or platform).                    |
+| [`AppAnalyticsConfig`](#enlace.AppAnalyticsConfig)(\*[, mode])                     | An app's `[analytics]` table in `app.toml`.                                 |
+|-----------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| [`AppConfig`](#enlace.AppConfig)(\*, name, route_prefix[, ...])           | Resolved configuration for a single discovered app.                         |
+| [`AppImportError`](#enlace.AppImportError)(\*, exception_type, message[, ...]) | Why an app could not be loaded, recorded instead of raised.                 |
+| [`BuildConfig`](#enlace.BuildConfig)(\*[, cwd, install, build, ...])        | Declarative build instructions for an app's compiled frontend.              |
+| [`BuildResult`](#enlace.BuildResult)(app, cwd[, commands, ran, ...])        | Outcome of building one app.                                                |
+| [`ConventionsConfig`](#enlace.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.                       |
+| [`DeployHeadersMiddleware`](#enlace.DeployHeadersMiddleware)(app, \*, ...[, ...])       | Pure-ASGI middleware that adds X-Deploy-\* headers on every response.       |
+| [`DeployManifest`](#enlace.DeployManifest)(\*[, schema_version, ...])          | What was deployed for one app (or the platform itself).                     |
+| [`DeployMetaTagMiddleware`](#enlace.DeployMetaTagMiddleware)(app, \*, ...[, ...])       | Pure-ASGI middleware that injects deploy `<meta>` tags into HTML.           |
+| [`DiagnosticReport`](#enlace.DiagnosticReport)(app_dir, app_name[, ...])         | Full diagnostic report for an app directory.                                |
+| [`ExternalRef`](#enlace.ExternalRef)(\*[, sha, version])                    | Identity for an externally-installed dependency (e.g. an editable sibling). |
+| [`Issue`](#enlace.Issue)(severity, category, summary[, ...])          | A single compatibility issue found during diagnosis.                        |
+| [`JsonFileStore`](#enlace.JsonFileStore)(root)                                | `key -> dict`, one JSON file per key at `{root}/{key}.json`.                |
+| [`PlatformAnalyticsConfig`](#enlace.PlatformAnalyticsConfig)(\*[, store_path, ...])     | The platform's `[analytics]` table in `platform.toml`.                      |
+| [`PlatformConfig`](#enlace.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                             |
+| [`ConventionDiscoverer`](#enlace.ConventionDiscoverer)([conventions, ...])           | Discovers apps by filesystem conventions.                                   |
+| [`SourceRef`](#enlace.SourceRef)(\*[, sha, ref, dirty, local_path, ...])  | Git identity for a single source tree (app or platform).                    |
 
 ### Exceptions
 
 | [`EnlaceConfigError`](#enlace.EnlaceConfigError)   | Raised when platform configuration is unusable at startup.   |
 |----------------------------------------------------------------------|--------------------------------------------------------------|
 
-### *class* enlace.AppAnalyticsConfig(\*\*data)
+### *class* enlace.AppAnalyticsConfig(, mode='none')
 
 Bases: `BaseModel`
 
@@ -64,7 +64,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*\*data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -89,7 +89,7 @@ either way.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppImportError(\*\*data)
+### *class* enlace.AppImportError(, exception_type, message, entry_module_path=None, stage='discover')
 
 Bases: `BaseModel`
 
@@ -109,7 +109,7 @@ The exception object itself is kept privately ([`exception`](#enlace.AppImportEr
 caller that must refuse to boot can re-raise it with its real traceback.
 It is never serialized.
 
-#### *property* exception *: [BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException) | [None](https://docs.python.org/3/builtins/constants.html#None)*
+#### *property* exception *: [Optional](https://docs.python.org/3/library/typing.html#typing.Optional)[[BaseException](https://docs.python.org/3/builtins/exceptions.html#BaseException)]*
 
 The original exception, when this record was built from one.
 
@@ -146,7 +146,7 @@ Never the message — it can carry server paths or configuration values
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
-### *class* enlace.BuildConfig(\*\*data)
+### *class* enlace.BuildConfig(\*, cwd=None, install=None, build=None, env_vars=<factory>, outputs=<factory>)
 
 Bases: `BaseModel`
 
@@ -169,7 +169,7 @@ not choose values. `outputs` is an optional hint of produced paths.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.BuildResult(app, cwd, commands=<factory>, ran=False, returncode=0)
+### *class* enlace.BuildResult(app, cwd, commands=list(), ran=False, returncode=0)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -216,7 +216,7 @@ this treats app_dir itself as the app directory.
 * **Returns:**
   AppConfig if the directory is a valid app, None otherwise.
 
-### *class* enlace.ConventionsConfig(\*\*data)
+### *class* enlace.ConventionsConfig(, entry_points=['server.py', 'app.py', 'main.py'], app_attr='app', frontend_dir='frontend')
 
 Bases: `BaseModel`
 
@@ -239,7 +239,7 @@ added when the underlying value is present — a stub manifest produces a
 short header set (just `X-Deploy-App`), not bogus SHAs. Values are
 percent-encoded where they are not plain ASCII (see `header_value()`).
 
-### *class* enlace.DeployManifest(\*\*data)
+### *class* enlace.DeployManifest(\*, schema_version=1, app, deployed_at=None, deployer=None, platform=None, app_source=<factory>, platform_source=<factory>, externals=<factory>, enlace_version=None, extra=<factory>)
 
 Bases: `BaseModel`
 
@@ -271,7 +271,7 @@ untouched (and carry the `X-Deploy-*` headers instead). Because it
 rewrites the body it must run **inside** any compression middleware
 (e.g. GZip), so it sees and edits uncompressed bytes.
 
-### *class* enlace.DiagnosticReport(app_dir, app_name, issues=<factory>, has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
+### *class* enlace.DiagnosticReport(app_dir, app_name, issues=list(), has_backend=False, has_frontend=False, backend_framework='', frontend_framework='', entry_point=None)
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
@@ -297,7 +297,7 @@ Raised when platform configuration is unusable at startup.
 Distinct from `ValueError` / `RuntimeError` so callers and tests can
 target this specific class.
 
-### *class* enlace.ExternalRef(\*\*data)
+### *class* enlace.ExternalRef(, sha=None, version=None)
 
 Bases: `BaseModel`
 
@@ -347,7 +347,7 @@ Delete temp files a killed write left behind; return how many.
 * **Return type:**
   [`int`](https://docs.python.org/3/builtins/functions.html#int)
 
-### *class* enlace.PlatformAnalyticsConfig(\*\*data)
+### *class* enlace.PlatformAnalyticsConfig(, store_path=None, retention_days=395, timezone='UTC', flush_interval_seconds=10.0, max_values_per_dimension=500, honor_opt_out_signals=True, exclude_prefixes=('/_', '/auth/'), opt_out_cookie='enlace_analytics_opt_out')
 
 Bases: `BaseModel`
 
@@ -361,7 +361,7 @@ boot does.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.PlatformConfig(\*\*data)
+### *class* enlace.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 
@@ -406,7 +406,7 @@ lists them; they are never an error, since a platform.toml may carry
 tables for other tools.
 
 * **Parameters:**
-  **path** (`Union`[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
+  **path** ([`Union`](https://docs.python.org/3/library/typing.html#typing.Union)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]) – Path to platform.toml (a `str` or `Path`). If the file
   doesn’t exist, returns a PlatformConfig with all default values.
 * **Return type:**
   [`PlatformConfig`](enlace.base.html.md#enlace.base.PlatformConfig)
@@ -431,7 +431,7 @@ It takes context as an argument since that’s what pydantic-core passes when ca
 
 Unclaimed top-level tables in the loaded platform.toml, as messages.
 
-### *class* enlace.SourceRef(\*\*data)
+### *class* enlace.SourceRef(, sha=None, ref=None, dirty=None, local_path=None, committed_at=None)
 
 Bases: `BaseModel`
 

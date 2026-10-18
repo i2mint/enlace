@@ -10,6 +10,7 @@
         <title>enlace.compose - enlace</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -963,6 +964,30 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_can_edit_meta</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether the caller may edit launcher metadata (the launcher's admin notion).</span>
+
+<span class="sd">    Read from the ``app_meta_can_edit`` closure a plugin (``enlace_auth``)</span>
+<span class="sd">    injects on ``app.state``; without one, nobody is an editor (fail closed).</span>
+<span class="sd">    """</span>
+    <span class="n">can_edit_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"app_meta_can_edit"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_email"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_listed_for</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">can_edit_meta</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether ``app`` belongs in a launcher listing for this caller.</span>
+
+<span class="sd">    An unlisted app (``listed = false`` in app.toml) is link-only: omitted from</span>
+<span class="sd">    listings for everyone except launcher-metadata editors, who see it flagged</span>
+<span class="sd">    so they can still find and edit it. This is about *advertising* only — it</span>
+<span class="sd">    is checked on top of :func:`_can_access`, never instead of it, and the</span>
+<span class="sd">    app's own routes (and its icon/manifest routes) are unaffected.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">app</span><span class="o">.</span><span class="n">listed</span> <span class="ow">or</span> <span class="n">can_edit_meta</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_app_launch</span><span class="p">(</span><span class="n">app</span><span class="p">:</span> <span class="n">AppConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Whether an app opens a human UI, and the URL to open.</span>
 
@@ -1065,6 +1090,8 @@
         <span class="s2">"launch_url"</span><span class="p">:</span> <span class="n">launch_url</span><span class="p">,</span>
         <span class="c1"># ISO-8601 or null — see _stamp_updated_at. The launcher sorts on it.</span>
         <span class="s2">"updated_at"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">updated_at</span><span class="p">,</span>
+        <span class="c1"># False only for a link-only app, which only metadata editors get here.</span>
+        <span class="s2">"listed"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">listed</span><span class="p">,</span>
         <span class="c1"># True when the app failed to load and a 500 stub serves its routes</span>
         <span class="c1"># (enlace.degraded). The launcher shows it as broken, not launchable.</span>
         <span class="s2">"degraded"</span><span class="p">:</span> <span class="n">app</span><span class="o">.</span><span class="n">import_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
@@ -1081,8 +1108,10 @@
 
 <span class="sd">    ``/_apps`` returns the resolved launcher metadata for every app the caller</span>
 <span class="sd">    can see; the landing app itself is hidden (it's the shell, not a listable</span>
-<span class="sd">    app). ``/_apps/{name}/icon`` serves each app's icon through the platform so</span>
-<span class="sd">    that even an auth-gated app's icon renders for an anonymous viewer who is</span>
+<span class="sd">    app), and so is an unlisted app (``listed = false``) unless the caller can</span>
+<span class="sd">    edit launcher metadata (see :func:`_is_listed_for`). ``/_apps/{name}/icon``</span>
+<span class="sd">    serves each app's icon through the platform so that even an auth-gated</span>
+<span class="sd">    app's icon renders for an anonymous viewer who is</span>
 <span class="sd">    allowed to *see* the app in the list. New fields are purely additive, so an</span>
 <span class="sd">    older landing UI keeps working.</span>
 
@@ -1101,16 +1130,15 @@
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apps_listing</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">user_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_id"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">user_email</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"user_email"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">can_edit_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="s2">"app_meta_can_edit"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">can_edit_meta</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">bool</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">(</span><span class="n">user_email</span><span class="p">))</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">can_edit_fn</span><span class="p">)</span> <span class="k">else</span> <span class="kc">False</span>
-        <span class="p">)</span>
+        <span class="n">can_edit_meta</span> <span class="o">=</span> <span class="n">_can_edit_meta</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
 
         <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">landing_name</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_listed_for</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">can_edit_meta</span><span class="o">=</span><span class="n">can_edit_meta</span><span class="p">):</span>
                 <span class="k">continue</span>
             <span class="n">refresh_updated_at</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">app_metas</span><span class="p">)</span>
             <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -1222,13 +1250,20 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_add_index_route</span><span class="p">(</span><span class="n">parent</span><span class="p">:</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Add a GET / route listing, as a simple HTML page, the apps the caller may see.</span>
 
-<span class="sd">    Filtered by the same predicate as ``/_apps`` (:func:`_can_access`), so the</span>
-<span class="sd">    built-in index never names an app the caller could not open.</span>
+<span class="sd">    Filtered by the same predicates as ``/_apps`` (:func:`_can_access`, then</span>
+<span class="sd">    :func:`_is_listed_for`), so the built-in index never names an app the</span>
+<span class="sd">    caller could not open, nor a link-only app to anyone but an editor.</span>
 <span class="sd">    """</span>
 
     <span class="nd">@parent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">response_class</span><span class="o">=</span><span class="n">HTMLResponse</span><span class="p">)</span>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">index</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
-        <span class="n">apps</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span> <span class="k">if</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">request</span><span class="p">)]</span>
+        <span class="n">can_edit_meta</span> <span class="o">=</span> <span class="n">_can_edit_meta</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="n">apps</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">a</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span>
+            <span class="k">if</span> <span class="n">_can_access</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">_is_listed_for</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">can_edit_meta</span><span class="o">=</span><span class="n">can_edit_meta</span><span class="p">)</span>
+        <span class="p">]</span>
         <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
             <span class="n">has_frontend</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
@@ -1463,7 +1498,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=2e3f22da"></script>
+</div><script src="../../_static/documentation_options.js?v=8c48d39d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

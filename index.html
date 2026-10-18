@@ -13,6 +13,7 @@
         <title>enlace</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -549,6 +550,15 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 <span class="n">display_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"My App"</span>
 </pre></div>
 </div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Launcher metadata (all optional; harvested from manifest / index.html if absent)</span>
+<span class="n">description</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"What it does, in one line"</span>
+<span class="n">keywords</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"music"</span><span class="p">,</span><span class="w"> </span><span class="s2">"tools"</span><span class="p">]</span>
+<span class="n">icon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"icon.svg"</span><span class="w">                   </span><span class="c1"># app-relative path, emoji:🎸, data: URI, or https URL</span>
+<span class="n">listed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w">                      </span><span class="c1"># link-only: served at its URL as usual, but omitted</span>
+<span class="w">                                    </span><span class="c1"># from the launcher (/_apps and /). Launcher-metadata</span>
+<span class="w">                                    </span><span class="c1"># editors still see it there, flagged "listed": false.</span>
+</pre></div>
+</div>
 <div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Non-Python or separate process</span>
 <span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"process"</span>
 <span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"node"</span><span class="p">,</span><span class="w"> </span><span class="s2">"server.js"</span><span class="p">]</span>
@@ -701,7 +711,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-14 21:46 UTC from <a href="https://github.com/i2mint/enlace/commit/c09076c7e503bd4b779c02f98b576b0216a566d8">c09076c</a> (main) · enlace 0.1.57 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-18 06:41 UTC from <a href="https://github.com/i2mint/enlace/commit/76f4f6e81911e8984de1c2c747fe25dd89bfa218">76f4f6e</a> (main) · enlace 0.1.58 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -780,7 +790,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=2e3f22da"></script>
+</div><script src="_static/documentation_options.js?v=8c48d39d"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

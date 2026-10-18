@@ -13,6 +13,7 @@
         <title>enlace.appmeta - enlace</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -319,10 +320,10 @@ metadata. Core only <em>reads</em> an injected overlay mapping via <code class="
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.appmeta.AppMetaConfig" title="enlace.appmeta.AppMetaConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppMetaConfig</span></code></a>(**data)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.appmeta.AppMetaConfig" title="enlace.appmeta.AppMetaConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppMetaConfig</span></code></a>(*[, default_icon, apps, ...])</p></td>
 <td><p>The <code class="docutils literal notranslate"><span class="pre">[app_meta]</span></code> table of <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.appmeta.AppMetaEntry" title="enlace.appmeta.AppMetaEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppMetaEntry</span></code></a>(**data)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.appmeta.AppMetaEntry" title="enlace.appmeta.AppMetaEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AppMetaEntry</span></code></a>(*[, display_name, description, ...])</p></td>
 <td><p>Per-app static override from <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code> (<code class="docutils literal notranslate"><span class="pre">[app_meta.apps.&lt;name&gt;]</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.appmeta.IconResult" title="enlace.appmeta.IconResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">IconResult</span></code></a>(content_type, token[, body, ...])</p></td>
@@ -333,7 +334,7 @@ metadata. Core only <em>reads</em> an injected overlay mapping via <code class="
 </div>
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.appmeta.AppMetaConfig">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">AppMetaConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/appmeta.html#AppMetaConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.AppMetaConfig" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">AppMetaConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_icon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">editors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">store_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icons_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifest_display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'browser'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/appmeta.html#AppMetaConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.AppMetaConfig" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
 <p>The <code class="docutils literal notranslate"><span class="pre">[app_meta]</span></code> table of <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">default_icon</span></code> and <code class="docutils literal notranslate"><span class="pre">apps</span></code> are consumed by enlace core (read model).
@@ -353,7 +354,7 @@ plugin without core interpreting them.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.appmeta.AppMetaEntry">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">AppMetaEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/appmeta.html#AppMetaEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.AppMetaEntry" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.appmeta.</span></span><span class="sig-name descname"><span class="pre">AppMetaEntry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keywords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">icon</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/appmeta.html#AppMetaEntry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.appmeta.AppMetaEntry" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseModel</span></code></p>
 <p>Per-app static override from <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code> (<code class="docutils literal notranslate"><span class="pre">[app_meta.apps.&lt;name&gt;]</span></code>).</p>
 <p>The platform owner’s static layer, applied on top of app-declared metadata.
@@ -415,11 +416,6 @@ walked-container and individual-app-dir discovery paths — so <code class="docu
 external/process apps (which have no frontend on disk) are covered too. Every
 harvester is a no-op when its source file is missing, so an app with only an
 <code class="docutils literal notranslate"><span class="pre">app.toml</span></code> — or nothing — resolves cleanly without raising.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
-</dd>
-</dl>
 <dl class="simple">
 <dt>Precedence (first non-empty wins for scalars; keywords union across all):</dt><dd><p>Tier C.1 app.toml (already on <code class="docutils literal notranslate"><span class="pre">config</span></code>, gated by provenance for the title)
 Tier C.2 manifest → C.3 &lt;head&gt; → C.4 package.json → C.5 pyproject → C.6 fs
@@ -427,6 +423,11 @@ Tier D   derived (title = auto-derived name; icon = “” ⇒ monogram at rende
 </dd>
 </dl>
 <p>Returns only the fields that changed, suitable for <code class="docutils literal notranslate"><span class="pre">model_copy(update=...)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -545,7 +546,7 @@ it into the overlay, so it isn’t offered as a removable overlay chip
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=2e3f22da"></script>
+</div><script src="../_static/documentation_options.js?v=8c48d39d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
