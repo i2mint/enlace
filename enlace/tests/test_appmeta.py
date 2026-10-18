@@ -406,6 +406,24 @@ def test_unlisted_app_still_served_and_icon_reachable(app_dir):
     assert client.get(f"/_apps/{cfg.name}/icon").status_code == 200
 
 
+@pytest.mark.parametrize("value", ['"false"', "false", "0"])
+def test_listed_toml_value_is_validated_on_asgi_path(tmp_path, value):
+    """A string "false" must not stay truthy (model_copy skips validation)."""
+    d = tmp_path / "apiapp"
+    _write(d / "server.py", "from fastapi import FastAPI\napp = FastAPI()\n")
+    _write(d / "app.toml", f"listed = {value}\n")
+    cfg = ConventionDiscoverer().discover_app_dir(d)
+    assert cfg.listed is False
+
+
+def test_listed_toml_garbage_fails_loudly(tmp_path):
+    d = tmp_path / "apiapp"
+    _write(d / "server.py", "from fastapi import FastAPI\napp = FastAPI()\n")
+    _write(d / "app.toml", 'listed = "nope"\n')
+    with pytest.raises(Exception, match="listed"):
+        ConventionDiscoverer().discover_app_dir(d)
+
+
 def test_unlisted_does_not_grant_visibility_of_forbidden_app():
     """An editor still never sees an app _can_access forbids them."""
     hidden = AppConfig(
