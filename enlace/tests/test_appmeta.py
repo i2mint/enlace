@@ -354,6 +354,72 @@ def test_external_app_is_launchable_at_route_prefix():
     assert item["launch_url"] == "/typola/"
 
 
+# ---------------------------------------------------------------------------
+# listed = false: link-only apps (served, but not advertised)
+# ---------------------------------------------------------------------------
+
+
+def test_listed_defaults_true_and_is_reported():
+    item = (
+        TestClient(build_backend(PlatformConfig(apps=[_make_public_app()])))
+        .get("/_apps")
+        .json()["apps"][0]
+    )
+    assert item["listed"] is True
+
+
+def test_unlisted_app_omitted_from_listing_and_index():
+    listed = _make_public_app("shown")
+    unlisted = _make_public_app("linkonly").model_copy(update={"listed": False})
+    client = TestClient(build_backend(PlatformConfig(apps=[listed, unlisted])))
+    names = [a["name"] for a in client.get("/_apps").json()["apps"]]
+    assert names == ["shown"]
+    # the built-in index applies the same rule
+    from enlace.compose import _add_index_route
+    from fastapi import FastAPI
+
+    index_app = FastAPI()
+    _add_index_route(index_app, PlatformConfig(apps=[listed, unlisted]))
+    html = TestClient(index_app).get("/").text.lower()
+    assert "1 app running" in html and "linkonly" not in html
+
+
+def test_unlisted_app_shown_flagged_to_meta_editors():
+    unlisted = _make_public_app("linkonly").model_copy(update={"listed": False})
+    backend = build_backend(PlatformConfig(apps=[unlisted]))
+    backend.state.app_meta_can_edit = lambda email: True
+    data = TestClient(backend).get("/_apps").json()
+    assert data["can_edit_meta"] is True
+    assert [(a["name"], a["listed"]) for a in data["apps"]] == [("linkonly", False)]
+
+
+def test_unlisted_app_still_served_and_icon_reachable(app_dir):
+    """Unlisted is about advertising only: the app and its icon still serve."""
+    _write(app_dir / "app.toml", "listed = false\naccess = 'public'\n")
+    cfg = ConventionDiscoverer().discover_app_dir(app_dir)
+    assert cfg.listed is False
+    client = TestClient(build_backend(PlatformConfig(apps=[cfg])))
+    assert client.get("/_apps").json()["apps"] == []
+    r = client.get(f"/{cfg.name}/")
+    assert r.status_code == 200 and "<title>myapp</title>" in r.text
+    assert client.get(f"/_apps/{cfg.name}/icon").status_code == 200
+
+
+def test_unlisted_does_not_grant_visibility_of_forbidden_app():
+    """An editor still never sees an app _can_access forbids them."""
+    hidden = AppConfig(
+        name="secret",
+        route_prefix="/api/secret",
+        app_type="frontend_only",
+        access="protected:user",
+        allowed_users=["someone@else.com"],
+        listed=False,
+    )
+    backend = build_backend(PlatformConfig(apps=[hidden]))
+    backend.state.app_meta_can_edit = lambda email: True
+    assert TestClient(backend).get("/_apps").json()["apps"] == []
+
+
 def test_icon_endpoint_serves_image_not_shadowed_by_landing(tmp_path):
     """GET /_apps/{name}/icon returns image/*, and isn't swallowed by any / mount."""
     app = _make_public_app(icon="emoji:🎸")

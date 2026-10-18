@@ -382,6 +382,7 @@ _CORE_TOML_FIELD_MAP = {
     "keywords": "keywords",
     "icon": "icon",
     "launchable": "launchable",
+    "listed": "listed",
 }
 
 # Core path keys (resolved relative to the app directory). Strategy-specific
