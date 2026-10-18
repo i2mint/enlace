@@ -375,8 +375,9 @@ def test_unlisted_app_omitted_from_listing_and_index():
     names = [a["name"] for a in client.get("/_apps").json()["apps"]]
     assert names == ["shown"]
     # the built-in index applies the same rule
-    from enlace.compose import _add_index_route
     from fastapi import FastAPI
+
+    from enlace.compose import _add_index_route
 
     index_app = FastAPI()
     _add_index_route(index_app, PlatformConfig(apps=[listed, unlisted]))

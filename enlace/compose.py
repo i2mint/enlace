@@ -684,8 +684,9 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
     ``/_apps`` returns the resolved launcher metadata for every app the caller
     can see; the landing app itself is hidden (it's the shell, not a listable
     app), and so is an unlisted app (``listed = false``) unless the caller can
-    edit launcher metadata (see :func:`_is_listed_for`). ``/_apps/{name}/icon`` serves each app's icon through the platform so
-    that even an auth-gated app's icon renders for an anonymous viewer who is
+    edit launcher metadata (see :func:`_is_listed_for`). ``/_apps/{name}/icon``
+    serves each app's icon through the platform so that even an auth-gated
+    app's icon renders for an anonymous viewer who is
     allowed to *see* the app in the list. New fields are purely additive, so an
     older landing UI keeps working.
     """
