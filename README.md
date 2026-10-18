@@ -257,6 +257,16 @@ display_name = "My App"
 ```
 
 ```toml
+# Launcher metadata (all optional; harvested from manifest / index.html if absent)
+description = "What it does, in one line"
+keywords = ["music", "tools"]
+icon = "icon.svg"                   # app-relative path, emoji:🎸, data: URI, or https URL
+listed = false                      # link-only: served at its URL as usual, but omitted
+                                    # from the launcher (/_apps and /). Launcher-metadata
+                                    # editors still see it there, flagged "listed": false.
+```
+
+```toml
 # Non-Python or separate process
 mode = "process"
 command = ["node", "server.js"]

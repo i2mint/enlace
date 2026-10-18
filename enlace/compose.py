@@ -694,6 +694,30 @@ def _can_access(app: AppConfig, request: Request) -> bool:
     )
 
 
+def _can_edit_meta(request: Request) -> bool:
+    """Whether the caller may edit launcher metadata (the launcher's admin notion).
+
+    Read from the ``app_meta_can_edit`` closure a plugin (``enlace_auth``)
+    injects on ``app.state``; without one, nobody is an editor (fail closed).
+    """
+    can_edit_fn = getattr(request.app.state, "app_meta_can_edit", None)
+    if not callable(can_edit_fn):
+        return False
+    return bool(can_edit_fn(getattr(request.state, "user_email", None)))
+
+
+def _is_listed_for(app: AppConfig, *, can_edit_meta: bool) -> bool:
+    """Whether ``app`` belongs in a launcher listing for this caller.
+
+    An unlisted app (``listed = false`` in app.toml) is link-only: omitted from
+    listings for everyone except launcher-metadata editors, who see it flagged
+    so they can still find and edit it. This is about *advertising* only — it
+    is checked on top of :func:`_can_access`, never instead of it, and the
+    app's own routes (and its icon/manifest routes) are unaffected.
+    """
+    return app.listed or can_edit_meta
+
+
 def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
     """Whether an app opens a human UI, and the URL to open.
 
@@ -794,6 +818,8 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
         "launch_url": launch_url,
         # ISO-8601 or null — see _stamp_updated_at. The launcher sorts on it.
         "updated_at": app.updated_at,
+        # False only for a link-only app, which only metadata editors get here.
+        "listed": app.listed,
         # True when the app failed to load and a 500 stub serves its routes
         # (enlace.degraded). The launcher shows it as broken, not launchable.
         "degraded": app.import_error is not None,
@@ -809,8 +835,10 @@ def _add_apps_listing_route(
 
     ``/_apps`` returns the resolved launcher metadata for every app the caller
     can see; the landing app itself is hidden (it's the shell, not a listable
-    app). ``/_apps/{name}/icon`` serves each app's icon through the platform so
-    that even an auth-gated app's icon renders for an anonymous viewer who is
+    app), and so is an unlisted app (``listed = false``) unless the caller can
+    edit launcher metadata (see :func:`_is_listed_for`). ``/_apps/{name}/icon``
+    serves each app's icon through the platform so that even an auth-gated
+    app's icon renders for an anonymous viewer who is
     allowed to *see* the app in the list. New fields are purely additive, so an
     older landing UI keeps working.
 
@@ -829,16 +857,15 @@ def _add_apps_listing_route(
     async def apps_listing(request: Request) -> dict:
         user_id = getattr(request.state, "user_id", None)
         user_email = getattr(request.state, "user_email", None)
-        can_edit_fn = getattr(request.app.state, "app_meta_can_edit", None)
-        can_edit_meta = (
-            bool(can_edit_fn(user_email)) if callable(can_edit_fn) else False
-        )
+        can_edit_meta = _can_edit_meta(request)
 
         items = []
         for app in apps:
             if app.name == landing_name:
                 continue
             if not _can_access(app, request):
+                continue
+            if not _is_listed_for(app, can_edit_meta=can_edit_meta):
                 continue
             refresh_updated_at(app, app_metas)
             items.append(
@@ -950,13 +977,20 @@ def _icon_response(body: bytes, content_type: str, token: str, cache: str) -> Re
 def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
     """Add a GET / route listing, as a simple HTML page, the apps the caller may see.
 
-    Filtered by the same predicate as ``/_apps`` (:func:`_can_access`), so the
-    built-in index never names an app the caller could not open.
+    Filtered by the same predicates as ``/_apps`` (:func:`_can_access`, then
+    :func:`_is_listed_for`), so the built-in index never names an app the
+    caller could not open, nor a link-only app to anyone but an editor.
     """
 
     @parent.get("/", response_class=HTMLResponse)
     async def index(request: Request):
-        apps = [a for a in config.apps if _can_access(a, request)]
+        can_edit_meta = _can_edit_meta(request)
+        apps = [
+            a
+            for a in config.apps
+            if _can_access(a, request)
+            and _is_listed_for(a, can_edit_meta=can_edit_meta)
+        ]
         items = []
         for app in apps:
             has_frontend = app.frontend_dir and app.frontend_dir.is_dir()

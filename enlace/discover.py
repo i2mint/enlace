@@ -362,7 +362,11 @@ class ConventionDiscoverer:
             app_dir,
         )
         updates["provenance"] = provenance
-        return config.model_copy(update=updates)
+        # Revalidate, don't ``model_copy(update=...)``: pydantic skips
+        # validation on a copy, so a TOML ``listed = "false"`` would stay the
+        # (truthy) string and fail open. The non-asgi path builds with
+        # ``AppConfig(**fields)``; this makes both paths coerce and reject alike.
+        return AppConfig.model_validate({**dict(config), **updates})
 
     def discover_app_dir(self, app_dir: Path) -> Optional[AppConfig]:
         """Discover a single directory that IS the app itself.
@@ -416,6 +420,7 @@ _CORE_TOML_FIELD_MAP = {
     "keywords": "keywords",
     "icon": "icon",
     "launchable": "launchable",
+    "listed": "listed",
     # Refuse to boot rather than mount a 500 stub (see AppConfig.fail_hard).
     "fail_hard": "fail_hard",
 }

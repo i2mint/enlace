@@ -283,6 +283,17 @@ class AppConfig(BaseModel):
     keywords: list[str] = Field(default_factory=list)
     icon: str = ""
     launchable: Optional[bool] = None
+    listed: bool = Field(
+        default=True,
+        description=(
+            "Whether the app appears in the launcher listing (``GET /_apps`` and "
+            "the built-in ``/`` index). ``listed = false`` in app.toml makes the "
+            "app link-only: it is still served at its URL exactly as before "
+            "(access is governed by ``access`` alone), it is just not advertised. "
+            "Launcher-metadata editors (``can_edit_meta``) still see it in "
+            '``/_apps``, flagged ``"listed": false``.'
+        ),
+    )
 
     # When this app's source last changed (ISO-8601), for the launcher's "last
     # updated" sort. NOT declared in app.toml — it is stamped onto the config at
