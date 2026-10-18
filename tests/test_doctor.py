@@ -130,3 +130,17 @@ def test_healthy_apps_produce_no_import_checks():
     report = run_doctor(config)
     assert [c for c in report.checks if c.name.startswith("import:")] == []
     assert report.ok is True
+
+
+def test_unknown_platform_toml_tables_are_a_WARN(tmp_path):
+    """#63: an ignored top-level table shows up in the doctor report."""
+    from enlace.base import PlatformConfig
+    from enlace.doctor import WARN
+
+    toml = tmp_path / "platform.toml"
+    toml.write_text(f'[platform]\napps_dirs = ["{tmp_path}"]\n\n[app_mta]\n')
+    report = run_doctor(PlatformConfig.from_toml(toml))
+    [check] = [c for c in report.checks if c.name == "config:unknown_tables"]
+    assert check.status == WARN
+    assert "[app_mta]" in check.detail and "[app_meta]" in check.detail
+    assert report.ok

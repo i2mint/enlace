@@ -18,6 +18,12 @@ Design:
   a traceback — see ``_check_app_imports`` and ``discover_apps``'
   ``on_import_error``. A health tool that dies on the failure it exists to
   detect reports nothing about the thirty apps that are fine.
+- An app the *running* gateway could not load is serving a 500 stub
+  (:mod:`enlace.degraded`); ``_check_live_meta`` reads the live
+  ``/_meta`` and FAILs once per stubbed app. That is the gateway's own
+  answer, so it also catches a failure only the server's identity hits
+  (a file the service user cannot read) that the doctor's local discovery
+  would not reproduce.
 - Plugins can supply extra static or HTTP probes via ``extra_static_checks``
   and ``extra_http_checks`` on ``run_doctor``. Those are also discovered
   automatically from the plugins the platform is configured to load — see
@@ -35,6 +41,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from enlace.base import PlatformConfig
+from enlace.util import url_path
 
 _DEFAULT_TIMEOUT = 5.0
 
@@ -60,6 +67,10 @@ class Report:
 
     base_url: Optional[str]
     checks: list[Check] = field(default_factory=list)
+    # The envfile the CLI tried (None: none) and how that went: "loaded",
+    # "unreadable" (env checks skipped) or "none". "" when not reported.
+    envfile: Optional[str] = None
+    envfile_status: str = ""
 
     @property
     def ok(self) -> bool:
@@ -69,6 +80,8 @@ class Report:
     def as_dict(self) -> dict:
         return {
             "base_url": self.base_url,
+            "envfile": self.envfile,
+            "envfile_status": self.envfile_status,
             "ok": self.ok,
             "summary": self._summary(),
             "checks": [asdict(c) for c in self.checks],
@@ -88,6 +101,10 @@ class Report:
             lines.append(f"enlace doctor — probing {self.base_url}")
         else:
             lines.append("enlace doctor — static checks only")
+        if self.envfile_status:
+            note = {"unreadable": " (unreadable; env checks skipped)"}
+            shown = self.envfile or "none"
+            lines.append(f"envfile: {shown}{note.get(self.envfile_status, '')}")
         lines.append("=" * 60)
         for c in self.checks:
             prefix = symbol.get(c.status, "??  ")
@@ -132,10 +149,24 @@ def _check_app_imports(config: PlatformConfig) -> list[Check]:
                     "exception_type": err.exception_type,
                     "message": err.message,
                     "entry_module_path": str(err.entry_module_path or ""),
+                    "stage": err.stage,
                 },
             )
         )
     return out
+
+
+def _check_unknown_tables(config: PlatformConfig) -> list[Check]:
+    """Top-level platform.toml tables enlace ignores and no one declared.
+
+    A WARN, not a FAIL: a platform.toml may carry tables for another tool,
+    which ``[platform] foreign_tables`` declares to silence this check.
+    """
+    if not config.unknown_tables:
+        return []
+    detail = "; ".join(config.unknown_tables)
+    hint = "list tables another tool owns in [platform] foreign_tables"
+    return [Check("config:unknown_tables", WARN, f"{detail} ({hint})")]
 
 
 def _check_frontend_dirs(config: PlatformConfig) -> list[Check]:
@@ -188,6 +219,91 @@ def _http_get(
         return None, {}, None, f"unexpected error: {e}"
 
 
+def _check_live_meta(base_url: str, timeout: float) -> list[Check]:
+    """What the live gateway's own ``/_meta`` says about itself.
+
+    - ``degraded:<app>`` FAIL once per app it is serving a 500 stub for
+      (:mod:`enlace.degraded`); one ``meta:degraded_apps`` PASS when none is.
+    - ``meta:degraded_apps`` FAIL when ``/_meta`` cannot be read as a JSON
+      object: this is the only check that sees a stub hidden behind an auth
+      gate (which answers the per-app probes 401), so a blind read must not
+      pass for a healthy one.
+    - ``meta:enlace_version`` WARN when the running enlace differs from the
+      version the deploy manifest recorded (an engine upgraded since the last
+      deploy; https://github.com/i2mint/enlace/issues/78).
+    """
+    from enlace.degraded import DEGRADED_APPS_KEY
+    from enlace.manifest import RUNTIME_VERSION_KEY
+
+    url = f"{base_url.rstrip('/')}/_meta"
+    status, _headers, body, err = _http_get(url, timeout=timeout)
+    name = "meta:degraded_apps"
+    blind = "load-failure stubs behind an auth gate cannot be seen"
+    if err:
+        return [Check(name, FAIL, f"could not read /_meta ({err}); {blind}")]
+    try:
+        payload = json.loads(body or b"")
+    except ValueError:
+        payload = None
+    if status != 200 or not isinstance(payload, dict):
+        return [
+            Check(name, FAIL, f"/_meta status={status}, not a JSON object; {blind}")
+        ]
+    out = _version_drift(payload, RUNTIME_VERSION_KEY)
+    degraded = payload.get(DEGRADED_APPS_KEY) or {}
+    if not isinstance(degraded, dict):
+        return out + [Check(name, FAIL, f"/_meta {DEGRADED_APPS_KEY} is not a mapping")]
+    if not degraded:
+        return out + [Check(name, PASS, "no app is serving a load-failure stub")]
+    for app_name, info in sorted(degraded.items()):
+        info = info if isinstance(info, dict) else {}
+        exc_type = info.get("exception_type", "?")
+        stage = info.get("stage", "?")
+        out.append(
+            Check(
+                f"degraded:{app_name}",
+                FAIL,
+                f"live gateway serves a 500 stub: failed to load at {stage} "
+                f"({exc_type}); the server log has the traceback",
+                extra={"app": app_name, "exception_type": exc_type, "stage": stage},
+            )
+        )
+    return out
+
+
+def _same_version(a: str, b: str) -> bool:
+    """Equal as versions (``1.0`` == ``1.0.0``), falling back to the strings.
+
+    >>> _same_version("1.0", "1.0.0"), _same_version("0.1.49", "0.1.50")
+    (True, False)
+    """
+    try:
+        from packaging.version import InvalidVersion, Version
+    except ImportError:  # pragma: no cover - packaging ships with pip
+        return a == b
+    try:
+        return Version(a) == Version(b)
+    except InvalidVersion:
+        return a == b
+
+
+def _version_drift(payload: dict, runtime_key: str) -> list[Check]:
+    """WARN when the running enlace is not the one the manifest recorded."""
+    running = payload.get(runtime_key)
+    recorded = payload.get("enlace_version")
+    if not running or not recorded or _same_version(running, recorded):
+        return []
+    return [
+        Check(
+            "meta:enlace_version",
+            WARN,
+            f"running enlace {running}, but the deploy manifest records {recorded} "
+            "(engine upgraded since the last deploy)",
+            extra={"running": running, "recorded": recorded},
+        )
+    ]
+
+
 def _check_frontend_mount(base_url: str, app_name: str, timeout: float) -> Check:
     """GET /{app_name}/ — mount must exist.
 
@@ -199,7 +315,7 @@ def _check_frontend_mount(base_url: str, app_name: str, timeout: float) -> Check
     Fails on 404 (mount missing — the SPA catch-all or a hole), 5xx, and
     connection errors.
     """
-    url = f"{base_url.rstrip('/')}/{app_name}/"
+    url = f"{base_url.rstrip('/')}{url_path(f'/{app_name}/')}"
     status, headers, _body, err = _http_get(url, timeout=timeout)
     name = f"http:/{app_name}/"
     if err:
@@ -231,7 +347,7 @@ def _check_api_mount(
     the point is to detect "something ate my traffic", not to enforce API
     conventions each app chose not to follow.
     """
-    url = f"{base_url.rstrip('/')}{route_prefix.rstrip('/')}/"
+    url = f"{base_url.rstrip('/')}{url_path(route_prefix.rstrip('/') + '/')}"
     status, _headers, _body, err = _http_get(url, timeout=timeout)
     name = f"http:{route_prefix}/"
     if err:
@@ -326,11 +442,13 @@ def run_doctor(
 
     report.checks.extend(_check_app_imports(config))
     report.checks.extend(_check_frontend_dirs(config))
+    report.checks.extend(_check_unknown_tables(config))
     for fn in extra_static_checks:
         report.checks.extend(fn(config))
 
     # HTTP probes — only when a base URL is provided.
     if base_url:
+        report.checks.extend(_check_live_meta(base_url, timeout))
         for fn in extra_http_checks:
             report.checks.extend(fn(config, base_url, timeout))
 

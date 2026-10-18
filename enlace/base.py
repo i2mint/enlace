@@ -16,15 +16,29 @@ allowlist matching at request time, and CSRF all live in the
 Likewise, ``[auth.*]`` and ``[stores.*]`` tables in ``platform.toml`` are
 preserved as untyped dicts on ``PlatformConfig`` so plugins can deserialize
 them with their own models.
+
+Any other top-level table is not read by enlace. ``from_toml`` logs a warning
+for each one (a misnested ``[oauth_server]`` or a typo such as ``[stores_]``
+would otherwise vanish), unless ``[platform] foreign_tables`` declares it as
+owned by another tool, and ``enlace doctor`` reports the same list.
 """
 
+import difflib
+import logging
 import os
 import shlex
 import sys
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Iterable, Literal, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    field_validator,
+    model_validator,
+)
 
 from enlace.analytics import AppAnalyticsConfig, PlatformAnalyticsConfig
 from enlace.appmeta import AppMetaConfig
@@ -36,6 +50,39 @@ else:
         import tomllib
     except ImportError:
         import tomli as tomllib  # type: ignore[no-redef]
+
+_logger = logging.getLogger("enlace.config")
+
+# The top-level platform.toml tables enlace itself reads (see
+# PlatformConfig.from_toml). Anything else is a typo, a misnested table, or a
+# table owned by another tool (declared via [platform] foreign_tables).
+ENLACE_TABLES = frozenset(
+    {"platform", "conventions", "auth", "stores", "app_meta", "analytics"}
+)
+
+
+def unknown_toml_tables(data: dict, *, foreign_tables: Iterable[str] = ()) -> list[str]:
+    """Top-level keys of a parsed platform.toml that nobody claims, as messages.
+
+    A key is claimed when enlace reads it (:data:`ENLACE_TABLES`) or when the
+    config declares it in ``foreign_tables``. Each message names the key and,
+    when one is close, the enlace table it was probably meant to be.
+
+    >>> unknown_toml_tables({"platform": {}, "deploy": {}, "stores_": {}},
+    ...                     foreign_tables=["deploy"])
+    ['[stores_] is not an enlace table and is ignored (did you mean [stores]?)']
+    """
+    claimed = ENLACE_TABLES | set(foreign_tables)
+    messages = []
+    for key in data:
+        if key in claimed:
+            continue
+        msg = f"[{key}] is not an enlace table and is ignored"
+        close = difflib.get_close_matches(key.lower(), sorted(ENLACE_TABLES), n=1)
+        if close:
+            msg += f" (did you mean [{close[0]}]?)"
+        messages.append(msg)
+    return messages
 
 
 class ConventionsConfig(BaseModel):
@@ -87,30 +134,74 @@ class BuildConfig(BaseModel):
         return v
 
 
-class AppImportError(BaseModel):
-    """Why an app's entry module could not be imported at discovery time.
+#: What a contained app-load failure may be. Importing a module runs arbitrary
+#: module-level code, so the net is ``Exception``, not ``ImportError`` — plus
+#: ``SystemExit``, because a module that calls ``sys.exit()`` at import is a
+#: broken app, and under a pre-forking server an uncaught one ends the worker
+#: and with it every other app. ``KeyboardInterrupt`` is not caught: Ctrl-C
+#: must still stop a dev server mid-boot.
+CONTAINED_LOAD_ERRORS: tuple[type[BaseException], ...] = (Exception, SystemExit)
 
-    Recorded (instead of raised) when discovery runs with
-    ``on_import_error="record"`` — see :func:`enlace.discover.discover_apps`.
+#: Where an app-load failure happened: while discovery imported the entry
+#: module to detect its type, while ``build_backend`` loaded the sub-app, or
+#: while the gateway ran the sub-app's lifespan startup.
+AppLoadStage = Literal["discover", "compose", "lifespan"]
+
+
+class AppImportError(BaseModel):
+    """Why an app could not be loaded, recorded instead of raised.
+
+    Recorded at discovery (``on_import_error="record"`` — see
+    :func:`enlace.discover.discover_apps`) or at compose time, when
+    :func:`enlace.compose.build_backend` contains a per-app load failure and
+    mounts a 500 stub in the app's place (see :mod:`enlace.degraded` and
+    ``misc/docs/decisions/0001-loud-and-local-app-load-failures.md``).
+
     Importing a module runs arbitrary module-level code, so ``exception_type``
     is not necessarily an ``ImportError``: the failure seen in production was a
     ``PermissionError`` from a dependency reading a root-only dotenv at import.
+
+    The exception object itself is kept privately (:attr:`exception`) so a
+    caller that must refuse to boot can re-raise it with its real traceback.
+    It is never serialized.
     """
 
     exception_type: str
     message: str
     entry_module_path: Optional[Path] = None
+    stage: AppLoadStage = "discover"
+    _exception: Optional[BaseException] = PrivateAttr(default=None)
 
     @classmethod
     def from_exception(
-        cls, exc: BaseException, entry_module_path: Optional[Path] = None
+        cls,
+        exc: BaseException,
+        entry_module_path: Optional[Path] = None,
+        *,
+        stage: AppLoadStage = "discover",
     ) -> "AppImportError":
-        """Build a record from the exception the import raised."""
-        return cls(
+        """Build a record from the exception the import (or load) raised."""
+        record = cls(
             exception_type=type(exc).__name__,
             message=str(exc),
             entry_module_path=entry_module_path,
+            stage=stage,
         )
+        record._exception = exc
+        return record
+
+    @property
+    def exception(self) -> Optional[BaseException]:
+        """The original exception, when this record was built from one."""
+        return self._exception
+
+    def public_summary(self) -> dict[str, str]:
+        """What may be shown to anyone: the exception class and the stage.
+
+        Never the message — it can carry server paths or configuration values
+        (the production ``PermissionError`` named the dotenv's path).
+        """
+        return {"exception_type": self.exception_type, "stage": self.stage}
 
     def __str__(self) -> str:
         return f"{self.exception_type}: {self.message}"
@@ -169,11 +260,18 @@ class AppConfig(BaseModel):
     # unless the app opts in with mode = "privacy". See enlace.analytics.
     analytics: AppAnalyticsConfig = Field(default_factory=AppAnalyticsConfig)
 
-    # Set only when discovery ran with ``on_import_error="record"`` and this
-    # app's entry module raised on import. ``None`` on every healthy app, and
-    # on every app discovered under the default ``"raise"`` policy (which
-    # never gets far enough to build a config for a broken app).
+    # Set when discovery ran with ``on_import_error="record"`` and this app's
+    # entry module raised on import, or when ``build_backend`` could not load
+    # the app and mounted a 500 stub in its place (``stage="compose"``).
+    # ``None`` on every healthy app. A set value is never silent: /_meta,
+    # /_apps, ``enlace doctor`` and the logs all report it.
     import_error: Optional[AppImportError] = None
+
+    # Refuse to boot the platform when this app cannot be loaded, instead of
+    # mounting a 500 stub in its place (app.toml ``fail_hard = true``). For an
+    # app that would rather be absent than serve errors; see
+    # ``PlatformConfig.app_load_failure`` for the platform-wide switch.
+    fail_hard: bool = False
 
     # App-launcher metadata. Resolved at discovery from app.toml + harvested
     # sources (manifest, index.html <head>, package.json, pyproject) — see
@@ -219,6 +317,13 @@ class AppConfig(BaseModel):
     restart_policy: Literal["always", "on-failure", "never"] = "on-failure"
     max_retries: int = 5
     restart_delay_ms: int = 100
+    #: Forward the visitor's platform session and CSRF credentials (cookies and
+    #: the ``X-CSRF-Token`` header) to the process. Off by default: a process app
+    #: is a separate program with its own dependencies, and bearer-token apps
+    #: such as MCP connectors never need them. Response filtering (no platform
+    #: ``Set-Cookie``, ``Clear-Site-Data`` or ``Service-Worker-Allowed``) applies
+    #: either way.
+    forward_platform_credentials: bool = False
 
     # External-mode fields
     upstream_url: Optional[str] = None
@@ -295,6 +400,17 @@ class PlatformConfig(BaseModel):
         ),
     )
     backend_port: int = 8000
+    app_load_failure: Literal["stub", "raise"] = Field(
+        default="stub",
+        description=(
+            "What the gateway does when an asgi-mode app cannot be imported or "
+            'loaded. ``"stub"`` (default): mount a 500 stub for that app only and '
+            "report it in /_meta, /_apps, ``enlace doctor`` and the logs; every "
+            'other app serves. ``"raise"``: refuse to boot, as before 0.1.50. A '
+            "single app can ask for ``raise`` with ``fail_hard = true`` in its "
+            "app.toml. Platform configuration errors always refuse to boot."
+        ),
+    )
 
     @field_validator("cors_origins")
     @classmethod
@@ -354,6 +470,22 @@ class PlatformConfig(BaseModel):
     # Platform-wide analytics settings (platform.toml [analytics]): storage,
     # retention, timezone. Apps opt in individually; see enlace.analytics.
     analytics: PlatformAnalyticsConfig = Field(default_factory=PlatformAnalyticsConfig)
+    foreign_tables: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Top-level platform.toml tables owned by another tool (e.g. a "
+            "deploy script's ``[deploy]``). enlace ignores them without the "
+            "unknown-table warning."
+        ),
+    )
+    # Messages for the unclaimed top-level tables from_toml found; read by
+    # `enlace doctor`. Empty for a config built in code.
+    _unknown_tables: list[str] = PrivateAttr(default_factory=list)
+
+    @property
+    def unknown_tables(self) -> list[str]:
+        """Unclaimed top-level tables in the loaded platform.toml, as messages."""
+        return list(self._unknown_tables)
 
     @model_validator(mode="after")
     def _normalize_dirs(self):
@@ -370,7 +502,9 @@ class PlatformConfig(BaseModel):
         return list(self.apps_dirs) + list(self.app_dirs)
 
     @classmethod
-    def from_toml(cls, path: Path = Path("platform.toml")) -> "PlatformConfig":
+    def from_toml(
+        cls, path: Union[str, Path] = Path("platform.toml")
+    ) -> "PlatformConfig":
         """Load configuration from a TOML file, falling back to defaults.
 
         Relative ``apps_dirs`` / ``app_dirs`` / ``shared_assets_dir`` entries
@@ -387,10 +521,16 @@ class PlatformConfig(BaseModel):
         - ENLACE_APP_DIRS (pathsep-delimited): individual app directories
         - ENLACE_APPS_DIR (legacy): single container directory
 
+        Top-level tables enlace does not read are logged as warnings (and
+        kept on :attr:`unknown_tables`) unless ``[platform] foreign_tables``
+        lists them; they are never an error, since a platform.toml may carry
+        tables for other tools.
+
         Args:
-            path: Path to platform.toml. If the file doesn't exist, returns
-                  a PlatformConfig with all default values.
+            path: Path to platform.toml (a ``str`` or ``Path``). If the file
+                  doesn't exist, returns a PlatformConfig with all default values.
         """
+        path = Path(path)
         if not path.exists():
             data = {}
         else:
@@ -463,7 +603,17 @@ class PlatformConfig(BaseModel):
         if env_apps_dir and "apps_dirs" not in platform_data:
             platform_data["apps_dir"] = env_apps_dir
 
-        return cls(**platform_data)
+        config = cls(**platform_data)
+        config._unknown_tables = unknown_toml_tables(
+            data, foreign_tables=config.foreign_tables
+        )
+        for msg in config._unknown_tables:
+            _logger.warning(
+                "%s: %s; if another tool owns it, list it in [platform] foreign_tables",
+                path,
+                msg,
+            )
+        return config
 
     def check_conflicts(self) -> list[str]:
         """Check for name and route conflicts across all apps.

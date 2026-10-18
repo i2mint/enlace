@@ -2,11 +2,13 @@
 name: enlace-dev
 description: >
   Use when developing or modifying the enlace package itself — adding features,
-  fixing bugs, extending the ASGI composition, adding middleware, or working on
-  any module in the enlace/ source directory. Triggers on: editing enlace source
-  files (base.py, discover.py, compose.py, serve.py, auth.py, stores.py),
-  implementing spec phases 2-4, or when the user says "add X to enlace" or
-  "implement Y in enlace".
+  fixing bugs, extending the ASGI composition, adding middleware, process
+  supervision, or working on any module in the enlace/ source directory. Triggers
+  on: editing enlace source files (base.py, discover.py, compose.py, serve.py,
+  supervise.py, proxy.py, strategies.py, degraded.py), implementing spec phases
+  2-4, or when the user says "add X to enlace" or "implement Y in enlace".
+metadata:
+  audience: developers
 ---
 
 # Developing enlace
@@ -56,19 +58,33 @@ See `misc/docs/design_principles__*.md` for the full rationale.
 
 ```
 enlace/
-├── base.py        # Pydantic models: AppConfig, PlatformConfig, ConventionsConfig
+├── base.py        # Pydantic models: AppConfig (mode, process fields), PlatformConfig
 ├── util.py        # Pure helpers: derive_display_name, derive_route_prefix, is_skippable
-├── discover.py    # ConventionDiscoverer: walks apps/, detects types, loads TOML
-├── compose.py     # build_backend(): mounts sub-apps, cascade_lifespan
+├── discover.py    # ConventionDiscoverer: reads app.toml early, detects types
+├── strategies.py  # BackendStrategy registry: asgi/process/external/static (+ plugins)
+├── compose.py     # build_backend(): mounts sub-apps, proxy routes, static, cascade_lifespan
+├── degraded.py    # load_or_stub(): 500 stub for an asgi app that fails to load
+├── access.py      # can_see_app / is_user_allowed: the one visibility predicate
+├── proxy.py       # Lightweight ASGI reverse proxy for process/external (httpx)
+├── supervise.py   # Dev-mode asyncio process supervisor (health, restart, logs)
+├── frontend.py    # SPA-aware static files (RevalidatingStaticFiles, SPAStaticFiles)
+├── manifest.py    # DeployManifest + /_meta + X-Deploy-* headers
+├── appmeta.py     # Launcher metadata: titles, descriptions, keywords, icons
+├── analytics.py   # Opt-in, cookie-free page-view counts
+├── build.py       # Declarative app.toml [build] runs
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues
-├── serve.py       # Uvicorn subprocess orchestration, signal forwarding
+├── doctor.py      # Post-deploy smoke checks against a running gateway
+├── serve.py       # Gateway Uvicorn + supervised process-mode children
 ├── __main__.py    # CLI: one dispatch list of verb functions (cw)
 ├── __init__.py    # Public API facade
-└── tests/         # Unit tests (test_discover.py, test_compose.py)
+└── tests/         # Unit tests (one test_<module>.py per area)
 ```
 
-**Data flow:** `PlatformConfig.from_toml()` → `ConventionDiscoverer.discover()` →
-`config.check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
+**Data flow (asgi-only):** `PlatformConfig.from_toml()` → `discover_apps()` →
+`check_conflicts()` → `build_backend(config)` → `uvicorn --factory`
+
+**Data flow (mixed-mode):** `discover_apps()` → partition by `mode` →
+gateway Uvicorn (asgi + proxy) + `ProcessSupervisor` (process children)
 
 ## Critical Rules
 
@@ -108,11 +124,21 @@ This prevents the Celery autodiscover anti-pattern.
 Reporting is not swallowing. `discover_apps(..., on_import_error="record")`
 records the failure on `AppConfig.import_error` and carries on, so the
 diagnostic verbs can name the broken app instead of dying on it — `enlace
-doctor` still exits nonzero, with a `FAIL` check. `serve` keeps the default
-`"raise"`. Never make `"record"` the default: a gateway that boots pretending a
-broken app is fine IS the anti-pattern. Note the net is `Exception`, not
-`ImportError` — a module runs arbitrary code at import (the failure seen in
-production was a `PermissionError`).
+doctor` still exits nonzero, with a `FAIL` check. The library default stays
+`"raise"`. Note the net is `Exception` + `SystemExit`, not `ImportError` — a
+module runs arbitrary code at import (the failure seen in production was a
+`PermissionError`).
+
+The gateway (`create_app`, `serve`) records, and `build_backend` mounts a 500
+stub for the broken asgi app only (`enlace/degraded.py`, ADR-0001 in
+`misc/docs/decisions/`). **A stub is not a degraded success**: every stub must
+show up in the ERROR log, `/_meta` `degraded_apps`, `/_apps` (`degraded`, not
+launchable) and `enlace doctor` — `test_no_stub_is_ever_silent` pins it. Keep
+the net narrow: only an asgi app's import, load and lifespan startup are
+contained (a startup failure swaps that mount's target for the stub, #76);
+platform config errors, route conflicts and non-asgi `make_asgi`/lifespan
+errors still refuse to boot, as does `fail_hard = true` / `app_load_failure =
+"raise"`.
 
 ### Conflict detection: fail-fast, report ALL
 
@@ -123,7 +149,11 @@ need to see all conflicts at once to fix them in one pass.
 
 Mounted sub-apps never receive startup/shutdown. The `cascade_lifespan` context
 manager in compose.py works around this by iterating Mount routes and entering
-their lifespan contexts. Any new mounting logic must preserve this.
+their lifespan contexts. Any new mounting logic must preserve this — including
+any wrapper around a mounted app: app mounts are `_AppIdInjector`s, and for
+months the cascade looked for `router` on the wrapper and ran *no* app's
+lifespan (#76). `test_degraded_lifespan.py::test_mounted_apps_lifespans_run`
+pins it.
 
 ### CORS on parent only
 
@@ -138,18 +168,25 @@ Detailed rationale, code patterns, and pitfalls live in `misc/docs/`:
 | Module area | Consult |
 |-------------|---------|
 | compose.py, mounting, middleware | `asgi_composition__*.md` |
-| auth.py, sessions, cookies | `auth_cross_cutting__*.md` |
+| auth, sessions, cookies (enlace_auth package) | `auth_cross_cutting__*.md` |
 | discover.py, config, show-config | `convention_over_configuration__*.md` |
 | serve.py, deployment, logging | `deployment_observability__*.md` |
+| supervise.py, proxy.py, strategies.py | `Process orchestration and multi-backend composition for enlace.md` |
+| Load-failure policy | `decisions/0001-loud-and-local-app-load-failures.md` |
 | frontend.py, SPA serving | `frontend_serving__*.md` |
-| stores.py, PrefixedStore, Mall | `user_data_persistence__*.md` |
+| stores, PrefixedStore, Mall (enlace_auth package) | `user_data_persistence__*.md` |
 | Design philosophy, coupling, independence | `design_principles__*.md` |
 
-Read the relevant doc before modifying its subsystem.
+Read the relevant doc before modifying its subsystem. Auth and per-user
+stores are not in this repo: they ship as the `enlace_auth` plugin
+(i2mint/enlace_auth), which enlace serves through ASGI scope injection.
 
 ## Implementation Phases (from spec)
 
 **Phase 1 (done):** Core discovery, composition, CLI, serve
+**Phase 1.5 (done):** Multi-mode orchestration — `mode` field on AppConfig
+  (asgi/process/external/static), app.toml-first discovery, dev process
+  supervisor (supervise.py), ASGI reverse proxy (proxy.py), mixed-mode serve
 **Phase 2:** frontend.py (SPAStaticFiles, launcher), auth.py (PlatformAuthMiddleware,
   shared-password login, signed cookies), inject.py (HTML injection), hash-password
   and create-session-secret CLI commands
@@ -157,6 +194,11 @@ Read the relevant doc before modifying its subsystem.
   StoreInjectionMiddleware, per-user sessions, CSRF, WebSocket origin validation
 **Phase 4:** deploy.py (Caddyfile/systemd generation), structlog middleware,
   analytics injection, `generate` CLI namespace
+
+**Deferred:** Caddy config generation, systemd unit generation (#38),
+  convention detection (package.json/go.mod heuristics), WebSocket proxying
+  (the proxy refuses a websocket with `websocket.close`), file watching for
+  process-mode apps
 
 ## Testing Pattern
 

@@ -659,3 +659,82 @@ def test_updated_at_survives_a_metadata_edit(tmp_path):
     item = build_launcher_item(app, cfg, {"description": "edited"})
     assert item["description"] == "edited"
     assert item["updated_at"] == "2026-04-28T12:16:50+02:00"
+
+
+def test_updated_at_follows_a_manifest_rewritten_while_running(tmp_path):
+    """`/_apps` used to report the compose-time date until a restart (#84)."""
+    import os
+
+    manifests = tmp_path / "manifests"
+    _write_manifest(manifests, "pubapp", committed_at="2026-04-28T12:16:50+02:00")
+    app = _make_public_app()
+    cfg = PlatformConfig(apps=[app], manifest_dir=manifests)
+    client = TestClient(build_backend(cfg))
+
+    def listed():
+        return client.get("/_apps").json()["apps"][0]["updated_at"]
+
+    assert listed() == "2026-04-28T12:16:50+02:00"
+    _write_manifest(manifests, "pubapp", committed_at="2026-10-14T00:00:00+00:00")
+    path = manifests / "pubapp.json"
+    st = path.stat()  # out of the same mtime tick, so the reader must re-read
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+
+    assert listed() == "2026-10-14T00:00:00+00:00", "stale until a restart"
+    # Carried on the AppConfig, so the enlace_auth metadata edit sees it too.
+    assert app.updated_at == "2026-10-14T00:00:00+00:00"
+
+
+def test_a_metadata_edit_reports_the_live_manifest_without_a_listing(tmp_path):
+    """#87: the enlace_auth PATCH builds its item itself; with no GET /_apps in
+    between it used to return the date the last listing stamped. The readers are
+    published on app state, and ``refresh_updated_at`` re-stamps from them."""
+    import os
+
+    from enlace.compose import build_launcher_item, refresh_updated_at
+
+    manifests = tmp_path / "manifests"
+    _write_manifest(manifests, "pubapp", committed_at="2026-04-28T12:16:50+02:00")
+    app = _make_public_app()
+    cfg = PlatformConfig(apps=[app], manifest_dir=manifests)
+    backend = build_backend(cfg)
+    readers = backend.state.app_manifest_readers
+    assert set(readers) == {"pubapp"}
+
+    _write_manifest(manifests, "pubapp", committed_at="2026-10-14T00:00:00+00:00")
+    path = manifests / "pubapp.json"
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+
+    refresh_updated_at(app, readers)
+    item = build_launcher_item(app, cfg, {})
+    assert item["updated_at"] == "2026-10-14T00:00:00+00:00"
+
+
+def test_refresh_updated_at_without_a_reader_keeps_the_stamp():
+    from enlace.compose import refresh_updated_at
+
+    app = _make_public_app()
+    app.updated_at = "2026-01-01T00:00:00+00:00"
+    refresh_updated_at(app, None)
+    refresh_updated_at(app, {})
+    assert app.updated_at == "2026-01-01T00:00:00+00:00"
+
+
+def test_refresh_updated_at_keeps_a_known_date_over_a_corrupt_manifest(tmp_path):
+    """A half-written manifest degrades to a stub: a read error, not "no date"."""
+    import os
+
+    from enlace.compose import refresh_updated_at
+
+    manifests = tmp_path / "manifests"
+    _write_manifest(manifests, "pubapp", committed_at="2026-04-28T12:16:50+02:00")
+    app = _make_public_app()
+    backend = build_backend(PlatformConfig(apps=[app], manifest_dir=manifests))
+    path = manifests / "pubapp.json"
+    path.write_text("{ not json")
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+
+    refresh_updated_at(app, backend.state.app_manifest_readers)
+    assert app.updated_at == "2026-04-28T12:16:50+02:00"

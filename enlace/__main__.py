@@ -25,9 +25,10 @@ from enlace.serve import serve
 
 # The diagnostic verbs (show-config, check, list-apps, app-meta, doctor) report
 # ON apps; they must survive one that cannot be imported in order to say so.
-# `serve` and `build_backend` keep the default "raise" — a gateway must not boot
-# pretending a broken app is fine. `build` keeps it too: it is a deploy step,
-# not a report.
+# The gateway (`serve`, `create_app`) records too, then mounts a 500 stub for
+# the broken app and reports it loudly (enlace.degraded) — loud and local, not
+# loud and global. `build` keeps the default "raise": it is a deploy step, not
+# a report.
 _DIAGNOSTIC_IMPORT_POLICY: ImportErrorPolicy = "record"
 
 
@@ -219,7 +220,7 @@ def check(
     # boot on it. Recording it rather than raising changes only the *shape* of
     # the report — every healthy app still gets validated and listed.
     errors = _import_error_lines(config) + config.check_conflicts()
-    warnings: list[str] = []
+    warnings: list[str] = [f"platform.toml: {m}" for m in config.unknown_tables]
     for app in config.apps:
         warnings.extend(validate_build(app))
     from enlace.app_icons import home_screen_gaps
@@ -385,7 +386,7 @@ def diagnose(
         sys.exit(1)
 
 
-def _load_envfile(path: str) -> bool:
+def _load_envfile(path: str, *, override: bool = True) -> bool:
     """Parse a simple KEY=VALUE envfile into ``os.environ``.
 
     Only handles the systemd/shell common case: blank lines, ``#`` comments,
@@ -403,6 +404,9 @@ def _load_envfile(path: str) -> bool:
     A genuinely missing path still hard-fails with ``sys.exit(2)``, because
     that almost always means a typo or wrong path rather than a deliberate
     permission topology.
+
+    With ``override=False``, a variable already set in the environment keeps
+    its value (what the caller exported wins over the file).
     """
     p = Path(path).expanduser()
     if not p.is_file():
@@ -430,8 +434,30 @@ def _load_envfile(path: str) -> bool:
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
             value = value[1:-1]
-        os.environ[key] = value
+        if override or key not in os.environ:
+            os.environ[key] = value
     return True
+
+
+# `enlace doctor --envfile` default: the .env beside platform.toml, if any.
+_AUTO_ENVFILE = "auto"
+
+
+def _resolve_envfile(
+    envfile: str, *, toml_path: Path = Path("platform.toml")
+) -> Optional[Path]:
+    """The envfile ``doctor`` should load, or ``None`` for none.
+
+    ``"auto"`` means the ``.env`` next to *toml_path* when both exist (the
+    gateway's own envfile in the usual layout); ``""`` opts out; anything else
+    is an explicit path, which must exist (see :func:`_load_envfile`). A
+    symlinked platform.toml is not followed: the ``.env`` is the one in the
+    directory the caller is looking at.
+    """
+    if envfile == _AUTO_ENVFILE:
+        candidate = toml_path.absolute().parent / ".env"
+        return candidate if toml_path.is_file() and candidate.is_file() else None
+    return Path(envfile) if envfile else None
 
 
 def doctor(
@@ -440,7 +466,7 @@ def doctor(
     timeout: float = 5.0,
     apps: str = "",
     json: bool = False,
-    envfile: str = "",
+    envfile: str = _AUTO_ENVFILE,
     skip_env_checks: bool = False,
     apps_dir: str = "",
     apps_dirs: str = "",
@@ -468,8 +494,14 @@ def doctor(
             Static checks still run across all apps.
         json: Output as JSON (for CI / deploy pipelines).
         envfile: Path to a KEY=VALUE envfile to load before running env
-            checks. Use this when probing from outside the service process
-            (e.g. a deploy script sourcing /opt/tw_platform/.env).
+            checks, so a plain shell sees the variables the gateway runs
+            with. Defaults to ``auto``: the ``.env`` beside ``platform.toml``
+            in the current directory, when there is one, without overriding
+            variables already exported (its ``ENLACE_*`` values, such as
+            ``ENLACE_APPS_DIRS``, then apply as they do for the gateway). An
+            explicit path overrides exported values; ``--envfile ''`` loads
+            none (a file literally named ``auto``: pass ``./auto``). The
+            report header names the envfile used.
         skip_env_checks: Skip signing-key / shared-password env checks
             entirely. Use when you are running from a shell that doesn't
             have the gateway's env and you trust the HTTP probes as the
@@ -478,12 +510,17 @@ def doctor(
         apps_dirs: Comma-separated container directories.
         app_dirs: Comma-separated individual app directories.
     """
-    if envfile:
+    envfile_path = _resolve_envfile(envfile)
+    envfile_status = "none"
+    if envfile_path is not None:
+        envfile_status = "loaded"
         # If the envfile is unreadable (e.g. root:root 0600 and we are the
         # deploy user) ``_load_envfile`` warns and returns False; auto-skip
         # env checks so the HTTP / config checks still run.
-        if not _load_envfile(envfile):
+        override = envfile != _AUTO_ENVFILE
+        if not _load_envfile(str(envfile_path), override=override):
             skip_env_checks = True
+            envfile_status = "unreadable"
 
     config = _build_config(
         apps_dir, apps_dirs, app_dirs, on_import_error=_DIAGNOSTIC_IMPORT_POLICY
@@ -505,6 +542,8 @@ def doctor(
         extra_static_checks=plugin_static,
         extra_http_checks=plugin_http,
     )
+    report.envfile = None if envfile_path is None else str(envfile_path)
+    report.envfile_status = envfile_status
 
     if json:
         print(json_module.dumps(report.as_dict(), indent=2, default=str))

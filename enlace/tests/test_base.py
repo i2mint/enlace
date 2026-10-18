@@ -283,3 +283,66 @@ def test_from_toml_missing_file_returns_defaults(tmp_path):
 
     assert config.apps_dirs == [Path("apps")]
     assert config.app_dirs == []
+
+
+# -- from_toml: unknown top-level tables (#63) --------------------------------
+
+
+def test_from_toml_warns_on_unknown_top_level_tables(tmp_path, caplog):
+    """A typo or misnested table is reported, not silently dropped."""
+    toml = tmp_path / "platform.toml"
+    toml.write_text(
+        "[platform]\n\n[stores_]\nx = 1\n\n[oauth_server]\nenabled = true\n"
+    )
+    with caplog.at_level("WARNING", logger="enlace.config"):
+        config = PlatformConfig.from_toml(toml)
+
+    assert config.unknown_tables == [
+        "[stores_] is not an enlace table and is ignored (did you mean [stores]?)",
+        "[oauth_server] is not an enlace table and is ignored",
+    ]
+    logged = caplog.text
+    assert "[stores_]" in logged and "[oauth_server]" in logged
+    assert "foreign_tables" in logged
+
+
+def test_from_toml_foreign_tables_silences_tables_owned_by_other_tools(
+    tmp_path, caplog
+):
+    """Tables declared in [platform] foreign_tables load quietly."""
+    toml = tmp_path / "platform.toml"
+    toml.write_text(
+        '[platform]\nforeign_tables = ["deploy", "google_analytics"]\n\n'
+        '[deploy]\nexternal_apps = ["a"]\n\n[google_analytics]\nga_id = "G-X"\n'
+        "\n[app_meta]\n\n[analytics]\n\n[auth]\n\n[stores.s]\n\n[conventions]\n"
+    )
+    with caplog.at_level("WARNING", logger="enlace.config"):
+        config = PlatformConfig.from_toml(toml)
+
+    assert config.unknown_tables == []
+    assert config.foreign_tables == ["deploy", "google_analytics"]
+    assert "not an enlace table" not in caplog.text
+
+
+def test_unknown_tables_survive_model_copy(tmp_path):
+    """CLI overrides use model_copy; the doctor must still see the list."""
+    toml = tmp_path / "platform.toml"
+    toml.write_text("[platform]\n\n[analytcs]\n")
+    config = PlatformConfig.from_toml(toml).model_copy(update={"apps": []})
+    assert len(config.unknown_tables) == 1
+
+
+def test_config_built_in_code_has_no_unknown_tables():
+    assert PlatformConfig().unknown_tables == []
+
+
+def test_from_toml_accepts_a_str_path(tmp_path, monkeypatch):
+    """A plain string works like a Path, as the spec documents (enlace#90)."""
+    (tmp_path / "papp").mkdir()
+    toml = _write_toml(tmp_path / "cfg" / "platform.toml", 'apps_dirs = ["../papp"]\n')
+    monkeypatch.chdir(tmp_path / "papp")
+
+    config = PlatformConfig.from_toml(str(toml))
+
+    assert config.apps_dirs == [(tmp_path / "papp").resolve()]
+    assert PlatformConfig.from_toml(str(tmp_path / "missing.toml")).apps_dirs

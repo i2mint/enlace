@@ -6,27 +6,47 @@ implementation for simple cases.
 
 This module is lazy-loaded: it only imports ``httpx`` when a proxy ASGI
 app is actually instantiated, so the dependency remains optional.
+
+What the credential filters do and do not contain: they keep the platform's
+cookies and CSRF header away from an upstream *server*, and keep an upstream
+from setting platform cookies or sending origin-wide headers
+(``PLATFORM_UNSAFE_RESPONSE_HEADERS``). They do not try to stop an upstream
+from *navigating* a visitor elsewhere on the origin: a ``Location`` or
+``Refresh`` pointing at ``/auth/...`` is passed through. A redirect is only a
+top-level GET navigation, which any page on any site can already cause (with
+the visitor's SameSite=Lax cookies attached), and a proxied app's own pages are
+served on the platform origin, one ``location.href = ...`` away from the same
+thing. So the platform's GET routes must be safe to navigate to on their own
+(the POST ones need CSRF); filtering these headers would only look like a
+boundary.
 """
 
+import re
 from typing import Callable, Iterable, Optional
+from urllib.parse import quote, unquote
 
 #: Cookies the platform itself sets on its own origin -- enlace_auth's defaults
-#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, and the
-#: per-app ``shared_auth_<app>`` cookies). Keep in sync with enlace_auth. They
+#: (``AuthConfig.session_cookie_name``, ``CSRFMiddleware`` cookie name, the
+#: social-login ``enlace_oauth_state`` cookie, and the per-app
+#: ``shared_auth_<app>`` cookies). Keep in sync with enlace_auth. They
 #: are credentials for *this* platform and must never reach an upstream that
 #: is not part of it.
-PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf")
+PLATFORM_COOKIE_NAMES = ("enlace_session", "enlace_csrf", "enlace_oauth_state")
 PLATFORM_COOKIE_PREFIXES = ("shared_auth_",)
 
-#: Request headers carrying platform credentials, withheld from external
+#: Request headers carrying platform credentials, withheld from proxied
 #: upstreams (the CSRF double-submit token pairs with ``enlace_csrf``).
-EXTERNAL_DROP_REQUEST_HEADERS = ("x-csrf-token",)
+PLATFORM_CREDENTIAL_REQUEST_HEADERS = ("x-csrf-token",)
 
-#: Response headers an external upstream may not send on the platform origin:
+#: Response headers a proxied upstream may not send on the platform origin:
 #: ``Clear-Site-Data`` could wipe the platform's cookies/storage, and
 #: ``Service-Worker-Allowed`` could let a script under the app's prefix
 #: register a service worker controlling the whole origin.
-EXTERNAL_DROP_RESPONSE_HEADERS = ("clear-site-data", "service-worker-allowed")
+PLATFORM_UNSAFE_RESPONSE_HEADERS = ("clear-site-data", "service-worker-allowed")
+
+# Original names, kept for importers: external mode was the first user.
+EXTERNAL_DROP_REQUEST_HEADERS = PLATFORM_CREDENTIAL_REQUEST_HEADERS
+EXTERNAL_DROP_RESPONSE_HEADERS = PLATFORM_UNSAFE_RESPONSE_HEADERS
 
 CookieFilter = Callable[[str], bool]  # cookie name -> forward it?
 
@@ -38,13 +58,70 @@ def platform_cookie_filter(
 ) -> CookieFilter:
     """Return a filter that keeps every cookie except the platform's own.
 
-    Used for ``mode="external"`` apps: an upstream on another host has no
-    business seeing a visitor's platform session, and must not be able to set
-    (overwrite) one on the platform's origin either.
+    Used for every proxied app (``mode="external"`` and ``mode="process"``): an
+    upstream has no business seeing a visitor's platform session, and must not
+    be able to set (overwrite) one on the platform's origin either.
+
+    Names match case-insensitively. Browsers and Starlette keep cookie names
+    case-sensitive, so ``Enlace_Session`` is a different cookie today, but a
+    case-variant of a platform name has no legitimate use and would become a
+    shadow the day any reader matched names loosely.
+
+    >>> keep = platform_cookie_filter()
+    >>> [keep(n) for n in ("theme", "Enlace_Session", "SHARED_AUTH_x")]
+    [True, False, False]
     """
-    names = frozenset(names)
-    prefixes = tuple(prefixes)
-    return lambda name: not (name in names or name.startswith(prefixes))
+    names = frozenset(n.casefold() for n in names)
+    prefixes = tuple(p.casefold() for p in prefixes)
+
+    def keep(name: str) -> bool:
+        folded = name.casefold()
+        return not (folded in names or folded.startswith(prefixes))
+
+    return keep
+
+
+def platform_cookie_names(platform=None) -> tuple[str, ...]:
+    """The platform's own cookie names, honouring a custom session cookie name.
+
+    ``[auth]`` is opaque to enlace core (enlace_auth owns its schema), so this
+    reads only the one key that renames a platform cookie.
+
+    >>> from types import SimpleNamespace
+    >>> platform_cookie_names(SimpleNamespace(auth={"session_cookie_name": "s"}))[-1]
+    's'
+    """
+    auth = getattr(platform, "auth", None) or {}
+    custom = auth.get("session_cookie_name") if isinstance(auth, dict) else None
+    return PLATFORM_COOKIE_NAMES + ((custom,) if custom else ())
+
+
+def platform_proxy_filters(platform=None, *, forward_credentials: bool = False) -> dict:
+    """:func:`make_proxy_app` keyword arguments that keep platform credentials home.
+
+    The one policy for every proxied app, whatever runs it (an external server,
+    a local process, a container from ``enlace_docker``): the upstream does not
+    see the visitor's platform cookies or ``X-CSRF-Token`` unless the caller
+    passes *forward_credentials* (process and docker modes pass an app's
+    ``forward_platform_credentials``; external mode never does), and it may
+    never set a platform cookie or send :data:`PLATFORM_UNSAFE_RESPONSE_HEADERS`,
+    whatever it is granted.
+
+    >>> filters = platform_proxy_filters()
+    >>> filters["cookie_filter"]("enlace_session"), filters["cookie_filter"]("theme")
+    (False, True)
+    >>> platform_proxy_filters(forward_credentials=True)["cookie_filter"] is None
+    True
+    """
+    platform_cookies = platform_cookie_filter(names=platform_cookie_names(platform))
+    return dict(
+        cookie_filter=None if forward_credentials else platform_cookies,
+        set_cookie_filter=platform_cookies,
+        drop_request_headers=(
+            () if forward_credentials else PLATFORM_CREDENTIAL_REQUEST_HEADERS
+        ),
+        drop_response_headers=PLATFORM_UNSAFE_RESPONSE_HEADERS,
+    )
 
 
 def _filter_cookie_header(value: str, keep: CookieFilter) -> str:
@@ -70,6 +147,77 @@ def _set_cookie_allowed(value: str, keep: CookieFilter) -> bool:
         return False
     name = pair.split("=", 1)[0].strip()
     return bool(name) and keep(name)
+
+
+#: A path as it may travel on the wire: RFC 3986 ``pchar`` and ``/``, with every
+#: ``%`` starting a two-digit escape. Anything else is not forwarded verbatim.
+_WIRE_PATH = re.compile(r"(?:[A-Za-z0-9\-._~!$&'()*+,;=:@/]|%[0-9A-Fa-f]{2})*")
+
+#: Characters :func:`quote` leaves alone when re-encoding a decoded path:
+#: ``pchar`` minus ``%``, so ``%``, ``?``, ``#`` and spaces are escaped.
+_PATH_SAFE = "/!$&'()*+,;=:@-._~"
+
+
+def _upstream_path(scope, strip_prefix: str = "") -> str:
+    """The path to forward, percent-encoded as the client sent it (enlace#74).
+
+    ASGI servers hand ``scope["path"]`` over *decoded*, so building the upstream
+    URL from it changes the request: ``a%2Fb`` arrives as ``a/b``, ``a%3Fb``
+    moves ``b`` into the query, and ``100%25`` becomes a bare ``%``. The bytes
+    the client sent are in ``scope["raw_path"]``, so the remainder after the
+    mount prefix is taken from there. That happens only when the raw path
+    provably *is* the decoded one: its leading segments decode to exactly
+    ``strip_prefix``, the rest decodes to exactly the decoded remainder, and it
+    is well-formed on the wire. Otherwise the decoded remainder is re-quoted,
+    which keeps ``%``, ``?`` and ``#`` inside the path.
+
+    A remainder with a ``.`` or ``..`` segment (decoded, so ``%2E%2E`` counts)
+    is also re-quoted. httpx then resolves the dot segments, as it always
+    did, rather than handing an escaped ``..`` to the upstream to decode.
+
+    The result always starts with ``/``. Concatenated onto the upstream's base
+    URL it can only name a path on that host, never a different authority
+    (``/api/x@evil`` must not become ``http://127.0.0.1:9100@evil``).
+
+    >>> scope = {"path": "/api/x/a/b", "raw_path": b"/api/x/a%2Fb"}
+    >>> _upstream_path(scope, "/api/x")
+    '/a%2Fb'
+    >>> _upstream_path({"path": "/api/x/100%"}, "/api/x")
+    '/100%25'
+    >>> dots = {"path": "/api/x/../y", "raw_path": b"/api/x/%2E%2E/y"}
+    >>> _upstream_path(dots, "/api/x")
+    '/../y'
+    """
+    path = scope.get("path") or "/"
+    prefix = strip_prefix.rstrip("/")
+    if prefix and (path == prefix or path.startswith(prefix + "/")):
+        remainder = path[len(prefix) :]
+    else:  # not under the prefix segment-wise (no Mount routes this): forward as is
+        remainder, prefix = path, ""
+    if not remainder.startswith("/"):
+        remainder = "/" + remainder
+
+    if any(seg in (".", "..") for seg in remainder.split("/")):
+        return quote(remainder, safe=_PATH_SAFE, errors="replace")
+
+    raw = scope.get("raw_path")
+    if isinstance(raw, (bytes, bytearray)):
+        raw_s = bytes(raw).decode("latin-1")
+        n = len(prefix.split("/")) if prefix else 1
+        parts = raw_s.split("/")
+        if [unquote(p) for p in parts[:n]] == (prefix.split("/") if prefix else [""]):
+            raw_rest = "/" + "/".join(parts[n:])
+            # Strict: an escape that is not UTF-8 (%FF, overlong %C0%AE) is
+            # not forwarded as is. The server decoded it to U+FFFD, so the dot
+            # check above never saw it, and a lenient upstream might read an
+            # overlong form as "." (review of #82).
+            try:
+                decoded = unquote(raw_rest, errors="strict")
+            except UnicodeDecodeError:
+                decoded = None
+            if _WIRE_PATH.fullmatch(raw_rest) and decoded == remainder:
+                return raw_rest
+    return quote(remainder, safe=_PATH_SAFE, errors="replace")
 
 
 # Default per-request timeout (seconds) for proxied requests. Bounds a hung
@@ -101,6 +249,7 @@ def make_proxy_app(
     upstream: str,
     strip_prefix: str = "",
     cookie_filter: Optional[CookieFilter] = None,
+    set_cookie_filter: Optional[CookieFilter] = None,
     drop_request_headers: Iterable[str] = (),
     drop_response_headers: Iterable[str] = (),
 ):
@@ -113,11 +262,15 @@ def make_proxy_app(
         cookie_filter: ``name -> bool``; when given, request cookies it
             rejects are not forwarded and upstream ``Set-Cookie`` headers
             naming them are dropped. ``None`` (the default) forwards all
-            cookies, which suits a local process app that is part of the
-            platform. See :func:`platform_cookie_filter`.
+            cookies. See :func:`platform_cookie_filter`.
+        set_cookie_filter: the filter for upstream ``Set-Cookie`` alone, when
+            it must differ from *cookie_filter* (an app trusted to read the
+            platform session is still not allowed to set it). Defaults to
+            *cookie_filter*.
         drop_request_headers / drop_response_headers: header names
             (case-insensitive) never forwarded upstream / never passed back
-            to the client. See ``EXTERNAL_DROP_*`` for what external apps use.
+            to the client. :func:`platform_proxy_filters` gives all four
+            filters as every enlace strategy applies them.
 
     Returns:
         An ASGI callable.
@@ -126,6 +279,7 @@ def make_proxy_app(
         upstream=upstream,
         strip_prefix=strip_prefix,
         cookie_filter=cookie_filter,
+        set_cookie_filter=set_cookie_filter,
         drop_request_headers=drop_request_headers,
         drop_response_headers=drop_response_headers,
     )
@@ -141,10 +295,14 @@ class _HttpxProxy:
         strip_prefix: str = "",
         timeout: float = _DEFAULT_TIMEOUT_S,
         cookie_filter: Optional[CookieFilter] = None,
+        set_cookie_filter: Optional[CookieFilter] = None,
         drop_request_headers: Iterable[str] = (),
         drop_response_headers: Iterable[str] = (),
     ):
         self.cookie_filter = cookie_filter
+        self.set_cookie_filter = (
+            cookie_filter if set_cookie_filter is None else set_cookie_filter
+        )
         self._drop_request = {"host", "transfer-encoding", "connection"} | {
             h.lower() for h in drop_request_headers
         }
@@ -173,17 +331,17 @@ class _HttpxProxy:
         return self._client
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
+        if scope["type"] == "websocket":
             # WebSocket proxying deferred to a future release
-            await _send_error(send, 501, b"WebSocket proxying not yet supported")
+            await _refuse_websocket(scope, receive, send)
             return
+        if scope["type"] != "http":
+            return  # e.g. lifespan: the proxy has no startup or shutdown work
 
         client = await self._get_client()
 
-        # Build the upstream path
-        path = scope.get("path", "/")
-        if self.strip_prefix and path.startswith(self.strip_prefix):
-            path = path[len(self.strip_prefix) :] or "/"
+        # The upstream path, as the client encoded it (see _upstream_path).
+        path = _upstream_path(scope, self.strip_prefix)
 
         query = scope.get("query_string", b"")
         # httpx.Request(url=...) does not apply AsyncClient.base_url (only the
@@ -212,8 +370,11 @@ class _HttpxProxy:
                 decoded = _filter_cookie_header(decoded, self.cookie_filter)
                 if not decoded:
                     continue
-                if "cookie" in headers:  # HTTP/2 may split cookies (RFC 9113)
-                    decoded = f"{headers['cookie']}; {decoded}"
+            if name in headers:
+                # A repeated field is one field (RFC 9110 §5.3); cookies are
+                # joined with "; " because HTTP/2 splits them (RFC 9113 §8.2.3).
+                sep = "; " if name == "cookie" else ", "
+                decoded = f"{headers[name]}{sep}{decoded}"
             headers[name] = decoded
 
         import httpx
@@ -246,8 +407,8 @@ class _HttpxProxy:
                 if k.lower() not in self._drop_response
                 and not (
                     k.lower() == "set-cookie"
-                    and self.cookie_filter is not None
-                    and not _set_cookie_allowed(v, self.cookie_filter)
+                    and self.set_cookie_filter is not None
+                    and not _set_cookie_allowed(v, self.set_cookie_filter)
                 )
             ]
 
@@ -277,6 +438,25 @@ class _HttpxProxy:
             )
         finally:
             await response.aclose()
+
+
+#: Close code for a refused websocket: "unexpected condition" (RFC 6455
+#: §7.4.1), as the degraded-app stub uses. Before accept, servers turn any
+#: close into an HTTP 403 for the client.
+_WS_REFUSED_CLOSE_CODE = 1011
+
+
+async def _refuse_websocket(scope, receive, send) -> None:
+    """Refuse a websocket handshake with a ``websocket.close`` before accept.
+
+    An ``http.response.*`` message on a websocket scope breaks the ASGI
+    protocol and is logged as a server error (enlace#61). A denial response
+    (the ``websocket.http.response`` extension) would carry a 501, but
+    uvicorn's default websocket implementation logs "returned without
+    completing handshake" after one, so a plain close it is.
+    """
+    await receive()  # websocket.connect
+    await send({"type": "websocket.close", "code": _WS_REFUSED_CLOSE_CODE})
 
 
 async def _send_error(send, status: int, body: bytes) -> None:

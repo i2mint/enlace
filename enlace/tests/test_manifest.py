@@ -580,3 +580,198 @@ def test_meta_injected_end_to_end_via_frontend(tmp_apps_dir, manifest_dir):
     resp = client.get("/foo/")
     assert resp.status_code == 200
     assert '<meta name="x-deploy-sha" content="deadbee">' in resp.text
+
+
+def test_deploy_headers_percent_encode_a_non_ascii_app_name(tmp_path, manifest_dir):
+    """#58: an app dir named ``café`` is served and its header stays ASCII."""
+    from urllib.parse import unquote
+
+    apps = tmp_path / "apps"
+    (apps / "café" / "frontend").mkdir(parents=True)
+    (apps / "café" / "frontend" / "index.html").write_text("<p>bonjour</p>")
+    _write(manifest_dir, "café", deployed_at="2026-05-26T18:00:00Z")
+    config = discover_apps(PlatformConfig(apps_dir=apps, manifest_dir=manifest_dir))
+    client = TestClient(build_backend(config))
+
+    resp = client.get("/café/")  # TestClient (httpx) raised here before the fix
+
+    assert resp.status_code == 200
+    assert "bonjour" in resp.text
+    assert resp.headers["x-deploy-app"] == "caf%C3%A9"
+    assert unquote(resp.headers["x-deploy-app"]) == "café"
+    assert resp.headers["x-deploy-time"] == "2026-05-26T18:00:00Z"
+
+
+# --- the running enlace version (#78) ----------------------------------------
+
+
+def test_meta_reports_the_running_enlace_even_when_the_manifest_is_stale(
+    single_app_dir, manifest_dir, monkeypatch
+):
+    """The deploy manifest's enlace_version is what was deployed; after an
+    engine-only upgrade it names the old version. enlace_runtime_version is
+    always what is running, on the platform and the per-app /_meta."""
+    from enlace import compose
+    from enlace.manifest import RUNTIME_VERSION_KEY
+
+    monkeypatch.setattr(compose, "_detect_enlace_version", lambda: "9.9.9")
+    _write(manifest_dir, PLATFORM_MANIFEST_NAME, enlace_version="0.0.1")
+    _write(manifest_dir, "foo", enlace_version="0.0.1")
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+
+    for path in ("/_meta", "/api/foo/_meta", "/foo/_meta"):
+        payload = client.get(path).json()
+        assert payload["enlace_version"] == "0.0.1", path  # the record is kept
+        assert payload[RUNTIME_VERSION_KEY] == "9.9.9", path  # the truth is added
+
+
+def _rewrite(dir_, app, *, bump, **fields):
+    """Rewrite a manifest and move its mtime, so the change is visible to stat."""
+    _write(dir_, app, **fields)
+    path = dir_ / f"{app}.json"
+    st = path.stat()
+    os.utime(path, (st.st_atime + bump, st.st_mtime + bump))
+
+
+def test_per_app_meta_rereads_a_rewritten_manifest(single_app_dir, manifest_dir):
+    """An app's manifest rewritten while the backend runs shows up at once (#81).
+
+    Before, ``/api/foo/_meta`` and ``/foo/_meta`` served the compose-time
+    snapshot until a restart, while the platform ``/_meta`` (#49) had already
+    moved on: two endpoints disagreeing about the same app.
+    """
+    _write(manifest_dir, "foo", app_source={"sha": "old111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    for path in ("/api/foo/_meta", "/foo/_meta"):
+        assert client.get(path).json()["app_source"]["sha"] == "old111"
+    assert client.get("/api/foo/hello").headers["x-deploy-sha"] == "old111"
+
+    _rewrite(manifest_dir, "foo", bump=2, app_source={"sha": "new222"})
+
+    for path in ("/api/foo/_meta", "/foo/_meta"):
+        payload = client.get(path).json()
+        assert payload["app_source"]["sha"] == "new222", path
+        on_disk = (manifest_dir / "foo.json").stat().st_mtime
+        reported = datetime.fromisoformat(
+            payload["manifest_mtime"].replace("Z", "+00:00")
+        )
+        assert abs(reported.timestamp() - on_disk) < 1
+    # The response headers read through the same per-app reader.
+    assert client.get("/api/foo/hello").headers["x-deploy-sha"] == "new222"
+
+
+def test_per_app_meta_degrades_on_a_bad_rewrite_and_recovers(
+    single_app_dir, manifest_dir
+):
+    _write(manifest_dir, "foo", app_source={"sha": "good1"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+
+    path = manifest_dir / "foo.json"
+    path.write_text("{ not valid json")
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+    resp = client.get("/api/foo/_meta")
+    assert resp.status_code == 200
+    assert MANIFEST_ERROR_KEY in resp.json()["extra"]
+    assert "x-deploy-sha" not in client.get("/api/foo/hello").headers
+
+    _rewrite(manifest_dir, "foo", bump=4, app_source={"sha": "good2"})
+    healthy = client.get("/api/foo/_meta").json()
+    assert healthy["app_source"]["sha"] == "good2"
+    assert MANIFEST_ERROR_KEY not in healthy["extra"]
+
+
+def test_per_app_meta_picks_up_a_manifest_written_after_startup(
+    single_app_dir, manifest_dir
+):
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    stub = client.get("/api/foo/_meta").json()
+    assert stub["app_source"]["sha"] is None
+    assert stub["manifest_mtime"] is None
+
+    _write(manifest_dir, "foo", app_source={"sha": "late1"})
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "late1"
+
+
+def test_injected_meta_tags_follow_a_rewritten_manifest(tmp_apps_dir, manifest_dir):
+    frontend = tmp_apps_dir / "foo" / "frontend"
+    frontend.mkdir(parents=True)
+    (frontend / "index.html").write_text("<html><head></head><body>hi</body></html>")
+    _write(manifest_dir, "foo", app_source={"sha": "aaa1111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=tmp_apps_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    assert 'content="aaa1111"' in client.get("/foo/").text
+
+    _rewrite(manifest_dir, "foo", bump=2, app_source={"sha": "bbb2222"})
+    assert 'content="bbb2222"' in client.get("/foo/").text
+
+
+def test_a_deleted_app_manifest_reverts_to_the_stub(single_app_dir, manifest_dir):
+    _write(manifest_dir, "foo", app_source={"sha": "gone111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "gone111"
+
+    (manifest_dir / "foo.json").unlink()
+    payload = client.get("/api/foo/_meta").json()
+    assert payload["app_source"]["sha"] is None
+    assert payload["manifest_mtime"] is None
+
+
+def test_a_same_tick_same_size_rewrite_is_not_missed(single_app_dir, manifest_dir):
+    """mtime is coarse: a second write in the same tick keeps the stat key.
+
+    Found by the review of #85. While the file is that young, it is re-read.
+    """
+    _write(manifest_dir, "foo", app_source={"sha": "aaaaaaa"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    path = manifest_dir / "foo.json"
+    first = path.stat()
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "aaaaaaa"
+
+    with open(path, "r+") as f:  # in place: same inode, same size
+        text = f.read().replace("aaaaaaa", "bbbbbbb")
+        f.seek(0)
+        f.write(text)
+    os.utime(path, ns=(first.st_atime_ns, first.st_mtime_ns))  # same tick
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "bbbbbbb"
+
+
+def test_a_manifest_that_breaks_the_parser_never_fails_a_request(
+    single_app_dir, manifest_dir
+):
+    """``load_manifest`` only degrades on OSError/ValueError; the middlewares read
+    the manifest on every request, so anything else must not escape (review of #85).
+    """
+    _write(manifest_dir, "foo", app_source={"sha": "good111"})
+    config = discover_apps(
+        PlatformConfig(apps_dir=single_app_dir, manifest_dir=manifest_dir)
+    )
+    client = TestClient(build_backend(config))
+    assert client.get("/api/foo/hello").status_code == 200
+
+    path = manifest_dir / "foo.json"
+    path.write_text("[" * 200_000)  # RecursionError in json.load
+    st = path.stat()
+    os.utime(path, (st.st_atime + 2, st.st_mtime + 2))
+    assert client.get("/api/foo/hello").status_code == 200
+    assert client.get("/api/foo/_meta").json()["app_source"]["sha"] == "good111"

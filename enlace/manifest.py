@@ -33,7 +33,8 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Callable, Literal, Optional, Union
+from urllib.parse import quote
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -108,6 +109,14 @@ def resolve_manifest_dir(
 #: one cannot be mistaken for "no manifest was ever written".
 MANIFEST_ERROR_KEY = "manifest_error"
 
+#: ``/_meta`` key carrying the enlace version the gateway is *running*, added at
+#: serve time. ``enlace_version`` is what the deploy recorded in the manifest and
+#: wins over the runtime when present, so after an engine-only upgrade (a new
+#: wheel and a restart, no redeploy) it names the old version. This key never
+#: does. ``None`` when enlace's distribution metadata is unavailable.
+#: See https://github.com/i2mint/enlace/issues/78.
+RUNTIME_VERSION_KEY = "enlace_runtime_version"
+
 
 def _manifest_error_summary(error: Exception) -> str:
     """A short, path-free description of why a manifest file was rejected.
@@ -181,6 +190,15 @@ def load_platform_manifest(
     )
 
 
+# A manifest, or a zero-arg callable returning the current one. The callable form
+# lets a long-running backend pick up a manifest rewritten after startup (#81).
+ManifestSource = Union[DeployManifest, Callable[[], DeployManifest]]
+
+
+def _resolve(source: Optional[ManifestSource]) -> Optional[DeployManifest]:
+    return source() if callable(source) else source
+
+
 class _PrefixManifestMiddleware:
     """Base for middlewares that pick a manifest by longest-matching prefix.
 
@@ -189,14 +207,17 @@ class _PrefixManifestMiddleware:
     prefixes (API mount + frontend mount), longest first, falling back to
     the platform manifest. This base holds that shared selection so the two
     middlewares don't duplicate it.
+
+    Each value may be a ``DeployManifest`` or a zero-arg callable returning one,
+    resolved per request (see :data:`ManifestSource`).
     """
 
     def __init__(
         self,
         app,
         *,
-        manifests_by_prefix: dict[str, DeployManifest],
-        platform_manifest: Optional[DeployManifest] = None,
+        manifests_by_prefix: dict[str, ManifestSource],
+        platform_manifest: Optional[ManifestSource] = None,
     ):
         self.app = app
         # Sort longest-first so /api/foo wins over /api when both registered.
@@ -206,8 +227,27 @@ class _PrefixManifestMiddleware:
     def _select(self, path: str) -> Optional[DeployManifest]:
         for prefix, manifest in self._prefixes:
             if path == prefix or path.startswith(prefix + "/"):
-                return manifest
-        return self._platform
+                return _resolve(manifest)
+        return _resolve(self._platform)
+
+
+# Visible ASCII except "%": the characters a header value keeps as-is. Anything
+# else (non-ASCII, space, control characters) is percent-encoded, so an
+# ASCII-only value is unchanged and the encoding is unambiguous.
+_HEADER_SAFE = "".join(chr(c) for c in range(0x21, 0x7F) if chr(c) != "%")
+
+
+def header_value(value: str) -> bytes:
+    """Encode *value* for an HTTP header: ASCII as-is, the rest percent-encoded.
+
+    Header values must be ASCII (latin-1 at most); an app directory named
+    ``café`` would otherwise reach clients as raw UTF-8, which httpx refuses.
+    Decode with ``urllib.parse.unquote``.
+
+    >>> header_value("reelee-web"), header_value("café"), header_value("a b%")
+    (b'reelee-web', b'caf%C3%A9', b'a%20b%25')
+    """
+    return quote(value, safe=_HEADER_SAFE).encode("ascii")
 
 
 class DeployHeadersMiddleware(_PrefixManifestMiddleware):
@@ -217,7 +257,8 @@ class DeployHeadersMiddleware(_PrefixManifestMiddleware):
     prefix (route_prefix or frontend mount path) for the request path. If no
     per-app prefix matches, the platform manifest fills in. Headers are only
     added when the underlying value is present — a stub manifest produces a
-    short header set (just ``X-Deploy-App``), not bogus SHAs.
+    short header set (just ``X-Deploy-App``), not bogus SHAs. Values are
+    percent-encoded where they are not plain ASCII (see :func:`header_value`).
     """
 
     async def __call__(self, scope, receive, send):
@@ -232,11 +273,11 @@ class DeployHeadersMiddleware(_PrefixManifestMiddleware):
 
         extra: list[tuple[bytes, bytes]] = []
         if manifest.app:
-            extra.append((b"x-deploy-app", manifest.app.encode()))
+            extra.append((b"x-deploy-app", header_value(manifest.app)))
         if manifest.app_source.sha:
-            extra.append((b"x-deploy-sha", manifest.app_source.sha.encode()))
+            extra.append((b"x-deploy-sha", header_value(manifest.app_source.sha)))
         if manifest.deployed_at:
-            extra.append((b"x-deploy-time", manifest.deployed_at.encode()))
+            extra.append((b"x-deploy-time", header_value(manifest.deployed_at)))
 
         if not extra:
             await self.app(scope, receive, send)

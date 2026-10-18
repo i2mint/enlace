@@ -10,6 +10,10 @@ Plugins:
     sub-apps are mounted. ``enlace_auth.plugin`` is the canonical example:
     when installed, it adds auth, sessions, the admin dashboard, and per-user
     stores. enlace itself is auth-agnostic.
+
+    ``build_backend`` publishes ``parent.state.app_manifest_readers`` (one live
+    manifest reader per app) for plugins that build launcher items themselves;
+    pass it to ``refresh_updated_at`` first.
 """
 
 import contextlib
@@ -18,10 +22,11 @@ import inspect
 import logging
 import os
 import sys
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, MutableMapping, Optional, Sequence
+from typing import Any, Callable, Mapping, MutableMapping, Optional, Sequence
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
@@ -29,7 +34,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
 
 from enlace.base import AppConfig, PlatformConfig
-from enlace.discover import discover_apps
+from enlace.discover import discover_apps, forget_partial_imports
 from enlace.frontend import (
     LandingWithUnknownApp404,
     RevalidatingStaticFiles,
@@ -37,7 +42,9 @@ from enlace.frontend import (
 )
 from enlace.gzip_selective import SelectiveGZipMiddleware
 from enlace.manifest import (
+    MANIFEST_ERROR_KEY,
     PLATFORM_MANIFEST_NAME,
+    RUNTIME_VERSION_KEY,
     DeployHeadersMiddleware,
     DeployManifest,
     DeployMetaTagMiddleware,
@@ -45,6 +52,7 @@ from enlace.manifest import (
     load_platform_manifest,
     resolve_manifest_dir,
 )
+from enlace.util import url_path
 
 _logger = logging.getLogger("enlace")
 
@@ -74,6 +82,13 @@ def build_backend(
     - mode=static: mount StaticFiles at the route prefix
     - frontend_only (mode=asgi): skip (no backend to mount)
 
+    An asgi app that cannot be imported or loaded does not take the platform
+    down: a 500 stub is mounted in its place and the failure is reported in
+    the logs, ``/_meta``, ``/_apps`` and ``enlace doctor`` (loud and local —
+    see :mod:`enlace.degraded`). ``config.app_load_failure = "raise"``, or
+    ``fail_hard = true`` in an app's app.toml, refuses to boot instead.
+    Platform configuration errors always refuse to boot.
+
     Args:
         config: Platform configuration with apps already discovered.
         plugins: Compose-time plugins, e.g. ``enlace_auth.plugin``.
@@ -96,13 +111,21 @@ def build_backend(
     # strategy's ``make_asgi`` returns either an ASGI sub-app to mount or
     # ``None`` (e.g. frontend-only apps, or apps whose port hasn't been
     # allocated yet).
+    #
+    # An asgi app that fails to load gets a 500 stub instead of taking every
+    # other app down with it (see enlace.degraded). Only the per-app load is
+    # contained; get_strategy's unknown-mode error and every other mode's
+    # make_asgi error are configuration, and propagate.
+    from enlace.degraded import load_or_stub
     from enlace.strategies import get_strategy
 
     for app_config in config.apps:
         strategy = get_strategy(app_config.mode)
-        sub_app = strategy.make_asgi(app_config, config)
+        sub_app = load_or_stub(strategy, app_config, config)
         if sub_app is not None:
             sub_apps.append((app_config.route_prefix, app_config.name, sub_app))
+
+    apps_by_name = {a.name: a for a in config.apps}
 
     @asynccontextmanager
     async def cascade_lifespan(app: FastAPI):
@@ -111,14 +134,37 @@ def build_backend(
         Starlette does NOT propagate lifespan events to mounted sub-apps
         (issue #649, open since Sept 2019). This workaround iterates Mount
         routes and enters their lifespan contexts.
+
+        App mounts are ``_AppIdInjector`` wrappers, so the app whose lifespan
+        runs is the wrapped one (until #76 the wrapper hid it, and no app's
+        lifespan ever ran). An asgi app whose startup raises is swapped for a
+        500 stub and reported, like an import failure (enlace.degraded); the
+        other apps start. Its shutdown is not run: it never started.
+
+        What the apps' lifespans yield (Starlette's lifespan state) is merged
+        and yielded here, so ``request.state`` carries it as it would for a
+        standalone app. The state is shared by every app on the gateway.
         """
+        from enlace.degraded import enter_lifespan_or_stub
+
+        state: dict = {}
         async with contextlib.AsyncExitStack() as stack:
             for route in app.routes:
-                if isinstance(route, Mount) and hasattr(route.app, "router"):
+                if not isinstance(route, Mount):
+                    continue
+                if isinstance(route.app, _AppIdInjector):
+                    app_config = apps_by_name.get(route.app.app_id)
+                    if app_config is not None:
+                        app_state = await enter_lifespan_or_stub(
+                            stack, route.app, app_config, config
+                        )
+                        state.update(app_state or {})
+                        continue
+                if hasattr(route.app, "router"):
                     lifespan = getattr(route.app.router, "lifespan_context", None)
                     if lifespan is not None:
                         await stack.enter_async_context(lifespan(route.app))
-            yield
+            yield state or None
 
     parent = FastAPI(
         title="enlace platform",
@@ -134,9 +180,43 @@ def build_backend(
     for plug in plugins:
         plug(parent, config)
 
+    # Deploy manifests, read once here. Built before /_apps, whose "last
+    # updated" reads them too (#84).
+    manifest_dir = resolve_manifest_dir(config.manifest_dir)
+    enlace_version = _detect_enlace_version()
+    platform_manifest = load_platform_manifest(
+        manifest_dir, enlace_version=enlace_version
+    )
+    per_app_manifests: dict[str, DeployManifest] = {
+        app.name: load_manifest(app.name, manifest_dir, enlace_version=enlace_version)
+        for app in config.apps
+    }
+    _stamp_updated_at(config, per_app_manifests)
+    # One reader per manifest file, shared by /_apps, the /_meta routes and the
+    # deploy-identity middlewares below, so a manifest rewritten while the
+    # backend runs shows up everywhere on the next request (#49, #81).
+    platform_meta = _MtimeCachedManifest(
+        platform_manifest, manifest_dir=manifest_dir, enlace_version=enlace_version
+    )
+    app_metas = {
+        name: _MtimeCachedManifest(
+            manifest,
+            name=name,
+            manifest_dir=manifest_dir,
+            enlace_version=enlace_version,
+        )
+        for name, manifest in per_app_manifests.items()
+    }
+
+    # Published for plugins that build launcher items themselves (enlace_auth's
+    # metadata edit), so they re-stamp ``updated_at`` from the live manifest
+    # rather than from whatever the last GET /_apps left (#87). See
+    # ``refresh_updated_at``.
+    parent.state.app_manifest_readers = app_metas
+
     # JSON listing is always on (cheap, useful for frontends even when the
     # HTML index_page is disabled).
-    _add_apps_listing_route(parent, config)
+    _add_apps_listing_route(parent, config, app_metas)
 
     # Privacy-first analytics, only when some app opted in. Its routes (the
     # opt-out page) go in now, before any catch-all "/" mount can shadow them;
@@ -150,23 +230,8 @@ def build_backend(
     # Deploy manifest endpoints + response headers. Built once at startup;
     # cheap (one HTTP route per app + a small middleware). Endpoints are
     # registered BEFORE sub-app mounts so they win the path match.
-    manifest_dir = resolve_manifest_dir(config.manifest_dir)
-    enlace_version = _detect_enlace_version()
-    platform_manifest = load_platform_manifest(
-        manifest_dir, enlace_version=enlace_version
-    )
-    per_app_manifests: dict[str, DeployManifest] = {
-        app.name: load_manifest(app.name, manifest_dir, enlace_version=enlace_version)
-        for app in config.apps
-    }
-    _stamp_updated_at(config, per_app_manifests)
     _add_meta_routes(
-        parent,
-        config,
-        platform_manifest,
-        per_app_manifests,
-        manifest_dir=manifest_dir,
-        enlace_version=enlace_version,
+        parent, config, platform_meta, app_metas, enlace_version=enlace_version
     )
 
     # landing_app takes precedence over the default Python index. When set
@@ -242,17 +307,17 @@ def build_backend(
     # Deploy-identity response headers. Build the prefix → manifest map from
     # both the API mount (route_prefix) and the frontend mount (/{name}/) so
     # static asset responses also carry the headers.
-    headers_prefix_map: dict[str, DeployManifest] = {}
+    headers_prefix_map: dict[str, Callable[[], DeployManifest]] = {}
     for app_config in config.apps:
-        manifest = per_app_manifests.get(app_config.name)
-        if manifest is None:
+        app_meta = app_metas.get(app_config.name)
+        if app_meta is None:
             continue
-        headers_prefix_map[app_config.route_prefix] = manifest
-        headers_prefix_map[f"/{app_config.name}"] = manifest
+        headers_prefix_map[app_config.route_prefix] = app_meta.current
+        headers_prefix_map[f"/{app_config.name}"] = app_meta.current
     parent.add_middleware(
         DeployHeadersMiddleware,
         manifests_by_prefix=headers_prefix_map,
-        platform_manifest=platform_manifest,
+        platform_manifest=platform_meta.current,
     )
 
     # Inject deploy <meta> tags into HTML responses so a browser can compare
@@ -263,7 +328,7 @@ def build_backend(
     parent.add_middleware(
         DeployMetaTagMiddleware,
         manifests_by_prefix=headers_prefix_map,
-        platform_manifest=platform_manifest,
+        platform_manifest=platform_meta.current,
     )
 
     # Give every app's HTML the platform's icon wiring (favicon, apple-touch-icon,
@@ -312,8 +377,15 @@ def _detect_enlace_version() -> Optional[str]:
         return None
 
 
+#: How recent a manifest's mtime must be for its stat key not to be trusted yet:
+#: comfortably more than a filesystem timestamp tick (a few ms on Linux).
+_MTIME_TICK_NS = 50_000_000
+#: A stat key no real one equals (an absent file keys as ``None``): read next time.
+_UNTRUSTED = object()
+
+
 class _MtimeCachedManifest:
-    """The platform manifest as it is on disk *now*, re-read when the file changes.
+    """One manifest as it is on disk *now*, re-read when the file changes.
 
     ``/_meta`` is a diagnostic endpoint, so a payload captured once at compose
     time is the wrong answer. Anything that legitimately rewrites the manifest
@@ -326,26 +398,29 @@ class _MtimeCachedManifest:
     and one ``stat`` per request on the cache-hit path. With no manifest
     directory configured, or no file there, the compose-time manifest is served
     unchanged — which is exactly the previous behaviour.
+
+    *name* selects the file (``{name}.json``): the platform manifest by default,
+    or one app's. Each app gets its own reader, shared by its ``/_meta`` routes
+    and the deploy-identity middlewares, so the endpoints and the headers can
+    never disagree about the same app (#81).
     """
 
     def __init__(
         self,
         manifest: DeployManifest,
         *,
+        name: str = PLATFORM_MANIFEST_NAME,
         manifest_dir: Optional[Path] = None,
         enlace_version: Optional[str] = None,
     ):
         self._manifest = manifest
+        self._name = name
         self._manifest_dir = manifest_dir
         self._enlace_version = enlace_version
-        self._path = (
-            None
-            if manifest_dir is None
-            else manifest_dir / f"{PLATFORM_MANIFEST_NAME}.json"
-        )
-        # None until the first request, so the first read refreshes rather than
-        # trusting a snapshot taken before the routes even existed.
-        self._stat_key: Optional[tuple[int, int]] = None
+        self._path = None if manifest_dir is None else manifest_dir / f"{name}.json"
+        # Untrusted until the first request, so the first read refreshes rather
+        # than trusting a snapshot taken before the routes even existed.
+        self._stat_key: object = _UNTRUSTED
 
     def payload(self) -> dict:
         """Return the manifest as a dict, plus the ``manifest_mtime`` it reflects.
@@ -354,18 +429,35 @@ class _MtimeCachedManifest:
         file to date the answer by — so a reader is never left guessing how old
         the payload is.
         """
-        st = self._stat()
-        stat_key = None if st is None else (st.st_mtime_ns, st.st_size)
-        if stat_key != self._stat_key:
-            # Never raises on a bad file: it degrades to a stub whose
-            # ``extra.manifest_error`` says why (see ``load_manifest``).
-            self._manifest = load_platform_manifest(
-                self._manifest_dir, enlace_version=self._enlace_version
-            )
-            self._stat_key = stat_key
-        payload = self._manifest.model_dump()
+        manifest, st = self._refresh()
+        payload = manifest.model_dump()
         payload["manifest_mtime"] = None if st is None else _iso_utc(st.st_mtime)
         return payload
+
+    def current(self) -> DeployManifest:
+        """Return the manifest as it is on disk now (for the response headers)."""
+        return self._refresh()[0]
+
+    def _refresh(self) -> tuple[DeployManifest, Optional[os.stat_result]]:
+        st = self._stat()
+        stat_key = None if st is None else (st.st_ino, st.st_mtime_ns, st.st_size)
+        if stat_key != self._stat_key:
+            try:
+                # Degrades to a stub whose ``extra.manifest_error`` says why on
+                # any file it can parse as bad (see ``load_manifest``).
+                self._manifest = load_manifest(
+                    self._name, self._manifest_dir, enlace_version=self._enlace_version
+                )
+            except Exception:  # noqa: BLE001 — e.g. RecursionError on deep JSON
+                # The deploy-identity middlewares call this on EVERY request under
+                # the app's prefix, so it must never raise: keep the last manifest.
+                _logger.warning("Unusable manifest %s", self._path, exc_info=True)
+            # Filesystem mtimes are coarse (a kernel tick), so a second same-size
+            # write within the tick of the first leaves the key unchanged. While
+            # the file is that young, re-read it next time too ("racy git").
+            young = st is not None and time.time_ns() - st.st_mtime_ns < _MTIME_TICK_NS
+            self._stat_key = _UNTRUSTED if young else stat_key
+        return self._manifest, st
 
     def _stat(self) -> Optional[os.stat_result]:
         """``stat`` the manifest file, or ``None`` if there is nothing to stat."""
@@ -389,10 +481,9 @@ def _iso_utc(timestamp: float) -> str:
 def _add_meta_routes(
     parent: FastAPI,
     config: PlatformConfig,
-    platform_manifest: DeployManifest,
-    per_app_manifests: dict[str, DeployManifest],
+    platform_meta: "_MtimeCachedManifest",
+    app_metas: dict[str, "_MtimeCachedManifest"],
     *,
-    manifest_dir: Optional[Path] = None,
     enlace_version: Optional[str] = None,
 ) -> None:
     """Mount /_meta (platform) and /{route_prefix}/_meta (per-app) endpoints.
@@ -402,38 +493,56 @@ def _add_meta_routes(
     (``/{name}/_meta``). Browser JS commonly fetches the latter with a
     relative URL from the SPA root.
 
-    ``manifest_dir`` and ``enlace_version`` let the platform ``/_meta`` re-read
-    the manifest when it changes on disk instead of serving the compose-time
-    snapshot (see ``_MtimeCachedManifest``). Omitting them serves that snapshot,
-    as before.
+    Every endpoint reads through a ``_MtimeCachedManifest``, so it reflects the
+    manifest on disk now rather than a compose-time snapshot (#49 for the
+    platform, #81 for the apps).
     """
-    platform_meta = _MtimeCachedManifest(
-        platform_manifest,
-        manifest_dir=manifest_dir,
-        enlace_version=enlace_version,
-    )
+    # Apps serving a 500 stub (enlace.degraded). Read per request, not
+    # captured here: an app whose lifespan startup fails is stubbed after
+    # these routes exist.
+    from enlace.degraded import DEGRADED_APPS_KEY, DEGRADED_KEY, degraded_apps
 
     @parent.get("/_meta", include_in_schema=False)
     async def _platform_meta() -> dict:
-        return platform_meta.payload()
+        payload = platform_meta.payload()
+        payload[RUNTIME_VERSION_KEY] = enlace_version
+        degraded = degraded_apps(config)
+        if degraded:
+            payload[DEGRADED_APPS_KEY] = degraded
+        return payload
 
     for app_config in config.apps:
-        manifest = per_app_manifests.get(app_config.name)
+        manifest = app_metas.get(app_config.name)
         if manifest is None:
             continue
-        _register_app_meta(parent, app_config.route_prefix + "/_meta", manifest)
+
+        def extra(app_config=app_config) -> dict:
+            out = {RUNTIME_VERSION_KEY: enlace_version}
+            if app_config.import_error is not None:
+                out[DEGRADED_KEY] = app_config.import_error.public_summary()
+            return out
+
+        _register_app_meta(
+            parent, app_config.route_prefix + "/_meta", manifest, extra=extra
+        )
         # Same data under the frontend mount so SPA code can fetch it with a
         # path relative to its own root.
         frontend_meta = f"/{app_config.name}/_meta"
         if frontend_meta != app_config.route_prefix + "/_meta":
-            _register_app_meta(parent, frontend_meta, manifest)
+            _register_app_meta(parent, frontend_meta, manifest, extra=extra)
 
 
-def _register_app_meta(parent: FastAPI, path: str, manifest: DeployManifest) -> None:
-    payload = manifest.model_dump()
+def _register_app_meta(
+    parent: FastAPI,
+    path: str,
+    manifest: "_MtimeCachedManifest",
+    *,
+    extra: Optional[Callable[[], dict]] = None,
+) -> None:
+    """Serve ``manifest`` as it is *now* at ``path``, plus what ``extra()`` says."""
 
     async def _meta() -> dict:
-        return payload
+        return {**manifest.payload(), **(extra() if extra else {})}
 
     parent.add_api_route(path, _meta, methods=["GET"], include_in_schema=False)
 
@@ -455,7 +564,7 @@ def _add_trailing_slash_redirect(parent: FastAPI, prefix: str) -> None:
         return
 
     async def _redirect() -> RedirectResponse:
-        return RedirectResponse(f"{prefix}/")
+        return RedirectResponse(url_path(f"{prefix}/"))
 
     parent.add_api_route(
         prefix,
@@ -529,7 +638,34 @@ def _stamp_updated_at(
         manifest = manifests.get(app.name)
         if manifest is None:
             continue
-        app.updated_at = manifest.app_source.committed_at or manifest.deployed_at
+        app.updated_at = _updated_at(manifest)
+
+
+def _updated_at(manifest: DeployManifest) -> Optional[str]:
+    """An app's "last updated", from its manifest -- see ``_stamp_updated_at``."""
+    return manifest.app_source.committed_at or manifest.deployed_at
+
+
+def refresh_updated_at(app: AppConfig, readers: Optional[Mapping[str, Any]]) -> None:
+    """Re-stamp ``app.updated_at`` from its live manifest reader, if it has one.
+
+    *readers* maps app names to objects with a ``current() -> DeployManifest``
+    method: ``parent.state.app_manifest_readers``, which ``build_backend`` sets
+    (one mtime-cached reader per app manifest). ``GET /_apps`` calls this for
+    each listed app; a plugin that builds a launcher item itself (the
+    ``enlace_auth`` metadata edit) calls it first, so its item carries the date
+    in the file, not the date the last listing stamped (#87). An app without a
+    reader, or no readers at all, keeps its current stamp, and so does one whose
+    manifest cannot be read right now (corrupt or half-written): a known date is
+    not replaced by "unknown" over a read error.
+    """
+    meta = (readers or {}).get(app.name)
+    if meta is None:
+        return
+    manifest = meta.current()
+    if MANIFEST_ERROR_KEY in (manifest.extra or {}):
+        return
+    app.updated_at = _updated_at(manifest)
 
 
 def _can_access(app: AppConfig, request: Request) -> bool:
@@ -589,7 +725,11 @@ def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
     (typola) has no local frontend but serves a working UI at its route prefix,
     and a ``process`` connector (an MCP endpoint) has a route but no human page.
     An explicit ``app.toml`` ``launchable`` overrides the mode-derived default.
+    An app that failed to load (it is serving a 500 stub) is never launchable,
+    whatever its app.toml says.
     """
+    if app.import_error is not None:
+        return False, None
     has_frontend = bool(app.frontend_dir and app.frontend_dir.is_dir())
     if app.launchable is not None:
         launchable = app.launchable
@@ -602,8 +742,8 @@ def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
     if not launchable:
         return False, None
     if has_frontend:
-        return True, f"/{app.name}/"  # the SPA mount, not the API route_prefix
-    return True, app.route_prefix.rstrip("/") + "/"  # external proxy UI
+        return True, url_path(f"/{app.name}/")  # the SPA mount, not route_prefix
+    return True, url_path(app.route_prefix.rstrip("/") + "/")  # external proxy UI
 
 
 def _overlay_entry(request: Request, name: str) -> dict:
@@ -643,7 +783,7 @@ def _resolved_app_meta(app: AppConfig, config: PlatformConfig, overlay: dict) ->
         "description": description,
         "keywords": keywords,
         "keyword_sources": sources,
-        "icon_url": f"/_apps/{app.name}/icon?v={icon.token}",
+        "icon_url": f"{url_path(f'/_apps/{app.name}')}/icon?v={icon.token}",
     }
 
 
@@ -654,6 +794,10 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
     metadata-edit endpoints can return the *identical* item shape after a
     mutation — single source of truth for the item contract. ``overlay`` is the
     app's Tier-A record (``{}`` if none).
+
+    The link fields (``route``, ``launch_url``, ``icon_url``) are percent-encoded
+    URLs (#75); ``api_route`` is the configured route as an identifier, decoded,
+    and must be passed through :func:`enlace.util.url_path` before use as a link.
     """
     launchable, launch_url = _app_launch(app)
     resolved = _resolved_app_meta(app, config, overlay)
@@ -664,7 +808,8 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
         "keywords": resolved["keywords"],
         "keyword_sources": resolved["keyword_sources"],
         "icon_url": resolved["icon_url"],
-        "route": f"/{app.name}/",  # back-compat; new landing ignores
+        "route": url_path(f"/{app.name}/"),  # back-compat; new landing ignores
+        # The configured route as an identifier (not a link), so left decoded.
         "api_route": app.route_prefix,
         "access": app.access,
         "has_frontend": bool(app.frontend_dir and app.frontend_dir.is_dir()),
@@ -675,10 +820,17 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
         "updated_at": app.updated_at,
         # False only for a link-only app, which only metadata editors get here.
         "listed": app.listed,
+        # True when the app failed to load and a 500 stub serves its routes
+        # (enlace.degraded). The launcher shows it as broken, not launchable.
+        "degraded": app.import_error is not None,
     }
 
 
-def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
+def _add_apps_listing_route(
+    parent: FastAPI,
+    config: PlatformConfig,
+    app_metas: Optional[dict[str, "_MtimeCachedManifest"]] = None,
+) -> None:
     """Add GET /_apps (+ per-app icon route) for the launcher UI.
 
     ``/_apps`` returns the resolved launcher metadata for every app the caller
@@ -689,7 +841,14 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
     app's icon renders for an anonymous viewer who is
     allowed to *see* the app in the list. New fields are purely additive, so an
     older landing UI keeps working.
+
+    Each listed app's ``updated_at`` is re-stamped from its *app_metas* reader
+    on every request (one ``stat`` per app), so a manifest rewritten while the
+    backend runs moves the launcher's "last updated" without a restart (#84).
+    The stamp lands on the ``AppConfig``, so ``build_launcher_item`` callers
+    elsewhere (the ``enlace_auth`` metadata edit) see it too.
     """
+    app_metas = app_metas or {}
     apps = config.apps
     landing_name = config.landing_app
     apps_by_name = {a.name: a for a in apps}
@@ -708,6 +867,7 @@ def _add_apps_listing_route(parent: FastAPI, config: PlatformConfig) -> None:
                 continue
             if not _is_listed_for(app, can_edit_meta=can_edit_meta):
                 continue
+            refresh_updated_at(app, app_metas)
             items.append(
                 build_launcher_item(app, config, _overlay_entry(request, app.name))
             )
@@ -837,10 +997,14 @@ def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
             has_api = app.app_type != "frontend_only"
             links = []
             if has_frontend:
-                links.append(f'<a href="/{app.name}/">open</a>')
+                links.append(f'<a href="{url_path(f"/{app.name}/")}">open</a>')
             if has_api:
-                links.append(f'<a href="{app.route_prefix}/docs">api docs</a>')
+                links.append(
+                    f'<a href="{url_path(app.route_prefix)}/docs">api docs</a>'
+                )
             link_html = " · ".join(links) if links else "(no routes)"
+            if app.import_error is not None:
+                link_html = "<em>unavailable: failed to load</em>"
             items.append(f"<li><strong>{app.display_name}</strong> — {link_html}</li>")
         app_list = "\n".join(items) if items else "<li>No apps discovered.</li>"
         return (
@@ -939,7 +1103,8 @@ def _import_app_module(entry_path: Path, source_dir: Path):
     module_name = str(relative.with_suffix("")).replace("/", ".").replace("\\", ".")
     if module_name in sys.modules:
         del sys.modules[module_name]
-    return importlib.import_module(module_name)
+    with forget_partial_imports(module_name):
+        return importlib.import_module(module_name)
 
 
 def create_app() -> FastAPI:
@@ -947,6 +1112,11 @@ def create_app() -> FastAPI:
 
     Loads platform config, discovers apps, checks conflicts,
     and builds the composed backend.
+
+    Discovery *records* an app whose entry module fails to import rather than
+    raising, so ``build_backend`` can mount a 500 stub for that app alone
+    (see :mod:`enlace.degraded`). Platform configuration errors, including a
+    broken ``ENLACE_PLUGINS`` entry, still raise here.
 
     Plugins are loaded from the ``ENLACE_PLUGINS`` env var: a comma-separated
     list of ``module:attribute`` pairs, e.g.::
@@ -956,7 +1126,7 @@ def create_app() -> FastAPI:
     Each resolved object must be a callable
     ``(parent: FastAPI, config: PlatformConfig) -> None``.
     """
-    config = discover_apps()
+    config = discover_apps(on_import_error="record")
     config = _apply_port_env(config)
     plugins = _load_plugins_from_env()
     return build_backend(config, plugins=plugins)
