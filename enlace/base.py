@@ -42,6 +42,7 @@ from pydantic import (
 
 from enlace.analytics import AppAnalyticsConfig, PlatformAnalyticsConfig
 from enlace.appmeta import AppMetaConfig
+from enlace.package_page import PackagePageConfig
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -264,6 +265,11 @@ class AppConfig(BaseModel):
     # declared. Enforced by enlace in front of the app; see enlace.ratelimit.
     rate_limit: dict[str, str] = Field(default_factory=dict)
 
+    # The app's page ships inside a Python package (app.toml's
+    # ``page_from_package``): enlace serves the shell at /{name}/ and the
+    # package's files at {route_prefix}/ui/. See enlace.package_page.
+    page_from_package: Optional[PackagePageConfig] = None
+
     # Set when discovery ran with ``on_import_error="record"`` and this app's
     # entry module raised on import, or when ``build_backend`` could not load
     # the app and mounted a 500 stub in its place (``stage="compose"``).
@@ -335,6 +341,17 @@ class AppConfig(BaseModel):
     # Static-mode fields
     public_dir: Optional[Path] = None
 
+    @property
+    def has_frontend(self) -> bool:
+        """Whether enlace serves a page for this app at ``/{name}/``.
+
+        A frontend directory on disk, or a page shipped by a package
+        (``page_from_package``).
+        """
+        if self.page_from_package is not None:
+            return True
+        return bool(self.frontend_dir and self.frontend_dir.is_dir())
+
     @field_validator("rate_limit")
     @classmethod
     def _validate_rate_limit(cls, v: dict[str, str]) -> dict[str, str]:
@@ -346,6 +363,15 @@ class AppConfig(BaseModel):
     def _default_display_name(self):
         if not self.display_name:
             self.display_name = self.name.replace("_", " ").title()
+        return self
+
+    @model_validator(mode="after")
+    def _page_needs_a_route(self):
+        if self.page_from_package is not None and self.mode == "static":
+            raise ValueError(
+                f"app {self.name!r}: page_from_package needs an API route to serve "
+                "the page's files under; a mode='static' app has none"
+            )
         return self
 
     @model_validator(mode="after")

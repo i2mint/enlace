@@ -236,6 +236,17 @@ mode = "static"
 public_dir = "dist"
 ```
 
+For an app whose page ships inside its Python package (script, style, vendored files under a data dir), enlace serves the shell at `/{name}/` and the files at `{route}/ui/`, so no generated `frontend/index.html` is committed and a UI change ships with the package:
+```toml
+page_from_package = "mypkg"          # files in mypkg/data/ui, generic shell
+# or
+[page_from_package]
+package = "songleaf"
+assets = "data/web"                  # directory inside the package
+shell = "songleaf.web:page_shell"    # the app's own shell(api=, base=, title=)
+files = ["app.js", "style.css"]      # optional allowlist
+```
+
 Read analytics with `enlace analytics [--app-name X] [--days 30] [--json]`. Storage, retention and timezone live in `platform.toml`'s `[analytics]` table; see `misc/docs/privacy_analytics.md` in the enlace repo.
 
 ### Override Precedence (lowest → highest)
