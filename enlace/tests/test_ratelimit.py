@@ -675,7 +675,42 @@ def test_a_full_limiter_sweeps_at_most_once_per_min_sweep_seconds():
     assert len(calls) == 1  # one sweep, then refused from the remembered horizon
 
 
-@pytest.mark.parametrize("bad", [{"max_keys": 0}, {"on_overflow": "drop"}])
+def test_a_sweep_examines_at_most_sweep_batch_keys():
+    clock = _Clock()
+    lim = TokenBucketLimiter(
+        Rate(1, 60), max_keys=10, on_overflow="deny", sweep_batch=3, clock=clock
+    )
+    for i in range(10):
+        lim.acquire(f"busy-{i}")
+    calls = []
+    original = lim._idle_in
+    lim._idle_in = lambda entry, now: calls.append(now) or original(entry, now)
+    assert lim.acquire("new") == pytest.approx(lim.min_sweep_seconds)  # mid-round
+    assert len(calls) == 3
+
+
+def test_successive_sweeps_reach_an_idle_key_deep_in_the_order():
+    clock = _Clock()
+    lim = TokenBucketLimiter(
+        Rate(10, 100), max_keys=6, on_overflow="deny", sweep_batch=2, clock=clock
+    )
+    for i in range(5):  # drained buckets: busy for ~100 s
+        for _ in range(10):
+            lim.acquire(f"busy-{i}")
+    lim.acquire("light")  # seen last, one hit: idle again after 10 s
+    clock.now += 20
+    refused = [lim.acquire("new") for _ in range(2)]  # slice 1, then wait for slice 2
+    assert all(r > 0 for r in refused)
+    clock.now += lim.min_sweep_seconds
+    assert lim.acquire("new") > 0  # slice 2: still busy keys only
+    clock.now += lim.min_sweep_seconds
+    assert lim.acquire("new") == 0  # slice 3 reaches "light", now idle: dropped
+    assert "light" not in lim._buckets
+
+
+@pytest.mark.parametrize(
+    "bad", [{"max_keys": 0}, {"on_overflow": "drop"}, {"sweep_batch": 0}]
+)
 @pytest.mark.parametrize("cls", [TokenBucketLimiter, SlidingWindowLimiter])
 def test_in_memory_limiters_validate_their_bound_options(cls, bad):
     with pytest.raises(ValueError):
