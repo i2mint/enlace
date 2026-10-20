@@ -1,0 +1,39 @@
+enlace.ratelimit
+================
+
+.. automodule:: enlace.ratelimit
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      RATE_UNITS
+      DEFAULT_MAX_KEYS
+      DEFAULT_IPV6_PREFIX
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      add_rate_limits
+      bucket_key
+      client_address
+      normalize_path
+      parse_address
+      parse_networks
+      parse_rate
+      parse_rule_key
+      rules_for_app
+      validate_rate_limits
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      Limiter
+      Rate
+      RateLimitMiddleware
+      RateLimitRule
+      TokenBucketLimiter
+   

@@ -9,7 +9,7 @@
 <link rel="alternate" type="text/markdown" href="index.html.md">
 <link rel="describedby" href="llms.txt"><link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="API reference" href="api.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>enlace</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
@@ -221,6 +221,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.manifest.html">enlace.manifest</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.proxy.html">enlace.proxy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.util.html">enlace.util</a></li>
@@ -685,6 +686,22 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 </div>
 <p>The design and how it maps onto the CNIL’s consent exemption for audience measurement are in <a class="reference internal" href="#misc/docs/privacy_analytics.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/privacy_analytics.md</span></code></span></a>. That doc also lists what a site operator still has to do: a privacy-notice entry, and handling their own access logs.</p>
 </section>
+<section id="per-client-rate-limits">
+<h3>Per-client rate limits<a class="headerlink" href="#per-client-rate-limits" title="Link to this heading">¶</a></h3>
+<p>An app with an anonymous write endpoint can have enlace rate-limit it per client, with no code in the app. It declares the limits in its own <code class="docutils literal notranslate"><span class="pre">app.toml</span></code>, with paths relative to its API prefix:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[rate_limit]</span>
+<span class="s2">"POST /attempts"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"60/minute"</span><span class="w">   </span><span class="c1"># method + path</span>
+<span class="s2">"/search"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"10/second"</span><span class="w">          </span><span class="c1"># any method</span>
+<span class="s2">"POST /items/*"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"100/hour"</span><span class="w">     </span><span class="c1"># fnmatch glob</span>
+</pre></div>
+</div>
+<p>A request over a limit gets <code class="docutils literal notranslate"><span class="pre">429</span> <span class="pre">Too</span> <span class="pre">Many</span> <span class="pre">Requests</span></code> with <code class="docutils literal notranslate"><span class="pre">Retry-After</span></code>. Behind a reverse proxy, list the proxy in <code class="docutils literal notranslate"><span class="pre">platform.toml</span></code> so the client address is read from its <code class="docutils literal notranslate"><span class="pre">X-Forwarded-For</span></code> (only from those peers, right to left, so a client cannot spoof it):</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[platform]</span>
+<span class="n">trusted_proxies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="s2">"::1"</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Without <code class="docutils literal notranslate"><span class="pre">trusted_proxies</span></code>, the ASGI peer address is used as is: behind a proxy that is the proxy’s own address (unless the server already resolves forwarded headers), so every client would share one bucket. Paths are normalised before matching, a <code class="docutils literal notranslate"><span class="pre">GET</span></code> rule also covers <code class="docutils literal notranslate"><span class="pre">HEAD</span></code>, CORS preflights are never counted, and a websocket handshake over the limit is closed with code 1008. Buckets live in memory per process, so N workers allow up to N times the declared rate: it bounds abuse rather than enforcing an exact quota. <code class="docutils literal notranslate"><span class="pre">enlace.ratelimit.RateLimitMiddleware(make_limiter=...)</span></code> is the seam for a shared limiter.</p>
+</section>
 <section id="deploy-manifest-meta">
 <h3>Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)<a class="headerlink" href="#deploy-manifest-meta" title="Link to this heading">¶</a></h3>
 <p>enlace answers “what is actually deployed?” via an always-on, cheap manifest layer. Every mounted app gets a <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> endpoint (plus a platform-level <code class="docutils literal notranslate"><span class="pre">/_meta</span></code>), and every response carries <code class="docutils literal notranslate"><span class="pre">X-Deploy-*</span></code> headers. A deploy tool snapshots build identity (git SHA, deploy time, externals) at deploy time into <code class="docutils literal notranslate"><span class="pre">{manifest_dir}/{app}.json</span></code>; enlace owns the read paths and schema. This lets you tell whether the server is serving the SHA you think it is and whether the browser rendered the current build or a stale cache.</p>
@@ -711,7 +728,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-18 06:41 UTC from <a href="https://github.com/i2mint/enlace/commit/76f4f6e81911e8984de1c2c747fe25dd89bfa218">76f4f6e</a> (main) · enlace 0.1.58 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-20 14:43 UTC from <a href="https://github.com/i2mint/enlace/commit/1b0d8cced0554e73d1016873027889409b00eeeb">1b0d8cc</a> (main) · enlace 0.1.59 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -775,6 +792,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
 <li><a class="reference internal" href="#html-caching">HTML caching</a></li>
 <li><a class="reference internal" href="#app-icons-tab-home-screen-launcher">App icons (tab, home screen, launcher)</a></li>
 <li><a class="reference internal" href="#privacy-first-analytics">Privacy-first analytics</a></li>
+<li><a class="reference internal" href="#per-client-rate-limits">Per-client rate limits</a></li>
 <li><a class="reference internal" href="#deploy-manifest-meta">Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)</a></li>
 </ul>
 </li>
@@ -790,7 +808,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=8c48d39d"></script>
+</div><script src="_static/documentation_options.js?v=2508a7fb"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

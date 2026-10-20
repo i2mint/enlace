@@ -64,7 +64,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -361,7 +361,7 @@ boot does.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
+### *class* enlace.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, trusted_proxies=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 
@@ -654,6 +654,7 @@ present, has a `build` command and that its working directory exists.
 | [`html_rewrite`](enlace.html_rewrite.html.md#module-enlace.html_rewrite)     | Rewrite HTML response bodies from pure-ASGI middleware.                              |
 | [`manifest`](enlace.manifest.html.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
 | [`proxy`](enlace.proxy.html.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                    |
+| [`ratelimit`](enlace.ratelimit.html.md#module-enlace.ratelimit)           | Opt-in, per-app, per-client rate limits for mounted apps.                            |
 | [`strategies`](enlace.strategies.html.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                        |
 | [`supervise`](enlace.supervise.html.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                              |
 | [`util`](enlace.util.html.md#module-enlace.util)                     | Internal helpers for enlace.                                                         |

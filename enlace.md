@@ -1,4 +1,4 @@
-> built 2026-10-18 06:41 UTC from 76f4f6e (main) · enlace 0.1.58. Details: build_info.json
+> built 2026-10-20 14:43 UTC from 1b0d8cc (main) · enlace 0.1.59. Details: build_info.json
 
 # index.html.md
 
@@ -375,6 +375,26 @@ timezone = "Europe/Paris"   # whose midnight starts a new day
 ```
 
 The design and how it maps onto the CNIL’s consent exemption for audience measurement are in [`misc/docs/privacy_analytics.md`](). That doc also lists what a site operator still has to do: a privacy-notice entry, and handling their own access logs.
+
+### Per-client rate limits
+
+An app with an anonymous write endpoint can have enlace rate-limit it per client, with no code in the app. It declares the limits in its own `app.toml`, with paths relative to its API prefix:
+
+```toml
+[rate_limit]
+"POST /attempts" = "60/minute"   # method + path
+"/search" = "10/second"          # any method
+"POST /items/*" = "100/hour"     # fnmatch glob
+```
+
+A request over a limit gets `429 Too Many Requests` with `Retry-After`. Behind a reverse proxy, list the proxy in `platform.toml` so the client address is read from its `X-Forwarded-For` (only from those peers, right to left, so a client cannot spoof it):
+
+```toml
+[platform]
+trusted_proxies = ["127.0.0.1", "::1"]
+```
+
+Without `trusted_proxies`, the ASGI peer address is used as is: behind a proxy that is the proxy’s own address (unless the server already resolves forwarded headers), so every client would share one bucket. Paths are normalised before matching, a `GET` rule also covers `HEAD`, CORS preflights are never counted, and a websocket handshake over the limit is closed with code 1008. Buckets live in memory per process, so N workers allow up to N times the declared rate: it bounds abuse rather than enforcing an exact quota. `enlace.ratelimit.RateLimitMiddleware(make_limiter=...)` is the seam for a shared limiter.
 
 ### Deploy manifest (`/_meta`)
 
@@ -1310,7 +1330,7 @@ owned by another tool, and `enlace doctor` reports the same list.
 | [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
 | [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -1445,7 +1465,7 @@ Meta-conventions controlling how apps are discovered.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
+### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, trusted_proxies=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 
@@ -2513,7 +2533,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -2810,7 +2830,7 @@ boot does.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
+### *class* enlace.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, trusted_proxies=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 
@@ -3103,6 +3123,7 @@ present, has a `build` command and that its working directory exists.
 | [`html_rewrite`](_autosummary/enlace.html_rewrite.html.md#module-enlace.html_rewrite)     | Rewrite HTML response bodies from pure-ASGI middleware.                              |
 | [`manifest`](_autosummary/enlace.manifest.html.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
 | [`proxy`](_autosummary/enlace.proxy.html.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                    |
+| [`ratelimit`](_autosummary/enlace.ratelimit.html.md#module-enlace.ratelimit)           | Opt-in, per-app, per-client rate limits for mounted apps.                            |
 | [`strategies`](_autosummary/enlace.strategies.html.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                        |
 | [`supervise`](_autosummary/enlace.supervise.html.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                              |
 | [`util`](_autosummary/enlace.util.html.md#module-enlace.util)                     | Internal helpers for enlace.                                                         |
@@ -3489,6 +3510,265 @@ True
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+
+# _autosummary/enlace.ratelimit.html.md
+
+# enlace.ratelimit
+
+Opt-in, per-app, per-client rate limits for mounted apps.
+
+An app declares limits in its `app.toml`; enlace enforces them in front of the
+app, so the app needs no code (and still runs alone without them):
+
+```default
+[rate_limit]
+"POST /attempts" = "60/minute"      # method + path under the app's API prefix
+"/search" = "10/second"             # no method: any method
+"POST /items/*" = "100/hour"        # fnmatch-style glob
+```
+
+A request over its limit gets `429 Too Many Requests` with `Retry-After`.
+
+**Who the client is.** Behind a reverse proxy the TCP peer is the proxy, so the
+client address comes from `X-Forwarded-For` – but only when the peer is one of
+platform.toml’s `[platform] trusted_proxies`, and read right to left skipping
+trusted hops, so a client cannot spoof it by sending the header itself. With no
+`trusted_proxies` the peer address in the ASGI scope is used as is (which is
+already the client when the server itself resolves proxy headers, as uvicorn does
+for a loopback proxy by default). IPv6 clients share a bucket per /64.
+
+**What is matched.** The request path is normalised first (`//`, `.` and
+`..` collapsed, as an upstream would resolve them), so a rule cannot be
+sidestepped with `/a/../attempts`. A `GET` rule also covers `HEAD`. CORS
+preflights (`OPTIONS` with `Access-Control-Request-Method`) are never counted.
+A websocket handshake is matched as `GET` and refused with close code 1008.
+
+**Scope of the guarantee.** Buckets are in memory, per process: a host running N
+worker processes allows up to N times the declared rate. Each rule tracks at most
+`max_keys` clients and evicts the least recently seen, and an evicted bucket
+comes back full, so a client rotating through more addresses than that (e.g. many
+IPv6 /64s) is not held to the rate. It bounds abuse; it is not an exact quota. The
+limiter is a seam (`make_limiter`) for a shared one.
+
+\*\*In production behind a proxy, set 
+
+```
+``
+```
+
+trusted_proxies\`\`\*\* unless the server
+already resolves the client from the proxy’s header: otherwise every client
+shares the proxy’s address, and one abusive client exhausts everyone’s bucket.
+
+### Module Attributes
+
+| [`RATE_UNITS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RATE_UNITS)          | Window lengths, in seconds, a rate may be expressed in ("60/minute").                                                                               |
+|----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`DEFAULT_MAX_KEYS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_MAX_KEYS)    | Client buckets one rule tracks before evicting the least recently seen, so a flood of distinct (spoofed or rotating) clients cannot exhaust memory. |
+| [`DEFAULT_IPV6_PREFIX`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_IPV6_PREFIX) | one host usually owns a whole /64.                                                                                                                  |
+
+### Functions
+
+| [`add_rate_limits`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.add_rate_limits)(parent, config)                  | Install [`RateLimitMiddleware`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitMiddleware) on *parent* if any app declares limits.   |
+|---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| [`bucket_key`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.bucket_key)(address, \*[, ipv6_prefix])           | IPv4 as is; IPv6 grouped by its /`ipv6_prefix`.                                                                        |
+| [`client_address`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.client_address)(peer, forwarded_for, \*, trusted) | The client address: `X-Forwarded-For` only via a trusted peer, right to left.                                          |
+| [`normalize_path`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.normalize_path)(path)                             | Collapse `//`, `.` and `..` the way an upstream would resolve them.                                                    |
+| [`parse_address`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_address)(text)                              | An IP address from a peer or forwarded hop, or None if it is not one.                                                  |
+| [`parse_networks`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_networks)(proxies)                          | Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).                                           |
+| [`parse_rate`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_rate)(text)                                 | Parse `"60/minute"` (also `60/min`, `60/m`, `5/seconds`...).                                                           |
+| [`parse_rule_key`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_rule_key)(key)                              | Split an app.toml key into `(method or None, path)`.                                                                   |
+| [`rules_for_app`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.rules_for_app)(app, route_prefix, table)          | The app's declared limits as rules on full request paths.                                                              |
+| [`validate_rate_limits`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.validate_rate_limits)(table)                      | Check an app.toml `[rate_limit]` table, raising ValueError on any bad entry.                                           |
+
+### Classes
+
+| [`Limiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Limiter)(\*args, \*\*kwargs)                     | Take one request for `key`: 0 if allowed, else seconds until it would be.                                   |
+|--------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| [`Rate`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Rate)(limit, window)                             | `limit` requests per `window` seconds.                                                                      |
+| [`RateLimitMiddleware`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitMiddleware)(app, \*, rules[, ...])      | Pure ASGI middleware enforcing [`RateLimitRule`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule) s per client. |
+| [`RateLimitRule`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule)(app, method, path, rate, spec)    | One declared limit: requests matching `method` + `path` share `rate`.                                       |
+| [`TokenBucketLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.TokenBucketLimiter)(rate, \*[, max_keys, clock]) | In-memory token buckets, one per key, bounded in number (LRU eviction).                                     |
+
+### enlace.ratelimit.DEFAULT_IPV6_PREFIX *= 64*
+
+one host usually owns a whole /64.
+
+* **Type:**
+  IPv6 clients are grouped by this prefix
+
+### enlace.ratelimit.DEFAULT_MAX_KEYS *= 100000*
+
+Client buckets one rule tracks before evicting the least recently seen, so a
+flood of distinct (spoofed or rotating) clients cannot exhaust memory.
+
+### *class* enlace.ratelimit.Limiter(\*args, \*\*kwargs)
+
+Bases: [`Protocol`](https://docs.python.org/3/library/typing.html#typing.Protocol)
+
+Take one request for `key`: 0 if allowed, else seconds until it would be.
+
+### enlace.ratelimit.RATE_UNITS *= {'d': 86400, 'day': 86400, 'h': 3600, 'hour': 3600, 'm': 60, 'min': 60, 'minute': 60, 's': 1, 'sec': 1, 'second': 1}*
+
+Window lengths, in seconds, a rate may be expressed in (“60/minute”).
+
+### *class* enlace.ratelimit.Rate(limit, window)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+`limit` requests per `window` seconds.
+
+### *class* enlace.ratelimit.RateLimitMiddleware(app, \*, rules, trusted_proxies=(), make_limiter=<class 'enlace.ratelimit.TokenBucketLimiter'>, ipv6_prefix=64)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Pure ASGI middleware enforcing [`RateLimitRule`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule) s per client.
+
+Every rule a request matches is charged (a request may count against a
+narrow and a broad rule); the first one exhausted answers 429.
+
+### *class* enlace.ratelimit.RateLimitRule(app, method, path, rate, spec)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+One declared limit: requests matching `method` + `path` share `rate`.
+
+`method` is `None` for any method; `path` is a full request path (or an
+fnmatch glob) and `spec` is the app.toml text it came from, for messages.
+
+#### matches(method, path)
+
+Whether a request matches; *path* should be [`normalize_path()`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.normalize_path) ed.
+
+```pycon
+>>> r = RateLimitRule("a", "GET", "/x", Rate(1, 1), "")
+>>> r.matches("HEAD", "/x"), r.matches("POST", "/x")
+(True, False)
+```
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### *class* enlace.ratelimit.TokenBucketLimiter(rate, \*, max_keys=100000, clock=<built-in function monotonic>)
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+In-memory token buckets, one per key, bounded in number (LRU eviction).
+
+A bucket holds up to `rate.limit` tokens and refills continuously at
+`limit / window` per second, so bursts up to the limit pass and the
+sustained rate is the declared one.
+
+### enlace.ratelimit.add_rate_limits(parent, config)
+
+Install [`RateLimitMiddleware`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitMiddleware) on *parent* if any app declares limits.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.ratelimit.bucket_key(address, , ipv6_prefix=64)
+
+IPv4 as is; IPv6 grouped by its /`ipv6_prefix`.
+
+```pycon
+>>> bucket_key("2001:db8::1") == bucket_key("2001:db8::ffff")
+True
+```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.ratelimit.client_address(peer, forwarded_for, , trusted)
+
+The client address: `X-Forwarded-For` only via a trusted peer, right to left.
+
+```pycon
+>>> nets = parse_networks(["127.0.0.1"])
+>>> client_address("127.0.0.1", "6.6.6.6, 1.2.3.4", trusted=nets)
+'1.2.3.4'
+>>> client_address("5.5.5.5", "1.2.3.4", trusted=nets)  # untrusted peer
+'5.5.5.5'
+```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.ratelimit.normalize_path(path)
+
+Collapse `//`, `.` and `..` the way an upstream would resolve them.
+
+```pycon
+>>> normalize_path("/api/x/foo/../attempts"), normalize_path("//api/./x//a/")
+('/api/x/attempts', '/api/x/a/')
+```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.ratelimit.parse_address(text)
+
+An IP address from a peer or forwarded hop, or None if it is not one.
+
+Strips a port and IPv6 brackets, and unwraps IPv4-mapped IPv6 addresses.
+
+```pycon
+>>> [str(parse_address(t)) for t in ("1.2.3.4:80", "[::1]:443", "::ffff:10.0.0.1")]
+['1.2.3.4', '::1', '10.0.0.1']
+>>> parse_address("unknown") is None
+True
+```
+
+### enlace.ratelimit.parse_networks(proxies)
+
+Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).
+
+```pycon
+>>> parse_networks(["127.0.0.1", "10.0.0.0/8"])
+[IPv4Network('127.0.0.1/32'), IPv4Network('10.0.0.0/8')]
+```
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`IPv4Network`](https://docs.python.org/3/library/ipaddress.html#ipaddress.IPv4Network) | [`IPv6Network`](https://docs.python.org/3/library/ipaddress.html#ipaddress.IPv6Network)]
+
+### enlace.ratelimit.parse_rate(text)
+
+Parse `"60/minute"` (also `60/min`, `60/m`, `5/seconds`…).
+
+```pycon
+>>> parse_rate("60/minute")
+Rate(limit=60, window=60)
+>>> parse_rate("10 / s")
+Rate(limit=10, window=1)
+```
+
+* **Return type:**
+  [`Rate`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Rate)
+
+### enlace.ratelimit.parse_rule_key(key)
+
+Split an app.toml key into `(method or None, path)`.
+
+```pycon
+>>> parse_rule_key("POST /attempts")
+('POST', '/attempts')
+>>> parse_rule_key("/search")
+(None, '/search')
+```
+
+* **Return type:**
+  [`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str) | [`None`](https://docs.python.org/3/builtins/constants.html#None), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.ratelimit.rules_for_app(app, route_prefix, table)
+
+The app’s declared limits as rules on full request paths.
+
+### enlace.ratelimit.validate_rate_limits(table)
+
+Check an app.toml `[rate_limit]` table, raising ValueError on any bad entry.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 
 # _autosummary/enlace.strategies.html.md
@@ -3938,18 +4218,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-18 06:41 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/76f4f6e81911e8984de1c2c747fe25dd89bfa218"><code>76f4f6e</code></a> on branch <code>main</code>, for **enlace 0.1.58** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 14:43 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/1b0d8cced0554e73d1016873027889409b00eeeb"><code>1b0d8cc</code></a> on branch <code>main</code>, for **enlace 0.1.59** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.58) is behind the latest release on PyPI (0.1.59): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.59) is behind the latest release on PyPI (0.1.60): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/76f4f6e81911e8984de1c2c747fe25dd89bfa218"><code>76f4f6e81911e8984de1c2c747fe25dd89bfa218</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/1b0d8cced0554e73d1016873027889409b00eeeb"><code>1b0d8cced0554e73d1016873027889409b00eeeb</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -3960,16 +4240,16 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39104832038">39104832038</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39441554270">39441554270</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>76f4f6e81911e8984de1c2c747fe25dd89bfa218</code> (in the history of the built commit) |
+| Event commit | <code>1b0d8cced0554e73d1016873027889409b00eeeb</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.17  |
-| Sphinx   | 9.1.0   |
+| epythet  | 0.2.21  |
+| Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
 
@@ -3987,14 +4267,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.59/">0.1.59</a>, newer than the documented version (0.1.58).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.60/">0.1.60</a>, newer than the documented version (0.1.59).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 76f4f6e81911e8984de1c2c747fe25dd89bfa218
-pip install "epythet==0.2.17"
+git checkout 1b0d8cced0554e73d1016873027889409b00eeeb
+pip install "epythet==0.2.21"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

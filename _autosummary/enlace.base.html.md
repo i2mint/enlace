@@ -44,7 +44,7 @@ owned by another tool, and `enlace doctor` reports the same list.
 | [`ConventionsConfig`](#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
 | [`PlatformConfig`](#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -179,7 +179,7 @@ Meta-conventions controlling how apps are discovered.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, foreign_tables=<factory>)
+### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, trusted_proxies=<factory>, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 

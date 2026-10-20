@@ -6,7 +6,7 @@
 <link rel="alternate" type="text/markdown" href="compose.html.md">
 <link rel="describedby" href="../../llms.txt" type="text/markdown"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>enlace.compose - enlace</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
@@ -218,6 +218,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.manifest.html">enlace.manifest</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.util.html">enlace.util</a></li>
@@ -436,6 +437,13 @@
         <span class="n">title</span><span class="o">=</span><span class="s2">"enlace platform"</span><span class="p">,</span>
         <span class="n">lifespan</span><span class="o">=</span><span class="n">cascade_lifespan</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="c1"># Per-client rate limits the apps declared ([rate_limit] in app.toml).</span>
+    <span class="c1"># Added before CORS so CORS wraps it: a cross-origin caller can read the</span>
+    <span class="c1"># 429 and its Retry-After. Preflights are never counted (enlace.ratelimit).</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.ratelimit</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_rate_limits</span>
+
+    <span class="n">add_rate_limits</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 
     <span class="c1"># CORS on the parent only — sub-apps must NOT add their own CORS</span>
     <span class="n">_add_cors</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">cors_origins</span><span class="p">)</span>
@@ -1498,7 +1506,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=8c48d39d"></script>
+</div><script src="../../_static/documentation_options.js?v=2508a7fb"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

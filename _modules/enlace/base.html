@@ -6,7 +6,7 @@
 <link rel="alternate" type="text/markdown" href="base.html.md">
 <link rel="describedby" href="../../llms.txt" type="text/markdown"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 -->
         <title>enlace.base - enlace</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
@@ -218,6 +218,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.manifest.html">enlace.manifest</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.util.html">enlace.util</a></li>
@@ -540,6 +541,10 @@
     <span class="c1"># Privacy-first page-view analytics (app.toml's [analytics] table). Off</span>
     <span class="c1"># unless the app opts in with mode = "privacy". See enlace.analytics.</span>
     <span class="n">analytics</span><span class="p">:</span> <span class="n">AppAnalyticsConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">AppAnalyticsConfig</span><span class="p">)</span>
+    <span class="c1"># Per-client request limits (app.toml's [rate_limit] table), keyed</span>
+    <span class="c1"># "[METHOD] /path" relative to route_prefix, valued "N/unit". Off unless</span>
+    <span class="c1"># declared. Enforced by enlace in front of the app; see enlace.ratelimit.</span>
+    <span class="n">rate_limit</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
     <span class="c1"># Set when discovery ran with ``on_import_error="record"`` and this app's</span>
     <span class="c1"># entry module raised on import, or when ``build_backend`` could not load</span>
@@ -611,6 +616,13 @@
 
     <span class="c1"># Static-mode fields</span>
     <span class="n">public_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"rate_limit"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_rate_limit</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.ratelimit</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_rate_limits</span>
+
+        <span class="k">return</span> <span class="n">validate_rate_limits</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_display_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -696,6 +708,15 @@
         <span class="p">),</span>
     <span class="p">)</span>
 
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"trusted_proxies"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_trusted_proxies</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">proxies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Every entry must parse as an IP or CIDR, so a typo fails at load."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.ratelimit</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_networks</span>
+
+        <span class="n">parse_networks</span><span class="p">(</span><span class="n">proxies</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">proxies</span>
+
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"cors_origins"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_cors_origins</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">origins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -754,6 +775,10 @@
     <span class="c1"># Platform-wide analytics settings (platform.toml [analytics]): storage,</span>
     <span class="c1"># retention, timezone. Apps opt in individually; see enlace.analytics.</span>
     <span class="n">analytics</span><span class="p">:</span> <span class="n">PlatformAnalyticsConfig</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">PlatformAnalyticsConfig</span><span class="p">)</span>
+    <span class="c1"># Reverse proxies (IPs or CIDRs) whose X-Forwarded-For names the client,</span>
+    <span class="c1"># for per-client rate limits ([platform] trusted_proxies). Empty: the ASGI</span>
+    <span class="c1"># peer address is used as is. See enlace.ratelimit.</span>
+    <span class="n">trusted_proxies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">foreign_tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
@@ -978,7 +1003,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=8c48d39d"></script>
+</div><script src="../../_static/documentation_options.js?v=2508a7fb"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

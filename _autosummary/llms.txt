@@ -22,6 +22,7 @@
 - [enlace.html_rewrite](enlace.html_rewrite.html.md): Rewrite HTML response bodies from pure-ASGI middleware.
 - [enlace.manifest](enlace.manifest.html.md): Deploy manifest: build-identity for diagnosing “what is actually deployed”.
 - [enlace.proxy](enlace.proxy.html.md): Lightweight ASGI reverse proxy for process and external backends.
+- [enlace.ratelimit](enlace.ratelimit.html.md): Opt-in, per-app, per-client rate limits for mounted apps.
 - [enlace.strategies](enlace.strategies.html.md): Backend-strategy registry and built-in strategies for enlace.
 - [enlace.supervise](enlace.supervise.html.md): Dev-mode process supervisor for enlace.
 - [enlace.util](enlace.util.html.md): Internal helpers for enlace.

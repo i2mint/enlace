@@ -6,7 +6,7 @@
 <link rel="alternate" type="text/markdown" href="genindex.html.md">
 <link rel="describedby" href="llms.txt" type="text/markdown"><link rel="index" title="Index" href="#"><link rel="search" title="Search" href="search.html">
 
-    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 --><title>Index - enlace</title>
+    <!-- Generated with Sphinx 9.1.1 and Furo 2025.12.19 --><title>Index - enlace</title>
 <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx_autodoc_typehints.css?v=057ac668" />
@@ -217,6 +217,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.manifest.html">enlace.manifest</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.proxy.html">enlace.proxy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.util.html">enlace.util</a></li>
@@ -267,6 +268,8 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.Analytics.add_middleware">add_middleware() (enlace.analytics.Analytics method)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.add_rate_limits">add_rate_limits() (in module enlace.ratelimit)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.Analytics.add_routes">add_routes() (enlace.analytics.Analytics method)</a>
 </li>
@@ -338,16 +341,18 @@
 </li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.backoff_delay">backoff_delay() (enlace.supervise.ManagedProcess method)</a>
 </li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.bucket_key">bucket_key() (in module enlace.ratelimit)</a>
+</li>
         <li><a href="_autosummary/enlace.html#enlace.build_backend">build_backend() (in module enlace)</a>
 
         <ul>
           <li><a href="_autosummary/enlace.compose.html#enlace.compose.build_backend">(in module enlace.compose)</a>
 </li>
         </ul></li>
-        <li><a href="_autosummary/enlace.build.html#enlace.build.build_cwd">build_cwd() (in module enlace.build)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.build.html#enlace.build.build_cwd">build_cwd() (in module enlace.build)</a>
+</li>
         <li><a href="_autosummary/enlace.compose.html#enlace.compose.build_launcher_item">build_launcher_item() (in module enlace.compose)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.BuildConfig">BuildConfig (class in enlace)</a>
@@ -382,6 +387,8 @@
           <li><a href="_autosummary/enlace.html#enlace.PlatformConfig.check_conflicts">(enlace.PlatformConfig method)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.client_address">client_address() (in module enlace.ratelimit)</a>
+</li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.collect_strategy_field_maps">collect_strategy_field_maps() (in module enlace.strategies)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.compact">compact() (enlace.analytics.PageViewCounter method)</a>
@@ -425,6 +432,10 @@
 </li>
         </ul></li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.default_analytics_store">default_analytics_store() (in module enlace.analytics)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.DEFAULT_IPV6_PREFIX">DEFAULT_IPV6_PREFIX (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.DEFAULT_MAX_KEYS">DEFAULT_MAX_KEYS (in module enlace.ratelimit)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.default_store_path">default_store_path() (in module enlace.analytics)</a>
 </li>
@@ -627,6 +638,13 @@
 
         <ul>
           <li><a href="_autosummary/enlace.proxy.html#module-enlace.proxy">module</a>
+</li>
+        </ul></li>
+        <li>
+    enlace.ratelimit
+
+        <ul>
+          <li><a href="_autosummary/enlace.ratelimit.html#module-enlace.ratelimit">module</a>
 </li>
         </ul></li>
         <li>
@@ -856,6 +874,8 @@
 </li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.Lifecycle">Lifecycle (class in enlace.strategies)</a>
 </li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.Limiter">Limiter (class in enlace.ratelimit)</a>
+</li>
         <li><a href="_autosummary/enlace.html#enlace.load_manifest">load_manifest() (in module enlace)</a>
 
         <ul>
@@ -913,6 +933,8 @@
         <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.MANIFEST_ERROR_KEY">MANIFEST_ERROR_KEY (in module enlace.manifest)</a>
 </li>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.manifest_json">manifest_json() (in module enlace.app_icons)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RateLimitRule.matches">matches() (enlace.ratelimit.RateLimitRule method)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.MAX_RETENTION_DAYS">MAX_RETENTION_DAYS (in module enlace.analytics)</a>
 </li>
@@ -1018,6 +1040,8 @@
 </li>
           <li><a href="_autosummary/enlace.proxy.html#module-enlace.proxy">enlace.proxy</a>
 </li>
+          <li><a href="_autosummary/enlace.ratelimit.html#module-enlace.ratelimit">enlace.ratelimit</a>
+</li>
           <li><a href="_autosummary/enlace.strategies.html#module-enlace.strategies">enlace.strategies</a>
 </li>
           <li><a href="_autosummary/enlace.supervise.html#module-enlace.supervise">enlace.supervise</a>
@@ -1034,7 +1058,11 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.normalize_path">normalize_path() (in module enlace.analytics)</a>
+
+        <ul>
+          <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.normalize_path">(in module enlace.ratelimit)</a>
 </li>
+        </ul></li>
     </ul></td>
   </tr></table>
 </section>
@@ -1063,6 +1091,14 @@
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewMiddleware">PageViewMiddleware (class in enlace.analytics)</a>
 </li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.parse_address">parse_address() (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.parse_networks">parse_networks() (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.parse_rate">parse_rate() (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.parse_rule_key">parse_rule_key() (in module enlace.ratelimit)</a>
+</li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.platform_cookie_filter">platform_cookie_filter() (in module enlace.proxy)</a>
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.PLATFORM_COOKIE_NAMES">PLATFORM_COOKIE_NAMES (in module enlace.proxy)</a>
@@ -1071,12 +1107,12 @@
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.PLATFORM_CREDENTIAL_REQUEST_HEADERS">PLATFORM_CREDENTIAL_REQUEST_HEADERS (in module enlace.proxy)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.platform_proxy_filters">platform_proxy_filters() (in module enlace.proxy)</a>
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS">PLATFORM_UNSAFE_RESPONSE_HEADERS (in module enlace.proxy)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.html#enlace.PlatformAnalyticsConfig">PlatformAnalyticsConfig (class in enlace)</a>
 
         <ul>
@@ -1111,6 +1147,14 @@
   <h2>R</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.Rate">Rate (class in enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RATE_UNITS">RATE_UNITS (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RateLimitMiddleware">RateLimitMiddleware (class in enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RateLimitRule">RateLimitRule (class in enlace.ratelimit)</a>
+</li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.record_bot_hit">record_bot_hit() (enlace.analytics.PageViewCounter method)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.record_view">record_view() (enlace.analytics.PageViewCounter method)</a>
@@ -1127,10 +1171,10 @@
 </li>
         <li><a href="_autosummary/enlace.doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
 </li>
-        <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.resolve_app_icon">resolve_app_icon() (in module enlace.app_icons)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.resolve_app_icon">resolve_app_icon() (in module enlace.app_icons)</a>
+</li>
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.resolve_icon">resolve_icon() (in module enlace.appmeta)</a>
 </li>
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.resolve_keywords">resolve_keywords() (in module enlace.appmeta)</a>
@@ -1140,6 +1184,8 @@
         <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.RevalidatingStaticFiles">RevalidatingStaticFiles (class in enlace.frontend)</a>
 </li>
         <li><a href="_autosummary/enlace.html_rewrite.html#enlace.html_rewrite.rewrite_html_response">rewrite_html_response() (in module enlace.html_rewrite)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.rules_for_app">rules_for_app() (in module enlace.ratelimit)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.run_background">run_background() (enlace.analytics.PageViewCounter method)</a>
 </li>
@@ -1217,6 +1263,8 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.today">today() (enlace.analytics.PageViewCounter method)</a>
 </li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.TokenBucketLimiter">TokenBucketLimiter (class in enlace.ratelimit)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -1265,6 +1313,8 @@
           <li><a href="_autosummary/enlace.build.html#enlace.build.validate_build">(in module enlace.build)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.validate_rate_limits">validate_rate_limits() (in module enlace.ratelimit)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -1315,7 +1365,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=8c48d39d"></script>
+</div><script src="_static/documentation_options.js?v=2508a7fb"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

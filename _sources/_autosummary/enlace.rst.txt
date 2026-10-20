@@ -71,6 +71,7 @@
    html_rewrite
    manifest
    proxy
+   ratelimit
    strategies
    supervise
    util
