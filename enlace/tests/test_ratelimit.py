@@ -1,4 +1,11 @@
-"""Tests for enlace.ratelimit: per-app, per-client limits declared in app.toml."""
+"""Tests for enlace.ratelimit: per-app, per-client limits declared in app.toml.
+
+Also the one home of the shared client-address and limiter tests: heed's public
+ingest endpoint uses the same implementation through thin aliases.
+"""
+
+import ipaddress
+import logging
 
 import pytest
 from fastapi import FastAPI
@@ -7,7 +14,10 @@ from fastapi.testclient import TestClient
 from enlace.ratelimit import (
     Rate,
     RateLimitMiddleware,
+    RedisLimiter,
+    SlidingWindowLimiter,
     TokenBucketLimiter,
+    bucket_key,
     client_address,
     parse_networks,
     parse_rate,
@@ -331,3 +341,135 @@ def test_websocket_handshakes_are_limited():
         with client.websocket_connect("/api/game/live") as ws:
             ws.receive_text()
     assert exc.value.code == 1008
+
+
+# ------------------------------------------------------- shared limiters (heed too)
+
+
+def test_sliding_window_has_no_refill_until_the_oldest_hit_leaves():
+    clock = _Clock()
+    lim = SlidingWindowLimiter(Rate(2, 10), clock=clock)
+    assert [lim.acquire("k") for _ in range(2)] == [0, 0]
+    assert lim.acquire("k") == pytest.approx(10.0)
+    clock.now += 5
+    assert lim.acquire("k") == pytest.approx(5.0)  # a bucket would have refilled
+    clock.now += 5
+    assert lim.allow("k") and lim.allow("k") and not lim.allow("k")
+
+
+def test_sliding_window_is_bounded_in_keys():
+    lim = SlidingWindowLimiter(Rate(1, 60), max_keys=2, clock=_Clock())
+    for key in ("a", "b", "a", "c"):
+        lim.acquire(key)
+    assert list(lim._hits) == ["a", "c"]  # "b" was the least recently seen
+
+
+@pytest.mark.parametrize("cls", [TokenBucketLimiter, SlidingWindowLimiter])
+def test_in_memory_limiters_reject_a_zero_key_bound(cls):
+    with pytest.raises(ValueError, match="max_keys"):
+        cls(Rate(1, 1), max_keys=0)
+
+
+class _FakePipe:
+    def __init__(self, store, fail):
+        self.store, self.fail, self.ops, self.ttl = store, fail, [], None
+
+    def incr(self, key):
+        self.ops.append(key)
+
+    def expire(self, key, seconds):
+        self.ttl = seconds
+
+    def execute(self):
+        if self.fail:
+            raise ConnectionError("redis down")
+        key = self.ops[0]
+        self.store[key] = self.store.get(key, 0) + 1
+        return [self.store[key], True]
+
+
+class _FakeRedis:
+    def __init__(self, fail=False):
+        self.store: dict = {}
+        self.fail = fail
+
+    def pipeline(self):
+        return _FakePipe(self.store, self.fail)
+
+
+def test_redis_limiter_counts_per_window_shared_across_instances():
+    redis, now = _FakeRedis(), [0.0]
+    a = RedisLimiter(redis, Rate(2, 60), clock=lambda: now[0])
+    b = RedisLimiter(redis, Rate(2, 60), clock=lambda: now[0])
+    assert a.acquire("k") == 0 and b.acquire("k") == 0  # one shared count
+    now[0] = 45.0
+    assert a.acquire("k") == pytest.approx(15.0)  # until the next window
+    now[0] = 61.0
+    assert b.allow("k")  # new window
+    assert all(key.startswith("enlace:rl:k:") for key in redis.store)
+
+
+def test_redis_limiter_falls_back_when_redis_down(caplog):
+    lim = RedisLimiter(_FakeRedis(fail=True), Rate(1, 60))
+    assert isinstance(lim.fallback, TokenBucketLimiter)
+    with caplog.at_level(logging.WARNING, logger="enlace.ratelimit"):
+        assert lim.allow("k") and not lim.allow("k")
+    assert "fallback" in caplog.text
+
+
+def test_redis_limiter_uses_an_injected_fallback():
+    fallback = SlidingWindowLimiter(Rate(1, 60))
+    lim = RedisLimiter(_FakeRedis(fail=True), Rate(5, 60), fallback=fallback)
+    assert lim.allow("k") and not lim.allow("k")
+    assert list(fallback._hits) == ["k"]
+
+
+def test_redis_from_url_sets_socket_timeouts(monkeypatch):
+    redis = pytest.importorskip("redis")
+    seen = {}
+
+    def fake_from_url(url, **kw):
+        seen.update(kw)
+        return _FakeRedis()
+
+    monkeypatch.setattr(redis.Redis, "from_url", staticmethod(fake_from_url))
+    lim = RedisLimiter.from_url("redis://x:6379/0", Rate(1, 1), namespace="ns")
+    assert seen["socket_timeout"] == seen["socket_connect_timeout"] == 0.5
+    assert lim.namespace == "ns" and lim.rate == Rate(1, 1)
+
+
+def test_one_shared_limiter_keeps_rules_apart():
+    """A shared (e.g. Redis) limiter behind make_limiter= must not mix two rules."""
+    shared = SlidingWindowLimiter(Rate(1, 60))
+    inner = FastAPI()
+
+    @inner.get("/a")
+    @inner.get("/b")
+    def ok():
+        return {"ok": True}
+
+    outer = FastAPI()
+    outer.mount("/api/game", inner)
+    rules = list(rules_for_app("game", "/api/game", {"/a": "1/minute", "/b": "1/m"}))
+    client = TestClient(
+        RateLimitMiddleware(outer, rules=rules, make_limiter=lambda rate: shared)
+    )
+    assert client.get("/api/game/a").status_code == 200
+    assert client.get("/api/game/b").status_code == 200  # its own count
+    assert client.get("/api/game/a").status_code == 429
+    assert len(shared._hits) == 2
+
+
+def test_parse_networks_accepts_parsed_networks():
+    net = ipaddress.ip_network("10.0.0.0/8")
+    assert parse_networks([net, "::1"]) == [net, ipaddress.ip_network("::1/128")]
+    with pytest.raises(ValueError):
+        parse_networks(["not-a-network"])
+
+
+def test_bucket_key_groups_ipv6_and_unwraps_mapped_ipv4():
+    assert bucket_key("2001:db8:1:2::1") == bucket_key("2001:db8:1:2:ffff::9")
+    assert bucket_key("2001:db8:1:2::1") != bucket_key("2001:db8:1:3::1")
+    assert bucket_key("::ffff:1.2.3.4") == "1.2.3.4"
+    assert bucket_key("2001:db8::1", ipv6_prefix=128) == "2001:db8::1/128"
+    assert bucket_key("unknown") == "unknown"

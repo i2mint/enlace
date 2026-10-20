@@ -34,6 +34,20 @@ limiter is a seam (``make_limiter``) for a shared one.
 **In production behind a proxy, set ``trusted_proxies``** unless the server
 already resolves the client from the proxy's header: otherwise every client
 shares the proxy's address, and one abusive client exhausts everyone's bucket.
+
+**Reusable on its own.** The client-address and limiter halves import nothing
+beyond the standard library, so other services use them directly (``heed``'s
+public ingest endpoint does): :func:`client_address` + :func:`bucket_key` say
+who the client is, and any :class:`Limiter` -- :class:`TokenBucketLimiter`,
+:class:`SlidingWindowLimiter`, or :class:`RedisLimiter` (one count shared by every
+worker and host; needs the ``[redis]`` extra) -- says whether it may proceed. To
+share enlace's own limits across workers, pass the Redis one to the seam::
+
+    RateLimitMiddleware(app, rules=rules, make_limiter=lambda rate: RedisLimiter(
+        client, rate))
+
+Each rule charges its own key (the rule's :attr:`RateLimitRule.id` plus the
+client), so one shared client never mixes two rules' counts.
 """
 
 from __future__ import annotations
@@ -41,15 +55,18 @@ from __future__ import annotations
 import fnmatch
 import ipaddress
 import json
+import logging
 import math
 import posixpath
 import re
 import threading
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
+
+logger = logging.getLogger("enlace.ratelimit")
 
 #: Window lengths, in seconds, a rate may be expressed in ("60/minute").
 RATE_UNITS = {
@@ -69,6 +86,8 @@ RATE_UNITS = {
 DEFAULT_MAX_KEYS = 100_000
 #: IPv6 clients are grouped by this prefix: one host usually owns a whole /64.
 DEFAULT_IPV6_PREFIX = 64
+#: Connect/read timeout of the Redis limiter: a hung Redis costs at most this long.
+DEFAULT_REDIS_SOCKET_TIMEOUT = 0.5
 
 _RATE_RE = re.compile(r"^\s*(\d+)\s*/\s*([a-z]+?)s?\s*$")
 _HTTP_METHODS = frozenset({"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"})
@@ -107,6 +126,15 @@ class RateLimitRule:
             if not (self.method == "GET" and method == "HEAD"):
                 return False
         return fnmatch.fnmatchcase(path, self.path)
+
+    @property
+    def id(self) -> str:
+        """Names the rule across processes: the prefix of every key it charges.
+
+        >>> RateLimitRule("a", "GET", "/api/a/x", Rate(1, 1), "GET /x = 1/s").id
+        'a:GET /x = 1/s'
+        """
+        return f"{self.app}:{self.spec}"
 
 
 def normalize_path(path: str) -> str:
@@ -206,13 +234,20 @@ def rules_for_app(app: str, route_prefix: str, table: Mapping[str, str]):
 Network = ipaddress.IPv4Network | ipaddress.IPv6Network
 
 
-def parse_networks(proxies: Iterable[str]) -> list[Network]:
-    """Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).
+def parse_networks(proxies: Iterable[str | Network]) -> list[Network]:
+    """Parse IPs/CIDRs (strings or network objects) into networks; raises ValueError.
+
+    Call it once, at startup, so a typo fails loudly there, not on every request.
 
     >>> parse_networks(["127.0.0.1", "10.0.0.0/8"])
     [IPv4Network('127.0.0.1/32'), IPv4Network('10.0.0.0/8')]
     """
-    return [ipaddress.ip_network(str(p).strip(), strict=False) for p in proxies]
+    return [
+        p
+        if isinstance(p, (ipaddress.IPv4Network, ipaddress.IPv6Network))
+        else ipaddress.ip_network(str(p).strip(), strict=False)
+        for p in proxies
+    ]
 
 
 def parse_address(text: str | None):
@@ -296,7 +331,15 @@ class Limiter(Protocol):
     def acquire(self, key: str) -> float: ...
 
 
-class TokenBucketLimiter:
+class _AllowMixin:
+    """``allow(key) -> bool`` for callers that only need the yes/no of ``acquire``."""
+
+    def allow(self, key: str) -> bool:
+        """Take one request for ``key``; True if it is allowed now."""
+        return self.acquire(key) <= 0
+
+
+class TokenBucketLimiter(_AllowMixin):
     """In-memory token buckets, one per key, bounded in number (LRU eviction).
 
     A bucket holds up to ``rate.limit`` tokens and refills continuously at
@@ -333,6 +376,133 @@ class TokenBucketLimiter:
             while len(self._buckets) > self.max_keys:
                 self._buckets.popitem(last=False)
             return wait
+
+
+class SlidingWindowLimiter(_AllowMixin):
+    """In-memory sliding window: at most ``rate.limit`` requests in any ``window``.
+
+    Unlike :class:`TokenBucketLimiter` there is no refill between hits: a client
+    that spent its budget waits until its oldest hit leaves the window. Per process
+    (N workers allow N times the rate); the number of tracked keys is bounded
+    (``max_keys``, least recently seen evicted) so a flood of distinct keys cannot
+    exhaust memory.
+
+    >>> now = [0.0]
+    >>> lim = SlidingWindowLimiter(Rate(1, 10), clock=lambda: now[0])
+    >>> lim.acquire("a"), lim.acquire("a")
+    (0.0, 10.0)
+    >>> now[0] = 10.0
+    >>> lim.allow("a")
+    True
+    """
+
+    def __init__(
+        self,
+        rate: Rate,
+        *,
+        max_keys: int = DEFAULT_MAX_KEYS,
+        clock: Callable[[], float] = time.monotonic,
+    ):
+        if max_keys < 1:
+            raise ValueError(f"max_keys must be at least 1, got {max_keys}")
+        self.rate = rate
+        self.max_keys = max_keys
+        self._clock = clock
+        self._hits: OrderedDict[str, deque] = OrderedDict()
+        self._lock = threading.Lock()  # callers may run in a threadpool
+
+    def acquire(self, key: str) -> float:
+        with self._lock:
+            now = self._clock()
+            hits = self._hits.get(key)
+            if hits is None:
+                hits = self._hits[key] = deque()
+                while len(self._hits) > self.max_keys:
+                    self._hits.popitem(last=False)
+            else:
+                self._hits.move_to_end(key)
+            cutoff = now - self.rate.window
+            while hits and hits[0] <= cutoff:
+                hits.popleft()
+            if len(hits) >= self.rate.limit:
+                return hits[0] - cutoff  # > 0: when the oldest hit leaves the window
+            hits.append(now)
+            return 0.0
+
+
+class RedisLimiter(_AllowMixin):
+    """Fixed window in Redis: one count per key per window, shared by every worker.
+
+    ``client`` is any redis-py compatible client (injected; tests use a fake), or
+    build one with :meth:`from_url`. When Redis errors, the request is decided by
+    ``fallback`` (a per-process in-memory limiter by default), so an outage
+    degrades protection instead of either refusing everything or lifting the limit.
+
+    A fixed window admits up to twice ``rate.limit`` across a window boundary; the
+    price of one round trip and one counter per key.
+    """
+
+    #: Shown when the optional ``redis`` client is not installed.
+    install_hint = "pip install 'enlace[redis]'"
+
+    def __init__(
+        self,
+        client: Any,
+        rate: Rate,
+        *,
+        namespace: str = "enlace:rl",
+        fallback: Limiter | None = None,
+        max_keys: int = DEFAULT_MAX_KEYS,
+        clock: Callable[[], float] = time.time,
+    ):
+        self.client = client
+        self.rate = rate
+        self.namespace = namespace
+        self.fallback = fallback or TokenBucketLimiter(rate, max_keys=max_keys)
+        self._clock = clock
+
+    @classmethod
+    def from_url(
+        cls,
+        url: str,
+        *args,
+        socket_timeout: float = DEFAULT_REDIS_SOCKET_TIMEOUT,
+        **kwargs,
+    ):
+        """Build from a ``redis://`` URL (needs the ``redis`` client installed).
+
+        ``socket_timeout`` bounds both connect and reads, so a hung Redis costs at
+        most that long before the fallback limiter decides. Other arguments go to
+        the constructor.
+        """
+        try:
+            import redis  # lazy: optional dependency
+        except ImportError as e:  # pragma: no cover - depends on environment
+            raise ImportError(
+                f"The Redis rate limiter needs the redis client: {cls.install_hint}"
+            ) from e
+        client = redis.Redis.from_url(
+            url, socket_timeout=socket_timeout, socket_connect_timeout=socket_timeout
+        )
+        return cls(client, *args, **kwargs)
+
+    def acquire(self, key: str) -> float:
+        window = self.rate.window
+        now = self._clock()
+        index = int(now // window)
+        redis_key = f"{self.namespace}:{key}:{index}"
+        try:
+            pipe = self.client.pipeline()
+            pipe.incr(redis_key)
+            pipe.expire(redis_key, math.ceil(window) + 1)
+            count = pipe.execute()[0]
+        except Exception:  # noqa: BLE001 - any client/network failure
+            logger.warning("Redis rate limiter unavailable; using fallback limiter")
+            return self.fallback.acquire(key)
+        if int(count) <= self.rate.limit:
+            return 0.0
+        wait = (index + 1) * window - now  # until the next window opens
+        return wait if wait > 0 else window
 
 
 # --------------------------------------------------------------------- middleware
@@ -383,9 +553,10 @@ class RateLimitMiddleware:
         path = normalize_path(scope["path"])
         matched = [(r, lim) for r, lim in self.rules if r.matches(method, path)]
         if matched:
-            key = self._client_key(scope)
+            client = self._client_key(scope)
             for rule, limiter in matched:
-                wait = limiter.acquire(key)
+                # The rule's id keeps two rules apart in a limiter they share.
+                wait = limiter.acquire(f"{rule.id}|{client}")
                 if wait > 0:
                     if kind == "websocket":
                         await send({"type": "websocket.close", "code": 1008})
