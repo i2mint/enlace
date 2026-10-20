@@ -406,7 +406,7 @@ def test_redis_limiter_counts_per_window_shared_across_instances():
     assert a.acquire("k") == pytest.approx(15.0)  # until the next window
     now[0] = 61.0
     assert b.allow("k")  # new window
-    assert all(key.startswith("enlace:rl:k:") for key in redis.store)
+    assert all(key.startswith("enlace:rl:60:k:") for key in redis.store)
 
 
 def test_redis_limiter_falls_back_when_redis_down(caplog):
@@ -414,7 +414,71 @@ def test_redis_limiter_falls_back_when_redis_down(caplog):
     assert isinstance(lim.fallback, TokenBucketLimiter)
     with caplog.at_level(logging.WARNING, logger="enlace.ratelimit"):
         assert lim.allow("k") and not lim.allow("k")
-    assert "fallback" in caplog.text
+    assert caplog.text.count("unavailable") == 1  # once per outage, not per request
+
+
+def test_redis_limiter_skips_redis_while_down_then_retries():
+    redis, now = _FakeRedis(fail=True), [0.0]
+    calls = []
+    pipeline = redis.pipeline
+    redis.pipeline = lambda: calls.append(1) or pipeline()
+    lim = RedisLimiter(redis, Rate(5, 60), retry_seconds=5, clock=lambda: now[0])
+    lim.acquire("k"), lim.acquire("k")
+    assert len(calls) == 1  # the second request never waited on a dead Redis
+    now[0] = 5.0
+    redis.fail = False
+    assert lim.acquire("k") == 0 and len(calls) == 2 and lim._down_until is None
+
+
+def test_two_windows_never_share_a_redis_counter():
+    redis = _FakeRedis()
+    RedisLimiter(redis, Rate(1, 60), clock=lambda: 0.0).acquire("k")
+    assert RedisLimiter(redis, Rate(1, 3600), clock=lambda: 0.0).allow("k")
+
+
+@pytest.mark.parametrize("limit, window", [(0, 60), (5, 0), (5, -1), (1, float("inf"))])
+def test_rate_rejects_limits_that_could_never_be_enforced(limit, window):
+    with pytest.raises(ValueError, match="Rate needs"):
+        Rate(limit, window)
+
+
+def test_ipv6_prefix_is_validated():
+    with pytest.raises(ValueError, match="ipv6_prefix"):
+        RateLimitMiddleware(FastAPI(), rules=[], ipv6_prefix=200)
+
+
+def test_ipv6_zone_ids_are_dropped_from_forwarded_hops():
+    trusted = parse_networks(["127.0.0.1"])
+    hop = "fe80::1%" + "x" * 500
+    assert client_address("127.0.0.1", hop, trusted=trusted) == "fe80::1"
+
+
+def test_blocking_limiters_run_off_the_event_loop():
+    import threading
+
+    loop_thread, limiter_thread = [], []
+
+    class Spy(SlidingWindowLimiter):
+        blocking = True  # as RedisLimiter: does network I/O in acquire
+
+        def acquire(self, key):
+            limiter_thread.append(threading.get_ident())
+            return super().acquire(key)
+
+    inner = FastAPI()
+
+    @inner.get("/a")
+    async def ok():
+        loop_thread.append(threading.get_ident())
+        return {"ok": True}
+
+    outer = FastAPI()
+    outer.mount("/api/game", inner)
+    rules = list(rules_for_app("game", "/api/game", {"/a": "1/minute"}))
+    client = TestClient(RateLimitMiddleware(outer, rules=rules, make_limiter=Spy))
+    assert client.get("/api/game/a").status_code == 200
+    assert client.get("/api/game/a").status_code == 429  # its result still counts
+    assert limiter_thread[0] != loop_thread[0]
 
 
 def test_redis_limiter_uses_an_injected_fallback():
