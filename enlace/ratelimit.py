@@ -16,7 +16,10 @@ platform.toml's ``[platform] trusted_proxies``, and read right to left skipping
 trusted hops, so a client cannot spoof it by sending the header itself. With no
 ``trusted_proxies`` the peer address in the ASGI scope is used as is (which is
 already the client when the server itself resolves proxy headers, as uvicorn does
-for a loopback proxy by default). IPv6 clients share a bucket per /64.
+for a loopback proxy by default). IPv6 clients share a bucket per /64. Behind a
+proxy on a unix socket (``uvicorn --uds``) there is no peer address at all: pass
+``trust_unix_socket=True`` (platform.toml ``[platform] trust_unix_socket = true``)
+so the proxy's header is read; otherwise every client shares one "unknown" bucket.
 
 **What is matched.** The request path is normalised first (``//``, ``.`` and
 ``..`` collapsed, as an upstream would resolve them), so a rule cannot be
@@ -26,10 +29,13 @@ A websocket handshake is matched as ``GET`` and refused with close code 1008.
 
 **Scope of the guarantee.** Buckets are in memory, per process: a host running N
 worker processes allows up to N times the declared rate. Each rule tracks at most
-``max_keys`` clients and evicts the least recently seen, and an evicted bucket
-comes back full, so a client rotating through more addresses than that (e.g. many
-IPv6 /64s) is not held to the rate. It bounds abuse; it is not an exact quota. The
-limiter is a seam (``make_limiter``) for a shared one.
+``max_keys`` clients. When full, idle buckets (full again, or with no hit left in
+the window) are dropped first, since they carry no information; only then is the
+least recently seen evicted (``on_overflow="evict"``, the default, warned once),
+and an evicted bucket comes back full, so a client rotating through more addresses
+than that (e.g. many IPv6 /64s) is not held to the rate. ``on_overflow="deny"``
+refuses new clients instead (fail closed). It bounds abuse; it is not an exact
+quota. The limiter is a seam (``make_limiter``) for a shared one.
 
 **In production behind a proxy, set ``trusted_proxies``** unless the server
 already resolves the client from the proxy's header: otherwise every client
@@ -53,6 +59,7 @@ client), so one shared client never mixes two rules' counts.
 from __future__ import annotations
 
 import fnmatch
+import inspect
 import ipaddress
 import json
 import logging
@@ -84,6 +91,15 @@ RATE_UNITS = {
 #: Client buckets one rule tracks before evicting the least recently seen, so a
 #: flood of distinct (spoofed or rotating) clients cannot exhaust memory.
 DEFAULT_MAX_KEYS = 100_000
+#: What an in-memory limiter does with a new key when every tracked one is busy:
+#: ``"evict"`` the least recently seen (fail open), or ``"deny"`` the new key.
+OVERFLOW_POLICIES = ("evict", "deny")
+#: A full in-memory limiter looks for idle keys at most this often (one O(max_keys)
+#: sweep), so a flood of new keys cannot make every request pay for a sweep.
+DEFAULT_MIN_SWEEP_SECONDS = 1.0
+#: What the Redis limiter does while Redis is failing: ask its ``fallback``, or
+#: refuse (``"deny"``, fail closed) or admit (``"allow"``, fail open) every request.
+REDIS_ERROR_POLICIES = ("fallback", "deny", "allow")
 #: IPv6 clients are grouped by this prefix: one host usually owns a whole /64.
 DEFAULT_IPV6_PREFIX = 64
 #: Connect/read timeout of the Redis limiter: a hung Redis costs at most this long.
@@ -306,19 +322,30 @@ def _in_networks(ip, networks: list[Network]) -> bool:
 
 
 def client_address(
-    peer: str | None, forwarded_for: str | None, *, trusted: list[Network]
+    peer: str | None,
+    forwarded_for: str | None,
+    *,
+    trusted: list[Network],
+    trust_unix_socket: bool = False,
 ) -> str:
     """The client address: ``X-Forwarded-For`` only via a trusted peer, right to left.
+
+    A missing peer (``None``: a unix-socket connection) is trusted only with
+    ``trust_unix_socket``, for a proxy that reaches the server over a socket.
 
     >>> nets = parse_networks(["127.0.0.1"])
     >>> client_address("127.0.0.1", "6.6.6.6, 1.2.3.4", trusted=nets)
     '1.2.3.4'
     >>> client_address("5.5.5.5", "1.2.3.4", trusted=nets)  # untrusted peer
     '5.5.5.5'
+    >>> client_address(None, "1.2.3.4", trusted=[]), client_address(
+    ...     None, "1.2.3.4", trusted=[], trust_unix_socket=True)
+    ('unknown', '1.2.3.4')
     """
     peer_ip = parse_address(peer)
+    peer_trusted = _in_networks(peer_ip, trusted) or (not peer and trust_unix_socket)
     peer = str(peer_ip) if peer_ip is not None else (peer or "unknown")
-    if not trusted or not forwarded_for or not _in_networks(peer_ip, trusted):
+    if not forwarded_for or not peer_trusted:
         return peer
     for hop in reversed([h.strip() for h in forwarded_for.split(",") if h.strip()]):
         hop_ip = parse_address(hop)
@@ -364,12 +391,88 @@ class _AllowMixin:
         return self.acquire(key) <= 0
 
 
-class TokenBucketLimiter(_AllowMixin):
+class _BoundedKeys:
+    """The key bound of the in-memory limiters: idle keys go first, then the policy.
+
+    A subclass keeps its per-key state in an ``OrderedDict`` (least recently seen
+    first) and says, with :meth:`_idle_in`, how long until a key's state carries no
+    information (a full bucket, an empty window).
+    """
+
+    def _init_bound(self, max_keys: int, on_overflow: str, min_sweep_seconds: float):
+        if max_keys < 1:
+            raise ValueError(f"max_keys must be at least 1, got {max_keys}")
+        if on_overflow not in OVERFLOW_POLICIES:
+            raise ValueError(
+                f"on_overflow must be one of {OVERFLOW_POLICIES}, got {on_overflow!r}"
+            )
+        self.max_keys = max_keys
+        self.on_overflow = on_overflow
+        self.min_sweep_seconds = min_sweep_seconds
+        self._next_sweep = -math.inf
+        self._warned_eviction = False
+
+    def _idle_in(self, entry, now: float) -> float:  # pragma: no cover - abstract
+        """Seconds until *entry* is idle (``<= 0``: idle now)."""
+        raise NotImplementedError
+
+    def _make_room(self, entries: OrderedDict, now: float) -> float:
+        """Room for one new key: 0 if it may be added, else the seconds to refuse it.
+
+        Drops idle keys (one sweep at most every ``min_sweep_seconds``, and none
+        before the first key could have gone idle). With no idle key, ``"evict"``
+        admits it (the caller trims the least recently seen) and ``"deny"`` refuses.
+        """
+        if len(entries) < self.max_keys:
+            return 0.0
+        if now >= self._next_sweep:
+            soonest = math.inf
+            for key, entry in list(entries.items()):
+                idle_in = self._idle_in(entry, now)
+                if idle_in <= 0:
+                    del entries[key]
+                else:
+                    soonest = min(soonest, idle_in)
+            self._next_sweep = now + max(soonest, self.min_sweep_seconds)
+            if len(entries) < self.max_keys:
+                return 0.0
+        if self.on_overflow == "deny":
+            return self._next_sweep - now  # > 0: when a key may next go idle
+        return 0.0
+
+    def _trim(self, entries: OrderedDict) -> None:
+        """Evict the least recently seen keys beyond ``max_keys`` (warned once)."""
+        if len(entries) <= self.max_keys:
+            return
+        if not self._warned_eviction:
+            self._warned_eviction = True
+            logger.warning(
+                "%s full (%d keys, none idle): evicting the least recently seen, "
+                "whose limits restart. Raise max_keys, or pass on_overflow='deny' "
+                "to refuse new clients instead.",
+                type(self).__name__,
+                self.max_keys,
+            )
+        while len(entries) > self.max_keys:
+            entries.popitem(last=False)
+
+
+class TokenBucketLimiter(_BoundedKeys, _AllowMixin):
     """In-memory token buckets, one per key, bounded in number (LRU eviction).
 
     A bucket holds up to ``rate.limit`` tokens and refills continuously at
     ``limit / window`` per second, so bursts up to the limit pass and the
-    sustained rate is the declared one.
+    sustained rate is the declared one. At ``max_keys`` keys, full buckets are
+    dropped first, then ``on_overflow`` decides (see :class:`_BoundedKeys`).
+
+    >>> now = [0.0]
+    >>> lim = TokenBucketLimiter(Rate(1, 10), max_keys=1, on_overflow="deny",
+    ...     clock=lambda: now[0])
+    >>> lim.acquire("a"), lim.acquire("b")  # "a" is busy: the new "b" is refused
+    (0.0, 10.0)
+    >>> now[0] = 10.0  # "a" is full again: idle, so it makes room
+    >>> lim.allow("b")
+    True
     """
 
     def __init__(
@@ -377,21 +480,29 @@ class TokenBucketLimiter(_AllowMixin):
         rate: Rate,
         *,
         max_keys: int = DEFAULT_MAX_KEYS,
+        on_overflow: str = "evict",
+        min_sweep_seconds: float = DEFAULT_MIN_SWEEP_SECONDS,
         clock: Callable[[], float] = time.monotonic,
     ):
-        if max_keys < 1:
-            raise ValueError(f"max_keys must be at least 1, got {max_keys}")
+        self._init_bound(max_keys, on_overflow, min_sweep_seconds)
         self.rate = rate
         self.capacity = float(rate.limit)
         self.refill_per_second = rate.limit / rate.window
-        self.max_keys = max_keys
         self._clock = clock
         self._buckets: OrderedDict[str, tuple[float, float]] = OrderedDict()
         self._lock = threading.Lock()
 
+    def _idle_in(self, entry, now: float) -> float:
+        tokens, last = entry
+        return (self.capacity - tokens) / self.refill_per_second - (now - last)
+
     def acquire(self, key: str) -> float:
         with self._lock:
             now = self._clock()
+            if key not in self._buckets:
+                refused = self._make_room(self._buckets, now)
+                if refused > 0:
+                    return refused
             tokens, last = self._buckets.pop(key, (self.capacity, now))
             tokens = min(self.capacity, tokens + (now - last) * self.refill_per_second)
             if tokens >= 1:
@@ -399,19 +510,18 @@ class TokenBucketLimiter(_AllowMixin):
             else:
                 wait = (1 - tokens) / self.refill_per_second
             self._buckets[key] = (tokens, now)
-            while len(self._buckets) > self.max_keys:
-                self._buckets.popitem(last=False)
+            self._trim(self._buckets)
             return wait
 
 
-class SlidingWindowLimiter(_AllowMixin):
+class SlidingWindowLimiter(_BoundedKeys, _AllowMixin):
     """In-memory sliding window: at most ``rate.limit`` requests in any ``window``.
 
     Unlike :class:`TokenBucketLimiter` there is no refill between hits: a client
     that spent its budget waits until its oldest hit leaves the window. Per process
     (N workers allow N times the rate); the number of tracked keys is bounded
-    (``max_keys``, least recently seen evicted) so a flood of distinct keys cannot
-    exhaust memory. Each key keeps up to ``rate.limit`` timestamps, so memory is
+    (``max_keys``: keys with no hit left in the window go first, then
+    ``on_overflow`` decides) so a flood of distinct keys cannot exhaust memory. Each key keeps up to ``rate.limit`` timestamps, so memory is
     bounded by ``max_keys * rate.limit``: prefer :class:`TokenBucketLimiter` (one
     pair of floats per key) for large limits.
 
@@ -429,24 +539,29 @@ class SlidingWindowLimiter(_AllowMixin):
         rate: Rate,
         *,
         max_keys: int = DEFAULT_MAX_KEYS,
+        on_overflow: str = "evict",
+        min_sweep_seconds: float = DEFAULT_MIN_SWEEP_SECONDS,
         clock: Callable[[], float] = time.monotonic,
     ):
-        if max_keys < 1:
-            raise ValueError(f"max_keys must be at least 1, got {max_keys}")
+        self._init_bound(max_keys, on_overflow, min_sweep_seconds)
         self.rate = rate
-        self.max_keys = max_keys
         self._clock = clock
         self._hits: OrderedDict[str, deque] = OrderedDict()
         self._lock = threading.Lock()  # callers may run in a threadpool
+
+    def _idle_in(self, entry, now: float) -> float:
+        return entry[-1] + self.rate.window - now if entry else 0.0
 
     def acquire(self, key: str) -> float:
         with self._lock:
             now = self._clock()
             hits = self._hits.get(key)
             if hits is None:
+                refused = self._make_room(self._hits, now)
+                if refused > 0:
+                    return refused
                 hits = self._hits[key] = deque()
-                while len(self._hits) > self.max_keys:
-                    self._hits.popitem(last=False)
+                self._trim(self._hits)
             else:
                 self._hits.move_to_end(key)
             cutoff = now - self.rate.window
@@ -462,14 +577,18 @@ class RedisLimiter(_AllowMixin):
     """Fixed window in Redis: one count per key per window, shared by every worker.
 
     ``client`` is any redis-py compatible client (injected; tests use a fake), or
-    build one with :meth:`from_url`. When Redis errors, the request is decided by
-    ``fallback`` (a per-process in-memory limiter by default), so an outage
-    degrades protection instead of either refusing everything or lifting the limit.
+    build one with :meth:`from_url`; an asyncio client is refused up front (the
+    limiter's calls are synchronous). When Redis errors, ``on_error`` decides:
+    ``"fallback"`` (the default) asks ``fallback`` (a per-process in-memory limiter
+    by default), so an outage degrades protection instead of either refusing
+    everything or lifting the limit; ``"deny"`` refuses every request (fail closed,
+    for a public endpoint that would rather refuse than allow N workers times the
+    rate) and ``"allow"`` admits every one (fail open).
 
     A fixed window admits up to twice ``rate.limit`` across a window boundary; the
     price of one round trip and one counter per key. Keys go into Redis as given,
     so they must come from a bounded set (client bucket keys, rule ids), never raw
-    client input. After an error the fallback alone decides for
+    client input. After an error ``on_error`` alone decides for
     ``retry_seconds`` (one warning per outage), so a hung Redis costs one
     ``socket_timeout`` per interval rather than one per request. ``max_keys`` sizes
     the default fallback only.
@@ -492,8 +611,21 @@ class RedisLimiter(_AllowMixin):
         fallback: Limiter | None = None,
         max_keys: int = DEFAULT_MAX_KEYS,
         retry_seconds: float = DEFAULT_REDIS_RETRY_SECONDS,
+        on_error: str = "fallback",
         clock: Callable[[], float] = time.time,
     ):
+        if _is_async_redis_client(client):
+            raise TypeError(
+                f"{type(self).__name__} needs a synchronous redis client "
+                f"(redis.Redis), got the asyncio {type(client).__module__}."
+                f"{type(client).__name__}: its calls would never be awaited, so "
+                f"every request would silently use the fallback."
+            )
+        if on_error not in REDIS_ERROR_POLICIES:
+            raise ValueError(
+                f"on_error must be one of {REDIS_ERROR_POLICIES}, got {on_error!r}"
+            )
+        self.on_error = on_error
         self.client = client
         self.rate = rate
         self.namespace = namespace
@@ -540,7 +672,7 @@ class RedisLimiter(_AllowMixin):
         now = self._clock()
         down_until = self._down_until
         if down_until is not None and now < down_until:
-            return self.fallback.acquire(key)
+            return self._while_down(key, now)
         index = int(now // window)
         redis_key = self.redis_key(key, index)
         try:
@@ -551,13 +683,13 @@ class RedisLimiter(_AllowMixin):
         except Exception:  # noqa: BLE001 - any client/network failure
             if down_until is None:
                 logger.warning(
-                    "Redis rate limiter unavailable; using the fallback limiter "
-                    "for %ss at a time",
+                    "Redis rate limiter unavailable; %s for %ss at a time",
+                    _ON_ERROR_WORDING[self.on_error],
                     self.retry_seconds,
                     exc_info=True,
                 )
             self._down_until = now + self.retry_seconds
-            return self.fallback.acquire(key)
+            return self._while_down(key, now)
         if down_until is not None:
             logger.info("Redis rate limiter reachable again")
             self._down_until = None
@@ -565,6 +697,31 @@ class RedisLimiter(_AllowMixin):
             return 0.0
         wait = (index + 1) * window - now  # until the next window opens
         return wait if wait > 0 else window  # guard float rounding at a boundary
+
+    def _while_down(self, key: str, now: float) -> float:
+        """Decide a request while Redis is failing, per ``on_error``."""
+        if self.on_error == "fallback":
+            return self.fallback.acquire(key)
+        if self.on_error == "allow":
+            return 0.0
+        wait = self._down_until - now  # "deny": until Redis is tried again
+        return wait if wait > 0 else self.rate.window
+
+
+#: How the outage warning says what :class:`RedisLimiter` does meanwhile.
+_ON_ERROR_WORDING = {
+    "fallback": "using the fallback limiter",
+    "deny": "refusing every request",
+    "allow": "admitting every request",
+}
+
+
+def _is_async_redis_client(client: Any) -> bool:
+    """Whether *client* is an asyncio redis client (``redis.asyncio.Redis`` and kin)."""
+    module = type(client).__module__ or ""
+    return module.startswith("redis.asyncio") or inspect.iscoroutinefunction(
+        getattr(client, "execute_command", None)
+    )
 
 
 # --------------------------------------------------------------------- middleware
@@ -575,6 +732,10 @@ class RateLimitMiddleware:
 
     Every rule a request matches is charged (a request may count against a
     narrow and a broad rule); the first one exhausted answers 429.
+
+    ``trust_unix_socket`` trusts a connection with no peer address (a proxy on a
+    unix socket) to name the client in ``X-Forwarded-For``; anything that can
+    reach the socket can then pick its own address, so only the proxy should.
     """
 
     def __init__(
@@ -585,10 +746,18 @@ class RateLimitMiddleware:
         trusted_proxies: Iterable[str | Network] = (),
         make_limiter: Callable[[Rate], Limiter] = TokenBucketLimiter,
         ipv6_prefix: int = DEFAULT_IPV6_PREFIX,
+        trust_unix_socket: bool = False,
     ):
         self.app = app
         self.rules = [(rule, make_limiter(rule.rate)) for rule in rules]
         self.trusted = parse_networks(trusted_proxies)
+        self.trust_unix_socket = trust_unix_socket
+        self._warned_no_peer = False
+        if trust_unix_socket and self.rules:
+            logger.warning(
+                "Rate limits trust X-Forwarded-For on connections with no peer "
+                "address (unix sockets): make sure only the proxy can reach the socket."
+            )
         if not 0 <= ipv6_prefix <= 128:
             raise ValueError(f"ipv6_prefix must be within 0..128, got {ipv6_prefix}")
         self.ipv6_prefix = ipv6_prefix
@@ -602,7 +771,19 @@ class RateLimitMiddleware:
                 # Several headers are one comma-joined list (RFC 9110 §5.3).
                 text = value.decode("latin-1")
                 forwarded = text if forwarded is None else f"{forwarded}, {text}"
-        address = client_address(peer, forwarded, trusted=self.trusted)
+        if peer is None and not self.trust_unix_socket and not self._warned_no_peer:
+            self._warned_no_peer = True
+            logger.warning(
+                "Rate-limited request with no peer address (a unix socket?): every "
+                "such client shares one 'unknown' bucket. Behind a proxy on a unix "
+                "socket, set [platform] trust_unix_socket = true."
+            )
+        address = client_address(
+            peer,
+            forwarded,
+            trusted=self.trusted,
+            trust_unix_socket=self.trust_unix_socket,
+        )
         return bucket_key(address, ipv6_prefix=self.ipv6_prefix)
 
     async def __call__(self, scope, receive, send):
@@ -671,6 +852,9 @@ def add_rate_limits(parent, config) -> bool:
     if not rules:
         return False
     parent.add_middleware(
-        RateLimitMiddleware, rules=rules, trusted_proxies=config.trusted_proxies
+        RateLimitMiddleware,
+        rules=rules,
+        trusted_proxies=config.trusted_proxies,
+        trust_unix_socket=config.trust_unix_socket,
     )
     return True

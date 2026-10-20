@@ -14,9 +14,11 @@ from fastapi.testclient import TestClient
 from enlace.ratelimit import (
     Rate,
     RateLimitMiddleware,
+    RateLimitRule,
     RedisLimiter,
     SlidingWindowLimiter,
     TokenBucketLimiter,
+    add_rate_limits,
     bucket_key,
     client_address,
     parse_networks,
@@ -537,3 +539,189 @@ def test_bucket_key_groups_ipv6_and_unwraps_mapped_ipv4():
     assert bucket_key("::ffff:1.2.3.4") == "1.2.3.4"
     assert bucket_key("2001:db8::1", ipv6_prefix=128) == "2001:db8::1/128"
     assert bucket_key("unknown") == "unknown"
+
+
+# --- #100: unix-socket peers, eviction policy, fail-closed option ---
+
+
+def test_a_missing_peer_is_trusted_only_with_trust_unix_socket():
+    assert client_address(None, "1.2.3.4", trusted=[]) == "unknown"
+    assert client_address(None, "1.2.3.4", trusted=[], trust_unix_socket=True) == (
+        "1.2.3.4"
+    )
+    nets = parse_networks(["10.0.0.0/8"])
+    # Trusted hops are skipped as usual behind the socket.
+    assert (
+        client_address(None, "1.2.3.4, 10.0.0.2", trusted=nets, trust_unix_socket=True)
+        == "1.2.3.4"
+    )
+    # A peer that is present and untrusted is still not trusted.
+    assert client_address("5.5.5.5", "1.2.3.4", trusted=[], trust_unix_socket=True) == (
+        "5.5.5.5"
+    )
+
+
+async def _call_with_no_peer(mw, forwarded):
+    sent = []
+
+    async def receive():  # pragma: no cover - the app never reads the body
+        return {"type": "http.request", "body": b""}
+
+    async def send(message):
+        sent.append(message)
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/x",
+        "headers": [(b"x-forwarded-for", forwarded.encode())],
+        "client": None,
+    }
+    await mw(scope, receive, send)
+    return sent[0]["status"]
+
+
+def _ok_app():
+    async def app(scope, receive, send):
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b""})
+
+    return app
+
+
+@pytest.mark.parametrize("trust, second_status", [(False, 429), (True, 200)])
+def test_unix_socket_clients_get_their_own_buckets_only_when_trusted(
+    trust, second_status, caplog
+):
+    import asyncio
+
+    rule = RateLimitRule("a", "GET", "/x", Rate(1, 60), "GET /x = 1/minute")
+    with caplog.at_level(logging.WARNING, logger="enlace.ratelimit"):
+        mw = RateLimitMiddleware(_ok_app(), rules=[rule], trust_unix_socket=trust)
+        first = asyncio.run(_call_with_no_peer(mw, "1.1.1.1"))
+        second = asyncio.run(_call_with_no_peer(mw, "2.2.2.2"))
+        asyncio.run(_call_with_no_peer(mw, "3.3.3.3"))
+    assert (first, second) == (200, second_status)
+    if trust:  # warned once at startup that the socket is trusted
+        assert caplog.text.count("unix sockets") == 1
+    else:  # warned once, not per request, that everyone shares one bucket
+        assert caplog.text.count("'unknown' bucket") == 1
+
+
+def test_platform_trust_unix_socket_reaches_the_middleware():
+    from types import SimpleNamespace
+
+    from enlace.base import PlatformConfig
+
+    assert PlatformConfig().trust_unix_socket is False
+    installed = {}
+
+    class _Parent:
+        def add_middleware(self, cls, **kwargs):
+            installed.update(kwargs)
+
+    app = SimpleNamespace(
+        name="a", route_prefix="/api/a", rate_limit={"/x": "1/minute"}
+    )
+    config = SimpleNamespace(apps=[app], trusted_proxies=[], trust_unix_socket=True)
+    assert add_rate_limits(_Parent(), config)
+    assert installed["trust_unix_socket"] is True
+
+
+@pytest.mark.parametrize("cls", [TokenBucketLimiter, SlidingWindowLimiter])
+def test_idle_keys_are_evicted_before_busy_ones(cls):
+    clock = _Clock()
+    lim = cls(Rate(1, 10), max_keys=2, clock=clock)
+    lim.acquire("busy")  # exhausted
+    clock.now += 5
+    lim.acquire("idle-soon")
+    clock.now += 6  # "busy" is idle again (11 s > 10 s); "idle-soon" is not
+    lim.acquire("new")
+    entries = lim._buckets if cls is TokenBucketLimiter else lim._hits
+    assert list(entries) == ["idle-soon", "new"]
+
+
+@pytest.mark.parametrize("cls", [TokenBucketLimiter, SlidingWindowLimiter])
+def test_rotating_keys_cannot_evict_an_exhausted_client_under_deny(cls):
+    clock = _Clock()
+    lim = cls(Rate(1, 60), max_keys=2, on_overflow="deny", clock=clock)
+    assert lim.allow("victim") and not lim.allow("victim")  # exhausted
+    assert lim.allow("rot-0")
+    for i in range(1, 10):  # a flood of new keys is refused, not admitted
+        assert lim.acquire(f"rot-{i}") > 0
+    assert not lim.allow("victim")  # its exhausted bucket was kept
+    clock.now += 61  # both tracked keys are idle now: room again
+    assert lim.allow("rot-new")
+
+
+@pytest.mark.parametrize("cls", [TokenBucketLimiter, SlidingWindowLimiter])
+def test_eviction_of_busy_keys_is_warned_once(cls, caplog):
+    lim = cls(Rate(1, 60), max_keys=1, clock=_Clock())
+    with caplog.at_level(logging.WARNING, logger="enlace.ratelimit"):
+        for key in "abcd":
+            lim.acquire(key)
+    assert caplog.text.count("evicting the least recently seen") == 1
+
+
+def test_a_full_limiter_sweeps_at_most_once_per_min_sweep_seconds():
+    clock = _Clock()
+    lim = TokenBucketLimiter(Rate(1, 60), max_keys=1, on_overflow="deny", clock=clock)
+    lim.acquire("a")
+    calls = []
+    original = lim._idle_in
+    lim._idle_in = lambda entry, now: calls.append(now) or original(entry, now)
+    for i in range(5):
+        lim.acquire(f"new-{i}")
+    assert len(calls) == 1  # one sweep, then refused from the remembered horizon
+
+
+@pytest.mark.parametrize("bad", [{"max_keys": 0}, {"on_overflow": "drop"}])
+@pytest.mark.parametrize("cls", [TokenBucketLimiter, SlidingWindowLimiter])
+def test_in_memory_limiters_validate_their_bound_options(cls, bad):
+    with pytest.raises(ValueError):
+        cls(Rate(1, 1), **bad)
+
+
+def test_redis_on_error_deny_refuses_until_redis_is_retried(caplog):
+    now = [0.0]
+    lim = RedisLimiter(
+        _FakeRedis(fail=True),
+        Rate(5, 60),
+        on_error="deny",
+        retry_seconds=5,
+        clock=lambda: now[0],
+    )
+    with caplog.at_level(logging.WARNING, logger="enlace.ratelimit"):
+        assert lim.acquire("k") == pytest.approx(5.0)
+        now[0] = 2.0
+        assert lim.acquire("k") == pytest.approx(3.0)
+    assert "refusing every request" in caplog.text
+
+
+def test_redis_on_error_deny_with_no_retry_delay_still_refuses():
+    lim = RedisLimiter(
+        _FakeRedis(fail=True), Rate(5, 60), on_error="deny", retry_seconds=0
+    )
+    assert lim.acquire("k") == 60
+
+
+def test_redis_on_error_allow_admits_everything():
+    lim = RedisLimiter(_FakeRedis(fail=True), Rate(1, 60), on_error="allow")
+    assert all(lim.allow("k") for _ in range(5))
+
+
+def test_redis_on_error_is_validated():
+    with pytest.raises(ValueError, match="on_error"):
+        RedisLimiter(_FakeRedis(), Rate(1, 60), on_error="ignore")
+
+
+def test_an_async_redis_client_is_refused_up_front():
+    class _AsyncRedis:
+        async def execute_command(self, *args):  # pragma: no cover - never awaited
+            return 1
+
+        def pipeline(self):  # pragma: no cover
+            return None
+
+    with pytest.raises(TypeError, match="synchronous redis client"):
+        RedisLimiter(_AsyncRedis(), Rate(1, 60))

@@ -520,6 +520,10 @@ class PlatformConfig(BaseModel):
     # for per-client rate limits ([platform] trusted_proxies). Empty: the ASGI
     # peer address is used as is. See enlace.ratelimit.
     trusted_proxies: list[str] = Field(default_factory=list)
+    # Trust X-Forwarded-For on connections with no peer address: a proxy that
+    # reaches the gateway over a unix socket (uvicorn --uds). Off: such clients
+    # share one "unknown" bucket. See enlace.ratelimit.
+    trust_unix_socket: bool = False
     foreign_tables: list[str] = Field(
         default_factory=list,
         description=(
