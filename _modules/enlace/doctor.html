@@ -217,6 +217,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.gzip_selective.html">enlace.gzip_selective</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.manifest.html">enlace.manifest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
@@ -731,9 +732,7 @@
             <span class="n">apps</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">apps</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">wanted</span><span class="p">]</span>
 
         <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">apps</span><span class="p">:</span>
-            <span class="n">has_frontend</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">frontend_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">())</span> <span class="ow">or</span> <span class="p">(</span>
-                <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"static"</span>
-            <span class="p">)</span>
+            <span class="n">has_frontend</span> <span class="o">=</span> <span class="n">app</span><span class="o">.</span><span class="n">has_frontend</span> <span class="ow">or</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"static"</span>
             <span class="k">if</span> <span class="n">has_frontend</span><span class="p">:</span>
                 <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_check_frontend_mount</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">app</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">timeout</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">app</span><span class="o">.</span><span class="n">app_type</span> <span class="o">!=</span> <span class="s2">"frontend_only"</span> <span class="ow">and</span> <span class="n">app</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s2">"static"</span><span class="p">:</span>
@@ -786,7 +785,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=2508a7fb"></script>
+</div><script src="../../_static/documentation_options.js?v=f1e4e900"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

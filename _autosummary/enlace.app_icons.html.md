@@ -68,6 +68,8 @@ The app’s display name across Tier A / B / C (same order as `/_apps`).
 
 Whether the platform serves this app’s HTML itself (so it can wire its head).
 
+A frontend directory, or a page shipped by a package (`page_from_package`).
+
 * **Return type:**
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 

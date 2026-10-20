@@ -23,13 +23,14 @@
 - [enlace.gzip_selective](_autosummary/enlace.gzip_selective.html.md): Compression that knows what it must not compress.
 - [enlace.html_rewrite](_autosummary/enlace.html_rewrite.html.md): Rewrite HTML response bodies from pure-ASGI middleware.
 - [enlace.manifest](_autosummary/enlace.manifest.html.md): Deploy manifest: build-identity for diagnosing “what is actually deployed”.
+- [enlace.package_page](_autosummary/enlace.package_page.html.md): Serve an app’s page from its Python package: the shell and its &#96;/ui/&#96; assets.
 - [enlace.proxy](_autosummary/enlace.proxy.html.md): Lightweight ASGI reverse proxy for process and external backends.
 - [enlace.ratelimit](_autosummary/enlace.ratelimit.html.md): Opt-in, per-app, per-client rate limits for mounted apps.
 - [enlace.strategies](_autosummary/enlace.strategies.html.md): Backend-strategy registry and built-in strategies for enlace.
 - [enlace.supervise](_autosummary/enlace.supervise.html.md): Dev-mode process supervisor for enlace.
 - [enlace.util](_autosummary/enlace.util.html.md): Internal helpers for enlace.
 - [For AI agents](ai-agents.html.md): &#96;enlace&#96; ships artifacts for coding agents alongside its code. This page lists
-- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-10-20 14:43 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-10-20 15:00 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
 
 ## Optional
 

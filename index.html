@@ -220,6 +220,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.gzip_selective.html">enlace.gzip_selective</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.manifest.html">enlace.manifest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.strategies.html">enlace.strategies</a></li>
@@ -572,6 +573,10 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 <span class="n">upstream_url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"http://192.168.1.50:3000"</span>
 </pre></div>
 </div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># A page shipped inside the app's Python package (see "Pages from a package" below)</span>
+<span class="n">page_from_package</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"mypkg"</span>
+</pre></div>
+</div>
 <div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Declarative frontend build (any app with a compiled frontend)</span>
 <span class="k">[build]</span>
 <span class="n">install</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"npm ci"</span><span class="w">                  </span><span class="c1"># string or argv list</span>
@@ -654,6 +659,21 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 </div>
 <p>Plugins can also be loaded by name from the <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> env var (comma-separated). The canonical example is <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code>, which adds auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps without coupling: services are injected into the ASGI scope, so apps read <code class="docutils literal notranslate"><span class="pre">request.state.store</span></code> rather than importing anything from enlace. Apps can also condition on the <code class="docutils literal notranslate"><span class="pre">ENLACE_MANAGED=1</span></code> env var (set by <code class="docutils literal notranslate"><span class="pre">build_backend()</span></code>), but never have to.</p>
 </section>
+<section id="pages-from-a-package">
+<h3>Pages from a package<a class="headerlink" href="#pages-from-a-package" title="Link to this heading">¶</a></h3>
+<p>Some apps ship their whole page inside their Python package: a script, a stylesheet and maybe vendored files in a data directory, plus a small HTML shell that tells the script where the API is. One <code class="docutils literal notranslate"><span class="pre">app.toml</span></code> key makes enlace serve both, so the host commits no generated <code class="docutils literal notranslate"><span class="pre">frontend/index.html</span></code> and a UI change ships by upgrading the package:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="n">page_from_package</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"mypkg"</span><span class="w">          </span><span class="c1"># files in mypkg/data/ui; generic shell</span>
+</pre></div>
+</div>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[page_from_package]</span>
+<span class="n">package</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"songleaf"</span>
+<span class="n">assets</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"data/web"</span><span class="w">                  </span><span class="c1"># directory inside the package (default data/ui)</span>
+<span class="n">shell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"songleaf.web:page_shell"</span><span class="w">    </span><span class="c1"># the app's own shell function, if it has one</span>
+<span class="n">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"app.js"</span><span class="p">,</span><span class="w"> </span><span class="s2">"style.css"</span><span class="p">]</span><span class="w">      </span><span class="c1"># optional allowlist (default: every file)</span>
+</pre></div>
+</div>
+<p>enlace then serves the shell at <code class="docutils literal notranslate"><span class="pre">/{name}/</span></code> and every path under it (client-side routing), and the package’s files at <code class="docutils literal notranslate"><span class="pre">{route}/ui/</span></code>, mounted ahead of the app: what the package does not serve (a missing or non-allowlisted file, a <code class="docutils literal notranslate"><span class="pre">POST</span></code>, a websocket) falls through to the app, so its own <code class="docutils literal notranslate"><span class="pre">/ui</span></code> routes keep working. Hidden files and <code class="docutils literal notranslate"><span class="pre">__pycache__</span></code> are never served from the package. Both are sent with <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></code>, so an upgrade reaches the browser on its next load. The shell is the app’s own (<code class="docutils literal notranslate"><span class="pre">shell</span> <span class="pre">=</span> <span class="pre">&quot;module:function&quot;</span></code>, called with <code class="docutils literal notranslate"><span class="pre">api=</span></code>, <code class="docutils literal notranslate"><span class="pre">base=</span></code> and <code class="docutils literal notranslate"><span class="pre">title=</span></code> keywords) or enlace’s generic one, which sets <code class="docutils literal notranslate"><span class="pre">window.&lt;GLOBAL&gt;</span> <span class="pre">=</span> <span class="pre">{api,</span> <span class="pre">base,</span> <span class="pre">title}</span></code> (<code class="docutils literal notranslate"><span class="pre">global_name</span></code>, default the package name upper-cased) and loads <code class="docutils literal notranslate"><span class="pre">scripts</span></code> (default <code class="docutils literal notranslate"><span class="pre">[&quot;app.js&quot;]</span></code>) and <code class="docutils literal notranslate"><span class="pre">stylesheets</span></code> (default <code class="docutils literal notranslate"><span class="pre">[&quot;style.css&quot;]</span></code>) from <code class="docutils literal notranslate"><span class="pre">{route}/ui/</span></code>. The page replaces a <code class="docutils literal notranslate"><span class="pre">frontend_dir</span></code> if the app has both. The package is imported into the gateway, so a package, assets directory or shell that cannot load is an app-load failure: that app is stubbed with a 500 and reported, like any other (<code class="docutils literal notranslate"><span class="pre">fail_hard</span></code> refuses to boot). Not available for <code class="docutils literal notranslate"><span class="pre">mode</span> <span class="pre">=</span> <span class="pre">&quot;static&quot;</span></code> apps, nor as the <code class="docutils literal notranslate"><span class="pre">landing_app</span></code> (refused at boot).</p>
+</section>
 <section id="html-caching">
 <h3>HTML caching<a class="headerlink" href="#html-caching" title="Link to this heading">¶</a></h3>
 <p>Every static mount (app frontends, the landing app, <code class="docutils literal notranslate"><span class="pre">mode=&quot;static&quot;</span></code> apps, shared assets) sends <code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></code> on HTML documents — including SPA fallbacks, <code class="docutils literal notranslate"><span class="pre">304</span></code> revalidations and an <code class="docutils literal notranslate"><span class="pre">html=True</span></code> <code class="docutils literal notranslate"><span class="pre">404.html</span></code> page — so browsers revalidate a page (a cheap <code class="docutils literal notranslate"><span class="pre">304</span></code> via its <code class="docutils literal notranslate"><span class="pre">ETag</span></code>) instead of heuristically reusing an old build whose HTML still names the previous asset URLs. Non-HTML assets are untouched, and a <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> already set on a response is never overridden. The class is <code class="docutils literal notranslate"><span class="pre">enlace.frontend.RevalidatingStaticFiles</span></code> (<code class="docutils literal notranslate"><span class="pre">html_cache_control=None</span></code> opts out).</p>
@@ -728,7 +748,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-20 14:43 UTC from <a href="https://github.com/i2mint/enlace/commit/1b0d8cced0554e73d1016873027889409b00eeeb">1b0d8cc</a> (main) · enlace 0.1.59 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-20 15:00 UTC from <a href="https://github.com/i2mint/enlace/commit/a5c56e7c90e3096e9149b303050f9dbf87263153">a5c56e7</a> (main) · enlace 0.1.60 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -789,6 +809,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
 <li><a class="reference internal" href="#configuration">Configuration</a></li>
 <li><a class="reference internal" href="#app-modes">App modes</a></li>
 <li><a class="reference internal" href="#auth-sessions-plugins">Auth, sessions &amp; plugins</a></li>
+<li><a class="reference internal" href="#pages-from-a-package">Pages from a package</a></li>
 <li><a class="reference internal" href="#html-caching">HTML caching</a></li>
 <li><a class="reference internal" href="#app-icons-tab-home-screen-launcher">App icons (tab, home screen, launcher)</a></li>
 <li><a class="reference internal" href="#privacy-first-analytics">Privacy-first analytics</a></li>
@@ -808,7 +829,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=2508a7fb"></script>
+</div><script src="_static/documentation_options.js?v=f1e4e900"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

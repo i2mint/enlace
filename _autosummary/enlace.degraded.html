@@ -220,6 +220,7 @@
 <li class="toctree-l3"><a class="reference internal" href="enlace.gzip_selective.html">enlace.gzip_selective</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.manifest.html">enlace.manifest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.strategies.html">enlace.strategies</a></li>
@@ -331,7 +332,10 @@ in <code class="docutils literal notranslate"><span class="pre">misc/docs/decisi
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.degraded.load_or_stub" title="enlace.degraded.load_or_stub"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_or_stub</span></code></a>(strategy, app, platform)</p></td>
 <td><p>Return <code class="docutils literal notranslate"><span class="pre">app</span></code>'s ASGI sub-app, or a stub when an asgi app cannot load.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#enlace.degraded.refuse_to_boot_if_required" title="enlace.degraded.refuse_to_boot_if_required"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refuse_to_boot_if_required</span></code></a>(platform)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.degraded.record_or_raise" title="enlace.degraded.record_or_raise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">record_or_raise</span></code></a>(exc, app, platform)</p></td>
+<td><p>Record a compose-time load failure on <code class="docutils literal notranslate"><span class="pre">app</span></code>, or re-raise it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.degraded.refuse_to_boot_if_required" title="enlace.degraded.refuse_to_boot_if_required"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refuse_to_boot_if_required</span></code></a>(platform)</p></td>
 <td><p>Raise the first recorded load failure the configuration says not to stub.</p></td>
 </tr>
 </tbody>
@@ -474,6 +478,22 @@ original traceback.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="enlace.degraded.record_or_raise">
+<span class="sig-prename descclassname"><span class="pre">enlace.degraded.</span></span><span class="sig-name descname"><span class="pre">record_or_raise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">app</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/degraded.html#record_or_raise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.degraded.record_or_raise" title="Link to this definition">¶</a></dt>
+<dd><p>Record a compose-time load failure on <code class="docutils literal notranslate"><span class="pre">app</span></code>, or re-raise it.</p>
+<p>For loads that happen beside the app’s own (its package page, see
+<a class="reference internal" href="enlace.package_page.html#module-enlace.package_page" title="enlace.package_page"><code class="xref py py-mod docutils literal notranslate"><span class="pre">enlace.package_page</span></code></a>): those import code into the gateway whatever
+the app’s mode, so they are contained in every mode. <code class="docutils literal notranslate"><span class="pre">fail_hard</span></code> and
+<code class="docutils literal notranslate"><span class="pre">app_load_failure</span> <span class="pre">=</span> <span class="pre">&quot;raise&quot;</span></code> still re-raise. A recorded failure makes
+<a class="reference internal" href="#enlace.degraded.load_or_stub" title="enlace.degraded.load_or_stub"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_or_stub()</span></code></a> serve the stub in the app’s place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="enlace.degraded.refuse_to_boot_if_required">
 <span class="sig-prename descclassname"><span class="pre">enlace.degraded.</span></span><span class="sig-name descname"><span class="pre">refuse_to_boot_if_required</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">platform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/degraded.html#refuse_to_boot_if_required"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.degraded.refuse_to_boot_if_required" title="Link to this definition">¶</a></dt>
 <dd><p>Raise the first recorded load failure the configuration says not to stub.</p>
@@ -552,6 +572,7 @@ up front, as they did when discovery raised.</p>
 <li><a class="reference internal" href="#enlace.degraded.degraded_apps"><code class="docutils literal notranslate"><span class="pre">degraded_apps()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.degraded.enter_lifespan_or_stub"><code class="docutils literal notranslate"><span class="pre">enter_lifespan_or_stub()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.degraded.load_or_stub"><code class="docutils literal notranslate"><span class="pre">load_or_stub()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.degraded.record_or_raise"><code class="docutils literal notranslate"><span class="pre">record_or_raise()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.degraded.refuse_to_boot_if_required"><code class="docutils literal notranslate"><span class="pre">refuse_to_boot_if_required()</span></code></a></li>
 </ul>
 </li>
@@ -564,7 +585,7 @@ up front, as they did when discovery raised.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=2508a7fb"></script>
+</div><script src="../_static/documentation_options.js?v=f1e4e900"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

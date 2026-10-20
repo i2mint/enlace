@@ -1,0 +1,31 @@
+enlace.package\_page
+====================
+
+.. automodule:: enlace.package_page
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      DFLT_ASSETS_DIR
+      DFLT_ASSETS_ROUTE
+      DFLT_CACHE_CONTROL
+      ShellFunc
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      page_shell
+      resolve_package_page
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      PackageAssets
+      PackagePage
+      PackagePageConfig
+      ShellApp
+   

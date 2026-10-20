@@ -216,6 +216,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.gzip_selective.html">enlace.gzip_selective</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.html_rewrite.html">enlace.html_rewrite</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.manifest.html">enlace.manifest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.strategies.html">enlace.strategies</a></li>
@@ -328,6 +329,8 @@
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.apps_with_data">apps_with_data() (in module enlace.analytics)</a>
 </li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.AsgiStrategy">AsgiStrategy (class in enlace.strategies)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackagePage.assets_app">assets_app() (enlace.package_page.PackagePage method)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -463,13 +466,19 @@
           <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.DeployMetaTagMiddleware">(class in enlace.manifest)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.util.html#enlace.util.derive_display_name">derive_display_name() (in module enlace.util)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.util.html#enlace.util.derive_route_prefix">derive_route_prefix() (in module enlace.util)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.device_class">device_class() (in module enlace.analytics)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.DFLT_ASSETS_DIR">DFLT_ASSETS_DIR (in module enlace.package_page)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.DFLT_ASSETS_ROUTE">DFLT_ASSETS_ROUTE (in module enlace.package_page)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.DFLT_CACHE_CONTROL">DFLT_CACHE_CONTROL (in module enlace.package_page)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.diagnose_app">diagnose_app() (in module enlace)</a>
 
@@ -603,8 +612,6 @@
           <li><a href="_autosummary/enlace.doctor.html#module-enlace.doctor">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     enlace.frontend
 
@@ -612,6 +619,8 @@
           <li><a href="_autosummary/enlace.frontend.html#module-enlace.frontend">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     enlace.gzip_selective
 
@@ -631,6 +640,13 @@
 
         <ul>
           <li><a href="_autosummary/enlace.manifest.html#module-enlace.manifest">module</a>
+</li>
+        </ul></li>
+        <li>
+    enlace.package_page
+
+        <ul>
+          <li><a href="_autosummary/enlace.package_page.html#module-enlace.package_page">module</a>
 </li>
         </ul></li>
         <li>
@@ -703,7 +719,11 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.RevalidatingStaticFiles.file_response">file_response() (enlace.frontend.RevalidatingStaticFiles method)</a>
+
+        <ul>
+          <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackageAssets.file_response">(enlace.package_page.PackageAssets method)</a>
 </li>
+        </ul></li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.flush">flush() (enlace.analytics.PageViewCounter method)</a>
 </li>
         <li><a href="_autosummary/enlace.discover.html#enlace.discover.forget_partial_imports">forget_partial_imports() (in module enlace.discover)</a>
@@ -749,6 +769,8 @@
         <ul>
           <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.SPAStaticFiles.get_response">(enlace.frontend.SPAStaticFiles method)</a>
 </li>
+          <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackageAssets.get_response">(enlace.package_page.PackageAssets method)</a>
+</li>
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
@@ -770,12 +792,18 @@
 </li>
         <li><a href="_autosummary/enlace.build.html#enlace.build.has_build">has_build() (in module enlace.build)</a>
 </li>
-        <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.has_opted_out">has_opted_out() (in module enlace.analytics)</a>
+        <li><a href="_autosummary/enlace.html#enlace.AppConfig.has_frontend">has_frontend (enlace.AppConfig property)</a>
+
+        <ul>
+          <li><a href="_autosummary/enlace.base.html#enlace.base.AppConfig.has_frontend">(enlace.base.AppConfig property)</a>
 </li>
-        <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.has_own_pages">has_own_pages() (in module enlace.app_icons)</a>
+        </ul></li>
+        <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.has_opted_out">has_opted_out() (in module enlace.analytics)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.has_own_pages">has_own_pages() (in module enlace.app_icons)</a>
+</li>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.head_links">head_links() (in module enlace.app_icons)</a>
 </li>
         <li><a href="_autosummary/enlace.html_rewrite.html#enlace.html_rewrite.header_value">header_value() (in module enlace.html_rewrite)</a>
@@ -983,6 +1011,10 @@
 </li>
           <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.SourceRef.model_config">(enlace.manifest.SourceRef attribute)</a>
 </li>
+          <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackagePageConfig.model_config">(enlace.package_page.PackagePageConfig attribute)</a>
+</li>
+          <li><a href="_autosummary/enlace.html#enlace.PackagePageConfig.model_config">(enlace.PackagePageConfig attribute)</a>
+</li>
           <li><a href="_autosummary/enlace.html#enlace.PlatformAnalyticsConfig.model_config">(enlace.PlatformAnalyticsConfig attribute)</a>
 </li>
           <li><a href="_autosummary/enlace.html#enlace.PlatformConfig.model_config">(enlace.PlatformConfig attribute)</a>
@@ -1038,6 +1070,8 @@
 </li>
           <li><a href="_autosummary/enlace.manifest.html#module-enlace.manifest">enlace.manifest</a>
 </li>
+          <li><a href="_autosummary/enlace.package_page.html#module-enlace.package_page">enlace.package_page</a>
+</li>
           <li><a href="_autosummary/enlace.proxy.html#module-enlace.proxy">enlace.proxy</a>
 </li>
           <li><a href="_autosummary/enlace.ratelimit.html#module-enlace.ratelimit">enlace.ratelimit</a>
@@ -1085,6 +1119,22 @@
   <h2>P</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackageAssets">PackageAssets (class in enlace.package_page)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackagePage">PackagePage (class in enlace.package_page)</a>
+</li>
+        <li><a href="_autosummary/enlace.html#enlace.PackagePageConfig">PackagePageConfig (class in enlace)</a>
+
+        <ul>
+          <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackagePageConfig">(class in enlace.package_page)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/enlace.html#enlace.page_shell">page_shell() (in module enlace)</a>
+
+        <ul>
+          <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.page_shell">(in module enlace.package_page)</a>
+</li>
+        </ul></li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageAttribution">PageAttribution (class in enlace.analytics)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter">PageViewCounter (class in enlace.analytics)</a>
@@ -1101,14 +1151,14 @@
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.platform_cookie_filter">platform_cookie_filter() (in module enlace.proxy)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.PLATFORM_COOKIE_NAMES">PLATFORM_COOKIE_NAMES (in module enlace.proxy)</a>
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.platform_cookie_names">platform_cookie_names() (in module enlace.proxy)</a>
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.PLATFORM_CREDENTIAL_REQUEST_HEADERS">PLATFORM_CREDENTIAL_REQUEST_HEADERS (in module enlace.proxy)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.platform_proxy_filters">platform_proxy_filters() (in module enlace.proxy)</a>
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.PLATFORM_UNSAFE_RESPONSE_HEADERS">PLATFORM_UNSAFE_RESPONSE_HEADERS (in module enlace.proxy)</a>
@@ -1157,6 +1207,8 @@
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.record_bot_hit">record_bot_hit() (enlace.analytics.PageViewCounter method)</a>
 </li>
+        <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.record_or_raise">record_or_raise() (in module enlace.degraded)</a>
+</li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.record_view">record_view() (enlace.analytics.PageViewCounter method)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.referrer_domain">referrer_domain() (in module enlace.analytics)</a>
@@ -1180,6 +1232,8 @@
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.resolve_keywords">resolve_keywords() (in module enlace.appmeta)</a>
 </li>
         <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.resolve_manifest_dir">resolve_manifest_dir() (in module enlace.manifest)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.resolve_package_page">resolve_package_page() (in module enlace.package_page)</a>
 </li>
         <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.RevalidatingStaticFiles">RevalidatingStaticFiles (class in enlace.frontend)</a>
 </li>
@@ -1213,6 +1267,12 @@
 </li>
         <li><a href="_autosummary/enlace.diagnose.html#enlace.diagnose.Severity">Severity (class in enlace.diagnose)</a>
 </li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.PackagePage.shell_app">shell_app() (enlace.package_page.PackagePage method)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.ShellApp">ShellApp (class in enlace.package_page)</a>
+</li>
+        <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.ShellFunc">ShellFunc (in module enlace.package_page)</a>
+</li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.should_restart">should_restart() (enlace.supervise.ManagedProcess method)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.skills_dir">skills_dir() (in module enlace)</a>
@@ -1223,12 +1283,12 @@
           <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.SourceRef">(class in enlace.manifest)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.SPAStaticFiles">SPAStaticFiles (class in enlace.frontend)</a>
 </li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.start">start() (enlace.supervise.ManagedProcess method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.StaticStrategy">StaticStrategy (class in enlace.strategies)</a>
 </li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.stop">stop() (enlace.supervise.ManagedProcess method)</a>
@@ -1365,7 +1425,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=2508a7fb"></script>
+</div><script src="_static/documentation_options.js?v=f1e4e900"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

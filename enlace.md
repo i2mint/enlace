@@ -1,4 +1,4 @@
-> built 2026-10-20 14:43 UTC from 1b0d8cc (main) · enlace 0.1.59. Details: build_info.json
+> built 2026-10-20 15:00 UTC from a5c56e7 (main) · enlace 0.1.60. Details: build_info.json
 
 # index.html.md
 
@@ -287,6 +287,11 @@ upstream_url = "http://192.168.1.50:3000"
 ```
 
 ```toml
+# A page shipped inside the app's Python package (see "Pages from a package" below)
+page_from_package = "mypkg"
+```
+
+```toml
 # Declarative frontend build (any app with a compiled frontend)
 [build]
 install = "npm ci"                  # string or argv list
@@ -335,6 +340,24 @@ app = build_backend(discover_apps(), plugins=[my_plugin])
 ```
 
 Plugins can also be loaded by name from the `ENLACE_PLUGINS` env var (comma-separated). The canonical example is `enlace_auth.plugin`, which adds auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps without coupling: services are injected into the ASGI scope, so apps read `request.state.store` rather than importing anything from enlace. Apps can also condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but never have to.
+
+### Pages from a package
+
+Some apps ship their whole page inside their Python package: a script, a stylesheet and maybe vendored files in a data directory, plus a small HTML shell that tells the script where the API is. One `app.toml` key makes enlace serve both, so the host commits no generated `frontend/index.html` and a UI change ships by upgrading the package:
+
+```toml
+page_from_package = "mypkg"          # files in mypkg/data/ui; generic shell
+```
+
+```toml
+[page_from_package]
+package = "songleaf"
+assets = "data/web"                  # directory inside the package (default data/ui)
+shell = "songleaf.web:page_shell"    # the app's own shell function, if it has one
+files = ["app.js", "style.css"]      # optional allowlist (default: every file)
+```
+
+enlace then serves the shell at `/{name}/` and every path under it (client-side routing), and the package’s files at `{route}/ui/`, mounted ahead of the app: what the package does not serve (a missing or non-allowlisted file, a `POST`, a websocket) falls through to the app, so its own `/ui` routes keep working. Hidden files and `__pycache__` are never served from the package. Both are sent with `Cache-Control: no-cache`, so an upgrade reaches the browser on its next load. The shell is the app’s own (`shell = "module:function"`, called with `api=`, `base=` and `title=` keywords) or enlace’s generic one, which sets `window.<GLOBAL> = {api, base, title}` (`global_name`, default the package name upper-cased) and loads `scripts` (default `["app.js"]`) and `stylesheets` (default `["style.css"]`) from `{route}/ui/`. The page replaces a `frontend_dir` if the app has both. The package is imported into the gateway, so a package, assets directory or shell that cannot load is an app-load failure: that app is stubbed with a 500 and reported, like any other (`fail_hard` refuses to boot). Not available for `mode = "static"` apps, nor as the `landing_app` (refused at boot).
 
 ### HTML caching
 
@@ -1029,6 +1052,8 @@ The app’s display name across Tier A / B / C (same order as `/_apps`).
 
 Whether the platform serves this app’s HTML itself (so it can wire its head).
 
+A frontend directory, or a page shipped by a package (`page_from_package`).
+
 * **Return type:**
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
@@ -1330,7 +1355,7 @@ owned by another tool, and `enlace doctor` reports the same list.
 | [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
 | [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -1350,6 +1375,13 @@ is a separate program with its own dependencies, and bearer-token apps
 such as MCP connectors never need them. Response filtering (no platform
 `Set-Cookie`, `Clear-Site-Data` or `Service-Worker-Allowed`) applies
 either way.
+
+#### *property* has_frontend *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Whether enlace serves a page for this app at `/{name}/`.
+
+A frontend directory on disk, or a page shipped by a package
+(`page_from_package`).
 
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'allow'}*
 
@@ -1822,6 +1854,7 @@ in `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
 |-------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
 | [`enter_lifespan_or_stub`](_autosummary/enlace.degraded.html.md#enlace.degraded.enter_lifespan_or_stub)(stack, mount, app, ...) | Start `app`'s lifespan, register its shutdown on `stack`; stub on failure. |
 | [`load_or_stub`](_autosummary/enlace.degraded.html.md#enlace.degraded.load_or_stub)(strategy, app, platform)          | Return `app`'s ASGI sub-app, or a stub when an asgi app cannot load.       |
+| [`record_or_raise`](_autosummary/enlace.degraded.html.md#enlace.degraded.record_or_raise)(exc, app, platform)            | Record a compose-time load failure on `app`, or re-raise it.               |
 | [`refuse_to_boot_if_required`](_autosummary/enlace.degraded.html.md#enlace.degraded.refuse_to_boot_if_required)(platform)           | Raise the first recorded load failure the configuration says not to stub.  |
 
 ### Classes
@@ -1931,6 +1964,19 @@ original traceback.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+
+### enlace.degraded.record_or_raise(exc, app, platform)
+
+Record a compose-time load failure on `app`, or re-raise it.
+
+For loads that happen beside the app’s own (its package page, see
+[`enlace.package_page`](_autosummary/enlace.package_page.html.md#module-enlace.package_page)): those import code into the gateway whatever
+the app’s mode, so they are contained in every mode. `fail_hard` and
+`app_load_failure = "raise"` still re-raise. A recorded failure makes
+[`load_or_stub()`](_autosummary/enlace.degraded.html.md#enlace.degraded.load_or_stub) serve the stub in the app’s place.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### enlace.degraded.refuse_to_boot_if_required(platform)
 
@@ -2476,19 +2522,20 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 
 ### Functions
 
-| [`analytics_report`](_autosummary/enlace.html.md#enlace.analytics_report)([app, days, config, store])     | Per-app report for the last `days` days: daily series + totals.    |
-|---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| [`build_backend`](_autosummary/enlace.html.md#enlace.build_backend)(config, \*[, plugins, ...])        | Compose all app backends into a single ASGI application.           |
-| [`create_app`](_autosummary/enlace.html.md#enlace.create_app)()                                     | App factory for Uvicorn's --factory flag.                          |
-| [`daily_counts`](_autosummary/enlace.html.md#enlace.daily_counts)(store, app, \*[, days, today, ...]) | One merged record per day for the last `days` days, oldest first.  |
-| [`diagnose_app`](_autosummary/enlace.html.md#enlace.diagnose_app)(app_dir, \*[, app_name])            | Diagnose an app directory for enlace compatibility.                |
-| [`discover_apps`](_autosummary/enlace.html.md#enlace.discover_apps)([config, on_import_error])         | High-level discovery: load config, discover apps, check conflicts. |
-| [`load_manifest`](_autosummary/enlace.html.md#enlace.load_manifest)(app_name, manifest_dir, \*[, ...]) | Load the deploy manifest for one app, or return a minimal stub.    |
-| [`load_platform_manifest`](_autosummary/enlace.html.md#enlace.load_platform_manifest)(manifest_dir, \*[, ...])  | Load the platform-level deploy manifest (or a minimal stub).       |
-| [`run_build`](_autosummary/enlace.html.md#enlace.run_build)(app, \*[, extra_env, dry_run, check])  | Run an app's `install` (if any) then `build` commands.             |
-| [`serve`](_autosummary/enlace.html.md#enlace.serve)(\*[, mode, apps_dir, apps_dirs, ...])      | Start the enlace backend server.                                   |
-| [`skills_dir`](_autosummary/enlace.html.md#enlace.skills_dir)()                                     | Return the path to this package's bundled skills directory.        |
-| [`validate_build`](_autosummary/enlace.html.md#enlace.validate_build)(app)                              | Return human-readable problems with an app's `[build]` config.     |
+| [`analytics_report`](_autosummary/enlace.html.md#enlace.analytics_report)([app, days, config, store])     | Per-app report for the last `days` days: daily series + totals.              |
+|---------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| [`build_backend`](_autosummary/enlace.html.md#enlace.build_backend)(config, \*[, plugins, ...])        | Compose all app backends into a single ASGI application.                     |
+| [`create_app`](_autosummary/enlace.html.md#enlace.create_app)()                                     | App factory for Uvicorn's --factory flag.                                    |
+| [`daily_counts`](_autosummary/enlace.html.md#enlace.daily_counts)(store, app, \*[, days, today, ...]) | One merged record per day for the last `days` days, oldest first.            |
+| [`diagnose_app`](_autosummary/enlace.html.md#enlace.diagnose_app)(app_dir, \*[, app_name])            | Diagnose an app directory for enlace compatibility.                          |
+| [`discover_apps`](_autosummary/enlace.html.md#enlace.discover_apps)([config, on_import_error])         | High-level discovery: load config, discover apps, check conflicts.           |
+| [`load_manifest`](_autosummary/enlace.html.md#enlace.load_manifest)(app_name, manifest_dir, \*[, ...]) | Load the deploy manifest for one app, or return a minimal stub.              |
+| [`load_platform_manifest`](_autosummary/enlace.html.md#enlace.load_platform_manifest)(manifest_dir, \*[, ...])  | Load the platform-level deploy manifest (or a minimal stub).                 |
+| [`page_shell`](_autosummary/enlace.html.md#enlace.page_shell)(\*, api[, base, title, ...])          | The generic shell: `window.<global_name> = {api, base, title}`, then assets. |
+| [`run_build`](_autosummary/enlace.html.md#enlace.run_build)(app, \*[, extra_env, dry_run, check])  | Run an app's `install` (if any) then `build` commands.                       |
+| [`serve`](_autosummary/enlace.html.md#enlace.serve)(\*[, mode, apps_dir, apps_dirs, ...])      | Start the enlace backend server.                                             |
+| [`skills_dir`](_autosummary/enlace.html.md#enlace.skills_dir)()                                     | Return the path to this package's bundled skills directory.                  |
+| [`validate_build`](_autosummary/enlace.html.md#enlace.validate_build)(app)                              | Return human-readable problems with an app's `[build]` config.               |
 
 ### Classes
 
@@ -2506,6 +2553,7 @@ mounts it, serves it, and optionally gates it behind auth – with zero boilerpl
 | [`ExternalRef`](_autosummary/enlace.html.md#enlace.ExternalRef)(\*[, sha, version])                    | Identity for an externally-installed dependency (e.g. an editable sibling). |
 | [`Issue`](_autosummary/enlace.html.md#enlace.Issue)(severity, category, summary[, ...])          | A single compatibility issue found during diagnosis.                        |
 | [`JsonFileStore`](_autosummary/enlace.html.md#enlace.JsonFileStore)(root)                                | `key -> dict`, one JSON file per key at `{root}/{key}.json`.                |
+| [`PackagePageConfig`](_autosummary/enlace.html.md#enlace.PackagePageConfig)(\*, package[, assets, ...])      | app.toml's `page_from_package`: the package that ships the app's page.      |
 | [`PlatformAnalyticsConfig`](_autosummary/enlace.html.md#enlace.PlatformAnalyticsConfig)(\*[, store_path, ...])     | The platform's `[analytics]` table in `platform.toml`.                      |
 | [`PlatformConfig`](_autosummary/enlace.html.md#enlace.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                             |
 | [`ConventionDiscoverer`](_autosummary/enlace.html.md#enlace.ConventionDiscoverer)([conventions, ...])           | Discovers apps by filesystem conventions.                                   |
@@ -2533,7 +2581,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -2553,6 +2601,13 @@ is a separate program with its own dependencies, and bearer-token apps
 such as MCP connectors never need them. Response filtering (no platform
 `Set-Cookie`, `Clear-Site-Data` or `Service-Worker-Allowed`) applies
 either way.
+
+#### *property* has_frontend *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Whether enlace serves a page for this app at `/{name}/`.
+
+A frontend directory on disk, or a page shipped by a package
+(`page_from_package`).
 
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'allow'}*
 
@@ -2816,6 +2871,25 @@ Delete temp files a killed write left behind; return how many.
 * **Return type:**
   [`int`](https://docs.python.org/3/builtins/functions.html#int)
 
+### *class* enlace.PackagePageConfig(\*, package, assets='data/ui', assets_route='ui', files=<factory>, shell=None, global_name='', title='', scripts=<factory>, stylesheets=<factory>)
+
+Bases: `BaseModel`
+
+app.toml’s `page_from_package`: the package that ships the app’s page.
+
+A bare string is the package name, every other field at its default.
+
+```pycon
+>>> PackagePageConfig.model_validate("songleaf").assets
+'data/ui'
+>>> PackagePageConfig(package="my_pkg.sub").global_name
+'MY_PKG'
+```
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
 ### *class* enlace.PlatformAnalyticsConfig(, store_path=None, retention_days=395, timezone='UTC', flush_interval_seconds=10.0, max_values_per_dimension=500, honor_opt_out_signals=True, exclude_prefixes=('/_', '/auth/'), opt_out_cookie='enlace_analytics_opt_out')
 
 Bases: `BaseModel`
@@ -3055,6 +3129,24 @@ Load the platform-level deploy manifest (or a minimal stub).
 * **Return type:**
   [`DeployManifest`](_autosummary/enlace.manifest.html.md#enlace.manifest.DeployManifest)
 
+### enlace.page_shell(, api, base='', title='', global_name='APP', scripts=('app.js',), stylesheets=('style.css',), assets_route='ui')
+
+The generic shell: `window.<global_name> = {api, base, title}`, then assets.
+
+`api` is where the app’s API is mounted (its files are under
+`{api}/{assets_route}/`), `base` where the page lives.
+
+```pycon
+>>> shell = page_shell(api="/api/demo", base="/demo", title="Demo")
+>>> '<script src="/api/demo/ui/app.js"></script>' in shell
+True
+>>> 'window.APP = {"api": "/api/demo", "base": "/demo", "title": "Demo"}' in shell
+True
+```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
 ### enlace.run_build(app, , extra_env=None, dry_run=False, check=True)
 
 Run an app’s `install` (if any) then `build` commands.
@@ -3122,6 +3214,7 @@ present, has a `build` command and that its working directory exists.
 | [`gzip_selective`](_autosummary/enlace.gzip_selective.html.md#module-enlace.gzip_selective) | Compression that knows what it must not compress.                                    |
 | [`html_rewrite`](_autosummary/enlace.html_rewrite.html.md#module-enlace.html_rewrite)     | Rewrite HTML response bodies from pure-ASGI middleware.                              |
 | [`manifest`](_autosummary/enlace.manifest.html.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
+| [`package_page`](_autosummary/enlace.package_page.html.md#module-enlace.package_page)     | Serve an app's page from its Python package: the shell and its `/ui/` assets.        |
 | [`proxy`](_autosummary/enlace.proxy.html.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                    |
 | [`ratelimit`](_autosummary/enlace.ratelimit.html.md#module-enlace.ratelimit)           | Opt-in, per-app, per-client rate limits for mounted apps.                            |
 | [`strategies`](_autosummary/enlace.strategies.html.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                        |
@@ -3363,6 +3456,201 @@ available; serve minimal stubs”.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Path`](https://docs.python.org/3/library/pathlib.html#pathlib.Path)]
+
+
+# _autosummary/enlace.package_page.html.md
+
+# enlace.package_page
+
+Serve an app’s page from its Python package: the shell and its `/ui/` assets.
+
+Some apps ship their whole page inside their Python package: a script and a
+stylesheet (and maybe vendored files) under a data directory, plus a tiny HTML
+shell that tells the script where its API lives. Before this module, the host
+committed that generated shell as the app’s `frontend/index.html` and the app
+served its own assets from a hand-written `/ui/{name}` route. Now one app.toml
+key does both, and a UI change ships by upgrading the package:
+
+```default
+page_from_package = "mypkg"     # assets in mypkg/data/ui, generic shell
+
+[page_from_package]             # or the full table
+package = "songleaf"
+assets = "data/web"             # directory inside the package
+shell = "songleaf.web:page_shell"   # the app's own shell, if it has one
+```
+
+What enlace serves for such an app (`name`, API at `route_prefix`):
+
+- `/{name}/` and every path under it: the shell (client-side routing), with
+  `Cache-Control: no-cache` and an `ETag`, so a package upgrade reaches
+  the browser on its next load.
+- `{route_prefix}/ui/<file>`: the files of the package’s assets directory,
+  always revalidated. Mounted ahead of the app; what it does not serve falls
+  through to the app, so the app’s own `/ui` routes keep working.
+
+The shell is the app’s own (`shell = "module:function"`, called as
+`function(api=..., base=..., title=...)` and returning HTML) or enlace’s
+generic one ([`page_shell()`](_autosummary/enlace.package_page.html.md#enlace.package_page.page_shell)): `window.<GLOBAL> = {api, base, title}` and
+the `scripts` and `stylesheets`, loaded from the assets route.
+
+The app does not change and does not import enlace. Run alone, it keeps
+serving its own page however it already did.
+
+The package is imported into the gateway, as an `asgi` app is. A failure to
+import it, find its assets directory or build the shell is a load failure of
+the app (see [`enlace.degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)): loud, and local to that app.
+
+### Module Attributes
+
+| [`DFLT_ASSETS_DIR`](_autosummary/enlace.package_page.html.md#enlace.package_page.DFLT_ASSETS_DIR)    | Where the assets live inside the package, by default.                    |
+|---------------------------------------------------------------------|--------------------------------------------------------------------------|
+| [`DFLT_ASSETS_ROUTE`](_autosummary/enlace.package_page.html.md#enlace.package_page.DFLT_ASSETS_ROUTE)  | The route segment, under the app's API prefix, the assets are served at. |
+| [`DFLT_CACHE_CONTROL`](_autosummary/enlace.package_page.html.md#enlace.package_page.DFLT_CACHE_CONTROL) | keep, but revalidate (a cheap 304).                                      |
+| [`ShellFunc`](_autosummary/enlace.package_page.html.md#enlace.package_page.ShellFunc)          | what a shell function is called with.                                    |
+
+### Functions
+
+| [`page_shell`](_autosummary/enlace.package_page.html.md#enlace.package_page.page_shell)(\*, api[, base, title, ...])            | The generic shell: `window.<global_name> = {api, base, title}`, then assets.   |
+|-----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| [`resolve_package_page`](_autosummary/enlace.package_page.html.md#enlace.package_page.resolve_package_page)(config, \*, api, base, title) | Import the package, find its assets directory and build the shell.             |
+
+### Classes
+
+| [`PackageAssets`](_autosummary/enlace.package_page.html.md#enlace.package_page.PackageAssets)(\*args[, allowed, ...])         | A package's page files, always revalidated, optionally allowlisted.          |
+|------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| [`PackagePage`](_autosummary/enlace.package_page.html.md#enlace.package_page.PackagePage)(shell, assets_dir[, ...])         | A resolved package page: the shell's HTML and the directory of its assets.   |
+| [`PackagePageConfig`](_autosummary/enlace.package_page.html.md#enlace.package_page.PackagePageConfig)(\*, package[, assets, ...]) | app.toml's `page_from_package`: the package that ships the app's page.       |
+| [`ShellApp`](_autosummary/enlace.package_page.html.md#enlace.package_page.ShellApp)(shell, \*[, cache_control])          | Pure-ASGI app answering every GET/HEAD with the shell (client-side routing). |
+
+### enlace.package_page.DFLT_ASSETS_DIR *= 'data/ui'*
+
+Where the assets live inside the package, by default.
+
+### enlace.package_page.DFLT_ASSETS_ROUTE *= 'ui'*
+
+The route segment, under the app’s API prefix, the assets are served at.
+
+### enlace.package_page.DFLT_CACHE_CONTROL *= 'no-cache'*
+
+keep, but revalidate (a cheap 304).
+
+* **Type:**
+  Cache policy of the shell and the assets
+
+### *class* enlace.package_page.PackageAssets(\*args, allowed=(), cache_control='no-cache', fallback=None, route='ui', \*\*kwargs)
+
+Bases: `StaticFiles`
+
+A package’s page files, always revalidated, optionally allowlisted.
+
+Hidden files (a path segment starting with `.`) and `__pycache__` are
+never served. A request it does not serve (no such file, not on the
+allowlist, a method other than GET/HEAD, a websocket) goes to
+`fallback` when one is given (the app’s own mount, so a route the app
+has under the same segment keeps working), else gets a 404 / 405.
+`fallback` sees the scope the app’s mount would have given it: the
+assets route segment moves from `root_path` back into the path.
+
+#### file_response(\*args, \*\*kwargs)
+
+The file, with `Cache-Control` so a package upgrade reaches the browser.
+
+* **Return type:**
+  `Response`
+
+#### *async* get_response(path, scope)
+
+Refuse hidden files and, with an allowlist, any file not on it.
+
+* **Return type:**
+  `Response`
+
+### *class* enlace.package_page.PackagePage(shell, assets_dir, assets_route='ui', files=tuple())
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+A resolved package page: the shell’s HTML and the directory of its assets.
+
+#### assets_app(, fallback=None)
+
+The ASGI app serving the assets directory; misses go to `fallback`.
+
+* **Return type:**
+  [`PackageAssets`](_autosummary/enlace.package_page.html.md#enlace.package_page.PackageAssets)
+
+#### shell_app()
+
+The ASGI app serving the shell at every path under the page’s mount.
+
+* **Return type:**
+  [`ShellApp`](_autosummary/enlace.package_page.html.md#enlace.package_page.ShellApp)
+
+### *class* enlace.package_page.PackagePageConfig(\*, package, assets='data/ui', assets_route='ui', files=<factory>, shell=None, global_name='', title='', scripts=<factory>, stylesheets=<factory>)
+
+Bases: `BaseModel`
+
+app.toml’s `page_from_package`: the package that ships the app’s page.
+
+A bare string is the package name, every other field at its default.
+
+```pycon
+>>> PackagePageConfig.model_validate("songleaf").assets
+'data/ui'
+>>> PackagePageConfig(package="my_pkg.sub").global_name
+'MY_PKG'
+```
+
+#### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'forbid'}*
+
+Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
+
+### *class* enlace.package_page.ShellApp(shell, , cache_control='no-cache')
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Pure-ASGI app answering every GET/HEAD with the shell (client-side routing).
+
+`Cache-Control: no-cache` plus a strong `ETag`, so a browser revalidates
+with a cheap 304 and picks up a new shell after a package upgrade.
+
+### enlace.package_page.ShellFunc
+
+what a shell function is called with.
+
+* **Type:**
+  `(*, api, base, title) -> html`
+
+alias of `Callable`[[…], [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.package_page.page_shell(, api, base='', title='', global_name='APP', scripts=('app.js',), stylesheets=('style.css',), assets_route='ui')
+
+The generic shell: `window.<global_name> = {api, base, title}`, then assets.
+
+`api` is where the app’s API is mounted (its files are under
+`{api}/{assets_route}/`), `base` where the page lives.
+
+```pycon
+>>> shell = page_shell(api="/api/demo", base="/demo", title="Demo")
+>>> '<script src="/api/demo/ui/app.js"></script>' in shell
+True
+>>> 'window.APP = {"api": "/api/demo", "base": "/demo", "title": "Demo"}' in shell
+True
+```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.package_page.resolve_package_page(config, , api, base, title)
+
+Import the package, find its assets directory and build the shell.
+
+Raises (`ImportError`, `FileNotFoundError`, `TypeError`…) when the
+package, its assets directory or the shell function is not usable; the
+caller decides whether that stubs the app or stops the boot.
+
+* **Return type:**
+  [`PackagePage`](_autosummary/enlace.package_page.html.md#enlace.package_page.PackagePage)
 
 
 # _autosummary/enlace.proxy.html.md
@@ -4218,18 +4506,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-20 14:43 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/1b0d8cced0554e73d1016873027889409b00eeeb"><code>1b0d8cc</code></a> on branch <code>main</code>, for **enlace 0.1.59** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 15:00 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/a5c56e7c90e3096e9149b303050f9dbf87263153"><code>a5c56e7</code></a> on branch <code>main</code>, for **enlace 0.1.60** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.59) is behind the latest release on PyPI (0.1.60): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.60) is behind the latest release on PyPI (0.1.61): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/1b0d8cced0554e73d1016873027889409b00eeeb"><code>1b0d8cced0554e73d1016873027889409b00eeeb</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/a5c56e7c90e3096e9149b303050f9dbf87263153"><code>a5c56e7c90e3096e9149b303050f9dbf87263153</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -4240,9 +4528,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39441554270">39441554270</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39444187342">39444187342</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>1b0d8cced0554e73d1016873027889409b00eeeb</code> (in the history of the built commit) |
+| Event commit | <code>a5c56e7c90e3096e9149b303050f9dbf87263153</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -4267,13 +4555,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.60/">0.1.60</a>, newer than the documented version (0.1.59).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.61/">0.1.61</a>, newer than the documented version (0.1.60).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 1b0d8cced0554e73d1016873027889409b00eeeb
+git checkout a5c56e7c90e3096e9149b303050f9dbf87263153
 pip install "epythet==0.2.21"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

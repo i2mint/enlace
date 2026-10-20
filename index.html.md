@@ -283,6 +283,11 @@ upstream_url = "http://192.168.1.50:3000"
 ```
 
 ```toml
+# A page shipped inside the app's Python package (see "Pages from a package" below)
+page_from_package = "mypkg"
+```
+
+```toml
 # Declarative frontend build (any app with a compiled frontend)
 [build]
 install = "npm ci"                  # string or argv list
@@ -331,6 +336,24 @@ app = build_backend(discover_apps(), plugins=[my_plugin])
 ```
 
 Plugins can also be loaded by name from the `ENLACE_PLUGINS` env var (comma-separated). The canonical example is `enlace_auth.plugin`, which adds auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps without coupling: services are injected into the ASGI scope, so apps read `request.state.store` rather than importing anything from enlace. Apps can also condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but never have to.
+
+### Pages from a package
+
+Some apps ship their whole page inside their Python package: a script, a stylesheet and maybe vendored files in a data directory, plus a small HTML shell that tells the script where the API is. One `app.toml` key makes enlace serve both, so the host commits no generated `frontend/index.html` and a UI change ships by upgrading the package:
+
+```toml
+page_from_package = "mypkg"          # files in mypkg/data/ui; generic shell
+```
+
+```toml
+[page_from_package]
+package = "songleaf"
+assets = "data/web"                  # directory inside the package (default data/ui)
+shell = "songleaf.web:page_shell"    # the app's own shell function, if it has one
+files = ["app.js", "style.css"]      # optional allowlist (default: every file)
+```
+
+enlace then serves the shell at `/{name}/` and every path under it (client-side routing), and the package’s files at `{route}/ui/`, mounted ahead of the app: what the package does not serve (a missing or non-allowlisted file, a `POST`, a websocket) falls through to the app, so its own `/ui` routes keep working. Hidden files and `__pycache__` are never served from the package. Both are sent with `Cache-Control: no-cache`, so an upgrade reaches the browser on its next load. The shell is the app’s own (`shell = "module:function"`, called with `api=`, `base=` and `title=` keywords) or enlace’s generic one, which sets `window.<GLOBAL> = {api, base, title}` (`global_name`, default the package name upper-cased) and loads `scripts` (default `["app.js"]`) and `stylesheets` (default `["style.css"]`) from `{route}/ui/`. The page replaces a `frontend_dir` if the app has both. The package is imported into the gateway, so a package, assets directory or shell that cannot load is an app-load failure: that app is stubbed with a 500 and reported, like any other (`fail_hard` refuses to boot). Not available for `mode = "static"` apps, nor as the `landing_app` (refused at boot).
 
 ### HTML caching
 

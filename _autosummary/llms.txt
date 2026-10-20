@@ -21,6 +21,7 @@
 - [enlace.gzip_selective](enlace.gzip_selective.html.md): Compression that knows what it must not compress.
 - [enlace.html_rewrite](enlace.html_rewrite.html.md): Rewrite HTML response bodies from pure-ASGI middleware.
 - [enlace.manifest](enlace.manifest.html.md): Deploy manifest: build-identity for diagnosing “what is actually deployed”.
+- [enlace.package_page](enlace.package_page.html.md): Serve an app’s page from its Python package: the shell and its &#96;/ui/&#96; assets.
 - [enlace.proxy](enlace.proxy.html.md): Lightweight ASGI reverse proxy for process and external backends.
 - [enlace.ratelimit](enlace.ratelimit.html.md): Opt-in, per-app, per-client rate limits for mounted apps.
 - [enlace.strategies](enlace.strategies.html.md): Backend-strategy registry and built-in strategies for enlace.

@@ -16,6 +16,7 @@
       discover_apps
       load_manifest
       load_platform_manifest
+      page_shell
       run_build
       serve
       skills_dir
@@ -38,6 +39,7 @@
       ExternalRef
       Issue
       JsonFileStore
+      PackagePageConfig
       PlatformAnalyticsConfig
       PlatformConfig
       ConventionDiscoverer
@@ -70,6 +72,7 @@
    gzip_selective
    html_rewrite
    manifest
+   package_page
    proxy
    ratelimit
    strategies

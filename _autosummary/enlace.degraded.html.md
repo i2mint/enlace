@@ -44,6 +44,7 @@ in `misc/docs/decisions/0001-loud-and-local-app-load-failures.md`.
 |-------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
 | [`enter_lifespan_or_stub`](#enlace.degraded.enter_lifespan_or_stub)(stack, mount, app, ...) | Start `app`'s lifespan, register its shutdown on `stack`; stub on failure. |
 | [`load_or_stub`](#enlace.degraded.load_or_stub)(strategy, app, platform)          | Return `app`'s ASGI sub-app, or a stub when an asgi app cannot load.       |
+| [`record_or_raise`](#enlace.degraded.record_or_raise)(exc, app, platform)            | Record a compose-time load failure on `app`, or re-raise it.               |
 | [`refuse_to_boot_if_required`](#enlace.degraded.refuse_to_boot_if_required)(platform)           | Raise the first recorded load failure the configuration says not to stub.  |
 
 ### Classes
@@ -153,6 +154,19 @@ original traceback.
 
 * **Return type:**
   [`Optional`](https://docs.python.org/3/library/typing.html#typing.Optional)[[`Any`](https://docs.python.org/3/library/typing.html#typing.Any)]
+
+### enlace.degraded.record_or_raise(exc, app, platform)
+
+Record a compose-time load failure on `app`, or re-raise it.
+
+For loads that happen beside the app’s own (its package page, see
+[`enlace.package_page`](enlace.package_page.html.md#module-enlace.package_page)): those import code into the gateway whatever
+the app’s mode, so they are contained in every mode. `fail_hard` and
+`app_load_failure = "raise"` still re-raise. A recorded failure makes
+[`load_or_stub()`](#enlace.degraded.load_or_stub) serve the stub in the app’s place.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### enlace.degraded.refuse_to_boot_if_required(platform)
 

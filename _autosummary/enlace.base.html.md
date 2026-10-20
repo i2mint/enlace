@@ -44,7 +44,7 @@ owned by another tool, and `enlace doctor` reports the same list.
 | [`ConventionsConfig`](#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
 | [`PlatformConfig`](#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -64,6 +64,13 @@ is a separate program with its own dependencies, and bearer-token apps
 such as MCP connectors never need them. Response filtering (no platform
 `Set-Cookie`, `Clear-Site-Data` or `Service-Worker-Allowed`) applies
 either way.
+
+#### *property* has_frontend *: [bool](https://docs.python.org/3/builtins/functions.html#bool)*
+
+Whether enlace serves a page for this app at `/{name}/`.
+
+A frontend directory on disk, or a page shipped by a package
+(`page_from_package`).
 
 #### model_config *: [ClassVar](https://docs.python.org/3/library/typing.html#typing.ClassVar)[ConfigDict]* *= {'extra': 'allow'}*
 

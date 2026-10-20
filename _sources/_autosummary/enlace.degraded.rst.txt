@@ -21,6 +21,7 @@ enlace.degraded
       degraded_apps
       enter_lifespan_or_stub
       load_or_stub
+      record_or_raise
       refuse_to_boot_if_required
    
    .. rubric:: Classes
