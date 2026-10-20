@@ -708,6 +708,38 @@ def test_successive_sweeps_reach_an_idle_key_deep_in_the_order():
     assert "light" not in lim._buckets
 
 
+def test_a_key_added_mid_round_still_bounds_the_rounds_horizon():
+    clock = _Clock()
+    lim = TokenBucketLimiter(
+        Rate(10, 100), max_keys=4, on_overflow="deny", sweep_batch=2, clock=clock
+    )
+    t0 = clock.now
+    lim.acquire("idle")  # one hit: idle again after 10 s
+    for key in ("busy-0", "busy-1", "busy-2"):  # drained: busy for ~100 s
+        for _ in range(10):
+            lim.acquire(key)
+    clock.now = t0 + 10
+    assert lim.acquire("light") == 0  # slice 1 drops "idle"; "light" idle by t0 + 20
+    clock.now = t0 + 11
+    assert lim.acquire("new") > 0  # slice 2 ends the round: busy keys only
+    clock.now = t0 + 21  # a new round at "light"'s horizon, not at t0 + 100
+    assert lim.acquire("new") == pytest.approx(lim.min_sweep_seconds)  # 2 busy keys
+    clock.now += lim.min_sweep_seconds
+    assert lim.acquire("new") == 0  # its second slice reaches "light": swept
+
+
+@pytest.mark.parametrize("cls", [TokenBucketLimiter, SlidingWindowLimiter])
+def test_a_limiter_refilled_after_an_emptying_sweep_still_sweeps(cls):
+    clock = _Clock()
+    lim = cls(Rate(1, 10), max_keys=2, on_overflow="deny", clock=clock)
+    lim.acquire("a"), lim.acquire("b")
+    clock.now += 20
+    assert lim.acquire("c") == 0  # the sweep drops both idle keys
+    assert lim.acquire("d") == 0
+    clock.now += 20
+    assert lim.acquire("e") == 0  # "c" and "d" are idle: swept, not refused forever
+
+
 @pytest.mark.parametrize(
     "bad", [{"max_keys": 0}, {"on_overflow": "drop"}, {"sweep_batch": 0}]
 )

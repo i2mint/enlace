@@ -428,6 +428,7 @@ class _BoundedKeys:
         self._next_sweep = -math.inf
         self._sweep_queue: deque = deque()  # keys left in the current round
         self._round_soonest = math.inf  # when a key examined this round goes idle
+        self._admitted_soonest = math.inf  # ... or a key added since it began
         self._warned_eviction = False
 
     def _idle_in(self, entry, now: float) -> float:  # pragma: no cover - abstract
@@ -459,7 +460,7 @@ class _BoundedKeys:
         """
         if not self._sweep_queue:
             self._sweep_queue.extend(entries)
-            self._round_soonest = math.inf
+            self._round_soonest = self._admitted_soonest = math.inf
         queue = self._sweep_queue
         for _ in range(min(self.sweep_batch, len(queue))):
             key = queue.popleft()
@@ -474,11 +475,18 @@ class _BoundedKeys:
         if queue:  # keys not examined yet may be idle already
             self._next_sweep = now + self.min_sweep_seconds
         else:
-            self._next_sweep = max(self._round_soonest, now + self.min_sweep_seconds)
+            soonest = min(self._round_soonest, self._admitted_soonest)
+            self._next_sweep = max(soonest, now + self.min_sweep_seconds)
 
     def _admitted(self, entry, now: float) -> None:
-        """A new key was stored: it may go idle before the remembered sweep horizon."""
-        self._next_sweep = min(self._next_sweep, now + self._idle_in(entry, now))
+        """A new key was stored: it may go idle before the remembered sweep horizon.
+
+        Remembered for the round too: the round's snapshot does not hold the key, so
+        the horizon set when the round ends must not overlook it.
+        """
+        idle_at = now + self._idle_in(entry, now)
+        self._next_sweep = min(self._next_sweep, idle_at)
+        self._admitted_soonest = min(self._admitted_soonest, idle_at)
 
     def _trim(self, entries: OrderedDict) -> None:
         """Evict the least recently seen keys beyond ``max_keys`` (warned once)."""
@@ -602,7 +610,8 @@ class SlidingWindowLimiter(_BoundedKeys, _AllowMixin):
         with self._lock:
             now = self._clock()
             hits = self._hits.get(key)
-            if hits is None:
+            new = hits is None
+            if new:
                 refused = self._make_room(self._hits, now)
                 if refused > 0:
                     return refused
@@ -616,6 +625,8 @@ class SlidingWindowLimiter(_BoundedKeys, _AllowMixin):
             if len(hits) >= self.rate.limit:
                 return hits[0] - cutoff  # > 0: when the oldest hit leaves the window
             hits.append(now)
+            if new:
+                self._admitted(hits, now)
             return 0.0
 
 
