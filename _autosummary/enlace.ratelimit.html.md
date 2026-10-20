@@ -45,12 +45,30 @@ trusted_proxies\`\`\*\* unless the server
 already resolves the client from the proxy’s header: otherwise every client
 shares the proxy’s address, and one abusive client exhausts everyone’s bucket.
 
+**Reusable on its own.** The client-address and limiter halves import nothing
+beyond the standard library, so other services use them directly (`heed`’s
+public ingest endpoint does): [`client_address()`](#enlace.ratelimit.client_address) + [`bucket_key()`](#enlace.ratelimit.bucket_key) say
+who the client is, and any [`Limiter`](#enlace.ratelimit.Limiter) – [`TokenBucketLimiter`](#enlace.ratelimit.TokenBucketLimiter),
+[`SlidingWindowLimiter`](#enlace.ratelimit.SlidingWindowLimiter), or [`RedisLimiter`](#enlace.ratelimit.RedisLimiter) (one count shared by every
+worker and host; needs the `[redis]` extra) – says whether it may proceed. To
+share enlace’s own limits across workers, pass the Redis one to the seam:
+
+```default
+RateLimitMiddleware(app, rules=rules, make_limiter=lambda rate: RedisLimiter(
+    client, rate))
+```
+
+Each rule charges its own key (the rule’s [`RateLimitRule.id`](#enlace.ratelimit.RateLimitRule.id) plus the
+client), so one shared client never mixes two rules’ counts.
+
 ### Module Attributes
 
-| [`RATE_UNITS`](#enlace.ratelimit.RATE_UNITS)          | Window lengths, in seconds, a rate may be expressed in ("60/minute").                                                                               |
-|----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`DEFAULT_MAX_KEYS`](#enlace.ratelimit.DEFAULT_MAX_KEYS)    | Client buckets one rule tracks before evicting the least recently seen, so a flood of distinct (spoofed or rotating) clients cannot exhaust memory. |
-| [`DEFAULT_IPV6_PREFIX`](#enlace.ratelimit.DEFAULT_IPV6_PREFIX) | one host usually owns a whole /64.                                                                                                                  |
+| [`RATE_UNITS`](#enlace.ratelimit.RATE_UNITS)                   | Window lengths, in seconds, a rate may be expressed in ("60/minute").                                                                                      |
+|-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`DEFAULT_MAX_KEYS`](#enlace.ratelimit.DEFAULT_MAX_KEYS)             | Client buckets one rule tracks before evicting the least recently seen, so a flood of distinct (spoofed or rotating) clients cannot exhaust memory.        |
+| [`DEFAULT_IPV6_PREFIX`](#enlace.ratelimit.DEFAULT_IPV6_PREFIX)          | one host usually owns a whole /64.                                                                                                                         |
+| [`DEFAULT_REDIS_SOCKET_TIMEOUT`](#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT) | a hung Redis costs at most this long.                                                                                                                      |
+| [`DEFAULT_REDIS_RETRY_SECONDS`](#enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS)  | After a Redis error, the Redis limiter uses its fallback this long before retrying, so an outage costs one timeout per this interval, not one per request. |
 
 ### Functions
 
@@ -60,7 +78,7 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 | [`client_address`](#enlace.ratelimit.client_address)(peer, forwarded_for, \*, trusted) | The client address: `X-Forwarded-For` only via a trusted peer, right to left.                                          |
 | [`normalize_path`](#enlace.ratelimit.normalize_path)(path)                             | Collapse `//`, `.` and `..` the way an upstream would resolve them.                                                    |
 | [`parse_address`](#enlace.ratelimit.parse_address)(text)                              | An IP address from a peer or forwarded hop, or None if it is not one.                                                  |
-| [`parse_networks`](#enlace.ratelimit.parse_networks)(proxies)                          | Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).                                           |
+| [`parse_networks`](#enlace.ratelimit.parse_networks)(proxies)                          | Parse IPs/CIDRs (strings or network objects) into networks; raises ValueError.                                         |
 | [`parse_rate`](#enlace.ratelimit.parse_rate)(text)                                 | Parse `"60/minute"` (also `60/min`, `60/m`, `5/seconds`...).                                                           |
 | [`parse_rule_key`](#enlace.ratelimit.parse_rule_key)(key)                              | Split an app.toml key into `(method or None, path)`.                                                                   |
 | [`rules_for_app`](#enlace.ratelimit.rules_for_app)(app, route_prefix, table)          | The app's declared limits as rules on full request paths.                                                              |
@@ -68,12 +86,14 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 
 ### Classes
 
-| [`Limiter`](#enlace.ratelimit.Limiter)(\*args, \*\*kwargs)                     | Take one request for `key`: 0 if allowed, else seconds until it would be.                                   |
-|--------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| [`Rate`](#enlace.ratelimit.Rate)(limit, window)                             | `limit` requests per `window` seconds.                                                                      |
-| [`RateLimitMiddleware`](#enlace.ratelimit.RateLimitMiddleware)(app, \*, rules[, ...])      | Pure ASGI middleware enforcing [`RateLimitRule`](#enlace.ratelimit.RateLimitRule) s per client. |
-| [`RateLimitRule`](#enlace.ratelimit.RateLimitRule)(app, method, path, rate, spec)    | One declared limit: requests matching `method` + `path` share `rate`.                                       |
-| [`TokenBucketLimiter`](#enlace.ratelimit.TokenBucketLimiter)(rate, \*[, max_keys, clock]) | In-memory token buckets, one per key, bounded in number (LRU eviction).                                     |
+| [`Limiter`](#enlace.ratelimit.Limiter)(\*args, \*\*kwargs)                       | Take one request for `key`: 0 if allowed, else seconds until it would be.                                   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| [`Rate`](#enlace.ratelimit.Rate)(limit, window)                               | `limit` requests per `window` seconds (`limit >= 1`, `window > 0`).                                         |
+| [`RateLimitMiddleware`](#enlace.ratelimit.RateLimitMiddleware)(app, \*, rules[, ...])        | Pure ASGI middleware enforcing [`RateLimitRule`](#enlace.ratelimit.RateLimitRule) s per client. |
+| [`RateLimitRule`](#enlace.ratelimit.RateLimitRule)(app, method, path, rate, spec)      | One declared limit: requests matching `method` + `path` share `rate`.                                       |
+| [`RedisLimiter`](#enlace.ratelimit.RedisLimiter)(client, rate, \*[, namespace, ...])  | Fixed window in Redis: one count per key per window, shared by every worker.                                |
+| [`SlidingWindowLimiter`](#enlace.ratelimit.SlidingWindowLimiter)(rate, \*[, max_keys, clock]) | In-memory sliding window: at most `rate.limit` requests in any `window`.                                    |
+| [`TokenBucketLimiter`](#enlace.ratelimit.TokenBucketLimiter)(rate, \*[, max_keys, clock])   | In-memory token buckets, one per key, bounded in number (LRU eviction).                                     |
 
 ### enlace.ratelimit.DEFAULT_IPV6_PREFIX *= 64*
 
@@ -86,6 +106,18 @@ one host usually owns a whole /64.
 
 Client buckets one rule tracks before evicting the least recently seen, so a
 flood of distinct (spoofed or rotating) clients cannot exhaust memory.
+
+### enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS *= 5.0*
+
+After a Redis error, the Redis limiter uses its fallback this long before retrying,
+so an outage costs one timeout per this interval, not one per request.
+
+### enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT *= 0.5*
+
+a hung Redis costs at most this long.
+
+* **Type:**
+  Connect/read timeout of the Redis limiter
 
 ### *class* enlace.ratelimit.Limiter(\*args, \*\*kwargs)
 
@@ -101,7 +133,14 @@ Window lengths, in seconds, a rate may be expressed in (“60/minute”).
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
-`limit` requests per `window` seconds.
+`limit` requests per `window` seconds (`limit >= 1`, `window > 0`).
+
+```pycon
+>>> Rate(0, 60)
+Traceback (most recent call last):
+...
+ValueError: Rate needs limit >= 1 and a finite window > 0, got Rate(0, 60)
+```
 
 ### *class* enlace.ratelimit.RateLimitMiddleware(app, \*, rules, trusted_proxies=(), make_limiter=<class 'enlace.ratelimit.TokenBucketLimiter'>, ipv6_prefix=64)
 
@@ -121,6 +160,18 @@ One declared limit: requests matching `method` + `path` share `rate`.
 `method` is `None` for any method; `path` is a full request path (or an
 fnmatch glob) and `spec` is the app.toml text it came from, for messages.
 
+#### *property* id *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+
+the prefix of every key it charges.
+
+```pycon
+>>> RateLimitRule("a", "GET", "/api/a/x", Rate(1, 1), "GET /x = 1/s").id
+'a:GET /x = 1/s'
+```
+
+* **Type:**
+  Names the rule across processes
+
 #### matches(method, path)
 
 Whether a request matches; *path* should be [`normalize_path()`](#enlace.ratelimit.normalize_path) ed.
@@ -134,9 +185,77 @@ Whether a request matches; *path* should be [`normalize_path()`](#enlace.ratelim
 * **Return type:**
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
+### *class* enlace.ratelimit.RedisLimiter(client, rate, \*, namespace='enlace:rl', fallback=None, max_keys=100000, retry_seconds=5.0, clock=<built-in function time>)
+
+Bases: `_AllowMixin`
+
+Fixed window in Redis: one count per key per window, shared by every worker.
+
+`client` is any redis-py compatible client (injected; tests use a fake), or
+build one with [`from_url()`](#enlace.ratelimit.RedisLimiter.from_url). When Redis errors, the request is decided by
+`fallback` (a per-process in-memory limiter by default), so an outage
+degrades protection instead of either refusing everything or lifting the limit.
+
+A fixed window admits up to twice `rate.limit` across a window boundary; the
+price of one round trip and one counter per key. Keys go into Redis as given,
+so they must come from a bounded set (client bucket keys, rule ids), never raw
+client input. After an error the fallback alone decides for
+`retry_seconds` (one warning per outage), so a hung Redis costs one
+`socket_timeout` per interval rather than one per request. `max_keys` sizes
+the default fallback only.
+
+`acquire` does blocking I/O: [`RateLimitMiddleware`](#enlace.ratelimit.RateLimitMiddleware) runs a limiter whose
+`blocking` attribute is true in a worker thread, off the event loop.
+
+#### *classmethod* from_url(url, \*args, socket_timeout=0.5, \*\*kwargs)
+
+Build from a `redis://` URL (needs the `redis` client installed).
+
+`socket_timeout` bounds both connect and reads, so a hung Redis costs at
+most that long before the fallback limiter decides. Other arguments go to
+the constructor.
+
+#### install_hint *= "pip install 'enlace[redis]'"*
+
+Shown when the optional `redis` client is not installed.
+
+#### redis_key(key, index)
+
+The Redis counter for `key` in window number `index`.
+
+The window length is part of it, so two limiters sharing a namespace but
+not a rate never share a counter.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### *class* enlace.ratelimit.SlidingWindowLimiter(rate, \*, max_keys=100000, clock=<built-in function monotonic>)
+
+Bases: `_AllowMixin`
+
+In-memory sliding window: at most `rate.limit` requests in any `window`.
+
+Unlike [`TokenBucketLimiter`](#enlace.ratelimit.TokenBucketLimiter) there is no refill between hits: a client
+that spent its budget waits until its oldest hit leaves the window. Per process
+(N workers allow N times the rate); the number of tracked keys is bounded
+(`max_keys`, least recently seen evicted) so a flood of distinct keys cannot
+exhaust memory. Each key keeps up to `rate.limit` timestamps, so memory is
+bounded by `max_keys * rate.limit`: prefer [`TokenBucketLimiter`](#enlace.ratelimit.TokenBucketLimiter) (one
+pair of floats per key) for large limits.
+
+```pycon
+>>> now = [0.0]
+>>> lim = SlidingWindowLimiter(Rate(1, 10), clock=lambda: now[0])
+>>> lim.acquire("a"), lim.acquire("a")
+(0.0, 10.0)
+>>> now[0] = 10.0
+>>> lim.allow("a")
+True
+```
+
 ### *class* enlace.ratelimit.TokenBucketLimiter(rate, \*, max_keys=100000, clock=<built-in function monotonic>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `_AllowMixin`
 
 In-memory token buckets, one per key, bounded in number (LRU eviction).
 
@@ -201,11 +320,15 @@ Strips a port and IPv6 brackets, and unwraps IPv4-mapped IPv6 addresses.
 ['1.2.3.4', '::1', '10.0.0.1']
 >>> parse_address("unknown") is None
 True
+>>> str(parse_address("fe80::1%eth0"))
+'fe80::1'
 ```
 
 ### enlace.ratelimit.parse_networks(proxies)
 
-Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).
+Parse IPs/CIDRs (strings or network objects) into networks; raises ValueError.
+
+Call it once, at startup, so a typo fails loudly there, not on every request.
 
 ```pycon
 >>> parse_networks(["127.0.0.1", "10.0.0.0/8"])

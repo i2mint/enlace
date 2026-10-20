@@ -440,6 +440,10 @@
 </li>
         <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.DEFAULT_MAX_KEYS">DEFAULT_MAX_KEYS (in module enlace.ratelimit)</a>
 </li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS">DEFAULT_REDIS_RETRY_SECONDS (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT">DEFAULT_REDIS_SOCKET_TIMEOUT (in module enlace.ratelimit)</a>
+</li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.default_store_path">default_store_path() (in module enlace.analytics)</a>
 </li>
         <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.degraded_apps">degraded_apps() (in module enlace.degraded)</a>
@@ -466,10 +470,10 @@
           <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.DeployMetaTagMiddleware">(class in enlace.manifest)</a>
 </li>
         </ul></li>
-        <li><a href="_autosummary/enlace.util.html#enlace.util.derive_display_name">derive_display_name() (in module enlace.util)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.util.html#enlace.util.derive_display_name">derive_display_name() (in module enlace.util)</a>
+</li>
         <li><a href="_autosummary/enlace.util.html#enlace.util.derive_route_prefix">derive_route_prefix() (in module enlace.util)</a>
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.device_class">device_class() (in module enlace.analytics)</a>
@@ -756,6 +760,8 @@
           <li><a href="_autosummary/enlace.html#enlace.PlatformConfig.from_toml">(enlace.PlatformConfig class method)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RedisLimiter.from_url">from_url() (enlace.ratelimit.RedisLimiter class method)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -828,9 +834,13 @@
 </li>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.icons_dir_file">icons_dir_file() (in module enlace.app_icons)</a>
 </li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RateLimitRule.id">id (enlace.ratelimit.RateLimitRule property)</a>
+</li>
         <li><a href="_autosummary/enlace.gzip_selective.html#enlace.gzip_selective.INCOMPRESSIBLE_PREFIXES">INCOMPRESSIBLE_PREFIXES (in module enlace.gzip_selective)</a>
 </li>
         <li><a href="_autosummary/enlace.html_rewrite.html#enlace.html_rewrite.inject_into_head">inject_into_head() (in module enlace.html_rewrite)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RedisLimiter.install_hint">install_hint (enlace.ratelimit.RedisLimiter attribute)</a>
 </li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.is_alive">is_alive() (enlace.supervise.ManagedProcess method)</a>
 </li>
@@ -1211,6 +1221,10 @@
 </li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.record_view">record_view() (enlace.analytics.PageViewCounter method)</a>
 </li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RedisLimiter.redis_key">redis_key() (enlace.ratelimit.RedisLimiter method)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.RedisLimiter">RedisLimiter (class in enlace.ratelimit)</a>
+</li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.referrer_domain">referrer_domain() (in module enlace.analytics)</a>
 </li>
         <li><a href="_autosummary/enlace.compose.html#enlace.compose.refresh_updated_at">refresh_updated_at() (in module enlace.compose)</a>
@@ -1221,10 +1235,10 @@
 </li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.register_strategy">register_strategy() (in module enlace.strategies)</a>
 </li>
-        <li><a href="_autosummary/enlace.doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
+</li>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.resolve_app_icon">resolve_app_icon() (in module enlace.app_icons)</a>
 </li>
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.resolve_icon">resolve_icon() (in module enlace.appmeta)</a>
@@ -1276,6 +1290,8 @@
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.should_restart">should_restart() (enlace.supervise.ManagedProcess method)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.skills_dir">skills_dir() (in module enlace)</a>
+</li>
+        <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.SlidingWindowLimiter">SlidingWindowLimiter (class in enlace.ratelimit)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.SourceRef">SourceRef (class in enlace)</a>
 
@@ -1425,7 +1441,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=f1e4e900"></script>
+</div><script src="_static/documentation_options.js?v=58a49d66"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

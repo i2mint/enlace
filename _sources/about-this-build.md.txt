@@ -5,19 +5,17 @@ orphan: true
 
 # About this build
 
-This documentation was built on **2026-10-20 15:00 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/a5c56e7c90e3096e9149b303050f9dbf87263153"><code>a5c56e7</code></a> on branch <code>main</code>, for **enlace 0.1.60** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 15:39 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/8b1ca917daa4de9e83ddcd66e4d66a9468085bbb"><code>8b1ca91</code></a> on branch <code>main</code>, for **enlace 0.1.61** (from <code>pyproject.toml</code>).
 
-:::{warning}
-The documentation and the package may be misaligned:
-
-- The documented version (0.1.60) is behind the latest release on PyPI (0.1.61): `pip install enlace` gives newer code than these docs describe.
+:::{note}
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 :::
 
 ## Source
 
 | | |
 |---|---|
-| Commit | <a href="https://github.com/i2mint/enlace/commit/a5c56e7c90e3096e9149b303050f9dbf87263153"><code>a5c56e7c90e3096e9149b303050f9dbf87263153</code></a> |
+| Commit | <a href="https://github.com/i2mint/enlace/commit/8b1ca917daa4de9e83ddcd66e4d66a9468085bbb"><code>8b1ca917daa4de9e83ddcd66e4d66a9468085bbb</code></a> |
 | Branch | <code>main</code> |
 | Tags at this commit | none |
 | Working tree | clean |
@@ -28,9 +26,9 @@ The documentation and the package may be misaligned:
 | | |
 |---|---|
 | Repository | <code>i2mint/enlace</code> |
-| Run | <a href="https://github.com/i2mint/enlace/actions/runs/39444187342">39444187342</a> |
+| Run | <a href="https://github.com/i2mint/enlace/actions/runs/39450119061">39450119061</a> |
 | Ref | <code>refs/heads/main</code> |
-| Event commit | <code>a5c56e7c90e3096e9149b303050f9dbf87263153</code> (in the history of the built commit) |
+| Event commit | <code>8b1ca917daa4de9e83ddcd66e4d66a9468085bbb</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -55,13 +53,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.61/">0.1.61</a>, newer than the documented version (0.1.60).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.61/">0.1.61</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout a5c56e7c90e3096e9149b303050f9dbf87263153
+git checkout 8b1ca917daa4de9e83ddcd66e4d66a9468085bbb
 pip install "epythet==0.2.21"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

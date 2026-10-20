@@ -302,6 +302,19 @@ limiter is a seam (<code class="docutils literal notranslate"><span class="pre">
 <p>**In production behind a proxy, set <a href="#id1"><span class="problematic" id="id2">``</span></a>trusted_proxies``** unless the server
 already resolves the client from the proxy’s header: otherwise every client
 shares the proxy’s address, and one abusive client exhausts everyone’s bucket.</p>
+<p><strong>Reusable on its own.</strong> The client-address and limiter halves import nothing
+beyond the standard library, so other services use them directly (<code class="docutils literal notranslate"><span class="pre">heed</span></code>’s
+public ingest endpoint does): <a class="reference internal" href="#enlace.ratelimit.client_address" title="enlace.ratelimit.client_address"><code class="xref py py-func docutils literal notranslate"><span class="pre">client_address()</span></code></a> + <a class="reference internal" href="#enlace.ratelimit.bucket_key" title="enlace.ratelimit.bucket_key"><code class="xref py py-func docutils literal notranslate"><span class="pre">bucket_key()</span></code></a> say
+who the client is, and any <a class="reference internal" href="#enlace.ratelimit.Limiter" title="enlace.ratelimit.Limiter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Limiter</span></code></a> – <a class="reference internal" href="#enlace.ratelimit.TokenBucketLimiter" title="enlace.ratelimit.TokenBucketLimiter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TokenBucketLimiter</span></code></a>,
+<a class="reference internal" href="#enlace.ratelimit.SlidingWindowLimiter" title="enlace.ratelimit.SlidingWindowLimiter"><code class="xref py py-class docutils literal notranslate"><span class="pre">SlidingWindowLimiter</span></code></a>, or <a class="reference internal" href="#enlace.ratelimit.RedisLimiter" title="enlace.ratelimit.RedisLimiter"><code class="xref py py-class docutils literal notranslate"><span class="pre">RedisLimiter</span></code></a> (one count shared by every
+worker and host; needs the <code class="docutils literal notranslate"><span class="pre">[redis]</span></code> extra) – says whether it may proceed. To
+share enlace’s own limits across workers, pass the Redis one to the seam:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RateLimitMiddleware</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span> <span class="n">make_limiter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">rate</span><span class="p">:</span> <span class="n">RedisLimiter</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">,</span> <span class="n">rate</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Each rule charges its own key (the rule’s <a class="reference internal" href="#enlace.ratelimit.RateLimitRule.id" title="enlace.ratelimit.RateLimitRule.id"><code class="xref py py-attr docutils literal notranslate"><span class="pre">RateLimitRule.id</span></code></a> plus the
+client), so one shared client never mixes two rules’ counts.</p>
 <p class="rubric">Module Attributes</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -314,6 +327,12 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ratelimit.DEFAULT_IPV6_PREFIX" title="enlace.ratelimit.DEFAULT_IPV6_PREFIX"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_IPV6_PREFIX</span></code></a></p></td>
 <td><p>one host usually owns a whole /64.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT" title="enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_REDIS_SOCKET_TIMEOUT</span></code></a></p></td>
+<td><p>a hung Redis costs at most this long.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS" title="enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_REDIS_RETRY_SECONDS</span></code></a></p></td>
+<td><p>After a Redis error, the Redis limiter uses its fallback this long before retrying, so an outage costs one timeout per this interval, not one per request.</p></td>
 </tr>
 </tbody>
 </table>
@@ -338,7 +357,7 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 <td><p>An IP address from a peer or forwarded hop, or None if it is not one.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.ratelimit.parse_networks" title="enlace.ratelimit.parse_networks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_networks</span></code></a>(proxies)</p></td>
-<td><p>Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).</p></td>
+<td><p>Parse IPs/CIDRs (strings or network objects) into networks; raises ValueError.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ratelimit.parse_rate" title="enlace.ratelimit.parse_rate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_rate</span></code></a>(text)</p></td>
 <td><p>Parse <code class="docutils literal notranslate"><span class="pre">&quot;60/minute&quot;</span></code> (also <code class="docutils literal notranslate"><span class="pre">60/min</span></code>, <code class="docutils literal notranslate"><span class="pre">60/m</span></code>, <code class="docutils literal notranslate"><span class="pre">5/seconds</span></code>...).</p></td>
@@ -363,13 +382,19 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 <td><p>Take one request for <code class="docutils literal notranslate"><span class="pre">key</span></code>: 0 if allowed, else seconds until it would be.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.ratelimit.Rate" title="enlace.ratelimit.Rate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Rate</span></code></a>(limit, window)</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">limit</span></code> requests per <code class="docutils literal notranslate"><span class="pre">window</span></code> seconds.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">limit</span></code> requests per <code class="docutils literal notranslate"><span class="pre">window</span></code> seconds (<code class="docutils literal notranslate"><span class="pre">limit</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">window</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ratelimit.RateLimitMiddleware" title="enlace.ratelimit.RateLimitMiddleware"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RateLimitMiddleware</span></code></a>(app, *, rules[, ...])</p></td>
 <td><p>Pure ASGI middleware enforcing <a class="reference internal" href="#enlace.ratelimit.RateLimitRule" title="enlace.ratelimit.RateLimitRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">RateLimitRule</span></code></a> s per client.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.ratelimit.RateLimitRule" title="enlace.ratelimit.RateLimitRule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RateLimitRule</span></code></a>(app, method, path, rate, spec)</p></td>
 <td><p>One declared limit: requests matching <code class="docutils literal notranslate"><span class="pre">method</span></code> + <code class="docutils literal notranslate"><span class="pre">path</span></code> share <code class="docutils literal notranslate"><span class="pre">rate</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ratelimit.RedisLimiter" title="enlace.ratelimit.RedisLimiter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RedisLimiter</span></code></a>(client, rate, *[, namespace, ...])</p></td>
+<td><p>Fixed window in Redis: one count per key per window, shared by every worker.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.ratelimit.SlidingWindowLimiter" title="enlace.ratelimit.SlidingWindowLimiter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlidingWindowLimiter</span></code></a>(rate, *[, max_keys, clock])</p></td>
+<td><p>In-memory sliding window: at most <code class="docutils literal notranslate"><span class="pre">rate.limit</span></code> requests in any <code class="docutils literal notranslate"><span class="pre">window</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#enlace.ratelimit.TokenBucketLimiter" title="enlace.ratelimit.TokenBucketLimiter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TokenBucketLimiter</span></code></a>(rate, *[, max_keys, clock])</p></td>
 <td><p>In-memory token buckets, one per key, bounded in number (LRU eviction).</p></td>
@@ -395,6 +420,24 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 flood of distinct (spoofed or rotating) clients cannot exhaust memory.</p>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS">
+<span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_REDIS_RETRY_SECONDS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5.0</span></span><a class="headerlink" href="#enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS" title="Link to this definition">¶</a></dt>
+<dd><p>After a Redis error, the Redis limiter uses its fallback this long before retrying,
+so an outage costs one timeout per this interval, not one per request.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT">
+<span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_REDIS_SOCKET_TIMEOUT</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT" title="Link to this definition">¶</a></dt>
+<dd><p>a hung Redis costs at most this long.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Connect/read timeout of the Redis limiter</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.ratelimit.Limiter">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">Limiter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#Limiter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.Limiter" title="Link to this definition">¶</a></dt>
@@ -412,7 +455,13 @@ flood of distinct (spoofed or rotating) clients cannot exhaust memory.</p>
 <dt class="sig sig-object py" id="enlace.ratelimit.Rate">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">Rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">limit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#Rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.Rate" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p><code class="docutils literal notranslate"><span class="pre">limit</span></code> requests per <code class="docutils literal notranslate"><span class="pre">window</span></code> seconds.</p>
+<p><code class="docutils literal notranslate"><span class="pre">limit</span></code> requests per <code class="docutils literal notranslate"><span class="pre">window</span></code> seconds (<code class="docutils literal notranslate"><span class="pre">limit</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">window</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>).</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Rate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+<span class="gt">Traceback (most recent call last):</span>
+<span class="c">...</span>
+<span class="gr">ValueError</span>: <span class="n">Rate needs limit &gt;= 1 and a finite window &gt; 0, got Rate(0, 60)</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -437,6 +486,21 @@ narrow and a broad rule); the first one exhausted answers 429.</p>
 fnmatch glob) and <code class="docutils literal notranslate"><span class="pre">spec</span></code> is the app.toml text it came from, for messages.</p>
 <dl class="field-list simple">
 </dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="enlace.ratelimit.RateLimitRule.id">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#enlace.ratelimit.RateLimitRule.id" title="Link to this definition">¶</a></dt>
+<dd><p>the prefix of every key it charges.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">RateLimitRule</span><span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"/api/a/x"</span><span class="p">,</span> <span class="n">Rate</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="s2">"GET /x = 1/s"</span><span class="p">)</span><span class="o">.</span><span class="n">id</span>
+<span class="go">'a:GET /x = 1/s'</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Names the rule across processes</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="enlace.ratelimit.RateLimitRule.matches">
 <span class="sig-name descname"><span class="pre">matches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#RateLimitRule.matches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.RateLimitRule.matches" title="Link to this definition">¶</a></dt>
@@ -456,9 +520,86 @@ fnmatch glob) and <code class="docutils literal notranslate"><span class="pre">s
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="enlace.ratelimit.RedisLimiter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">RedisLimiter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'enlace:rl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retry_seconds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clock</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">time&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#RedisLimiter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.RedisLimiter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_AllowMixin</span></code></p>
+<p>Fixed window in Redis: one count per key per window, shared by every worker.</p>
+<p><code class="docutils literal notranslate"><span class="pre">client</span></code> is any redis-py compatible client (injected; tests use a fake), or
+build one with <a class="reference internal" href="#enlace.ratelimit.RedisLimiter.from_url" title="enlace.ratelimit.RedisLimiter.from_url"><code class="xref py py-meth docutils literal notranslate"><span class="pre">from_url()</span></code></a>. When Redis errors, the request is decided by
+<code class="docutils literal notranslate"><span class="pre">fallback</span></code> (a per-process in-memory limiter by default), so an outage
+degrades protection instead of either refusing everything or lifting the limit.</p>
+<p>A fixed window admits up to twice <code class="docutils literal notranslate"><span class="pre">rate.limit</span></code> across a window boundary; the
+price of one round trip and one counter per key. Keys go into Redis as given,
+so they must come from a bounded set (client bucket keys, rule ids), never raw
+client input. After an error the fallback alone decides for
+<code class="docutils literal notranslate"><span class="pre">retry_seconds</span></code> (one warning per outage), so a hung Redis costs one
+<code class="docutils literal notranslate"><span class="pre">socket_timeout</span></code> per interval rather than one per request. <code class="docutils literal notranslate"><span class="pre">max_keys</span></code> sizes
+the default fallback only.</p>
+<p><code class="docutils literal notranslate"><span class="pre">acquire</span></code> does blocking I/O: <a class="reference internal" href="#enlace.ratelimit.RateLimitMiddleware" title="enlace.ratelimit.RateLimitMiddleware"><code class="xref py py-class docutils literal notranslate"><span class="pre">RateLimitMiddleware</span></code></a> runs a limiter whose
+<code class="docutils literal notranslate"><span class="pre">blocking</span></code> attribute is true in a worker thread, off the event loop.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.ratelimit.RedisLimiter.from_url">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">socket_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#RedisLimiter.from_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.RedisLimiter.from_url" title="Link to this definition">¶</a></dt>
+<dd><p>Build from a <code class="docutils literal notranslate"><span class="pre">redis://</span></code> URL (needs the <code class="docutils literal notranslate"><span class="pre">redis</span></code> client installed).</p>
+<p><code class="docutils literal notranslate"><span class="pre">socket_timeout</span></code> bounds both connect and reads, so a hung Redis costs at
+most that long before the fallback limiter decides. Other arguments go to
+the constructor.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="enlace.ratelimit.RedisLimiter.install_hint">
+<span class="sig-name descname"><span class="pre">install_hint</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;pip</span> <span class="pre">install</span> <span class="pre">'enlace[redis]'&quot;</span></span><a class="headerlink" href="#enlace.ratelimit.RedisLimiter.install_hint" title="Link to this definition">¶</a></dt>
+<dd><p>Shown when the optional <code class="docutils literal notranslate"><span class="pre">redis</span></code> client is not installed.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="enlace.ratelimit.RedisLimiter.redis_key">
+<span class="sig-name descname"><span class="pre">redis_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#RedisLimiter.redis_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.RedisLimiter.redis_key" title="Link to this definition">¶</a></dt>
+<dd><p>The Redis counter for <code class="docutils literal notranslate"><span class="pre">key</span></code> in window number <code class="docutils literal notranslate"><span class="pre">index</span></code>.</p>
+<p>The window length is part of it, so two limiters sharing a namespace but
+not a rate never share a counter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="enlace.ratelimit.SlidingWindowLimiter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">SlidingWindowLimiter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clock</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">monotonic&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#SlidingWindowLimiter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.SlidingWindowLimiter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_AllowMixin</span></code></p>
+<p>In-memory sliding window: at most <code class="docutils literal notranslate"><span class="pre">rate.limit</span></code> requests in any <code class="docutils literal notranslate"><span class="pre">window</span></code>.</p>
+<p>Unlike <a class="reference internal" href="#enlace.ratelimit.TokenBucketLimiter" title="enlace.ratelimit.TokenBucketLimiter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TokenBucketLimiter</span></code></a> there is no refill between hits: a client
+that spent its budget waits until its oldest hit leaves the window. Per process
+(N workers allow N times the rate); the number of tracked keys is bounded
+(<code class="docutils literal notranslate"><span class="pre">max_keys</span></code>, least recently seen evicted) so a flood of distinct keys cannot
+exhaust memory. Each key keeps up to <code class="docutils literal notranslate"><span class="pre">rate.limit</span></code> timestamps, so memory is
+bounded by <code class="docutils literal notranslate"><span class="pre">max_keys</span> <span class="pre">*</span> <span class="pre">rate.limit</span></code>: prefer <a class="reference internal" href="#enlace.ratelimit.TokenBucketLimiter" title="enlace.ratelimit.TokenBucketLimiter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TokenBucketLimiter</span></code></a> (one
+pair of floats per key) for large limits.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">now</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lim</span> <span class="o">=</span> <span class="n">SlidingWindowLimiter</span><span class="p">(</span><span class="n">Rate</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">clock</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">now</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lim</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="s2">"a"</span><span class="p">),</span> <span class="n">lim</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span>
+<span class="go">(0.0, 10.0)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">now</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lim</span><span class="o">.</span><span class="n">allow</span><span class="p">(</span><span class="s2">"a"</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="enlace.ratelimit.TokenBucketLimiter">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">TokenBucketLimiter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clock</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;built-in</span> <span class="pre">function</span> <span class="pre">monotonic&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#TokenBucketLimiter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.TokenBucketLimiter" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_AllowMixin</span></code></p>
 <p>In-memory token buckets, one per key, bounded in number (LRU eviction).</p>
 <p>A bucket holds up to <code class="docutils literal notranslate"><span class="pre">rate.limit</span></code> tokens and refills continuously at
 <code class="docutils literal notranslate"><span class="pre">limit</span> <span class="pre">/</span> <span class="pre">window</span></code> per second, so bursts up to the limit pass and the
@@ -535,6 +676,8 @@ sustained rate is the declared one.</p>
 <span class="go">['1.2.3.4', '::1', '10.0.0.1']</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">parse_address</span><span class="p">(</span><span class="s2">"unknown"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
 <span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">parse_address</span><span class="p">(</span><span class="s2">"fe80::1</span><span class="si">%e</span><span class="s2">th0"</span><span class="p">))</span>
+<span class="go">'fe80::1'</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -544,7 +687,8 @@ sustained rate is the declared one.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="enlace.ratelimit.parse_networks">
 <span class="sig-prename descclassname"><span class="pre">enlace.ratelimit.</span></span><span class="sig-name descname"><span class="pre">parse_networks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proxies</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/ratelimit.html#parse_networks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.ratelimit.parse_networks" title="Link to this definition">¶</a></dt>
-<dd><p>Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).</p>
+<dd><p>Parse IPs/CIDRs (strings or network objects) into networks; raises ValueError.</p>
+<p>Call it once, at startup, so a typo fails loudly there, not on every request.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">parse_networks</span><span class="p">([</span><span class="s2">"127.0.0.1"</span><span class="p">,</span> <span class="s2">"10.0.0.0/8"</span><span class="p">])</span>
 <span class="go">[IPv4Network('127.0.0.1/32'), IPv4Network('10.0.0.0/8')]</span>
 </pre></div>
@@ -665,14 +809,24 @@ sustained rate is the declared one.</p>
 <li><a class="reference internal" href="#">enlace.ratelimit</a><ul>
 <li><a class="reference internal" href="#enlace.ratelimit.DEFAULT_IPV6_PREFIX"><code class="docutils literal notranslate"><span class="pre">DEFAULT_IPV6_PREFIX</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.DEFAULT_MAX_KEYS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_MAX_KEYS</span></code></a></li>
+<li><a class="reference internal" href="#enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_REDIS_RETRY_SECONDS</span></code></a></li>
+<li><a class="reference internal" href="#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT"><code class="docutils literal notranslate"><span class="pre">DEFAULT_REDIS_SOCKET_TIMEOUT</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.Limiter"><code class="docutils literal notranslate"><span class="pre">Limiter</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.RATE_UNITS"><code class="docutils literal notranslate"><span class="pre">RATE_UNITS</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.Rate"><code class="docutils literal notranslate"><span class="pre">Rate</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.RateLimitMiddleware"><code class="docutils literal notranslate"><span class="pre">RateLimitMiddleware</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.RateLimitRule"><code class="docutils literal notranslate"><span class="pre">RateLimitRule</span></code></a><ul>
+<li><a class="reference internal" href="#enlace.ratelimit.RateLimitRule.id"><code class="docutils literal notranslate"><span class="pre">RateLimitRule.id</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.RateLimitRule.matches"><code class="docutils literal notranslate"><span class="pre">RateLimitRule.matches()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#enlace.ratelimit.RedisLimiter"><code class="docutils literal notranslate"><span class="pre">RedisLimiter</span></code></a><ul>
+<li><a class="reference internal" href="#enlace.ratelimit.RedisLimiter.from_url"><code class="docutils literal notranslate"><span class="pre">RedisLimiter.from_url()</span></code></a></li>
+<li><a class="reference internal" href="#enlace.ratelimit.RedisLimiter.install_hint"><code class="docutils literal notranslate"><span class="pre">RedisLimiter.install_hint</span></code></a></li>
+<li><a class="reference internal" href="#enlace.ratelimit.RedisLimiter.redis_key"><code class="docutils literal notranslate"><span class="pre">RedisLimiter.redis_key()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#enlace.ratelimit.SlidingWindowLimiter"><code class="docutils literal notranslate"><span class="pre">SlidingWindowLimiter</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.TokenBucketLimiter"><code class="docutils literal notranslate"><span class="pre">TokenBucketLimiter</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.add_rate_limits"><code class="docutils literal notranslate"><span class="pre">add_rate_limits()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.ratelimit.bucket_key"><code class="docutils literal notranslate"><span class="pre">bucket_key()</span></code></a></li>
@@ -695,7 +849,7 @@ sustained rate is the declared one.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=f1e4e900"></script>
+</div><script src="../_static/documentation_options.js?v=58a49d66"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

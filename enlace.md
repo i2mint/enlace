@@ -1,4 +1,4 @@
-> built 2026-10-20 15:00 UTC from a5c56e7 (main) · enlace 0.1.60. Details: build_info.json
+> built 2026-10-20 15:39 UTC from 8b1ca91 (main) · enlace 0.1.61. Details: build_info.json
 
 # index.html.md
 
@@ -417,7 +417,9 @@ A request over a limit gets `429 Too Many Requests` with `Retry-After`. Behind a
 trusted_proxies = ["127.0.0.1", "::1"]
 ```
 
-Without `trusted_proxies`, the ASGI peer address is used as is: behind a proxy that is the proxy’s own address (unless the server already resolves forwarded headers), so every client would share one bucket. Paths are normalised before matching, a `GET` rule also covers `HEAD`, CORS preflights are never counted, and a websocket handshake over the limit is closed with code 1008. Buckets live in memory per process, so N workers allow up to N times the declared rate: it bounds abuse rather than enforcing an exact quota. `enlace.ratelimit.RateLimitMiddleware(make_limiter=...)` is the seam for a shared limiter.
+Without `trusted_proxies`, the ASGI peer address is used as is: behind a proxy that is the proxy’s own address (unless the server already resolves forwarded headers), so every client would share one bucket. Paths are normalised before matching, a `GET` rule also covers `HEAD`, CORS preflights are never counted, and a websocket handshake over the limit is closed with code 1008. Buckets live in memory per process, so N workers allow up to N times the declared rate: it bounds abuse rather than enforcing an exact quota. `enlace.ratelimit.RateLimitMiddleware(make_limiter=...)` is the seam for a shared limiter: `make_limiter=lambda rate: RedisLimiter(client, rate)` (with the `enlace[redis]` extra) gives one count across every worker and host, each rule keeping its own count.
+
+The client-address and limiter pieces (`client_address`, `bucket_key`, `TokenBucketLimiter`, `SlidingWindowLimiter`, `RedisLimiter`) import only the standard library and are usable outside enlace’s middleware; heed’s public feedback endpoint uses them.
 
 ### Deploy manifest (`/_meta`)
 
@@ -3849,12 +3851,30 @@ trusted_proxies\`\`\*\* unless the server
 already resolves the client from the proxy’s header: otherwise every client
 shares the proxy’s address, and one abusive client exhausts everyone’s bucket.
 
+**Reusable on its own.** The client-address and limiter halves import nothing
+beyond the standard library, so other services use them directly (`heed`’s
+public ingest endpoint does): [`client_address()`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.client_address) + [`bucket_key()`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.bucket_key) say
+who the client is, and any [`Limiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Limiter) – [`TokenBucketLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.TokenBucketLimiter),
+[`SlidingWindowLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.SlidingWindowLimiter), or [`RedisLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RedisLimiter) (one count shared by every
+worker and host; needs the `[redis]` extra) – says whether it may proceed. To
+share enlace’s own limits across workers, pass the Redis one to the seam:
+
+```default
+RateLimitMiddleware(app, rules=rules, make_limiter=lambda rate: RedisLimiter(
+    client, rate))
+```
+
+Each rule charges its own key (the rule’s [`RateLimitRule.id`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule.id) plus the
+client), so one shared client never mixes two rules’ counts.
+
 ### Module Attributes
 
-| [`RATE_UNITS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RATE_UNITS)          | Window lengths, in seconds, a rate may be expressed in ("60/minute").                                                                               |
-|----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| [`DEFAULT_MAX_KEYS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_MAX_KEYS)    | Client buckets one rule tracks before evicting the least recently seen, so a flood of distinct (spoofed or rotating) clients cannot exhaust memory. |
-| [`DEFAULT_IPV6_PREFIX`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_IPV6_PREFIX) | one host usually owns a whole /64.                                                                                                                  |
+| [`RATE_UNITS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RATE_UNITS)                   | Window lengths, in seconds, a rate may be expressed in ("60/minute").                                                                                      |
+|-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`DEFAULT_MAX_KEYS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_MAX_KEYS)             | Client buckets one rule tracks before evicting the least recently seen, so a flood of distinct (spoofed or rotating) clients cannot exhaust memory.        |
+| [`DEFAULT_IPV6_PREFIX`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_IPV6_PREFIX)          | one host usually owns a whole /64.                                                                                                                         |
+| [`DEFAULT_REDIS_SOCKET_TIMEOUT`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT) | a hung Redis costs at most this long.                                                                                                                      |
+| [`DEFAULT_REDIS_RETRY_SECONDS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS)  | After a Redis error, the Redis limiter uses its fallback this long before retrying, so an outage costs one timeout per this interval, not one per request. |
 
 ### Functions
 
@@ -3864,7 +3884,7 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 | [`client_address`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.client_address)(peer, forwarded_for, \*, trusted) | The client address: `X-Forwarded-For` only via a trusted peer, right to left.                                          |
 | [`normalize_path`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.normalize_path)(path)                             | Collapse `//`, `.` and `..` the way an upstream would resolve them.                                                    |
 | [`parse_address`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_address)(text)                              | An IP address from a peer or forwarded hop, or None if it is not one.                                                  |
-| [`parse_networks`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_networks)(proxies)                          | Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).                                           |
+| [`parse_networks`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_networks)(proxies)                          | Parse IPs/CIDRs (strings or network objects) into networks; raises ValueError.                                         |
 | [`parse_rate`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_rate)(text)                                 | Parse `"60/minute"` (also `60/min`, `60/m`, `5/seconds`...).                                                           |
 | [`parse_rule_key`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.parse_rule_key)(key)                              | Split an app.toml key into `(method or None, path)`.                                                                   |
 | [`rules_for_app`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.rules_for_app)(app, route_prefix, table)          | The app's declared limits as rules on full request paths.                                                              |
@@ -3872,12 +3892,14 @@ shares the proxy’s address, and one abusive client exhausts everyone’s bucke
 
 ### Classes
 
-| [`Limiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Limiter)(\*args, \*\*kwargs)                     | Take one request for `key`: 0 if allowed, else seconds until it would be.                                   |
-|--------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| [`Rate`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Rate)(limit, window)                             | `limit` requests per `window` seconds.                                                                      |
-| [`RateLimitMiddleware`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitMiddleware)(app, \*, rules[, ...])      | Pure ASGI middleware enforcing [`RateLimitRule`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule) s per client. |
-| [`RateLimitRule`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule)(app, method, path, rate, spec)    | One declared limit: requests matching `method` + `path` share `rate`.                                       |
-| [`TokenBucketLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.TokenBucketLimiter)(rate, \*[, max_keys, clock]) | In-memory token buckets, one per key, bounded in number (LRU eviction).                                     |
+| [`Limiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Limiter)(\*args, \*\*kwargs)                       | Take one request for `key`: 0 if allowed, else seconds until it would be.                                   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| [`Rate`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.Rate)(limit, window)                               | `limit` requests per `window` seconds (`limit >= 1`, `window > 0`).                                         |
+| [`RateLimitMiddleware`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitMiddleware)(app, \*, rules[, ...])        | Pure ASGI middleware enforcing [`RateLimitRule`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule) s per client. |
+| [`RateLimitRule`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitRule)(app, method, path, rate, spec)      | One declared limit: requests matching `method` + `path` share `rate`.                                       |
+| [`RedisLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RedisLimiter)(client, rate, \*[, namespace, ...])  | Fixed window in Redis: one count per key per window, shared by every worker.                                |
+| [`SlidingWindowLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.SlidingWindowLimiter)(rate, \*[, max_keys, clock]) | In-memory sliding window: at most `rate.limit` requests in any `window`.                                    |
+| [`TokenBucketLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.TokenBucketLimiter)(rate, \*[, max_keys, clock])   | In-memory token buckets, one per key, bounded in number (LRU eviction).                                     |
 
 ### enlace.ratelimit.DEFAULT_IPV6_PREFIX *= 64*
 
@@ -3890,6 +3912,18 @@ one host usually owns a whole /64.
 
 Client buckets one rule tracks before evicting the least recently seen, so a
 flood of distinct (spoofed or rotating) clients cannot exhaust memory.
+
+### enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS *= 5.0*
+
+After a Redis error, the Redis limiter uses its fallback this long before retrying,
+so an outage costs one timeout per this interval, not one per request.
+
+### enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT *= 0.5*
+
+a hung Redis costs at most this long.
+
+* **Type:**
+  Connect/read timeout of the Redis limiter
 
 ### *class* enlace.ratelimit.Limiter(\*args, \*\*kwargs)
 
@@ -3905,7 +3939,14 @@ Window lengths, in seconds, a rate may be expressed in (“60/minute”).
 
 Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
 
-`limit` requests per `window` seconds.
+`limit` requests per `window` seconds (`limit >= 1`, `window > 0`).
+
+```pycon
+>>> Rate(0, 60)
+Traceback (most recent call last):
+...
+ValueError: Rate needs limit >= 1 and a finite window > 0, got Rate(0, 60)
+```
 
 ### *class* enlace.ratelimit.RateLimitMiddleware(app, \*, rules, trusted_proxies=(), make_limiter=<class 'enlace.ratelimit.TokenBucketLimiter'>, ipv6_prefix=64)
 
@@ -3925,6 +3966,18 @@ One declared limit: requests matching `method` + `path` share `rate`.
 `method` is `None` for any method; `path` is a full request path (or an
 fnmatch glob) and `spec` is the app.toml text it came from, for messages.
 
+#### *property* id *: [str](https://docs.python.org/3/builtins/stdtypes.html#str)*
+
+the prefix of every key it charges.
+
+```pycon
+>>> RateLimitRule("a", "GET", "/api/a/x", Rate(1, 1), "GET /x = 1/s").id
+'a:GET /x = 1/s'
+```
+
+* **Type:**
+  Names the rule across processes
+
 #### matches(method, path)
 
 Whether a request matches; *path* should be [`normalize_path()`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.normalize_path) ed.
@@ -3938,9 +3991,77 @@ Whether a request matches; *path* should be [`normalize_path()`](_autosummary/en
 * **Return type:**
   [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
+### *class* enlace.ratelimit.RedisLimiter(client, rate, \*, namespace='enlace:rl', fallback=None, max_keys=100000, retry_seconds=5.0, clock=<built-in function time>)
+
+Bases: `_AllowMixin`
+
+Fixed window in Redis: one count per key per window, shared by every worker.
+
+`client` is any redis-py compatible client (injected; tests use a fake), or
+build one with [`from_url()`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RedisLimiter.from_url). When Redis errors, the request is decided by
+`fallback` (a per-process in-memory limiter by default), so an outage
+degrades protection instead of either refusing everything or lifting the limit.
+
+A fixed window admits up to twice `rate.limit` across a window boundary; the
+price of one round trip and one counter per key. Keys go into Redis as given,
+so they must come from a bounded set (client bucket keys, rule ids), never raw
+client input. After an error the fallback alone decides for
+`retry_seconds` (one warning per outage), so a hung Redis costs one
+`socket_timeout` per interval rather than one per request. `max_keys` sizes
+the default fallback only.
+
+`acquire` does blocking I/O: [`RateLimitMiddleware`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.RateLimitMiddleware) runs a limiter whose
+`blocking` attribute is true in a worker thread, off the event loop.
+
+#### *classmethod* from_url(url, \*args, socket_timeout=0.5, \*\*kwargs)
+
+Build from a `redis://` URL (needs the `redis` client installed).
+
+`socket_timeout` bounds both connect and reads, so a hung Redis costs at
+most that long before the fallback limiter decides. Other arguments go to
+the constructor.
+
+#### install_hint *= "pip install 'enlace[redis]'"*
+
+Shown when the optional `redis` client is not installed.
+
+#### redis_key(key, index)
+
+The Redis counter for `key` in window number `index`.
+
+The window length is part of it, so two limiters sharing a namespace but
+not a rate never share a counter.
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### *class* enlace.ratelimit.SlidingWindowLimiter(rate, \*, max_keys=100000, clock=<built-in function monotonic>)
+
+Bases: `_AllowMixin`
+
+In-memory sliding window: at most `rate.limit` requests in any `window`.
+
+Unlike [`TokenBucketLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.TokenBucketLimiter) there is no refill between hits: a client
+that spent its budget waits until its oldest hit leaves the window. Per process
+(N workers allow N times the rate); the number of tracked keys is bounded
+(`max_keys`, least recently seen evicted) so a flood of distinct keys cannot
+exhaust memory. Each key keeps up to `rate.limit` timestamps, so memory is
+bounded by `max_keys * rate.limit`: prefer [`TokenBucketLimiter`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.TokenBucketLimiter) (one
+pair of floats per key) for large limits.
+
+```pycon
+>>> now = [0.0]
+>>> lim = SlidingWindowLimiter(Rate(1, 10), clock=lambda: now[0])
+>>> lim.acquire("a"), lim.acquire("a")
+(0.0, 10.0)
+>>> now[0] = 10.0
+>>> lim.allow("a")
+True
+```
+
 ### *class* enlace.ratelimit.TokenBucketLimiter(rate, \*, max_keys=100000, clock=<built-in function monotonic>)
 
-Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+Bases: `_AllowMixin`
 
 In-memory token buckets, one per key, bounded in number (LRU eviction).
 
@@ -4005,11 +4126,15 @@ Strips a port and IPv6 brackets, and unwraps IPv4-mapped IPv6 addresses.
 ['1.2.3.4', '::1', '10.0.0.1']
 >>> parse_address("unknown") is None
 True
+>>> str(parse_address("fe80::1%eth0"))
+'fe80::1'
 ```
 
 ### enlace.ratelimit.parse_networks(proxies)
 
-Parse IPs/CIDRs into networks; raises ValueError (call it once, at startup).
+Parse IPs/CIDRs (strings or network objects) into networks; raises ValueError.
+
+Call it once, at startup, so a typo fails loudly there, not on every request.
 
 ```pycon
 >>> parse_networks(["127.0.0.1", "10.0.0.0/8"])
@@ -4506,18 +4631,16 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-20 15:00 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/a5c56e7c90e3096e9149b303050f9dbf87263153"><code>a5c56e7</code></a> on branch <code>main</code>, for **enlace 0.1.60** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 15:39 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/8b1ca917daa4de9e83ddcd66e4d66a9468085bbb"><code>8b1ca91</code></a> on branch <code>main</code>, for **enlace 0.1.61** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.1.60) is behind the latest release on PyPI (0.1.61): `pip install enlace` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/a5c56e7c90e3096e9149b303050f9dbf87263153"><code>a5c56e7c90e3096e9149b303050f9dbf87263153</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/8b1ca917daa4de9e83ddcd66e4d66a9468085bbb"><code>8b1ca917daa4de9e83ddcd66e4d66a9468085bbb</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -4528,9 +4651,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39444187342">39444187342</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39450119061">39450119061</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>a5c56e7c90e3096e9149b303050f9dbf87263153</code> (in the history of the built commit) |
+| Event commit | <code>8b1ca917daa4de9e83ddcd66e4d66a9468085bbb</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -4555,13 +4678,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.61/">0.1.61</a>, newer than the documented version (0.1.60).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.61/">0.1.61</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout a5c56e7c90e3096e9149b303050f9dbf87263153
+git checkout 8b1ca917daa4de9e83ddcd66e4d66a9468085bbb
 pip install "epythet==0.2.21"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
