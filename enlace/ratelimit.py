@@ -18,9 +18,22 @@ trusted hops, so a client cannot spoof it by sending the header itself. With no
 already the client when the server itself resolves proxy headers, as uvicorn does
 for a loopback proxy by default). IPv6 clients share a bucket per /64.
 
+**What is matched.** The request path is normalised first (``//``, ``.`` and
+``..`` collapsed, as an upstream would resolve them), so a rule cannot be
+sidestepped with ``/a/../attempts``. A ``GET`` rule also covers ``HEAD``. CORS
+preflights (``OPTIONS`` with ``Access-Control-Request-Method``) are never counted.
+A websocket handshake is matched as ``GET`` and refused with close code 1008.
+
 **Scope of the guarantee.** Buckets are in memory, per process: a host running N
-worker processes allows up to N times the declared rate. That bounds abuse; it is
-not an exact quota. The limiter is a seam (``make_limiter``) for a shared one.
+worker processes allows up to N times the declared rate. Each rule tracks at most
+``max_keys`` clients and evicts the least recently seen, and an evicted bucket
+comes back full, so a client rotating through more addresses than that (e.g. many
+IPv6 /64s) is not held to the rate. It bounds abuse; it is not an exact quota. The
+limiter is a seam (``make_limiter``) for a shared one.
+
+**In production behind a proxy, set ``trusted_proxies``** unless the server
+already resolves the client from the proxy's header: otherwise every client
+shares the proxy's address, and one abusive client exhausts everyone's bucket.
 """
 
 from __future__ import annotations
@@ -29,6 +42,7 @@ import fnmatch
 import ipaddress
 import json
 import math
+import posixpath
 import re
 import threading
 import time
@@ -83,9 +97,30 @@ class RateLimitRule:
     spec: str
 
     def matches(self, method: str, path: str) -> bool:
+        """Whether a request matches; *path* should be :func:`normalize_path` ed.
+
+        >>> r = RateLimitRule("a", "GET", "/x", Rate(1, 1), "")
+        >>> r.matches("HEAD", "/x"), r.matches("POST", "/x")
+        (True, False)
+        """
         if self.method is not None and method != self.method:
-            return False
+            if not (self.method == "GET" and method == "HEAD"):
+                return False
         return fnmatch.fnmatchcase(path, self.path)
+
+
+def normalize_path(path: str) -> str:
+    """Collapse ``//``, ``.`` and ``..`` the way an upstream would resolve them.
+
+    >>> normalize_path("/api/x/foo/../attempts"), normalize_path("//api/./x//a/")
+    ('/api/x/attempts', '/api/x/a/')
+    """
+    norm = posixpath.normpath("/" + path.lstrip("/"))
+    if norm.startswith("//"):  # normpath keeps a leading double slash
+        norm = "/" + norm.lstrip("/")
+    if path.endswith("/") and norm != "/":
+        norm += "/"
+    return norm
 
 
 def parse_rate(text: str) -> Rate:
@@ -128,6 +163,16 @@ def parse_rule_key(key: str) -> tuple[str | None, str]:
         raise ValueError(f"invalid rate_limit key {key!r}: expected '[METHOD] /path'")
     if not path.startswith("/"):
         raise ValueError(f"invalid rate_limit key {key!r}: path must start with /")
+    if "%" in path:
+        # Paths are matched decoded; an encoded key could never match.
+        raise ValueError(
+            f"invalid rate_limit key {key!r}: write the path decoded, without %"
+        )
+    if normalize_path(path) != path:
+        raise ValueError(
+            f"invalid rate_limit key {key!r}: path must be normalised "
+            f"(no //, . or .. segments)"
+        )
     return method, path
 
 
@@ -170,12 +215,34 @@ def parse_networks(proxies: Iterable[str]) -> list[Network]:
     return [ipaddress.ip_network(str(p).strip(), strict=False) for p in proxies]
 
 
-def _in_networks(addr: str, networks: list[Network]) -> bool:
+def parse_address(text: str | None):
+    """An IP address from a peer or forwarded hop, or None if it is not one.
+
+    Strips a port and IPv6 brackets, and unwraps IPv4-mapped IPv6 addresses.
+
+    >>> [str(parse_address(t)) for t in ("1.2.3.4:80", "[::1]:443", "::ffff:10.0.0.1")]
+    ['1.2.3.4', '::1', '10.0.0.1']
+    >>> parse_address("unknown") is None
+    True
+    """
+    if not text:
+        return None
+    text = text.strip()
+    if text.startswith("["):
+        text = text[1:].split("]", 1)[0]
+    elif text.count(":") == 1:  # IPv4 with a port
+        text = text.split(":", 1)[0]
     try:
-        ip = ipaddress.ip_address(addr.strip())
+        ip = ipaddress.ip_address(text)
     except ValueError:
-        return False
-    return any(ip in net for net in networks)
+        return None
+    if ip.version == 6 and ip.ipv4_mapped is not None:
+        return ip.ipv4_mapped
+    return ip
+
+
+def _in_networks(ip, networks: list[Network]) -> bool:
+    return ip is not None and any(ip in net for net in networks)
 
 
 def client_address(
@@ -189,12 +256,17 @@ def client_address(
     >>> client_address("5.5.5.5", "1.2.3.4", trusted=nets)  # untrusted peer
     '5.5.5.5'
     """
-    peer = peer or "unknown"
-    if not trusted or not forwarded_for or not _in_networks(peer, trusted):
+    peer_ip = parse_address(peer)
+    peer = str(peer_ip) if peer_ip is not None else (peer or "unknown")
+    if not trusted or not forwarded_for or not _in_networks(peer_ip, trusted):
         return peer
     for hop in reversed([h.strip() for h in forwarded_for.split(",") if h.strip()]):
-        if not _in_networks(hop, trusted):
-            return hop
+        hop_ip = parse_address(hop)
+        if hop_ip is None:
+            # Not an address: the chain cannot be trusted past this point.
+            return peer
+        if not _in_networks(hop_ip, trusted):
+            return str(hop_ip)
     return peer
 
 
@@ -300,19 +372,33 @@ class RateLimitMiddleware:
         return bucket_key(address, ipv6_prefix=self.ipv6_prefix)
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or not self.rules:
+        kind = scope["type"]
+        if kind not in ("http", "websocket") or not self.rules:
             await self.app(scope, receive, send)
             return
-        method, path = scope["method"], scope["path"]
+        method = scope.get("method", "GET") if kind == "http" else "GET"
+        if method == "OPTIONS" and _is_preflight(scope):
+            await self.app(scope, receive, send)
+            return
+        path = normalize_path(scope["path"])
         matched = [(r, lim) for r, lim in self.rules if r.matches(method, path)]
         if matched:
             key = self._client_key(scope)
             for rule, limiter in matched:
                 wait = limiter.acquire(key)
                 if wait > 0:
-                    await _too_many_requests(send, wait, rule)
+                    if kind == "websocket":
+                        await send({"type": "websocket.close", "code": 1008})
+                    else:
+                        await _too_many_requests(send, wait, rule)
                     return
         await self.app(scope, receive, send)
+
+
+def _is_preflight(scope) -> bool:
+    return any(
+        name == b"access-control-request-method" for name, _ in scope.get("headers", ())
+    )
 
 
 async def _too_many_requests(send, wait: float, rule: RateLimitRule) -> None:

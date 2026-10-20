@@ -242,3 +242,92 @@ def test_app_toml_bad_rate_limit_fails_discovery(tmp_path):
     _game_app_dir(tmp_path / "apps", '[rate_limit]\n"POST /attempts" = "lots"\n')
     with pytest.raises(ValueError, match="lots"):
         discover_apps(PlatformConfig(apps_dirs=[tmp_path / "apps"]))
+
+
+# --- review findings: bypasses and edge cases --------------------------------
+
+
+def test_dot_segments_do_not_sidestep_a_rule():
+    client = TestClient(_app({"POST /attempts": "1/minute"}))
+    assert client.post("/api/game/attempts").status_code == 200
+    from enlace.ratelimit import normalize_path
+
+    for sneaky in ("/api/game/x/../attempts", "/api/game/./attempts"):
+        assert normalize_path(sneaky) == "/api/game/attempts"
+    # Starlette itself does not resolve them, so drive the middleware directly.
+    rule = next(rules_for_app("game", "/api/game", {"POST /attempts": "1/minute"}))
+    assert rule.matches("POST", normalize_path("//api/game//x/../attempts"))
+
+
+def test_head_counts_against_a_get_rule():
+    client = TestClient(_app({"GET /attempts": "1/minute"}))
+    client.head("/api/game/attempts")  # whatever the app answers, it is counted
+    assert client.get("/api/game/attempts").status_code == 429
+
+
+@pytest.mark.parametrize("key", ["POST /a%20b", "POST /a/../b", "POST //a"])
+def test_rule_keys_must_be_decoded_and_normalised(key):
+    with pytest.raises(ValueError):
+        parse_rule_key(key)
+
+
+def test_forwarded_hops_with_ports_and_mapped_peers():
+    trusted = parse_networks(["127.0.0.1"])
+    assert client_address("::ffff:127.0.0.1", "1.2.3.4", trusted=trusted) == "1.2.3.4"
+    assert client_address("127.0.0.1", "1.2.3.4:5678", trusted=trusted) == "1.2.3.4"
+    assert client_address("127.0.0.1", "[2001:db8::1]:80", trusted=trusted) == (
+        "2001:db8::1"
+    )
+    # Garbage in the chain: fall back to the peer, never a raw string key.
+    assert client_address("127.0.0.1", "not-an-ip", trusted=trusted) == "127.0.0.1"
+
+
+def _platform_with_cors(tmp_path):
+    from enlace.base import PlatformConfig
+    from enlace.compose import build_backend
+    from enlace.discover import discover_apps
+
+    _game_app_dir(
+        tmp_path / "apps", 'access = "public"\n[rate_limit]\n"/attempts" = "1/minute"\n'
+    )
+    config = discover_apps(
+        PlatformConfig(
+            apps_dirs=[tmp_path / "apps"], cors_origins=["https://ui.example.com"]
+        )
+    )
+    return TestClient(build_backend(config)), f"{config.apps[0].route_prefix}/attempts"
+
+
+def test_preflights_are_not_counted_and_429_carries_cors(tmp_path):
+    client, url = _platform_with_cors(tmp_path)
+    origin = {"origin": "https://ui.example.com"}
+    preflight = {**origin, "access-control-request-method": "POST"}
+    for _ in range(3):
+        assert client.options(url, headers=preflight).status_code == 200
+    assert client.post(url, headers=origin).status_code == 200
+    r = client.post(url, headers=origin)
+    assert r.status_code == 429
+    assert r.headers["access-control-allow-origin"] == "https://ui.example.com"
+
+
+def test_websocket_handshakes_are_limited():
+    from starlette.websockets import WebSocket, WebSocketDisconnect
+
+    inner = FastAPI()
+
+    @inner.websocket("/live")
+    async def live(ws: WebSocket):
+        await ws.accept()
+        await ws.send_text("hi")
+        await ws.close()
+
+    outer = FastAPI()
+    outer.mount("/api/game", inner)
+    rules = list(rules_for_app("game", "/api/game", {"/live": "1/minute"}))
+    client = TestClient(RateLimitMiddleware(outer, rules=rules))
+    with client.websocket_connect("/api/game/live") as ws:
+        assert ws.receive_text() == "hi"
+    with pytest.raises(WebSocketDisconnect) as exc:
+        with client.websocket_connect("/api/game/live") as ws:
+            ws.receive_text()
+    assert exc.value.code == 1008

@@ -388,7 +388,7 @@ A request over a limit gets `429 Too Many Requests` with `Retry-After`. Behind a
 trusted_proxies = ["127.0.0.1", "::1"]
 ```
 
-Without `trusted_proxies`, the ASGI peer address is used as is. Buckets live in memory per process, so N workers allow up to N times the declared rate: it bounds abuse rather than enforcing an exact quota. `enlace.ratelimit.RateLimitMiddleware(make_limiter=...)` is the seam for a shared limiter.
+Without `trusted_proxies`, the ASGI peer address is used as is: behind a proxy that is the proxy's own address (unless the server already resolves forwarded headers), so every client would share one bucket. Paths are normalised before matching, a `GET` rule also covers `HEAD`, CORS preflights are never counted, and a websocket handshake over the limit is closed with code 1008. Buckets live in memory per process, so N workers allow up to N times the declared rate: it bounds abuse rather than enforcing an exact quota. `enlace.ratelimit.RateLimitMiddleware(make_limiter=...)` is the seam for a shared limiter.
 
 ### Deploy manifest (`/_meta`)
 
