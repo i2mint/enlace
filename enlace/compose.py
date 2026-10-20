@@ -347,6 +347,13 @@ def build_backend(
     if analytics is not None:
         analytics.add_middleware(parent)
 
+    # Per-client rate limits the apps declared ([rate_limit] in app.toml).
+    # Outside auth and every body rewriter, so an over-limit request is
+    # refused before any of them does work; inside GZip only by necessity.
+    from enlace.ratelimit import add_rate_limits
+
+    add_rate_limits(parent, config)
+
     # Compress sizeable text/JSON responses. Added LAST so it is the OUTERMOST
     # middleware — it must wrap everything downstream (meta injection, sub-app
     # responses, static files) and see final bytes.

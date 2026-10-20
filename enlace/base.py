@@ -259,6 +259,10 @@ class AppConfig(BaseModel):
     # Privacy-first page-view analytics (app.toml's [analytics] table). Off
     # unless the app opts in with mode = "privacy". See enlace.analytics.
     analytics: AppAnalyticsConfig = Field(default_factory=AppAnalyticsConfig)
+    # Per-client request limits (app.toml's [rate_limit] table), keyed
+    # "[METHOD] /path" relative to route_prefix, valued "N/unit". Off unless
+    # declared. Enforced by enlace in front of the app; see enlace.ratelimit.
+    rate_limit: dict[str, str] = Field(default_factory=dict)
 
     # Set when discovery ran with ``on_import_error="record"`` and this app's
     # entry module raised on import, or when ``build_backend`` could not load
@@ -330,6 +334,13 @@ class AppConfig(BaseModel):
 
     # Static-mode fields
     public_dir: Optional[Path] = None
+
+    @field_validator("rate_limit")
+    @classmethod
+    def _validate_rate_limit(cls, v: dict[str, str]) -> dict[str, str]:
+        from enlace.ratelimit import validate_rate_limits
+
+        return validate_rate_limits(v)
 
     @model_validator(mode="after")
     def _default_display_name(self):
@@ -412,6 +423,15 @@ class PlatformConfig(BaseModel):
         ),
     )
 
+    @field_validator("trusted_proxies")
+    @classmethod
+    def _check_trusted_proxies(cls, proxies: list[str]) -> list[str]:
+        """Every entry must parse as an IP or CIDR, so a typo fails at load."""
+        from enlace.ratelimit import parse_networks
+
+        parse_networks(proxies)
+        return proxies
+
     @field_validator("cors_origins")
     @classmethod
     def _check_cors_origins(cls, origins: list[str]) -> list[str]:
@@ -470,6 +490,10 @@ class PlatformConfig(BaseModel):
     # Platform-wide analytics settings (platform.toml [analytics]): storage,
     # retention, timezone. Apps opt in individually; see enlace.analytics.
     analytics: PlatformAnalyticsConfig = Field(default_factory=PlatformAnalyticsConfig)
+    # Reverse proxies (IPs or CIDRs) whose X-Forwarded-For names the client,
+    # for per-client rate limits ([platform] trusted_proxies). Empty: the ASGI
+    # peer address is used as is. See enlace.ratelimit.
+    trusted_proxies: list[str] = Field(default_factory=list)
     foreign_tables: list[str] = Field(
         default_factory=list,
         description=(

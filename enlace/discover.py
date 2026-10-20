@@ -483,6 +483,12 @@ def _overlay_toml_fields(
         fields["analytics"] = AppAnalyticsConfig.model_validate(analytics_table)
         provenance["analytics"] = "override: app.toml [analytics]"
 
+    # [rate_limit] — "[METHOD] /path" = "N/unit"; validated by AppConfig.
+    rate_limit_table = toml_data.get("rate_limit")
+    if rate_limit_table is not None:
+        fields["rate_limit"] = rate_limit_table
+        provenance["rate_limit"] = "override: app.toml [rate_limit]"
+
     return fields, provenance
 
 
