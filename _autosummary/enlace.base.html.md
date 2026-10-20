@@ -186,7 +186,7 @@ Meta-conventions controlling how apps are discovered.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, trusted_proxies=<factory>, foreign_tables=<factory>)
+### *class* enlace.base.PlatformConfig(\*, apps_dir=None, apps_dirs=<factory>, app_dirs=<factory>, shared_assets_dir=None, manifest_dir=None, index_page=True, landing_app=None, domain='localhost', cors_origins=<factory>, backend_port=8000, app_load_failure='stub', frontend_port=3000, process_port_start=9100, socket_dir=PosixPath('/tmp/enlace'), conventions=<factory>, apps=<factory>, auth=<factory>, stores=<factory>, app_meta=<factory>, analytics=<factory>, trusted_proxies=<factory>, trust_unix_socket=False, foreign_tables=<factory>)
 
 Bases: `BaseModel`
 

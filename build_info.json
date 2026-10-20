@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-20T15:39:34Z",
+  "built_at": "2026-10-20T16:19:37Z",
   "package": {
     "name": "enlace",
-    "version": "0.1.61",
+    "version": "0.1.62",
     "display_name": "enlace",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "8b1ca917daa4de9e83ddcd66e4d66a9468085bbb",
-    "short_commit": "8b1ca91",
+    "commit": "660a6878f436afae4c3c4e144fcfef295eef4fbf",
+    "short_commit": "660a687",
     "branch": "main",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/i2mint/enlace",
-    "commit_url": "https://github.com/i2mint/enlace/commit/8b1ca917daa4de9e83ddcd66e4d66a9468085bbb",
+    "commit_url": "https://github.com/i2mint/enlace/commit/660a6878f436afae4c3c4e144fcfef295eef4fbf",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "i2mint/enlace",
-    "sha": "8b1ca917daa4de9e83ddcd66e4d66a9468085bbb",
+    "sha": "660a6878f436afae4c3c4e144fcfef295eef4fbf",
     "sha_in_history": true,
     "ref": "refs/heads/main",
     "ref_name": "main",
-    "run_id": "39450119061",
-    "run_url": "https://github.com/i2mint/enlace/actions/runs/39450119061",
+    "run_id": "39456152654",
+    "run_url": "https://github.com/i2mint/enlace/actions/runs/39456152654",
     "server_url": "https://github.com"
   },
   "tools": {
@@ -56,15 +56,15 @@
   },
   "site": {
     "modules_documented": 22,
-    "objects_documented": 312
+    "objects_documented": 315
   },
   "pypi": {
     "checked": true,
-    "latest": "0.1.61",
+    "latest": "0.1.62",
     "relation": "same",
     "error": null
   },
-  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout 8b1ca917daa4de9e83ddcd66e4d66a9468085bbb\npip install \"epythet==0.2.21\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/i2mint/enlace && cd enlace\ngit checkout 660a6878f436afae4c3c4e144fcfef295eef4fbf\npip install \"epythet==0.2.21\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
     "aligned": true,

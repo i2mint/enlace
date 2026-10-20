@@ -279,7 +279,10 @@
 <span class="sd">trusted hops, so a client cannot spoof it by sending the header itself. With no</span>
 <span class="sd">``trusted_proxies`` the peer address in the ASGI scope is used as is (which is</span>
 <span class="sd">already the client when the server itself resolves proxy headers, as uvicorn does</span>
-<span class="sd">for a loopback proxy by default). IPv6 clients share a bucket per /64.</span>
+<span class="sd">for a loopback proxy by default). IPv6 clients share a bucket per /64. Behind a</span>
+<span class="sd">proxy on a unix socket (``uvicorn --uds``) there is no peer address at all: pass</span>
+<span class="sd">``trust_unix_socket=True`` (platform.toml ``[platform] trust_unix_socket = true``)</span>
+<span class="sd">so the proxy's header is read; otherwise every client shares one "unknown" bucket.</span>
 
 <span class="sd">**What is matched.** The request path is normalised first (``//``, ``.`` and</span>
 <span class="sd">``..`` collapsed, as an upstream would resolve them), so a rule cannot be</span>
@@ -289,10 +292,13 @@
 
 <span class="sd">**Scope of the guarantee.** Buckets are in memory, per process: a host running N</span>
 <span class="sd">worker processes allows up to N times the declared rate. Each rule tracks at most</span>
-<span class="sd">``max_keys`` clients and evicts the least recently seen, and an evicted bucket</span>
-<span class="sd">comes back full, so a client rotating through more addresses than that (e.g. many</span>
-<span class="sd">IPv6 /64s) is not held to the rate. It bounds abuse; it is not an exact quota. The</span>
-<span class="sd">limiter is a seam (``make_limiter``) for a shared one.</span>
+<span class="sd">``max_keys`` clients. When full, idle buckets (full again, or with no hit left in</span>
+<span class="sd">the window) are dropped first, since they carry no information; only then is the</span>
+<span class="sd">least recently seen evicted (``on_overflow="evict"``, the default, warned once),</span>
+<span class="sd">and an evicted bucket comes back full, so a client rotating through more addresses</span>
+<span class="sd">than that (e.g. many IPv6 /64s) is not held to the rate. ``on_overflow="deny"``</span>
+<span class="sd">refuses new clients instead (fail closed). It bounds abuse; it is not an exact</span>
+<span class="sd">quota. The limiter is a seam (``make_limiter``) for a shared one.</span>
 
 <span class="sd">**In production behind a proxy, set ``trusted_proxies``** unless the server</span>
 <span class="sd">already resolves the client from the proxy's header: otherwise every client</span>
@@ -316,6 +322,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">fnmatch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">ipaddress</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -347,6 +354,15 @@
 <span class="c1">#: Client buckets one rule tracks before evicting the least recently seen, so a</span>
 <span class="c1">#: flood of distinct (spoofed or rotating) clients cannot exhaust memory.</span>
 <span class="n">DEFAULT_MAX_KEYS</span> <span class="o">=</span> <span class="mi">100_000</span>
+<span class="c1">#: What an in-memory limiter does with a new key when every tracked one is busy:</span>
+<span class="c1">#: ``"evict"`` the least recently seen (fail open), or ``"deny"`` the new key.</span>
+<span class="n">OVERFLOW_POLICIES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"evict"</span><span class="p">,</span> <span class="s2">"deny"</span><span class="p">)</span>
+<span class="c1">#: A full in-memory limiter looks for idle keys at most this often (one O(max_keys)</span>
+<span class="c1">#: sweep), so a flood of new keys cannot make every request pay for a sweep.</span>
+<span class="n">DEFAULT_MIN_SWEEP_SECONDS</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="c1">#: What the Redis limiter does while Redis is failing: ask its ``fallback``, or</span>
+<span class="c1">#: refuse (``"deny"``, fail closed) or admit (``"allow"``, fail open) every request.</span>
+<span class="n">REDIS_ERROR_POLICIES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"fallback"</span><span class="p">,</span> <span class="s2">"deny"</span><span class="p">,</span> <span class="s2">"allow"</span><span class="p">)</span>
 <span class="c1">#: IPv6 clients are grouped by this prefix: one host usually owns a whole /64.</span>
 <span class="n">DEFAULT_IPV6_PREFIX</span> <span class="o">=</span> <span class="mi">64</span>
 <span class="c1">#: Connect/read timeout of the Redis limiter: a hung Redis costs at most this long.</span>
@@ -601,19 +617,30 @@
 <div class="viewcode-block" id="client_address">
 <a class="viewcode-back" href="../../_autosummary/enlace.ratelimit.html#enlace.ratelimit.client_address">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">client_address</span><span class="p">(</span>
-    <span class="n">peer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">forwarded_for</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">trusted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Network</span><span class="p">]</span>
+    <span class="n">peer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">forwarded_for</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">trusted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Network</span><span class="p">],</span>
+    <span class="n">trust_unix_socket</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The client address: ``X-Forwarded-For`` only via a trusted peer, right to left.</span>
+
+<span class="sd">    A missing peer (``None``: a unix-socket connection) is trusted only with</span>
+<span class="sd">    ``trust_unix_socket``, for a proxy that reaches the server over a socket.</span>
 
 <span class="sd">    &gt;&gt;&gt; nets = parse_networks(["127.0.0.1"])</span>
 <span class="sd">    &gt;&gt;&gt; client_address("127.0.0.1", "6.6.6.6, 1.2.3.4", trusted=nets)</span>
 <span class="sd">    '1.2.3.4'</span>
 <span class="sd">    &gt;&gt;&gt; client_address("5.5.5.5", "1.2.3.4", trusted=nets)  # untrusted peer</span>
 <span class="sd">    '5.5.5.5'</span>
+<span class="sd">    &gt;&gt;&gt; client_address(None, "1.2.3.4", trusted=[]), client_address(</span>
+<span class="sd">    ...     None, "1.2.3.4", trusted=[], trust_unix_socket=True)</span>
+<span class="sd">    ('unknown', '1.2.3.4')</span>
 <span class="sd">    """</span>
     <span class="n">peer_ip</span> <span class="o">=</span> <span class="n">parse_address</span><span class="p">(</span><span class="n">peer</span><span class="p">)</span>
+    <span class="n">peer_trusted</span> <span class="o">=</span> <span class="n">_in_networks</span><span class="p">(</span><span class="n">peer_ip</span><span class="p">,</span> <span class="n">trusted</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">peer</span> <span class="ow">and</span> <span class="n">trust_unix_socket</span><span class="p">)</span>
     <span class="n">peer</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">peer_ip</span><span class="p">)</span> <span class="k">if</span> <span class="n">peer_ip</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">peer</span> <span class="ow">or</span> <span class="s2">"unknown"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">trusted</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">forwarded_for</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_in_networks</span><span class="p">(</span><span class="n">peer_ip</span><span class="p">,</span> <span class="n">trusted</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">forwarded_for</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">peer_trusted</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">peer</span>
     <span class="k">for</span> <span class="n">hop</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">([</span><span class="n">h</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">forwarded_for</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">strip</span><span class="p">()]):</span>
         <span class="n">hop_ip</span> <span class="o">=</span> <span class="n">parse_address</span><span class="p">(</span><span class="n">hop</span><span class="p">)</span>
@@ -666,14 +693,94 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">_BoundedKeys</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The key bound of the in-memory limiters: idle keys go first, then the policy.</span>
+
+<span class="sd">    A subclass keeps its per-key state in an ``OrderedDict`` (least recently seen</span>
+<span class="sd">    first) and says, with :meth:`_idle_in`, how long until a key's state carries no</span>
+<span class="sd">    information (a full bucket, an empty window).</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">max_keys</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max_keys must be at least 1, got </span><span class="si">{</span><span class="n">max_keys</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">on_overflow</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">OVERFLOW_POLICIES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"on_overflow must be one of </span><span class="si">{</span><span class="n">OVERFLOW_POLICIES</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">on_overflow</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span> <span class="o">=</span> <span class="n">max_keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_overflow</span> <span class="o">=</span> <span class="n">on_overflow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_sweep_seconds</span> <span class="o">=</span> <span class="n">min_sweep_seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_warned_eviction</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_idle_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># pragma: no cover - abstract</span>
+<span class="w">        </span><span class="sd">"""Seconds until *entry* is idle (``&lt;= 0``: idle now)."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_room</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Room for one new key: 0 if it may be added, else the seconds to refuse it.</span>
+
+<span class="sd">        Drops idle keys (one sweep at most every ``min_sweep_seconds``, and none</span>
+<span class="sd">        before the first key could have gone idle). With no idle key, ``"evict"``</span>
+<span class="sd">        admits it (the caller trims the least recently seen) and ``"deny"`` refuses.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span><span class="p">:</span>
+            <span class="n">soonest</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">entries</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">idle_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_in</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">idle_in</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">entries</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">soonest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">soonest</span><span class="p">,</span> <span class="n">idle_in</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="n">soonest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_sweep_seconds</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_overflow</span> <span class="o">==</span> <span class="s2">"deny"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">-</span> <span class="n">now</span>  <span class="c1"># &gt; 0: when a key may next go idle</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_admitted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A new key was stored: it may go idle before the remembered sweep horizon."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span><span class="p">,</span> <span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_in</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Evict the least recently seen keys beyond ``max_keys`` (warned once)."""</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_warned_eviction</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_warned_eviction</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"</span><span class="si">%s</span><span class="s2"> full (</span><span class="si">%d</span><span class="s2"> keys, none idle): evicting the least recently seen, "</span>
+                <span class="s2">"whose limits restart. Raise max_keys, or pass on_overflow='deny' "</span>
+                <span class="s2">"to refuse new clients instead."</span><span class="p">,</span>
+                <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
+            <span class="n">entries</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="TokenBucketLimiter">
 <a class="viewcode-back" href="../../_autosummary/enlace.ratelimit.html#enlace.ratelimit.TokenBucketLimiter">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">TokenBucketLimiter</span><span class="p">(</span><span class="n">_AllowMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TokenBucketLimiter</span><span class="p">(</span><span class="n">_BoundedKeys</span><span class="p">,</span> <span class="n">_AllowMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""In-memory token buckets, one per key, bounded in number (LRU eviction).</span>
 
 <span class="sd">    A bucket holds up to ``rate.limit`` tokens and refills continuously at</span>
 <span class="sd">    ``limit / window`` per second, so bursts up to the limit pass and the</span>
-<span class="sd">    sustained rate is the declared one.</span>
+<span class="sd">    sustained rate is the declared one. At ``max_keys`` keys, full buckets are</span>
+<span class="sd">    dropped first, then ``on_overflow`` decides (see :class:`_BoundedKeys`).</span>
+
+<span class="sd">    &gt;&gt;&gt; now = [0.0]</span>
+<span class="sd">    &gt;&gt;&gt; lim = TokenBucketLimiter(Rate(1, 10), max_keys=1, on_overflow="deny",</span>
+<span class="sd">    ...     clock=lambda: now[0])</span>
+<span class="sd">    &gt;&gt;&gt; lim.acquire("a"), lim.acquire("b")  # "a" is busy: the new "b" is refused</span>
+<span class="sd">    (0.0, 10.0)</span>
+<span class="sd">    &gt;&gt;&gt; now[0] = 10.0  # "a" is full again: idle, so it makes room</span>
+<span class="sd">    &gt;&gt;&gt; lim.allow("b")</span>
+<span class="sd">    True</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -681,21 +788,30 @@
         <span class="n">rate</span><span class="p">:</span> <span class="n">Rate</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_KEYS</span><span class="p">,</span>
+        <span class="n">on_overflow</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"evict"</span><span class="p">,</span>
+        <span class="n">min_sweep_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_MIN_SWEEP_SECONDS</span><span class="p">,</span>
         <span class="n">clock</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">if</span> <span class="n">max_keys</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max_keys must be at least 1, got </span><span class="si">{</span><span class="n">max_keys</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_bound</span><span class="p">(</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="n">rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rate</span><span class="o">.</span><span class="n">limit</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">refill_per_second</span> <span class="o">=</span> <span class="n">rate</span><span class="o">.</span><span class="n">limit</span> <span class="o">/</span> <span class="n">rate</span><span class="o">.</span><span class="n">window</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span> <span class="o">=</span> <span class="n">max_keys</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clock</span> <span class="o">=</span> <span class="n">clock</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_idle_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">tokens</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="n">entry</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity</span> <span class="o">-</span> <span class="n">tokens</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">refill_per_second</span> <span class="o">-</span> <span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">last</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clock</span><span class="p">()</span>
+            <span class="n">new</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span>
+            <span class="k">if</span> <span class="n">new</span><span class="p">:</span>
+                <span class="n">refused</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_room</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">refused</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">refused</span>
             <span class="n">tokens</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity</span><span class="p">,</span> <span class="n">now</span><span class="p">))</span>
             <span class="n">tokens</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">capacity</span><span class="p">,</span> <span class="n">tokens</span> <span class="o">+</span> <span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">last</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">refill_per_second</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">tokens</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
@@ -703,24 +819,26 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">wait</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">tokens</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">refill_per_second</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
-            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_admitted</span><span class="p">((</span><span class="n">tokens</span><span class="p">,</span> <span class="n">now</span><span class="p">),</span> <span class="n">now</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_trim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_buckets</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">wait</span></div>
 
 
 
 <div class="viewcode-block" id="SlidingWindowLimiter">
 <a class="viewcode-back" href="../../_autosummary/enlace.ratelimit.html#enlace.ratelimit.SlidingWindowLimiter">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SlidingWindowLimiter</span><span class="p">(</span><span class="n">_AllowMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SlidingWindowLimiter</span><span class="p">(</span><span class="n">_BoundedKeys</span><span class="p">,</span> <span class="n">_AllowMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""In-memory sliding window: at most ``rate.limit`` requests in any ``window``.</span>
 
 <span class="sd">    Unlike :class:`TokenBucketLimiter` there is no refill between hits: a client</span>
 <span class="sd">    that spent its budget waits until its oldest hit leaves the window. Per process</span>
 <span class="sd">    (N workers allow N times the rate); the number of tracked keys is bounded</span>
-<span class="sd">    (``max_keys``, least recently seen evicted) so a flood of distinct keys cannot</span>
-<span class="sd">    exhaust memory. Each key keeps up to ``rate.limit`` timestamps, so memory is</span>
-<span class="sd">    bounded by ``max_keys * rate.limit``: prefer :class:`TokenBucketLimiter` (one</span>
-<span class="sd">    pair of floats per key) for large limits.</span>
+<span class="sd">    (``max_keys``: keys with no hit left in the window go first, then</span>
+<span class="sd">    ``on_overflow`` decides) so a flood of distinct keys cannot exhaust memory.</span>
+<span class="sd">    Each key keeps up to ``rate.limit`` timestamps, so memory is bounded by</span>
+<span class="sd">    ``max_keys * rate.limit``: prefer :class:`TokenBucketLimiter` (one pair of</span>
+<span class="sd">    floats per key) for large limits.</span>
 
 <span class="sd">    &gt;&gt;&gt; now = [0.0]</span>
 <span class="sd">    &gt;&gt;&gt; lim = SlidingWindowLimiter(Rate(1, 10), clock=lambda: now[0])</span>
@@ -736,24 +854,29 @@
         <span class="n">rate</span><span class="p">:</span> <span class="n">Rate</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_KEYS</span><span class="p">,</span>
+        <span class="n">on_overflow</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"evict"</span><span class="p">,</span>
+        <span class="n">min_sweep_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_MIN_SWEEP_SECONDS</span><span class="p">,</span>
         <span class="n">clock</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">if</span> <span class="n">max_keys</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max_keys must be at least 1, got </span><span class="si">{</span><span class="n">max_keys</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_bound</span><span class="p">(</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="n">rate</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span> <span class="o">=</span> <span class="n">max_keys</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clock</span> <span class="o">=</span> <span class="n">clock</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">deque</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>  <span class="c1"># callers may run in a threadpool</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_idle_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">entry</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">window</span> <span class="o">-</span> <span class="n">now</span> <span class="k">if</span> <span class="n">entry</span> <span class="k">else</span> <span class="mf">0.0</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">acquire</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clock</span><span class="p">()</span>
             <span class="n">hits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">hits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">refused</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_room</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">refused</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">refused</span>
                 <span class="n">hits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
-                <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_trim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="n">cutoff</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">window</span>
@@ -772,14 +895,18 @@
 <span class="w">    </span><span class="sd">"""Fixed window in Redis: one count per key per window, shared by every worker.</span>
 
 <span class="sd">    ``client`` is any redis-py compatible client (injected; tests use a fake), or</span>
-<span class="sd">    build one with :meth:`from_url`. When Redis errors, the request is decided by</span>
-<span class="sd">    ``fallback`` (a per-process in-memory limiter by default), so an outage</span>
-<span class="sd">    degrades protection instead of either refusing everything or lifting the limit.</span>
+<span class="sd">    build one with :meth:`from_url`; an asyncio client is refused up front (the</span>
+<span class="sd">    limiter's calls are synchronous). When Redis errors, ``on_error`` decides:</span>
+<span class="sd">    ``"fallback"`` (the default) asks ``fallback`` (a per-process in-memory limiter</span>
+<span class="sd">    by default), so an outage degrades protection instead of either refusing</span>
+<span class="sd">    everything or lifting the limit; ``"deny"`` refuses every request (fail closed,</span>
+<span class="sd">    for a public endpoint that would rather refuse than allow N workers times the</span>
+<span class="sd">    rate) and ``"allow"`` admits every one (fail open).</span>
 
 <span class="sd">    A fixed window admits up to twice ``rate.limit`` across a window boundary; the</span>
 <span class="sd">    price of one round trip and one counter per key. Keys go into Redis as given,</span>
 <span class="sd">    so they must come from a bounded set (client bucket keys, rule ids), never raw</span>
-<span class="sd">    client input. After an error the fallback alone decides for</span>
+<span class="sd">    client input. After an error ``on_error`` alone decides for</span>
 <span class="sd">    ``retry_seconds`` (one warning per outage), so a hung Redis costs one</span>
 <span class="sd">    ``socket_timeout`` per interval rather than one per request. ``max_keys`` sizes</span>
 <span class="sd">    the default fallback only.</span>
@@ -802,8 +929,21 @@
         <span class="n">fallback</span><span class="p">:</span> <span class="n">Limiter</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_KEYS</span><span class="p">,</span>
         <span class="n">retry_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_REDIS_RETRY_SECONDS</span><span class="p">,</span>
+        <span class="n">on_error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"fallback"</span><span class="p">,</span>
         <span class="n">clock</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
     <span class="p">):</span>
+        <span class="k">if</span> <span class="n">_is_async_redis_client</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> needs a synchronous redis client "</span>
+                <span class="sa">f</span><span class="s2">"(redis.Redis), got the asyncio </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">."</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: its calls would never be awaited, so "</span>
+                <span class="sa">f</span><span class="s2">"every request would silently use the fallback."</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">on_error</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">REDIS_ERROR_POLICIES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"on_error must be one of </span><span class="si">{</span><span class="n">REDIS_ERROR_POLICIES</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">on_error</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_error</span> <span class="o">=</span> <span class="n">on_error</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="n">rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span> <span class="o">=</span> <span class="n">namespace</span>
@@ -856,7 +996,7 @@
         <span class="n">now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clock</span><span class="p">()</span>
         <span class="n">down_until</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_down_until</span>
         <span class="k">if</span> <span class="n">down_until</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">now</span> <span class="o">&lt;</span> <span class="n">down_until</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_while_down</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
         <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">now</span> <span class="o">//</span> <span class="n">window</span><span class="p">)</span>
         <span class="n">redis_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">redis_key</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
@@ -867,21 +1007,46 @@
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 - any client/network failure</span>
             <span class="k">if</span> <span class="n">down_until</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">"Redis rate limiter unavailable; using the fallback limiter "</span>
-                    <span class="s2">"for </span><span class="si">%s</span><span class="s2">s at a time"</span><span class="p">,</span>
+                    <span class="s2">"Redis rate limiter unavailable; </span><span class="si">%s</span><span class="s2"> for </span><span class="si">%s</span><span class="s2">s at a time"</span><span class="p">,</span>
+                    <span class="n">_ON_ERROR_WORDING</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">on_error</span><span class="p">],</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">retry_seconds</span><span class="p">,</span>
                     <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_down_until</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">retry_seconds</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_while_down</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">down_until</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Redis rate limiter reachable again"</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_down_until</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">count</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">limit</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
         <span class="n">wait</span> <span class="o">=</span> <span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">window</span> <span class="o">-</span> <span class="n">now</span>  <span class="c1"># until the next window opens</span>
-        <span class="k">return</span> <span class="n">wait</span> <span class="k">if</span> <span class="n">wait</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">window</span>  <span class="c1"># guard float rounding at a boundary</span></div>
+        <span class="k">return</span> <span class="n">wait</span> <span class="k">if</span> <span class="n">wait</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">window</span>  <span class="c1"># guard float rounding at a boundary</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_while_down</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Decide a request while Redis is failing, per ``on_error``."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_error</span> <span class="o">==</span> <span class="s2">"fallback"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fallback</span><span class="o">.</span><span class="n">acquire</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_error</span> <span class="o">==</span> <span class="s2">"allow"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="n">wait</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_down_until</span> <span class="o">-</span> <span class="n">now</span>  <span class="c1"># "deny": until Redis is tried again</span>
+        <span class="k">return</span> <span class="n">wait</span> <span class="k">if</span> <span class="n">wait</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">window</span></div>
+
+
+
+<span class="c1">#: How the outage warning says what :class:`RedisLimiter` does meanwhile.</span>
+<span class="n">_ON_ERROR_WORDING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"fallback"</span><span class="p">:</span> <span class="s2">"using the fallback limiter"</span><span class="p">,</span>
+    <span class="s2">"deny"</span><span class="p">:</span> <span class="s2">"refusing every request"</span><span class="p">,</span>
+    <span class="s2">"allow"</span><span class="p">:</span> <span class="s2">"admitting every request"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_is_async_redis_client</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether *client* is an asyncio redis client (``redis.asyncio.Redis`` and kin)."""</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">client</span><span class="p">)</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">or</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="n">module</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"redis.asyncio"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">inspect</span><span class="o">.</span><span class="n">iscoroutinefunction</span><span class="p">(</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="s2">"execute_command"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># --------------------------------------------------------------------- middleware</span>
@@ -894,6 +1059,10 @@
 
 <span class="sd">    Every rule a request matches is charged (a request may count against a</span>
 <span class="sd">    narrow and a broad rule); the first one exhausted answers 429.</span>
+
+<span class="sd">    ``trust_unix_socket`` trusts a connection with no peer address (a proxy on a</span>
+<span class="sd">    unix socket) to name the client in ``X-Forwarded-For``; anything that can</span>
+<span class="sd">    reach the socket can then pick its own address, so only the proxy should.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -904,10 +1073,18 @@
         <span class="n">trusted_proxies</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="n">Network</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
         <span class="n">make_limiter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Rate</span><span class="p">],</span> <span class="n">Limiter</span><span class="p">]</span> <span class="o">=</span> <span class="n">TokenBucketLimiter</span><span class="p">,</span>
         <span class="n">ipv6_prefix</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_IPV6_PREFIX</span><span class="p">,</span>
+        <span class="n">trust_unix_socket</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="n">app</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rules</span> <span class="o">=</span> <span class="p">[(</span><span class="n">rule</span><span class="p">,</span> <span class="n">make_limiter</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">rate</span><span class="p">))</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">trusted</span> <span class="o">=</span> <span class="n">parse_networks</span><span class="p">(</span><span class="n">trusted_proxies</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trust_unix_socket</span> <span class="o">=</span> <span class="n">trust_unix_socket</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_warned_no_peer</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">trust_unix_socket</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">rules</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Rate limits trust X-Forwarded-For on connections with no peer "</span>
+                <span class="s2">"address (unix sockets): make sure only the proxy can reach the socket."</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">ipv6_prefix</span> <span class="o">&lt;=</span> <span class="mi">128</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ipv6_prefix must be within 0..128, got </span><span class="si">{</span><span class="n">ipv6_prefix</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ipv6_prefix</span> <span class="o">=</span> <span class="n">ipv6_prefix</span>
@@ -921,7 +1098,19 @@
                 <span class="c1"># Several headers are one comma-joined list (RFC 9110 §5.3).</span>
                 <span class="n">text</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"latin-1"</span><span class="p">)</span>
                 <span class="n">forwarded</span> <span class="o">=</span> <span class="n">text</span> <span class="k">if</span> <span class="n">forwarded</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">forwarded</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span>
-        <span class="n">address</span> <span class="o">=</span> <span class="n">client_address</span><span class="p">(</span><span class="n">peer</span><span class="p">,</span> <span class="n">forwarded</span><span class="p">,</span> <span class="n">trusted</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">trusted</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">peer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trust_unix_socket</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_warned_no_peer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_warned_no_peer</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Rate-limited request with no peer address (a unix socket?): every "</span>
+                <span class="s2">"such client shares one 'unknown' bucket. Behind a proxy on a unix "</span>
+                <span class="s2">"socket, set [platform] trust_unix_socket = true."</span>
+            <span class="p">)</span>
+        <span class="n">address</span> <span class="o">=</span> <span class="n">client_address</span><span class="p">(</span>
+            <span class="n">peer</span><span class="p">,</span>
+            <span class="n">forwarded</span><span class="p">,</span>
+            <span class="n">trusted</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">trusted</span><span class="p">,</span>
+            <span class="n">trust_unix_socket</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">trust_unix_socket</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">bucket_key</span><span class="p">(</span><span class="n">address</span><span class="p">,</span> <span class="n">ipv6_prefix</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ipv6_prefix</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">receive</span><span class="p">,</span> <span class="n">send</span><span class="p">):</span>
@@ -993,7 +1182,10 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">rules</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
-        <span class="n">RateLimitMiddleware</span><span class="p">,</span> <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span> <span class="n">trusted_proxies</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">trusted_proxies</span>
+        <span class="n">RateLimitMiddleware</span><span class="p">,</span>
+        <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
+        <span class="n">trusted_proxies</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">trusted_proxies</span><span class="p">,</span>
+        <span class="n">trust_unix_socket</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">trust_unix_socket</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="kc">True</span></div>
 
@@ -1025,7 +1217,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=58a49d66"></script>
+</div><script src="../../_static/documentation_options.js?v=7815078d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -806,6 +806,10 @@
     <span class="c1"># for per-client rate limits ([platform] trusted_proxies). Empty: the ASGI</span>
     <span class="c1"># peer address is used as is. See enlace.ratelimit.</span>
     <span class="n">trusted_proxies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="c1"># Trust X-Forwarded-For on connections with no peer address: a proxy that</span>
+    <span class="c1"># reaches the gateway over a unix socket (uvicorn --uds). Off: such clients</span>
+    <span class="c1"># share one "unknown" bucket. See enlace.ratelimit.</span>
+    <span class="n">trust_unix_socket</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">foreign_tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
@@ -1030,7 +1034,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=58a49d66"></script>
+</div><script src="../../_static/documentation_options.js?v=7815078d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
