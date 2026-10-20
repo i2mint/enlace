@@ -171,6 +171,13 @@ def build_backend(
         lifespan=cascade_lifespan,
     )
 
+    # Per-client rate limits the apps declared ([rate_limit] in app.toml).
+    # Added before CORS so CORS wraps it: a cross-origin caller can read the
+    # 429 and its Retry-After. Preflights are never counted (enlace.ratelimit).
+    from enlace.ratelimit import add_rate_limits
+
+    add_rate_limits(parent, config)
+
     # CORS on the parent only — sub-apps must NOT add their own CORS
     _add_cors(parent, config.cors_origins)
 
