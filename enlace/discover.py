@@ -136,7 +136,8 @@ class ConventionDiscoverer:
         frontend_override = toml_data.get("frontend_dir") if toml_data else None
         frontend_dir = self._find_frontend_dir(app_dir, override=frontend_override)
 
-        if entry_path is None and frontend_dir is None:
+        has_page = "page_from_package" in toml_data
+        if entry_path is None and frontend_dir is None and not has_page:
             return None  # Not an app directory
 
         provenance: dict[str, str] = {}
@@ -154,7 +155,11 @@ class ConventionDiscoverer:
         else:
             app_type = "frontend_only"
             entry_path = None
-            provenance["app_type"] = "convention: no backend entry, has frontend"
+            provenance["app_type"] = (
+                "convention: no backend entry, has frontend"
+                if frontend_dir is not None
+                else "convention: no backend entry, page_from_package"
+            )
 
         provenance["source_dir"] = str(apps_dir)
 
@@ -482,6 +487,14 @@ def _overlay_toml_fields(
 
         fields["analytics"] = AppAnalyticsConfig.model_validate(analytics_table)
         provenance["analytics"] = "override: app.toml [analytics]"
+
+    # page_from_package — a package name, or a table; strict, like [analytics].
+    page = toml_data.get("page_from_package")
+    if page is not None:
+        from enlace.package_page import PackagePageConfig
+
+        fields["page_from_package"] = PackagePageConfig.model_validate(page)
+        provenance["page_from_package"] = "override: app.toml"
 
     # [rate_limit] — "[METHOD] /path" = "N/unit"; validated by AppConfig.
     rate_limit_table = toml_data.get("rate_limit")

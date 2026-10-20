@@ -458,9 +458,7 @@ def run_doctor(
             apps = [a for a in apps if a.name in wanted]
 
         for app in apps:
-            has_frontend = bool(app.frontend_dir and app.frontend_dir.is_dir()) or (
-                app.mode == "static"
-            )
+            has_frontend = app.has_frontend or app.mode == "static"
             if has_frontend:
                 report.checks.append(_check_frontend_mount(base_url, app.name, timeout))
             if app.app_type != "frontend_only" and app.mode != "static":

@@ -34,6 +34,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route
 
 from enlace.base import AppConfig, PlatformConfig
+from enlace.degraded import UnavailableApp
 from enlace.discover import discover_apps, forget_partial_imports
 from enlace.frontend import (
     LandingWithUnknownApp404,
@@ -52,6 +53,7 @@ from enlace.manifest import (
     load_platform_manifest,
     resolve_manifest_dir,
 )
+from enlace.package_page import PackagePage, resolve_package_page
 from enlace.util import url_path
 
 _logger = logging.getLogger("enlace")
@@ -119,8 +121,14 @@ def build_backend(
     from enlace.degraded import load_or_stub
     from enlace.strategies import get_strategy
 
+    # Pages shipped by a package (app.toml ``page_from_package``), by app name.
+    # Resolved before the app loads: a page that cannot load stubs the app.
+    pages: dict[str, PackagePage] = {}
     for app_config in config.apps:
         strategy = get_strategy(app_config.mode)
+        page = _load_package_page(app_config, config)
+        if page is not None:
+            pages[app_config.name] = page
         sub_app = load_or_stub(strategy, app_config, config)
         if sub_app is not None:
             sub_apps.append((app_config.route_prefix, app_config.name, sub_app))
@@ -252,12 +260,38 @@ def build_backend(
             f"{sorted(a.name for a in config.apps)}"
         )
 
+    landing = next((a for a in config.apps if a.name == landing_app_name), None)
+    if landing is not None and landing.page_from_package is not None:
+        raise EnlaceConfigError(
+            f"platform.landing_app = {landing_app_name!r}, an app with "
+            "page_from_package; a package page cannot be served at / yet. "
+            "Serve it at its own URL, or give the landing app a frontend_dir."
+        )
+
     if config.index_page and not landing_app_name:
         _add_index_route(parent, config)
 
-    for prefix, app_id, sub_app in sub_apps:
+    app_mounts = {
+        app_id: (prefix, _AppIdInjector(sub_app, app_id))
+        for prefix, app_id, sub_app in sub_apps
+    }
+
+    # A package page's files, at {route_prefix}/ui/. Mounted before the apps
+    # so they answer first; what they don't serve (a missing file, a POST, a
+    # websocket) falls through to the app, so its own /ui routes still work.
+    for app_config in config.apps:
+        page = pages.get(app_config.name)
+        if page is not None:
+            prefix = app_config.route_prefix.rstrip("/")
+            app_mount = app_mounts.get(app_config.name)
+            fallback = app_mount[1] if app_mount is not None else None
+            parent.mount(
+                f"{prefix}/{page.assets_route}", page.assets_app(fallback=fallback)
+            )
+
+    for prefix, injector in app_mounts.values():
         _add_trailing_slash_redirect(parent, prefix)
-        parent.mount(prefix, _AppIdInjector(sub_app, app_id))
+        parent.mount(prefix, injector)
 
     # Serve frontend static files for apps that have a frontend/ directory.
     # Mounted at /{app_name}/ so the frontend is accessible alongside the API.
@@ -266,6 +300,20 @@ def build_backend(
     # The landing_app (if any) is mounted LAST at / so it catches the root.
     landing_app_config: Optional[AppConfig] = None
     for app_config in config.apps:
+        if app_config.page_from_package is not None:
+            # The package's shell, at every path under /{name}/ (client-side
+            # routing). It replaces a frontend_dir, e.g. a committed copy of
+            # the shell. An app whose page failed to load answers 500 here too.
+            page_prefix = f"/{app_config.name}"
+            page = pages.get(app_config.name)
+            page_app = (
+                page.shell_app()
+                if page is not None
+                else UnavailableApp(app_config.name, _failure_type(app_config))
+            )
+            _add_trailing_slash_redirect(parent, page_prefix)
+            parent.mount(page_prefix, page_app)
+            continue
         if (
             app_config.mode != "static"
             and app_config.frontend_dir
@@ -737,7 +785,7 @@ def _app_launch(app: AppConfig) -> tuple[bool, Optional[str]]:
     """
     if app.import_error is not None:
         return False, None
-    has_frontend = bool(app.frontend_dir and app.frontend_dir.is_dir())
+    has_frontend = app.has_frontend
     if app.launchable is not None:
         launchable = app.launchable
     elif app.mode == "external":
@@ -819,7 +867,7 @@ def build_launcher_item(app: AppConfig, config: PlatformConfig, overlay: dict) -
         # The configured route as an identifier (not a link), so left decoded.
         "api_route": app.route_prefix,
         "access": app.access,
-        "has_frontend": bool(app.frontend_dir and app.frontend_dir.is_dir()),
+        "has_frontend": app.has_frontend,
         "has_api": app.app_type != "frontend_only",
         "launchable": launchable,
         "launch_url": launch_url,
@@ -1000,7 +1048,7 @@ def _add_index_route(parent: FastAPI, config: PlatformConfig) -> None:
         ]
         items = []
         for app in apps:
-            has_frontend = app.frontend_dir and app.frontend_dir.is_dir()
+            has_frontend = app.has_frontend
             has_api = app.app_type != "frontend_only"
             links = []
             if has_frontend:
@@ -1046,6 +1094,38 @@ class _AppIdInjector:
             state = scope.setdefault("state", {})
             state["app_id"] = self.app_id
         await self.app(scope, receive, send)
+
+
+def _load_package_page(
+    app: AppConfig, platform: PlatformConfig
+) -> Optional[PackagePage]:
+    """``app``'s package page, or ``None``: no page, or one that failed (recorded).
+
+    The shell names the app's API at its route prefix and the page at
+    ``/{name}``, where :func:`build_backend` mounts it. A failure is a load
+    failure of the app: recorded (the app is then stubbed) or, under
+    ``fail_hard`` / ``app_load_failure = "raise"``, re-raised.
+    """
+    if app.page_from_package is None or app.import_error is not None:
+        return None
+    from enlace.base import CONTAINED_LOAD_ERRORS
+    from enlace.degraded import record_or_raise
+
+    try:
+        return resolve_package_page(
+            app.page_from_package,
+            api=app.route_prefix,
+            base=f"/{app.name}",
+            title=app.display_name,
+        )
+    except CONTAINED_LOAD_ERRORS as exc:
+        record_or_raise(exc, app, platform)
+        return None
+
+
+def _failure_type(app: AppConfig) -> str:
+    error = app.import_error
+    return error.exception_type if error is not None else "unknown"
 
 
 def _load_sub_app(app_config: AppConfig) -> Optional[object]:

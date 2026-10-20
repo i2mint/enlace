@@ -72,6 +72,7 @@ enlace/
 ├── proxy.py       # Lightweight ASGI reverse proxy for process/external backends (httpx)
 ├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)
 ├── frontend.py    # SPA-aware static files; HTML documents get Cache-Control: no-cache
+├── package_page.py # app.toml page_from_package: shell at /{name}/ + package files at {route}/ui/
 ├── appmeta.py     # Launcher metadata (titles, descriptions, keywords, icons); app_icons.py serves icons
 ├── build.py       # Declarative app.toml [build] runs (`enlace build`)
 ├── diagnose.py    # diagnose_app(): scan an app dir for enlace compatibility issues

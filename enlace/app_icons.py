@@ -220,7 +220,12 @@ def home_screen_gaps(config) -> list[str]:
 
 
 def has_own_pages(app) -> bool:
-    """Whether the platform serves this app's HTML itself (so it can wire its head)."""
+    """Whether the platform serves this app's HTML itself (so it can wire its head).
+
+    A frontend directory, or a page shipped by a package (``page_from_package``).
+    """
+    if getattr(app, "page_from_package", None) is not None:
+        return True
     return bool(app.frontend_dir and Path(app.frontend_dir).is_dir())
 
 

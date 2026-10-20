@@ -36,6 +36,7 @@ from enlace.manifest import (
     load_manifest,
     load_platform_manifest,
 )
+from enlace.package_page import PackagePageConfig, page_shell
 from enlace.serve import serve
 
 try:
@@ -58,6 +59,7 @@ __all__ = [
     "Issue",
     "JsonFileStore",
     "MANIFEST_SCHEMA_VERSION",
+    "PackagePageConfig",
     "PlatformAnalyticsConfig",
     "PlatformConfig",
     "Plugin",
@@ -72,6 +74,7 @@ __all__ = [
     "discover_apps",
     "load_manifest",
     "load_platform_manifest",
+    "page_shell",
     "run_build",
     "serve",
     "skills_dir",

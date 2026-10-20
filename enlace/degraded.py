@@ -138,6 +138,24 @@ def load_or_stub(
     return UnavailableApp(app.name, app.import_error.exception_type)
 
 
+def record_or_raise(
+    exc: BaseException, app: AppConfig, platform: PlatformConfig
+) -> None:
+    """Record a compose-time load failure on ``app``, or re-raise it.
+
+    For loads that happen beside the app's own (its package page, see
+    :mod:`enlace.package_page`): those import code into the gateway whatever
+    the app's mode, so they are contained in every mode. ``fail_hard`` and
+    ``app_load_failure = "raise"`` still re-raise. A recorded failure makes
+    :func:`load_or_stub` serve the stub in the app's place.
+    """
+    if _must_refuse_to_boot(app, platform):
+        raise exc
+    app.import_error = AppImportError.from_exception(
+        exc, app.entry_module_path, stage="compose"
+    )
+
+
 async def enter_lifespan_or_stub(
     stack: "contextlib.AsyncExitStack",
     mount: Any,
