@@ -440,6 +440,10 @@ class _BoundedKeys:
             return self._next_sweep - now  # > 0: when a key may next go idle
         return 0.0
 
+    def _admitted(self, entry, now: float) -> None:
+        """A new key was stored: it may go idle before the remembered sweep horizon."""
+        self._next_sweep = min(self._next_sweep, now + self._idle_in(entry, now))
+
     def _trim(self, entries: OrderedDict) -> None:
         """Evict the least recently seen keys beyond ``max_keys`` (warned once)."""
         if len(entries) <= self.max_keys:
@@ -499,7 +503,8 @@ class TokenBucketLimiter(_BoundedKeys, _AllowMixin):
     def acquire(self, key: str) -> float:
         with self._lock:
             now = self._clock()
-            if key not in self._buckets:
+            new = key not in self._buckets
+            if new:
                 refused = self._make_room(self._buckets, now)
                 if refused > 0:
                     return refused
@@ -510,6 +515,8 @@ class TokenBucketLimiter(_BoundedKeys, _AllowMixin):
             else:
                 wait = (1 - tokens) / self.refill_per_second
             self._buckets[key] = (tokens, now)
+            if new:
+                self._admitted((tokens, now), now)
             self._trim(self._buckets)
             return wait
 
@@ -521,9 +528,10 @@ class SlidingWindowLimiter(_BoundedKeys, _AllowMixin):
     that spent its budget waits until its oldest hit leaves the window. Per process
     (N workers allow N times the rate); the number of tracked keys is bounded
     (``max_keys``: keys with no hit left in the window go first, then
-    ``on_overflow`` decides) so a flood of distinct keys cannot exhaust memory. Each key keeps up to ``rate.limit`` timestamps, so memory is
-    bounded by ``max_keys * rate.limit``: prefer :class:`TokenBucketLimiter` (one
-    pair of floats per key) for large limits.
+    ``on_overflow`` decides) so a flood of distinct keys cannot exhaust memory.
+    Each key keeps up to ``rate.limit`` timestamps, so memory is bounded by
+    ``max_keys * rate.limit``: prefer :class:`TokenBucketLimiter` (one pair of
+    floats per key) for large limits.
 
     >>> now = [0.0]
     >>> lim = SlidingWindowLimiter(Rate(1, 10), clock=lambda: now[0])

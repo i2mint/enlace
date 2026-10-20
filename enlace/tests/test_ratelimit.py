@@ -725,3 +725,17 @@ def test_an_async_redis_client_is_refused_up_front():
 
     with pytest.raises(TypeError, match="synchronous redis client"):
         RedisLimiter(_AsyncRedis(), Rate(1, 60))
+
+
+def test_a_key_admitted_after_a_sweep_lowers_the_sweep_horizon():
+    clock = _Clock()
+    lim = TokenBucketLimiter(Rate(10, 100), max_keys=3, on_overflow="deny", clock=clock)
+    t0 = clock.now
+    for _ in range(10):
+        lim.acquire("a")
+        lim.acquire("b")
+    lim.acquire("c")  # one hit: idle again after 10 s
+    clock.now = t0 + 20
+    assert lim.acquire("d") == 0  # the sweep drops "c"; "d" is idle by t0 + 30
+    clock.now = t0 + 35
+    assert lim.acquire("e") == 0  # "d" is idle: swept, not refused until t0 + 100
