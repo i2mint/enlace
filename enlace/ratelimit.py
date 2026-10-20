@@ -94,9 +94,12 @@ DEFAULT_MAX_KEYS = 100_000
 #: What an in-memory limiter does with a new key when every tracked one is busy:
 #: ``"evict"`` the least recently seen (fail open), or ``"deny"`` the new key.
 OVERFLOW_POLICIES = ("evict", "deny")
-#: A full in-memory limiter looks for idle keys at most this often (one O(max_keys)
-#: sweep), so a flood of new keys cannot make every request pay for a sweep.
+#: A full in-memory limiter looks for idle keys at most this often, so a flood of
+#: new keys cannot make every request pay for a sweep.
 DEFAULT_MIN_SWEEP_SECONDS = 1.0
+#: Keys one sweep examines: a sweep of a full limiter is a slice of its keys
+#: (oldest first) rather than all ``max_keys``, so it cannot stall the event loop.
+DEFAULT_SWEEP_BATCH = 1024
 #: What the Redis limiter does while Redis is failing: ask its ``fallback``, or
 #: refuse (``"deny"``, fail closed) or admit (``"allow"``, fail open) every request.
 REDIS_ERROR_POLICIES = ("fallback", "deny", "allow")
@@ -397,11 +400,23 @@ class _BoundedKeys:
     A subclass keeps its per-key state in an ``OrderedDict`` (least recently seen
     first) and says, with :meth:`_idle_in`, how long until a key's state carries no
     information (a full bucket, an empty window).
+
+    Sweeps are incremental: a round snapshots the keys (least recently seen first,
+    the likeliest to be idle) and each sweep examines the next ``sweep_batch`` of
+    them, so the work done under the lock is bounded however large ``max_keys`` is.
     """
 
-    def _init_bound(self, max_keys: int, on_overflow: str, min_sweep_seconds: float):
+    def _init_bound(
+        self,
+        max_keys: int,
+        on_overflow: str,
+        min_sweep_seconds: float,
+        sweep_batch: int = DEFAULT_SWEEP_BATCH,
+    ):
         if max_keys < 1:
             raise ValueError(f"max_keys must be at least 1, got {max_keys}")
+        if sweep_batch < 1:
+            raise ValueError(f"sweep_batch must be at least 1, got {sweep_batch}")
         if on_overflow not in OVERFLOW_POLICIES:
             raise ValueError(
                 f"on_overflow must be one of {OVERFLOW_POLICIES}, got {on_overflow!r}"
@@ -409,7 +424,11 @@ class _BoundedKeys:
         self.max_keys = max_keys
         self.on_overflow = on_overflow
         self.min_sweep_seconds = min_sweep_seconds
+        self.sweep_batch = sweep_batch
         self._next_sweep = -math.inf
+        self._sweep_queue: deque = deque()  # keys left in the current round
+        self._round_soonest = math.inf  # when a key examined this round goes idle
+        self._admitted_soonest = math.inf  # ... or a key added since it began
         self._warned_eviction = False
 
     def _idle_in(self, entry, now: float) -> float:  # pragma: no cover - abstract
@@ -426,23 +445,48 @@ class _BoundedKeys:
         if len(entries) < self.max_keys:
             return 0.0
         if now >= self._next_sweep:
-            soonest = math.inf
-            for key, entry in list(entries.items()):
-                idle_in = self._idle_in(entry, now)
-                if idle_in <= 0:
-                    del entries[key]
-                else:
-                    soonest = min(soonest, idle_in)
-            self._next_sweep = now + max(soonest, self.min_sweep_seconds)
+            self._sweep(entries, now)
             if len(entries) < self.max_keys:
                 return 0.0
         if self.on_overflow == "deny":
             return self._next_sweep - now  # > 0: when a key may next go idle
         return 0.0
 
+    def _sweep(self, entries: OrderedDict, now: float) -> None:
+        """Drop the idle keys among the next ``sweep_batch`` of the round.
+
+        A key examined earlier in the round may have been seen again since: its
+        remembered idle time is then too early, which only brings a sweep forward.
+        """
+        if not self._sweep_queue:
+            self._sweep_queue.extend(entries)
+            self._round_soonest = self._admitted_soonest = math.inf
+        queue = self._sweep_queue
+        for _ in range(min(self.sweep_batch, len(queue))):
+            key = queue.popleft()
+            entry = entries.get(key)
+            if entry is None:
+                continue  # gone since the round began
+            idle_in = self._idle_in(entry, now)
+            if idle_in <= 0:
+                del entries[key]
+            else:
+                self._round_soonest = min(self._round_soonest, now + idle_in)
+        if queue:  # keys not examined yet may be idle already
+            self._next_sweep = now + self.min_sweep_seconds
+        else:
+            soonest = min(self._round_soonest, self._admitted_soonest)
+            self._next_sweep = max(soonest, now + self.min_sweep_seconds)
+
     def _admitted(self, entry, now: float) -> None:
-        """A new key was stored: it may go idle before the remembered sweep horizon."""
-        self._next_sweep = min(self._next_sweep, now + self._idle_in(entry, now))
+        """A new key was stored: it may go idle before the remembered sweep horizon.
+
+        Remembered for the round too: the round's snapshot does not hold the key, so
+        the horizon set when the round ends must not overlook it.
+        """
+        idle_at = now + self._idle_in(entry, now)
+        self._next_sweep = min(self._next_sweep, idle_at)
+        self._admitted_soonest = min(self._admitted_soonest, idle_at)
 
     def _trim(self, entries: OrderedDict) -> None:
         """Evict the least recently seen keys beyond ``max_keys`` (warned once)."""
@@ -486,9 +530,10 @@ class TokenBucketLimiter(_BoundedKeys, _AllowMixin):
         max_keys: int = DEFAULT_MAX_KEYS,
         on_overflow: str = "evict",
         min_sweep_seconds: float = DEFAULT_MIN_SWEEP_SECONDS,
+        sweep_batch: int = DEFAULT_SWEEP_BATCH,
         clock: Callable[[], float] = time.monotonic,
     ):
-        self._init_bound(max_keys, on_overflow, min_sweep_seconds)
+        self._init_bound(max_keys, on_overflow, min_sweep_seconds, sweep_batch)
         self.rate = rate
         self.capacity = float(rate.limit)
         self.refill_per_second = rate.limit / rate.window
@@ -549,9 +594,10 @@ class SlidingWindowLimiter(_BoundedKeys, _AllowMixin):
         max_keys: int = DEFAULT_MAX_KEYS,
         on_overflow: str = "evict",
         min_sweep_seconds: float = DEFAULT_MIN_SWEEP_SECONDS,
+        sweep_batch: int = DEFAULT_SWEEP_BATCH,
         clock: Callable[[], float] = time.monotonic,
     ):
-        self._init_bound(max_keys, on_overflow, min_sweep_seconds)
+        self._init_bound(max_keys, on_overflow, min_sweep_seconds, sweep_batch)
         self.rate = rate
         self._clock = clock
         self._hits: OrderedDict[str, deque] = OrderedDict()
@@ -564,7 +610,8 @@ class SlidingWindowLimiter(_BoundedKeys, _AllowMixin):
         with self._lock:
             now = self._clock()
             hits = self._hits.get(key)
-            if hits is None:
+            new = hits is None
+            if new:
                 refused = self._make_room(self._hits, now)
                 if refused > 0:
                     return refused
@@ -578,6 +625,8 @@ class SlidingWindowLimiter(_BoundedKeys, _AllowMixin):
             if len(hits) >= self.rate.limit:
                 return hits[0] - cutoff  # > 0: when the oldest hit leaves the window
             hits.append(now)
+            if new:
+                self._admitted(hits, now)
             return 0.0
 
 
