@@ -20,8 +20,8 @@ What enlace serves for such an app (``name``, API at ``route_prefix``):
   ``Cache-Control: no-cache`` and an ``ETag``, so a package upgrade reaches
   the browser on its next load.
 - ``{route_prefix}/ui/<file>``: the files of the package's assets directory,
-  always revalidated. Mounted ahead of the app, so it answers before any
-  ``/ui`` route the app keeps for running alone.
+  always revalidated. Mounted ahead of the app; what it does not serve falls
+  through to the app, so the app's own ``/ui`` routes keep working.
 
 The shell is the app's own (``shell = "module:function"``, called as
 ``function(api=..., base=..., title=...)`` and returning HTML) or enlace's
@@ -47,9 +47,10 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from starlette.exceptions import HTTPException
 from starlette.responses import Response
 from starlette.staticfiles import StaticFiles
-from starlette.types import Receive, Scope, Send
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 #: Where the assets live inside the package, by default.
 DFLT_ASSETS_DIR = "data/ui"
@@ -63,6 +64,8 @@ DFLT_CACHE_CONTROL = "no-cache"
 _JS_IDENTIFIER = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 _SHELL_REF = re.compile(r"[A-Za-z_][\w.]*:[A-Za-z_]\w*")
 _SAFE_METHODS = frozenset({"GET", "HEAD"})
+#: What the assets app hands to the app's own mount instead of answering.
+_FALLBACK_STATUSES = frozenset({404, 405})
 
 #: ``(*, api, base, title) -> html``: what a shell function is called with.
 ShellFunc = Callable[..., str]
@@ -137,6 +140,17 @@ class PackagePageConfig(BaseModel):
         if not self.global_name:
             top = self.package.split(".")[0]
             self.global_name = re.sub(r"\W", "_", top).upper()
+        if self.files and not self.shell:
+            allowed = {name.strip("/") for name in self.files}
+            missing = [
+                name
+                for name in [*self.scripts, *self.stylesheets]
+                if name.strip("/") not in allowed
+            ]
+            if missing:
+                raise ValueError(
+                    f"the shell loads {missing}, which files (the allowlist) leaves out"
+                )
         if not _JS_IDENTIFIER.fullmatch(self.global_name):
             raise ValueError(
                 f"global_name must be a JavaScript identifier: {self.global_name!r}"
@@ -165,6 +179,10 @@ def page_shell(
     >>> 'window.APP = {"api": "/api/demo", "base": "/demo", "title": "Demo"}' in shell
     True
     """
+    if not _JS_IDENTIFIER.fullmatch(global_name):
+        raise ValueError(
+            f"global_name must be a JavaScript identifier: {global_name!r}"
+        )
     config = {"api": api.rstrip("/"), "base": base.rstrip("/"), "title": title}
     # "<" escaped, so no "</script>" in a value can close the script element
     config_js = json.dumps(config).replace("<", "\\u003c")
@@ -204,9 +222,14 @@ class PackagePage:
         """The ASGI app serving the shell at every path under the page's mount."""
         return ShellApp(self.shell)
 
-    def assets_app(self) -> "PackageAssets":
-        """The ASGI app serving the assets directory."""
-        return PackageAssets(directory=str(self.assets_dir), allowed=self.files)
+    def assets_app(self, *, fallback: Optional[ASGIApp] = None) -> "PackageAssets":
+        """The ASGI app serving the assets directory; misses go to ``fallback``."""
+        return PackageAssets(
+            directory=str(self.assets_dir),
+            allowed=self.files,
+            fallback=fallback,
+            route=self.assets_route,
+        )
 
 
 def resolve_package_page(
@@ -246,7 +269,9 @@ def resolve_package_page(
 
 def _assets_dir(package: str, assets: str) -> Path:
     """The package's assets directory, as a directory on disk."""
-    resource = package_files(package).joinpath(*assets.split("/"))
+    resource = package_files(package)
+    for part in assets.split("/"):  # one at a time: 3.10's MultiplexedPath takes one
+        resource = resource.joinpath(part)
     path = Path(str(resource))
     if not path.is_dir():
         raise FileNotFoundError(
@@ -287,7 +312,7 @@ class ShellApp:
             response = Response(
                 "Method Not Allowed", status_code=405, headers={"Allow": "GET, HEAD"}
             )
-        elif self._etag in _if_none_match(scope):
+        elif _etag_matches(self._etag, scope):
             response = Response(status_code=304, headers=self._headers())
         else:
             response = Response(
@@ -301,30 +326,75 @@ class ShellApp:
         return {"Cache-Control": self._cache_control, "ETag": self._etag}
 
 
-def _if_none_match(scope: Scope) -> set[str]:
+def _etag_matches(etag: str, scope: Scope) -> bool:
+    """Whether ``If-None-Match`` names ``etag`` (weak comparison, ``*`` matches)."""
     for key, value in scope.get("headers", ()):
         if key == b"if-none-match":
-            return {tag.strip() for tag in value.decode("latin-1").split(",")}
-    return set()
+            tags = {tag.strip() for tag in value.decode("latin-1").split(",")}
+            return "*" in tags or etag in {t.removeprefix("W/") for t in tags}
+    return False
 
 
 class PackageAssets(StaticFiles):
-    """A package's page files, always revalidated, optionally allowlisted."""
+    """A package's page files, always revalidated, optionally allowlisted.
+
+    Hidden files (a path segment starting with ``.``) and ``__pycache__`` are
+    never served. A request it does not serve (no such file, not on the
+    allowlist, a method other than GET/HEAD, a websocket) goes to
+    ``fallback`` when one is given (the app's own mount, so a route the app
+    has under the same segment keeps working), else gets a 404 / 405.
+    ``fallback`` sees the scope the app's mount would have given it: the
+    assets route segment moves from ``root_path`` back into the path.
+    """
 
     def __init__(
         self,
         *args,
         allowed: tuple[str, ...] = (),
         cache_control: str = DFLT_CACHE_CONTROL,
+        fallback: Optional[ASGIApp] = None,
+        route: str = DFLT_ASSETS_ROUTE,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.allowed = frozenset(name.strip("/") for name in allowed)
         self.cache_control = cache_control
+        self.fallback = fallback
+        self._route_suffix = "/" + route.strip("/")
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if self.fallback is None:
+            await super().__call__(scope, receive, send)
+            return
+        if scope["type"] == "http":
+            if not self.config_checked:
+                await self.check_config()
+                self.config_checked = True
+            try:
+                response = await self.get_response(self.get_path(scope), scope)
+            except HTTPException as exc:
+                if exc.status_code not in _FALLBACK_STATUSES:
+                    raise
+                response = None
+            if response is not None and response.status_code not in (
+                _FALLBACK_STATUSES
+            ):
+                await response(scope, receive, send)
+                return
+        await self.fallback(self._fallback_scope(scope), receive, send)
+
+    def _fallback_scope(self, scope: Scope) -> Scope:
+        root_path = scope.get("root_path", "")
+        if root_path.endswith(self._route_suffix):
+            root_path = root_path[: -len(self._route_suffix)]
+        return {**scope, "root_path": root_path}
 
     async def get_response(self, path: str, scope: Scope) -> Response:
-        """Refuse a file outside the allowlist (when there is one), else serve it."""
-        if self.allowed and path.replace("\\", "/") not in self.allowed:
+        """Refuse hidden files and, with an allowlist, any file not on it."""
+        rel = path.replace("\\", "/")
+        segments = rel.split("/")
+        hidden = any(seg.startswith(".") or seg == "__pycache__" for seg in segments)
+        if hidden or (self.allowed and rel not in self.allowed):
             return Response("Not Found", status_code=404)
         return await super().get_response(path, scope)
 

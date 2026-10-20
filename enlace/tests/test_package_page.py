@@ -24,9 +24,13 @@ APP_CODE = textwrap.dedent("""\
     def hello():
         return {"message": "hello"}
 
+    @app.post("/ui/state")  # a dynamic route of the app's under the same segment
+    def ui_state():
+        return {"state": "kept"}
+
     @app.get("/ui/{name:path}")  # the app's own route, for running alone
     def ui(name: str):
-        return PlainTextResponse("served by the app")
+        return PlainTextResponse(f"served by the app: {name}")
 """)
 
 SHELL_MODULE = textwrap.dedent("""\
@@ -51,6 +55,9 @@ def page_pkg(tmp_path, monkeypatch):
     (ui / "style.css").write_text("body{}")
     (ui / "vendor" / "lib.js").write_text("// vendored")
     (ui / "secret.txt").write_text("not on the allowlist")
+    (ui / ".hidden").write_text("never served")
+    (ui / "nested" / "deeper").mkdir(parents=True)
+    (ui / "nested" / "deeper" / "app.js").write_text("// nested")
     monkeypatch.syspath_prepend(str(root))
     for name in [m for m in sys.modules if m.split(".")[0] == PKG]:
         monkeypatch.delitem(sys.modules, name)
@@ -97,6 +104,7 @@ def test_a_string_is_the_package_name():
         {"package": "p", "shell": "no_colon"},
         {"package": "p", "global_name": "not-an-identifier"},
         {"package": "p", "typo": 1},
+        {"package": "p", "files": ["app.js"]},  # style.css is loaded, not allowed
     ],
 )
 def test_bad_config_is_refused(fields):
@@ -114,6 +122,11 @@ def test_a_static_app_cannot_have_a_package_page(tmp_path):
             public_dir=tmp_path,
             page_from_package="pkg",
         )
+
+
+def test_generic_shell_refuses_a_bad_global_name():
+    with pytest.raises(ValueError, match="identifier"):
+        page_shell(api="/api/x", global_name="x;alert(1)//")
 
 
 def test_generic_shell_escapes_what_it_embeds():
@@ -147,7 +160,11 @@ def test_generic_shell_and_assets_from_the_package(tmp_path, page_pkg):
     assert js.text == "console.log('from the package');"
     assert js.headers["cache-control"] == "no-cache"
     assert client.get("/api/demo/ui/vendor/lib.js").text == "// vendored"
-    assert client.get("/api/demo/ui/missing.js").status_code == 404
+    # what the package does not have falls through to the app's own routes
+    assert client.get("/api/demo/ui/missing.js").text == "served by the app: missing.js"
+    assert client.post("/api/demo/ui/state").json() == {"state": "kept"}
+    # hidden files are never served from the package
+    assert client.get("/api/demo/ui/.hidden").text == "served by the app: .hidden"
 
     # the app's API is untouched
     assert client.get("/api/demo/hello").json() == {"message": "hello"}
@@ -158,6 +175,13 @@ def test_shell_revalidates_with_an_etag(tmp_path, page_pkg):
     etag = client.get("/demo/").headers["etag"]
     again = client.get("/demo/", headers={"If-None-Match": etag})
     assert again.status_code == 304
+    assert (
+        client.get("/demo/", headers={"If-None-Match": "W/" + etag}).status_code == 304
+    )
+    assert client.get("/demo/", headers={"If-None-Match": "*"}).status_code == 304
+    assert client.get("/demo/", headers={"If-None-Match": '"other"'}).status_code == 200
+    head = client.head("/demo/")
+    assert head.status_code == 200 and head.content == b""
     assert client.post("/demo/").status_code == 405
     assert client.get("/demo", follow_redirects=False).status_code == 307
 
@@ -172,7 +196,8 @@ def test_the_apps_own_shell_function(tmp_path, page_pkg):
         shell = "{PKG}.web:page_shell"
         """,
     )
-    assert client.get("/demo/").text == (
+    # the platform's icon links are added; the app's shell is otherwise as built
+    assert client.get("/demo/").text.endswith(
         "<!doctype html><p>own shell api=/api/demo base=/demo title=Mine</p>"
     )
 
@@ -183,13 +208,12 @@ def test_allowlist_restricts_the_files(tmp_path, page_pkg):
         f"""\
         [page_from_package]
         package = "{PKG}"
-        files = ["app.js", "vendor/lib.js"]
+        files = ["app.js", "style.css", "vendor/lib.js"]
         """,
     )
     assert client.get("/api/demo/ui/app.js").status_code == 200
     assert client.get("/api/demo/ui/vendor/lib.js").status_code == 200
-    assert client.get("/api/demo/ui/secret.txt").status_code == 404
-    assert client.get("/api/demo/ui/style.css").status_code == 404
+    assert client.get("/api/demo/ui/secret.txt").text == "served by the app: secret.txt"
 
 
 def test_the_page_replaces_a_frontend_dir(tmp_path, page_pkg):
@@ -211,6 +235,10 @@ def test_an_app_with_only_a_package_page_is_discovered(tmp_path, page_pkg):
     client = TestClient(build_backend(config))
     assert client.get("/demo/").status_code == 200
     assert client.get("/api/demo/ui/app.js").status_code == 200
+    # no app to fall through to: the package's misses are 404s
+    assert client.get("/api/demo/ui/missing.js").status_code == 404
+    assert client.get("/api/demo/ui/.hidden").status_code == 404
+    assert client.get("/api/demo/ui/../ui/secret.txt").status_code in (200, 404)
 
 
 def test_the_launcher_opens_the_page(tmp_path, page_pkg):
@@ -248,4 +276,26 @@ def test_fail_hard_refuses_to_boot_on_a_broken_page(tmp_path, page_pkg):
         tmp_path, 'fail_hard = true\npage_from_package = "enlace_no_such_package_xyz"\n'
     )
     with pytest.raises(ModuleNotFoundError):
+        build_backend(config)
+
+
+def test_a_nested_assets_directory(tmp_path, page_pkg):
+    client = _client(
+        tmp_path,
+        f'[page_from_package]\npackage = "{PKG}"\nassets = "data/ui/nested/deeper"\n',
+    )
+    assert client.get("/api/demo/ui/app.js").text == "// nested"
+
+
+def test_the_shell_gets_the_platform_icon_links(tmp_path, page_pkg):
+    client = _client(tmp_path, f'page_from_package = "{PKG}"\n')
+    page = client.get("/demo/").text
+    assert 'rel="icon"' in page and 'rel="manifest"' in page
+
+
+def test_a_package_page_cannot_be_the_landing_app(tmp_path, page_pkg):
+    from enlace.compose import EnlaceConfigError
+
+    config = _platform(tmp_path, f'page_from_package = "{PKG}"\n', landing_app="demo")
+    with pytest.raises(EnlaceConfigError, match="landing_app"):
         build_backend(config)

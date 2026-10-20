@@ -260,20 +260,38 @@ def build_backend(
             f"{sorted(a.name for a in config.apps)}"
         )
 
+    landing = next((a for a in config.apps if a.name == landing_app_name), None)
+    if landing is not None and landing.page_from_package is not None:
+        raise EnlaceConfigError(
+            f"platform.landing_app = {landing_app_name!r}, an app with "
+            "page_from_package; a package page cannot be served at / yet. "
+            "Serve it at its own URL, or give the landing app a frontend_dir."
+        )
+
     if config.index_page and not landing_app_name:
         _add_index_route(parent, config)
 
+    app_mounts = {
+        app_id: (prefix, _AppIdInjector(sub_app, app_id))
+        for prefix, app_id, sub_app in sub_apps
+    }
+
     # A package page's files, at {route_prefix}/ui/. Mounted before the apps
-    # so they answer ahead of any /ui route an app keeps for running alone.
+    # so they answer first; what they don't serve (a missing file, a POST, a
+    # websocket) falls through to the app, so its own /ui routes still work.
     for app_config in config.apps:
         page = pages.get(app_config.name)
         if page is not None:
-            assets_prefix = f"{app_config.route_prefix.rstrip('/')}/{page.assets_route}"
-            parent.mount(assets_prefix, page.assets_app())
+            prefix = app_config.route_prefix.rstrip("/")
+            app_mount = app_mounts.get(app_config.name)
+            fallback = app_mount[1] if app_mount is not None else None
+            parent.mount(
+                f"{prefix}/{page.assets_route}", page.assets_app(fallback=fallback)
+            )
 
-    for prefix, app_id, sub_app in sub_apps:
+    for prefix, injector in app_mounts.values():
         _add_trailing_slash_redirect(parent, prefix)
-        parent.mount(prefix, _AppIdInjector(sub_app, app_id))
+        parent.mount(prefix, injector)
 
     # Serve frontend static files for apps that have a frontend/ directory.
     # Mounted at /{app_name}/ so the frontend is accessible alongside the API.
