@@ -73,7 +73,8 @@ client), so one shared client never mixes two rules’ counts.
 |-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`DEFAULT_MAX_KEYS`](#enlace.ratelimit.DEFAULT_MAX_KEYS)             | Client buckets one rule tracks before evicting the least recently seen, so a flood of distinct (spoofed or rotating) clients cannot exhaust memory.        |
 | [`OVERFLOW_POLICIES`](#enlace.ratelimit.OVERFLOW_POLICIES)            | What an in-memory limiter does with a new key when every tracked one is busy: `"evict"` the least recently seen (fail open), or `"deny"` the new key.      |
-| [`DEFAULT_MIN_SWEEP_SECONDS`](#enlace.ratelimit.DEFAULT_MIN_SWEEP_SECONDS)    | A full in-memory limiter looks for idle keys at most this often (one O(max_keys) sweep), so a flood of new keys cannot make every request pay for a sweep. |
+| [`DEFAULT_MIN_SWEEP_SECONDS`](#enlace.ratelimit.DEFAULT_MIN_SWEEP_SECONDS)    | A full in-memory limiter looks for idle keys at most this often, so a flood of new keys cannot make every request pay for a sweep.                         |
+| [`DEFAULT_SWEEP_BATCH`](#enlace.ratelimit.DEFAULT_SWEEP_BATCH)          | a sweep of a full limiter is a slice of its keys (oldest first) rather than all `max_keys`, so it cannot stall the event loop.                             |
 | [`REDIS_ERROR_POLICIES`](#enlace.ratelimit.REDIS_ERROR_POLICIES)         | ask its `fallback`, or refuse (`"deny"`, fail closed) or admit (`"allow"`, fail open) every request.                                                       |
 | [`DEFAULT_IPV6_PREFIX`](#enlace.ratelimit.DEFAULT_IPV6_PREFIX)          | one host usually owns a whole /64.                                                                                                                         |
 | [`DEFAULT_REDIS_SOCKET_TIMEOUT`](#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT) | a hung Redis costs at most this long.                                                                                                                      |
@@ -118,8 +119,8 @@ flood of distinct (spoofed or rotating) clients cannot exhaust memory.
 
 ### enlace.ratelimit.DEFAULT_MIN_SWEEP_SECONDS *= 1.0*
 
-A full in-memory limiter looks for idle keys at most this often (one O(max_keys)
-sweep), so a flood of new keys cannot make every request pay for a sweep.
+A full in-memory limiter looks for idle keys at most this often, so a flood of
+new keys cannot make every request pay for a sweep.
 
 ### enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS *= 5.0*
 
@@ -132,6 +133,14 @@ a hung Redis costs at most this long.
 
 * **Type:**
   Connect/read timeout of the Redis limiter
+
+### enlace.ratelimit.DEFAULT_SWEEP_BATCH *= 1024*
+
+a sweep of a full limiter is a slice of its keys
+(oldest first) rather than all `max_keys`, so it cannot stall the event loop.
+
+* **Type:**
+  Keys one sweep examines
 
 ### *class* enlace.ratelimit.Limiter(\*args, \*\*kwargs)
 
@@ -264,7 +273,7 @@ not a rate never share a counter.
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
-### *class* enlace.ratelimit.SlidingWindowLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, clock=<built-in function monotonic>)
+### *class* enlace.ratelimit.SlidingWindowLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, sweep_batch=1024, clock=<built-in function monotonic>)
 
 Bases: `_BoundedKeys`, `_AllowMixin`
 
@@ -289,7 +298,7 @@ floats per key) for large limits.
 True
 ```
 
-### *class* enlace.ratelimit.TokenBucketLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, clock=<built-in function monotonic>)
+### *class* enlace.ratelimit.TokenBucketLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, sweep_batch=1024, clock=<built-in function monotonic>)
 
 Bases: `_BoundedKeys`, `_AllowMixin`
 

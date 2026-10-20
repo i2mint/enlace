@@ -1,4 +1,4 @@
-> built 2026-10-20 16:19 UTC from 660a687 (main) · enlace 0.1.62. Details: build_info.json
+> built 2026-10-20 16:53 UTC from 430b13d (main) · enlace 0.1.63. Details: build_info.json
 
 # index.html.md
 
@@ -3879,7 +3879,8 @@ client), so one shared client never mixes two rules’ counts.
 |-------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`DEFAULT_MAX_KEYS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_MAX_KEYS)             | Client buckets one rule tracks before evicting the least recently seen, so a flood of distinct (spoofed or rotating) clients cannot exhaust memory.        |
 | [`OVERFLOW_POLICIES`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.OVERFLOW_POLICIES)            | What an in-memory limiter does with a new key when every tracked one is busy: `"evict"` the least recently seen (fail open), or `"deny"` the new key.      |
-| [`DEFAULT_MIN_SWEEP_SECONDS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_MIN_SWEEP_SECONDS)    | A full in-memory limiter looks for idle keys at most this often (one O(max_keys) sweep), so a flood of new keys cannot make every request pay for a sweep. |
+| [`DEFAULT_MIN_SWEEP_SECONDS`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_MIN_SWEEP_SECONDS)    | A full in-memory limiter looks for idle keys at most this often, so a flood of new keys cannot make every request pay for a sweep.                         |
+| [`DEFAULT_SWEEP_BATCH`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_SWEEP_BATCH)          | a sweep of a full limiter is a slice of its keys (oldest first) rather than all `max_keys`, so it cannot stall the event loop.                             |
 | [`REDIS_ERROR_POLICIES`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.REDIS_ERROR_POLICIES)         | ask its `fallback`, or refuse (`"deny"`, fail closed) or admit (`"allow"`, fail open) every request.                                                       |
 | [`DEFAULT_IPV6_PREFIX`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_IPV6_PREFIX)          | one host usually owns a whole /64.                                                                                                                         |
 | [`DEFAULT_REDIS_SOCKET_TIMEOUT`](_autosummary/enlace.ratelimit.html.md#enlace.ratelimit.DEFAULT_REDIS_SOCKET_TIMEOUT) | a hung Redis costs at most this long.                                                                                                                      |
@@ -3924,8 +3925,8 @@ flood of distinct (spoofed or rotating) clients cannot exhaust memory.
 
 ### enlace.ratelimit.DEFAULT_MIN_SWEEP_SECONDS *= 1.0*
 
-A full in-memory limiter looks for idle keys at most this often (one O(max_keys)
-sweep), so a flood of new keys cannot make every request pay for a sweep.
+A full in-memory limiter looks for idle keys at most this often, so a flood of
+new keys cannot make every request pay for a sweep.
 
 ### enlace.ratelimit.DEFAULT_REDIS_RETRY_SECONDS *= 5.0*
 
@@ -3938,6 +3939,14 @@ a hung Redis costs at most this long.
 
 * **Type:**
   Connect/read timeout of the Redis limiter
+
+### enlace.ratelimit.DEFAULT_SWEEP_BATCH *= 1024*
+
+a sweep of a full limiter is a slice of its keys
+(oldest first) rather than all `max_keys`, so it cannot stall the event loop.
+
+* **Type:**
+  Keys one sweep examines
 
 ### *class* enlace.ratelimit.Limiter(\*args, \*\*kwargs)
 
@@ -4070,7 +4079,7 @@ not a rate never share a counter.
 * **Return type:**
   [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
 
-### *class* enlace.ratelimit.SlidingWindowLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, clock=<built-in function monotonic>)
+### *class* enlace.ratelimit.SlidingWindowLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, sweep_batch=1024, clock=<built-in function monotonic>)
 
 Bases: `_BoundedKeys`, `_AllowMixin`
 
@@ -4095,7 +4104,7 @@ floats per key) for large limits.
 True
 ```
 
-### *class* enlace.ratelimit.TokenBucketLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, clock=<built-in function monotonic>)
+### *class* enlace.ratelimit.TokenBucketLimiter(rate, \*, max_keys=100000, on_overflow='evict', min_sweep_seconds=1.0, sweep_batch=1024, clock=<built-in function monotonic>)
 
 Bases: `_BoundedKeys`, `_AllowMixin`
 
@@ -4685,16 +4694,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-20 16:19 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/660a6878f436afae4c3c4e144fcfef295eef4fbf"><code>660a687</code></a> on branch <code>main</code>, for **enlace 0.1.62** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-20 16:53 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/430b13dac05ee94180a2dd3fd99ef0ce545d475d"><code>430b13d</code></a> on branch <code>main</code>, for **enlace 0.1.63** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.63) is behind the latest release on PyPI (0.1.64): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/660a6878f436afae4c3c4e144fcfef295eef4fbf"><code>660a6878f436afae4c3c4e144fcfef295eef4fbf</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/430b13dac05ee94180a2dd3fd99ef0ce545d475d"><code>430b13dac05ee94180a2dd3fd99ef0ce545d475d</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -4705,15 +4716,15 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39456152654">39456152654</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39461073033">39461073033</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>660a6878f436afae4c3c4e144fcfef295eef4fbf</code> (in the history of the built commit) |
+| Event commit | <code>430b13dac05ee94180a2dd3fd99ef0ce545d475d</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.21  |
+| epythet  | 0.2.22  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
@@ -4732,14 +4743,14 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.62/">0.1.62</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.64/">0.1.64</a>, newer than the documented version (0.1.63).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 660a6878f436afae4c3c4e144fcfef295eef4fbf
-pip install "epythet==0.2.21"
+git checkout 430b13dac05ee94180a2dd3fd99ef0ce545d475d
+pip install "epythet==0.2.22"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

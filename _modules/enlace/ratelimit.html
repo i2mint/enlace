@@ -357,9 +357,12 @@
 <span class="c1">#: What an in-memory limiter does with a new key when every tracked one is busy:</span>
 <span class="c1">#: ``"evict"`` the least recently seen (fail open), or ``"deny"`` the new key.</span>
 <span class="n">OVERFLOW_POLICIES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"evict"</span><span class="p">,</span> <span class="s2">"deny"</span><span class="p">)</span>
-<span class="c1">#: A full in-memory limiter looks for idle keys at most this often (one O(max_keys)</span>
-<span class="c1">#: sweep), so a flood of new keys cannot make every request pay for a sweep.</span>
+<span class="c1">#: A full in-memory limiter looks for idle keys at most this often, so a flood of</span>
+<span class="c1">#: new keys cannot make every request pay for a sweep.</span>
 <span class="n">DEFAULT_MIN_SWEEP_SECONDS</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="c1">#: Keys one sweep examines: a sweep of a full limiter is a slice of its keys</span>
+<span class="c1">#: (oldest first) rather than all ``max_keys``, so it cannot stall the event loop.</span>
+<span class="n">DEFAULT_SWEEP_BATCH</span> <span class="o">=</span> <span class="mi">1024</span>
 <span class="c1">#: What the Redis limiter does while Redis is failing: ask its ``fallback``, or</span>
 <span class="c1">#: refuse (``"deny"``, fail closed) or admit (``"allow"``, fail open) every request.</span>
 <span class="n">REDIS_ERROR_POLICIES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"fallback"</span><span class="p">,</span> <span class="s2">"deny"</span><span class="p">,</span> <span class="s2">"allow"</span><span class="p">)</span>
@@ -699,11 +702,23 @@
 <span class="sd">    A subclass keeps its per-key state in an ``OrderedDict`` (least recently seen</span>
 <span class="sd">    first) and says, with :meth:`_idle_in`, how long until a key's state carries no</span>
 <span class="sd">    information (a full bucket, an empty window).</span>
+
+<span class="sd">    Sweeps are incremental: a round snapshots the keys (least recently seen first,</span>
+<span class="sd">    the likeliest to be idle) and each sweep examines the next ``sweep_batch`` of</span>
+<span class="sd">    them, so the work done under the lock is bounded however large ``max_keys`` is.</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_init_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_bound</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">on_overflow</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">min_sweep_seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">sweep_batch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_SWEEP_BATCH</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="k">if</span> <span class="n">max_keys</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"max_keys must be at least 1, got </span><span class="si">{</span><span class="n">max_keys</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sweep_batch</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sweep_batch must be at least 1, got </span><span class="si">{</span><span class="n">sweep_batch</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">on_overflow</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">OVERFLOW_POLICIES</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"on_overflow must be one of </span><span class="si">{</span><span class="n">OVERFLOW_POLICIES</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">on_overflow</span><span class="si">!r}</span><span class="s2">"</span>
@@ -711,7 +726,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span> <span class="o">=</span> <span class="n">max_keys</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_overflow</span> <span class="o">=</span> <span class="n">on_overflow</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_sweep_seconds</span> <span class="o">=</span> <span class="n">min_sweep_seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sweep_batch</span> <span class="o">=</span> <span class="n">sweep_batch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_queue</span><span class="p">:</span> <span class="n">deque</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>  <span class="c1"># keys left in the current round</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_round_soonest</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>  <span class="c1"># when a key examined this round goes idle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_admitted_soonest</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>  <span class="c1"># ... or a key added since it began</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_warned_eviction</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_idle_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># pragma: no cover - abstract</span>
@@ -728,23 +747,48 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="n">now</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span><span class="p">:</span>
-            <span class="n">soonest</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">entries</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-                <span class="n">idle_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_in</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">idle_in</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">del</span> <span class="n">entries</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">soonest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">soonest</span><span class="p">,</span> <span class="n">idle_in</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="n">soonest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_sweep_seconds</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sweep</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_keys</span><span class="p">:</span>
                 <span class="k">return</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_overflow</span> <span class="o">==</span> <span class="s2">"deny"</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">-</span> <span class="n">now</span>  <span class="c1"># &gt; 0: when a key may next go idle</span>
         <span class="k">return</span> <span class="mf">0.0</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sweep</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Drop the idle keys among the next ``sweep_batch`` of the round.</span>
+
+<span class="sd">        A key examined earlier in the round may have been seen again since: its</span>
+<span class="sd">        remembered idle time is then too early, which only brings a sweep forward.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_queue</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_queue</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_round_soonest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_admitted_soonest</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sweep_queue</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sweep_batch</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">queue</span><span class="p">))):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">entries</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># gone since the round began</span>
+            <span class="n">idle_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_in</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">idle_in</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">entries</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_round_soonest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_round_soonest</span><span class="p">,</span> <span class="n">now</span> <span class="o">+</span> <span class="n">idle_in</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">queue</span><span class="p">:</span>  <span class="c1"># keys not examined yet may be idle already</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_sweep_seconds</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">soonest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_round_soonest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_admitted_soonest</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">soonest</span><span class="p">,</span> <span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_sweep_seconds</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_admitted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A new key was stored: it may go idle before the remembered sweep horizon."""</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span><span class="p">,</span> <span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_in</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">))</span>
+<span class="w">        </span><span class="sd">"""A new key was stored: it may go idle before the remembered sweep horizon.</span>
+
+<span class="sd">        Remembered for the round too: the round's snapshot does not hold the key, so</span>
+<span class="sd">        the horizon set when the round ends must not overlook it.</span>
+<span class="sd">        """</span>
+        <span class="n">idle_at</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_in</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_next_sweep</span><span class="p">,</span> <span class="n">idle_at</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_admitted_soonest</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_admitted_soonest</span><span class="p">,</span> <span class="n">idle_at</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_trim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entries</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evict the least recently seen keys beyond ``max_keys`` (warned once)."""</span>
@@ -790,9 +834,10 @@
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_KEYS</span><span class="p">,</span>
         <span class="n">on_overflow</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"evict"</span><span class="p">,</span>
         <span class="n">min_sweep_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_MIN_SWEEP_SECONDS</span><span class="p">,</span>
+        <span class="n">sweep_batch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_SWEEP_BATCH</span><span class="p">,</span>
         <span class="n">clock</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_bound</span><span class="p">(</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_bound</span><span class="p">(</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">,</span> <span class="n">sweep_batch</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="n">rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rate</span><span class="o">.</span><span class="n">limit</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">refill_per_second</span> <span class="o">=</span> <span class="n">rate</span><span class="o">.</span><span class="n">limit</span> <span class="o">/</span> <span class="n">rate</span><span class="o">.</span><span class="n">window</span>
@@ -856,9 +901,10 @@
         <span class="n">max_keys</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_KEYS</span><span class="p">,</span>
         <span class="n">on_overflow</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"evict"</span><span class="p">,</span>
         <span class="n">min_sweep_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_MIN_SWEEP_SECONDS</span><span class="p">,</span>
+        <span class="n">sweep_batch</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_SWEEP_BATCH</span><span class="p">,</span>
         <span class="n">clock</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_bound</span><span class="p">(</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_bound</span><span class="p">(</span><span class="n">max_keys</span><span class="p">,</span> <span class="n">on_overflow</span><span class="p">,</span> <span class="n">min_sweep_seconds</span><span class="p">,</span> <span class="n">sweep_batch</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rate</span> <span class="o">=</span> <span class="n">rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clock</span> <span class="o">=</span> <span class="n">clock</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">deque</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
@@ -871,7 +917,8 @@
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
             <span class="n">now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clock</span><span class="p">()</span>
             <span class="n">hits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">hits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new</span> <span class="o">=</span> <span class="n">hits</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">new</span><span class="p">:</span>
                 <span class="n">refused</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_room</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hits</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">refused</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">return</span> <span class="n">refused</span>
@@ -885,6 +932,8 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rate</span><span class="o">.</span><span class="n">limit</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">hits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">cutoff</span>  <span class="c1"># &gt; 0: when the oldest hit leaves the window</span>
             <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">now</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_admitted</span><span class="p">(</span><span class="n">hits</span><span class="p">,</span> <span class="n">now</span><span class="p">)</span>
             <span class="k">return</span> <span class="mf">0.0</span></div>
 
 
@@ -1217,7 +1266,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=7815078d"></script>
+</div><script src="../../_static/documentation_options.js?v=d15573eb"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
