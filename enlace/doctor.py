@@ -194,6 +194,34 @@ def _check_frontend_dirs(config: PlatformConfig) -> list[Check]:
     return out
 
 
+def _check_app_identity(config: PlatformConfig) -> list[Check]:
+    """One ``identity:<app>`` check per app, WARN when it misses the checklist.
+
+    A WARN here, never a FAIL: strictness is the deployer's policy (a deploy
+    gate reads ``extra["missing"]`` and decides which apps may still be
+    incomplete), so a stale app never makes the doctor itself red.
+    """
+    from enlace.app_identity import identity_gaps
+
+    gaps = identity_gaps(config)
+    # The aggregate check always runs, so a reader can tell "every app is
+    # complete" from "this enlace predates the checklist".
+    summary = Check(
+        "identity",
+        WARN if gaps else PASS,
+        f"{len(gaps)} app(s) miss checklist items" if gaps else "all apps complete",
+    )
+    return [summary] + [
+        Check(
+            f"identity:{name}",
+            WARN,
+            "missing " + ", ".join(codes),
+            extra={"app": name, "missing": codes},
+        )
+        for name, codes in gaps.items()
+    ]
+
+
 # ---------------------------------------------------------------------------
 # HTTP probes
 # ---------------------------------------------------------------------------
@@ -443,6 +471,7 @@ def run_doctor(
     report.checks.extend(_check_app_imports(config))
     report.checks.extend(_check_frontend_dirs(config))
     report.checks.extend(_check_unknown_tables(config))
+    report.checks.extend(_check_app_identity(config))
     for fn in extra_static_checks:
         report.checks.extend(fn(config))
 
