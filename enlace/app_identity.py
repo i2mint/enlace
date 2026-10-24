@@ -60,7 +60,9 @@ def app_gaps(app, config) -> list[str]:
     gaps = []
     if not (head and head.title.strip()):
         gaps.append("title")
-    if not (app.description or (head and (head.description or head.og_description))):
+    tier_b = config.app_meta.apps.get(app.name)
+    described = app.description or (tier_b and tier_b.description)
+    if not (described or (head and (head.description or head.og_description))):
         gaps.append("description")
     if not (head and head.theme_color):
         gaps.append("theme-color")
@@ -68,11 +70,29 @@ def app_gaps(app, config) -> list[str]:
         gaps.append("og-image")
     if app.name != config.landing_app:
         icon = resolve_app_icon(app, config, {})
-        if not is_raster(icon):
+        if icon.redirect_url:
+            pass  # a remote icon cannot be inspected here
+        elif not is_raster(icon):
             gaps.append("icon-png")
-        elif icon.content_type == "image/png" and _png_px(icon.body) < MIN_ICON_PX:
+        elif _icon_px(icon) < MIN_ICON_PX:
             gaps.append("icon-512")
     return gaps
+
+
+def _icon_px(icon) -> int:
+    """Pixel width of a raster icon (PNG header, else Pillow; 0 if unreadable)."""
+    px = _png_px(icon.body)
+    if px or icon.content_type == "image/png":
+        return px
+    try:
+        import io
+
+        from PIL import Image
+
+        with Image.open(io.BytesIO(icon.body or b"")) as im:
+            return im.size[0]
+    except Exception:  # no Pillow, or not decodable: treat as unknown
+        return MIN_ICON_PX
 
 
 def _png_px(body: Optional[bytes]) -> int:
@@ -86,7 +106,7 @@ def identity_gaps(config) -> dict[str, list[str]]:
     """``{app name: missing codes}`` for apps whose HTML the platform serves."""
     out = {}
     for app in config.apps:
-        if not has_own_pages(app):
+        if not has_own_pages(app) or not getattr(app, "listed", True):
             continue
         gaps = app_gaps(app, config)
         if gaps:

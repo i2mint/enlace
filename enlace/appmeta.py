@@ -294,9 +294,9 @@ class _HeadParser(HTMLParser):
                 self.og_title = content
             elif prop == "og:description":
                 self.og_description = content
-            elif prop == "og:image":
+            elif "og:image" in (prop, name):
                 self.og_image = content
-            elif name == "theme-color":
+            elif "theme-color" in (prop, name):
                 self.theme_color = content
         elif tag == "link":
             rel = a.get("rel", "").lower()
