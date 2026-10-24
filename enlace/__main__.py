@@ -231,6 +231,14 @@ def check(
         for name in home_screen_gaps(config)
     )
 
+    from enlace.app_identity import CHECKLIST, identity_gaps
+
+    warnings.extend(
+        f"{name}: missing {code} ({CHECKLIST[code]})"
+        for name, codes in identity_gaps(config).items()
+        for code in codes
+    )
+
     if json:
         print(json_module.dumps({"errors": errors, "warnings": warnings}, indent=2))
     else:

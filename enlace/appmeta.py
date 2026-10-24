@@ -261,6 +261,8 @@ class _HeadParser(HTMLParser):
         self.og_title = ""
         self.description = ""
         self.og_description = ""
+        self.og_image = ""
+        self.theme_color = ""
         self.keywords = ""
         # (href, declared sizes, is_apple_touch) for every icon <link>, in order.
         self.icon_links: list[tuple[str, str, bool]] = []
@@ -292,6 +294,10 @@ class _HeadParser(HTMLParser):
                 self.og_title = content
             elif prop == "og:description":
                 self.og_description = content
+            elif prop == "og:image":
+                self.og_image = content
+            elif name == "theme-color":
+                self.theme_color = content
         elif tag == "link":
             rel = a.get("rel", "").lower()
             href = a.get("href", "").strip()
