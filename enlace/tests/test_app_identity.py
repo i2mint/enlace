@@ -46,3 +46,8 @@ def test_doctor_warns_but_stays_green(tmp_path):
     check = next(c for c in report.checks if c.name == "identity:demo")
     assert check.status == WARN and "og-image" in check.extra["missing"]
     assert report.ok
+
+
+def test_doctor_aggregate_check_passes_when_complete(tmp_path):
+    report = run_doctor(PlatformConfig(apps=[_full_app(tmp_path)]))
+    assert next(c for c in report.checks if c.name == "identity").status == "pass"

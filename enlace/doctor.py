@@ -203,14 +203,22 @@ def _check_app_identity(config: PlatformConfig) -> list[Check]:
     """
     from enlace.app_identity import identity_gaps
 
-    return [
+    gaps = identity_gaps(config)
+    # The aggregate check always runs, so a reader can tell "every app is
+    # complete" from "this enlace predates the checklist".
+    summary = Check(
+        "identity",
+        WARN if gaps else PASS,
+        f"{len(gaps)} app(s) miss checklist items" if gaps else "all apps complete",
+    )
+    return [summary] + [
         Check(
             f"identity:{name}",
             WARN,
             "missing " + ", ".join(codes),
             extra={"app": name, "missing": codes},
         )
-        for name, codes in identity_gaps(config).items()
+        for name, codes in gaps.items()
     ]
 
 
