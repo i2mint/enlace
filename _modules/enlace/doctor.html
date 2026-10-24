@@ -205,6 +205,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.access.html">enlace.access</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.analytics.html">enlace.analytics</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.app_icons.html">enlace.app_icons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.app_identity.html">enlace.app_identity</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.appmeta.html">enlace.appmeta</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.base.html">enlace.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.build.html">enlace.build</a></li>
@@ -466,6 +467,34 @@
     <span class="k">return</span> <span class="n">out</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_app_identity</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">PlatformConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Check</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""One ``identity:&lt;app&gt;`` check per app, WARN when it misses the checklist.</span>
+
+<span class="sd">    A WARN here, never a FAIL: strictness is the deployer's policy (a deploy</span>
+<span class="sd">    gate reads ``extra["missing"]`` and decides which apps may still be</span>
+<span class="sd">    incomplete), so a stale app never makes the doctor itself red.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.app_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">identity_gaps</span>
+
+    <span class="n">gaps</span> <span class="o">=</span> <span class="n">identity_gaps</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="c1"># The aggregate check always runs, so a reader can tell "every app is</span>
+    <span class="c1"># complete" from "this enlace predates the checklist".</span>
+    <span class="n">summary</span> <span class="o">=</span> <span class="n">Check</span><span class="p">(</span>
+        <span class="s2">"identity"</span><span class="p">,</span>
+        <span class="n">WARN</span> <span class="k">if</span> <span class="n">gaps</span> <span class="k">else</span> <span class="n">PASS</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gaps</span><span class="p">)</span><span class="si">}</span><span class="s2"> app(s) miss checklist items"</span> <span class="k">if</span> <span class="n">gaps</span> <span class="k">else</span> <span class="s2">"all apps complete"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">summary</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">Check</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"identity:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">WARN</span><span class="p">,</span>
+            <span class="s2">"missing "</span> <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">codes</span><span class="p">),</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">"app"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">:</span> <span class="n">codes</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">codes</span> <span class="ow">in</span> <span class="n">gaps</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">]</span>
+
+
 <span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># HTTP probes</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
@@ -717,6 +746,7 @@
     <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_app_imports</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
     <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_frontend_dirs</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
     <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_unknown_tables</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_check_app_identity</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
     <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">extra_static_checks</span><span class="p">:</span>
         <span class="n">report</span><span class="o">.</span><span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">fn</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
 
@@ -785,7 +815,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=d15573eb"></script>
+</div><script src="../../_static/documentation_options.js?v=3976325b"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -1,0 +1,20 @@
+enlace.app\_identity
+====================
+
+.. automodule:: enlace.app_identity
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      MIN_ICON_PX
+      CHECKLIST
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      app_gaps
+      identity_gaps
+   

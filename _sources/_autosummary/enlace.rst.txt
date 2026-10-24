@@ -60,6 +60,7 @@
    access
    analytics
    app_icons
+   app_identity
    appmeta
    base
    build

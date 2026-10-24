@@ -1,4 +1,4 @@
-> built 2026-10-20 16:53 UTC from 430b13d (main) · enlace 0.1.63. Details: build_info.json
+> built 2026-10-24 11:30 UTC from 636ad81 (main) · enlace 0.1.64. Details: build_info.json
 
 # index.html.md
 
@@ -1147,6 +1147,61 @@ Scoped to the app’s own mount so each app installs as its own shortcut.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)
+
+
+# _autosummary/enlace.app_identity.html.md
+
+# enlace.app_identity
+
+The app identity checklist: what every public-facing app’s page must carry.
+
+One list, stated once ([`CHECKLIST`](_autosummary/enlace.app_identity.html.md#enlace.app_identity.CHECKLIST)), checked in one place
+([`identity_gaps()`](_autosummary/enlace.app_identity.html.md#enlace.app_identity.identity_gaps)) and reported by every surface that audits an app
+(`enlace check`, `enlace doctor`, a deploy gate reading the doctor’s JSON).
+
+The platform already wires the favicon, apple-touch-icon and web manifest
+`<link>` tags from the app’s icon (see [`enlace.app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)), so those need
+only a raster source icon here. What the app’s own page must supply is its
+`<head>` text and social-preview tags.
+
+```pycon
+>>> sorted(CHECKLIST)[:3]
+['description', 'icon-512', 'icon-png']
+```
+
+### Module Attributes
+
+| [`MIN_ICON_PX`](_autosummary/enlace.app_identity.html.md#enlace.app_identity.MIN_ICON_PX)   | Smallest PNG source that renders crisply at the largest manifest size.   |
+|----------------------------------------------------------------|--------------------------------------------------------------------------|
+| [`CHECKLIST`](_autosummary/enlace.app_identity.html.md#enlace.app_identity.CHECKLIST)     | code -> what the app owes (the SSOT; docs and skills point here).        |
+
+### Functions
+
+| [`app_gaps`](_autosummary/enlace.app_identity.html.md#enlace.app_identity.app_gaps)(app, config)   | Checklist codes this one app misses (empty: complete).               |
+|--------------------------------------------------------------------------|----------------------------------------------------------------------|
+| [`identity_gaps`](_autosummary/enlace.app_identity.html.md#enlace.app_identity.identity_gaps)(config)   | `{app name: missing codes}` for apps whose HTML the platform serves. |
+
+### enlace.app_identity.CHECKLIST *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'description': '<meta name="description"> (or description in app.toml)', 'icon-512': 'a PNG source icon >= 512px wide (manifest 512)', 'icon-png': 'a raster icon (platform cuts favicon, apple-touch 180)', 'og-image': '<meta property="og:image"> (social preview PNG)', 'theme-color': '<meta name="theme-color">', 'title': 'a <title> in the page <head>'}*
+
+code -> what the app owes (the SSOT; docs and skills point here).
+
+### enlace.app_identity.MIN_ICON_PX *= 512*
+
+Smallest PNG source that renders crisply at the largest manifest size.
+
+### enlace.app_identity.app_gaps(app, config)
+
+Checklist codes this one app misses (empty: complete).
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.app_identity.identity_gaps(config)
+
+`{app name: missing codes}` for apps whose HTML the platform serves.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
 
 
 # _autosummary/enlace.appmeta.html.md
@@ -3204,6 +3259,7 @@ present, has a `build` command and that its working directory exists.
 |----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
 | [`analytics`](_autosummary/enlace.analytics.html.md#module-enlace.analytics)           | Privacy-first page-view analytics, turned on per app.                                |
 | [`app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
+| [`app_identity`](_autosummary/enlace.app_identity.html.md#module-enlace.app_identity)     | The app identity checklist: what every public-facing app's page must carry.          |
 | [`appmeta`](_autosummary/enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
 | [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
 | [`build`](_autosummary/enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
@@ -4694,18 +4750,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-20 16:53 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/430b13dac05ee94180a2dd3fd99ef0ce545d475d"><code>430b13d</code></a> on branch <code>main</code>, for **enlace 0.1.63** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-24 11:30 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/636ad81ab5f6c618ae9d87be7525ff9e383b41d6"><code>636ad81</code></a> on branch <code>main</code>, for **enlace 0.1.64** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.63) is behind the latest release on PyPI (0.1.64): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.64) is behind the latest release on PyPI (0.1.65): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/430b13dac05ee94180a2dd3fd99ef0ce545d475d"><code>430b13dac05ee94180a2dd3fd99ef0ce545d475d</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/636ad81ab5f6c618ae9d87be7525ff9e383b41d6"><code>636ad81ab5f6c618ae9d87be7525ff9e383b41d6</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -4716,9 +4772,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/39461073033">39461073033</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/40090080425">40090080425</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>430b13dac05ee94180a2dd3fd99ef0ce545d475d</code> (in the history of the built commit) |
+| Event commit | <code>636ad81ab5f6c618ae9d87be7525ff9e383b41d6</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -4743,13 +4799,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.64/">0.1.64</a>, newer than the documented version (0.1.63).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.65/">0.1.65</a>, newer than the documented version (0.1.64).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 430b13dac05ee94180a2dd3fd99ef0ce545d475d
+git checkout 636ad81ab5f6c618ae9d87be7525ff9e383b41d6
 pip install "epythet==0.2.22"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

@@ -687,6 +687,7 @@ present, has a `build` command and that its working directory exists.
 |----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
 | [`analytics`](enlace.analytics.html.md#module-enlace.analytics)           | Privacy-first page-view analytics, turned on per app.                                |
 | [`app_icons`](enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
+| [`app_identity`](enlace.app_identity.html.md#module-enlace.app_identity)     | The app identity checklist: what every public-facing app's page must carry.          |
 | [`appmeta`](enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
 | [`base`](enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
 | [`build`](enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
