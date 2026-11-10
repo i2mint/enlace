@@ -24,7 +24,18 @@ from starlette.staticfiles import StaticFiles
 from starlette.types import Receive, Scope, Send
 
 DFLT_HTML_CACHE_CONTROL = "no-cache"
+#: Extensions the standard ``mimetypes`` table lacks, which would otherwise be served as
+#: ``text/plain`` (and gzipped). ONNX models are binary weights (#113).
+DFLT_MEDIA_TYPES: dict[str, str] = {".onnx": "application/octet-stream"}
 HTML_MEDIA_TYPES = frozenset({"text/html", "application/xhtml+xml"})
+
+
+def apply_media_type(response: Response, path, media_types=DFLT_MEDIA_TYPES) -> None:
+    """Set *response*'s content type from *media_types*, keyed by *path*'s suffix."""
+    media_type = media_types.get(Path(path).suffix.lower())
+    if media_type is not None:
+        response.media_type = media_type
+        response.headers["content-type"] = media_type
 
 
 def is_html_path(path) -> bool:
@@ -56,10 +67,12 @@ class RevalidatingStaticFiles(StaticFiles):
         self,
         *args,
         html_cache_control: str | None = DFLT_HTML_CACHE_CONTROL,
+        media_types: dict[str, str] | None = None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.html_cache_control = html_cache_control
+        self.media_types = {**DFLT_MEDIA_TYPES, **(media_types or {})}
 
     def _revalidate_if_html(self, response: Response, full_path) -> Response:
         if (
@@ -71,8 +84,9 @@ class RevalidatingStaticFiles(StaticFiles):
         return response
 
     def file_response(self, full_path, stat_result, scope, status_code=200):
-        """Build the file response, adding ``Cache-Control`` for HTML files."""
+        """The file response, with HTML revalidated and ``media_types`` applied."""
         response = super().file_response(full_path, stat_result, scope, status_code)
+        apply_media_type(response, full_path, self.media_types)
         return self._revalidate_if_html(response, full_path)
 
     async def get_response(self, path: str, scope: Scope) -> Response:

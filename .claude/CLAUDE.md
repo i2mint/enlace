@@ -68,6 +68,7 @@ enlace/
 ├── strategies.py  # BackendStrategy registry: one strategy per mode, register_strategy for plugins
 ├── compose.py     # build_backend(): mounts ASGI sub-apps, proxy routes, static files
 ├── degraded.py    # load_or_stub(): loud-and-local 500 stub for an asgi app that fails to load
+├── response_headers.py # app.toml [response_headers] / cross_origin_isolated: per-app headers (COOP/COEP)
 ├── access.py      # can_see_app / is_user_allowed: the ONE visibility predicate (launcher + auth gate)
 ├── proxy.py       # Lightweight ASGI reverse proxy for process/external backends (httpx)
 ├── supervise.py   # Dev-mode asyncio process supervisor (health checks, restart, logs)

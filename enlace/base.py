@@ -264,6 +264,14 @@ class AppConfig(BaseModel):
     # "[METHOD] /path" relative to route_prefix, valued "N/unit". Off unless
     # declared. Enforced by enlace in front of the app; see enlace.ratelimit.
     rate_limit: dict[str, str] = Field(default_factory=dict)
+    # Headers enlace adds to every response under a sub-path of the app
+    # (app.toml's [response_headers] table, "sub-path" = {header = value}, "/"
+    # for the whole app). Off unless declared. See enlace.response_headers.
+    response_headers: dict[str, dict[str, str]] = Field(default_factory=dict)
+    # Serve the app (true) or some of its sub-paths (a list, e.g. ["lab"])
+    # cross-origin isolated: COOP + COEP + CORP, so its pages get
+    # SharedArrayBuffer. Off by default: it stops third-party embeds loading.
+    cross_origin_isolated: Union[bool, list[str]] = False
 
     # The app's page ships inside a Python package (app.toml's
     # ``page_from_package``): enlace serves the shell at /{name}/ and the
@@ -358,6 +366,20 @@ class AppConfig(BaseModel):
         from enlace.ratelimit import validate_rate_limits
 
         return validate_rate_limits(v)
+
+    @field_validator("response_headers", mode="before")
+    @classmethod
+    def _validate_response_headers(cls, v):
+        from enlace.response_headers import validate_response_headers
+
+        return validate_response_headers(v)
+
+    @field_validator("cross_origin_isolated", mode="before")
+    @classmethod
+    def _validate_cross_origin_isolated(cls, v):
+        from enlace.response_headers import validate_cross_origin_isolated
+
+        return validate_cross_origin_isolated(v)
 
     @model_validator(mode="after")
     def _default_display_name(self):

@@ -369,6 +369,13 @@ def build_backend(
             continue
         headers_prefix_map[app_config.route_prefix] = app_meta.current
         headers_prefix_map[f"/{app_config.name}"] = app_meta.current
+    # Headers the apps declared for their own paths (app.toml [response_headers],
+    # cross_origin_isolated). Outside the plugins, so a gated path's sign-in
+    # response carries them too; only installed when some app declares one.
+    from enlace.response_headers import add_response_headers
+
+    add_response_headers(parent, config)
+
     parent.add_middleware(
         DeployHeadersMiddleware,
         manifests_by_prefix=headers_prefix_map,

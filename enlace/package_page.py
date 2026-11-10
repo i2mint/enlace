@@ -52,6 +52,8 @@ from starlette.responses import Response
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from enlace.frontend import apply_media_type
+
 #: Where the assets live inside the package, by default.
 DFLT_ASSETS_DIR = "data/ui"
 #: The route segment, under the app's API prefix, the assets are served at.
@@ -402,4 +404,5 @@ class PackageAssets(StaticFiles):
         """The file, with ``Cache-Control`` so a package upgrade reaches the browser."""
         response = super().file_response(*args, **kwargs)
         response.headers["Cache-Control"] = self.cache_control
+        apply_media_type(response, args[0] if args else kwargs["full_path"])
         return response
