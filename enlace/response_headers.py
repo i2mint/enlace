@@ -91,8 +91,19 @@ FORBIDDEN_HEADERS: frozenset[str] = frozenset(
         "clear-site-data",
         "strict-transport-security",
         "service-worker-allowed",
+        "nel",
+        "report-to",
+        "reporting-endpoints",
+        "origin-agent-cluster",
+        "accept-ch",
+        "critical-ch",
     }
 )
+
+#: Header-name prefixes an app may not declare (lower-case). ``access-control-*`` is
+#: the platform's CORS answer: this middleware wraps CORS, so a declared value would
+#: replace it, e.g. pairing a chosen origin with ``Allow-Credentials`` on the app's API.
+FORBIDDEN_HEADER_PREFIXES: tuple[str, ...] = ("access-control-",)
 
 _TOKEN = re.compile(r"[!#$%&'*+.^_`|~0-9A-Za-z-]+")  # RFC 9110 field-name
 _VALUE = re.compile(r"[\t\x20-\x7e]*")  # visible ASCII, space and tab
@@ -126,7 +137,9 @@ def _validate_headers(where: str, headers) -> dict[str, str]:
     for name, value in headers.items():
         if not isinstance(name, str) or not _TOKEN.fullmatch(name):
             raise ValueError(f"[response_headers] {where!r}: bad header name {name!r}")
-        if name.lower() in FORBIDDEN_HEADERS:
+        if name.lower() in FORBIDDEN_HEADERS or name.lower().startswith(
+            FORBIDDEN_HEADER_PREFIXES
+        ):
             raise ValueError(
                 f"[response_headers] {where!r}: {name} cannot be declared (it would "
                 "corrupt the response, the platform's cookies, or other apps)"
