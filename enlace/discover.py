@@ -428,6 +428,9 @@ _CORE_TOML_FIELD_MAP = {
     "listed": "listed",
     # Refuse to boot rather than mount a 500 stub (see AppConfig.fail_hard).
     "fail_hard": "fail_hard",
+    # Per-app response headers (see enlace.response_headers); validated by AppConfig.
+    "response_headers": "response_headers",
+    "cross_origin_isolated": "cross_origin_isolated",
 }
 
 # Core path keys (resolved relative to the app directory). Strategy-specific

@@ -48,6 +48,9 @@ INCOMPRESSIBLE_TYPES: frozenset[str] = frozenset(
         "application/zstd",
         "application/pdf",
         "application/wasm",
+        # Opaque binaries (model weights, archives of unknown kind): little to gain,
+        # and gzipping tens of MB blocks the shared event loop.
+        "application/octet-stream",
     }
 )
 

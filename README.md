@@ -415,6 +415,24 @@ Without `trusted_proxies`, the ASGI peer address is used as is: behind a proxy t
 
 The client-address and limiter pieces (`client_address`, `bucket_key`, `TokenBucketLimiter`, `SlidingWindowLimiter`, `RedisLimiter`) import only the standard library and are usable outside enlace's middleware; heed's public feedback endpoint uses them.
 
+### Response headers and cross-origin isolation
+
+An app can have enlace add headers to every response under a sub-path of itself, with no code in the app. A page that needs `SharedArrayBuffer` (threaded WebAssembly, memory shared with an `AudioWorklet`) must be cross-origin isolated, and one line in its `app.toml` does it:
+
+```toml
+cross_origin_isolated = ["lab"]   # or true, for the whole app
+```
+
+Responses under `/{name}/lab/` and `{route}/lab/` then carry `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp` and `Cross-Origin-Resource-Policy: same-origin`, and the page reports `crossOriginIsolated === true`. Every other path of the app, and every other app, is unchanged. Any other header, or an override, goes in a table keyed by sub-path (`"/"` for the whole app; the longest matching key wins, header by header):
+
+```toml
+[response_headers]
+"lab" = { "Cross-Origin-Embedder-Policy" = "credentialless" }
+"/" = { "X-Robots-Tag" = "noindex" }
+```
+
+Both are off by default, because isolation has a price on every isolated page: a cross-origin resource loads only if it opts in (CORS, or `Cross-Origin-Resource-Policy: cross-origin`), so third-party iframes (YouTube, maps, payment widgets), analytics and ad scripts, and images or fonts from a CDN that sends no CORP stop loading; pop-ups that report back through `window.opener` (OAuth or payment sign-in on another origin) lose their link to the page; and other sites can no longer embed the isolated files. Keep it on the one route that needs it, with that page's workers and wasm under the same sub-path (a dedicated worker takes its policy from its own response). Matching is by whole path segments (`"lab"` never covers `/labels/`), and a declared header replaces one of the same name set by the app. Static files ending in `.onnx` are served as `application/octet-stream`, which enlace never gzips. The middleware is `enlace.response_headers.ResponseHeadersMiddleware`.
+
 ### Deploy manifest (`/_meta`)
 
 enlace answers "what is actually deployed?" via an always-on, cheap manifest layer. Every mounted app gets a `/_meta` endpoint (plus a platform-level `/_meta`), and every response carries `X-Deploy-*` headers. A deploy tool snapshots build identity (git SHA, deploy time, externals) at deploy time into `{manifest_dir}/{app}.json`; enlace owns the read paths and schema. This lets you tell whether the server is serving the SHA you think it is and whether the browser rendered the current build or a stale cache.
