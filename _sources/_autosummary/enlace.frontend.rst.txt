@@ -4,10 +4,17 @@ enlace.frontend
 .. automodule:: enlace.frontend
 
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      DFLT_MEDIA_TYPES
+   
    .. rubric:: Functions
 
    .. autosummary::
    
+      apply_media_type
       is_html_path
    
    .. rubric:: Classes

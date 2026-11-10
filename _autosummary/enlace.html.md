@@ -66,7 +66,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, response_headers=<factory>, cross_origin_isolated=False, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -683,26 +683,27 @@ present, has a `build` command and that its working directory exists.
 
 ### Modules
 
-| [`access`](enlace.access.html.md#module-enlace.access)                 | Who may reach an app: the one predicate the gate and the launcher both call.         |
-|----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [`analytics`](enlace.analytics.html.md#module-enlace.analytics)           | Privacy-first page-view analytics, turned on per app.                                |
-| [`app_icons`](enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
-| [`app_identity`](enlace.app_identity.html.md#module-enlace.app_identity)     | The app identity checklist: what every public-facing app's page must carry.          |
-| [`appmeta`](enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
-| [`base`](enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
-| [`build`](enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
-| [`compose`](enlace.compose.html.md#module-enlace.compose)               | ASGI app composition for enlace.                                                     |
-| [`degraded`](enlace.degraded.html.md#module-enlace.degraded)             | Loud-and-local app-load failures: a 500 stub for the one app that broke.             |
-| [`diagnose`](enlace.diagnose.html.md#module-enlace.diagnose)             | Diagnose app compatibility with enlace.                                              |
-| [`discover`](enlace.discover.html.md#module-enlace.discover)             | Convention-based app discovery for enlace.                                           |
-| [`doctor`](enlace.doctor.html.md#module-enlace.doctor)                 | Post-deploy smoke checks for a running enlace gateway.                               |
-| [`frontend`](enlace.frontend.html.md#module-enlace.frontend)             | SPA-aware static file serving for enlace.                                            |
-| [`gzip_selective`](enlace.gzip_selective.html.md#module-enlace.gzip_selective) | Compression that knows what it must not compress.                                    |
-| [`html_rewrite`](enlace.html_rewrite.html.md#module-enlace.html_rewrite)     | Rewrite HTML response bodies from pure-ASGI middleware.                              |
-| [`manifest`](enlace.manifest.html.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
-| [`package_page`](enlace.package_page.html.md#module-enlace.package_page)     | Serve an app's page from its Python package: the shell and its `/ui/` assets.        |
-| [`proxy`](enlace.proxy.html.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                    |
-| [`ratelimit`](enlace.ratelimit.html.md#module-enlace.ratelimit)           | Opt-in, per-app, per-client rate limits for mounted apps.                            |
-| [`strategies`](enlace.strategies.html.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                        |
-| [`supervise`](enlace.supervise.html.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                              |
-| [`util`](enlace.util.html.md#module-enlace.util)                     | Internal helpers for enlace.                                                         |
+| [`access`](enlace.access.html.md#module-enlace.access)                     | Who may reach an app: the one predicate the gate and the launcher both call.         |
+|--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`analytics`](enlace.analytics.html.md#module-enlace.analytics)               | Privacy-first page-view analytics, turned on per app.                                |
+| [`app_icons`](enlace.app_icons.html.md#module-enlace.app_icons)               | One icon per app, served in every form a browser or phone asks for.                  |
+| [`app_identity`](enlace.app_identity.html.md#module-enlace.app_identity)         | The app identity checklist: what every public-facing app's page must carry.          |
+| [`appmeta`](enlace.appmeta.html.md#module-enlace.appmeta)                   | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
+| [`base`](enlace.base.html.md#module-enlace.base)                         | Core data structures for enlace platform configuration.                              |
+| [`build`](enlace.build.html.md#module-enlace.build)                       | Run and validate declarative app builds from `app.toml` `[build]`.                   |
+| [`compose`](enlace.compose.html.md#module-enlace.compose)                   | ASGI app composition for enlace.                                                     |
+| [`degraded`](enlace.degraded.html.md#module-enlace.degraded)                 | Loud-and-local app-load failures: a 500 stub for the one app that broke.             |
+| [`diagnose`](enlace.diagnose.html.md#module-enlace.diagnose)                 | Diagnose app compatibility with enlace.                                              |
+| [`discover`](enlace.discover.html.md#module-enlace.discover)                 | Convention-based app discovery for enlace.                                           |
+| [`doctor`](enlace.doctor.html.md#module-enlace.doctor)                     | Post-deploy smoke checks for a running enlace gateway.                               |
+| [`frontend`](enlace.frontend.html.md#module-enlace.frontend)                 | SPA-aware static file serving for enlace.                                            |
+| [`gzip_selective`](enlace.gzip_selective.html.md#module-enlace.gzip_selective)     | Compression that knows what it must not compress.                                    |
+| [`html_rewrite`](enlace.html_rewrite.html.md#module-enlace.html_rewrite)         | Rewrite HTML response bodies from pure-ASGI middleware.                              |
+| [`manifest`](enlace.manifest.html.md#module-enlace.manifest)                 | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
+| [`package_page`](enlace.package_page.html.md#module-enlace.package_page)         | Serve an app's page from its Python package: the shell and its `/ui/` assets.        |
+| [`proxy`](enlace.proxy.html.md#module-enlace.proxy)                       | Lightweight ASGI reverse proxy for process and external backends.                    |
+| [`ratelimit`](enlace.ratelimit.html.md#module-enlace.ratelimit)               | Opt-in, per-app, per-client rate limits for mounted apps.                            |
+| [`response_headers`](enlace.response_headers.html.md#module-enlace.response_headers) | Per-app response headers declared in `app.toml`; cross-origin isolation in a line.   |
+| [`strategies`](enlace.strategies.html.md#module-enlace.strategies)             | Backend-strategy registry and built-in strategies for enlace.                        |
+| [`supervise`](enlace.supervise.html.md#module-enlace.supervise)               | Dev-mode process supervisor for enlace.                                              |
+| [`util`](enlace.util.html.md#module-enlace.util)                         | Internal helpers for enlace.                                                         |

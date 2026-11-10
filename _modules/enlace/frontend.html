@@ -221,6 +221,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.response_headers.html">enlace.response_headers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.util.html">enlace.util</a></li>
@@ -288,7 +289,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">Send</span>
 
 <span class="n">DFLT_HTML_CACHE_CONTROL</span> <span class="o">=</span> <span class="s2">"no-cache"</span>
+<span class="c1">#: Extensions the standard ``mimetypes`` table lacks, which would otherwise be served as</span>
+<span class="c1">#: ``text/plain`` (and gzipped). ONNX models are binary weights (#113).</span>
+<span class="n">DFLT_MEDIA_TYPES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">".onnx"</span><span class="p">:</span> <span class="s2">"application/octet-stream"</span><span class="p">}</span>
 <span class="n">HTML_MEDIA_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"text/html"</span><span class="p">,</span> <span class="s2">"application/xhtml+xml"</span><span class="p">})</span>
+
+
+<div class="viewcode-block" id="apply_media_type">
+<a class="viewcode-back" href="../../_autosummary/enlace.frontend.html#enlace.frontend.apply_media_type">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_media_type</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">media_types</span><span class="o">=</span><span class="n">DFLT_MEDIA_TYPES</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Set *response*'s content type from *media_types*, keyed by *path*'s suffix."""</span>
+    <span class="n">media_type</span> <span class="o">=</span> <span class="n">media_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">media_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">media_type</span> <span class="o">=</span> <span class="n">media_type</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">"content-type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">media_type</span></div>
+
 
 
 <div class="viewcode-block" id="is_html_path">
@@ -325,10 +340,12 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="n">args</span><span class="p">,</span>
         <span class="n">html_cache_control</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">DFLT_HTML_CACHE_CONTROL</span><span class="p">,</span>
+        <span class="n">media_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">html_cache_control</span> <span class="o">=</span> <span class="n">html_cache_control</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">media_types</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">DFLT_MEDIA_TYPES</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">media_types</span> <span class="ow">or</span> <span class="p">{})}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_revalidate_if_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span> <span class="n">full_path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Response</span><span class="p">:</span>
         <span class="k">if</span> <span class="p">(</span>
@@ -342,8 +359,9 @@
 <div class="viewcode-block" id="RevalidatingStaticFiles.file_response">
 <a class="viewcode-back" href="../../_autosummary/enlace.frontend.html#enlace.frontend.RevalidatingStaticFiles.file_response">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">file_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_path</span><span class="p">,</span> <span class="n">stat_result</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">status_code</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Build the file response, adding ``Cache-Control`` for HTML files."""</span>
+<span class="w">        </span><span class="sd">"""The file response, with HTML revalidated and ``media_types`` applied."""</span>
         <span class="n">response</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">file_response</span><span class="p">(</span><span class="n">full_path</span><span class="p">,</span> <span class="n">stat_result</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">status_code</span><span class="p">)</span>
+        <span class="n">apply_media_type</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">full_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">media_types</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_revalidate_if_html</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">full_path</span><span class="p">)</span></div>
 
 
@@ -625,7 +643,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=3976325b"></script>
+</div><script src="../../_static/documentation_options.js?v=9036463d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

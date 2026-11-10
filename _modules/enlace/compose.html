@@ -221,6 +221,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.response_headers.html">enlace.response_headers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.util.html">enlace.util</a></li>
@@ -638,6 +639,13 @@
             <span class="k">continue</span>
         <span class="n">headers_prefix_map</span><span class="p">[</span><span class="n">app_config</span><span class="o">.</span><span class="n">route_prefix</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">current</span>
         <span class="n">headers_prefix_map</span><span class="p">[</span><span class="sa">f</span><span class="s2">"/</span><span class="si">{</span><span class="n">app_config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">app_meta</span><span class="o">.</span><span class="n">current</span>
+    <span class="c1"># Headers the apps declared for their own paths (app.toml [response_headers],</span>
+    <span class="c1"># cross_origin_isolated). Outside the plugins, so a gated path's sign-in</span>
+    <span class="c1"># response carries them too; only installed when some app declares one.</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.response_headers</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_response_headers</span>
+
+    <span class="n">add_response_headers</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
     <span class="n">parent</span><span class="o">.</span><span class="n">add_middleware</span><span class="p">(</span>
         <span class="n">DeployHeadersMiddleware</span><span class="p">,</span>
         <span class="n">manifests_by_prefix</span><span class="o">=</span><span class="n">headers_prefix_map</span><span class="p">,</span>
@@ -1588,7 +1596,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=3976325b"></script>
+</div><script src="../../_static/documentation_options.js?v=9036463d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

@@ -221,6 +221,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.response_headers.html">enlace.response_headers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.util.html">enlace.util</a></li>
@@ -312,6 +313,9 @@
         <span class="s2">"application/zstd"</span><span class="p">,</span>
         <span class="s2">"application/pdf"</span><span class="p">,</span>
         <span class="s2">"application/wasm"</span><span class="p">,</span>
+        <span class="c1"># Opaque binaries (model weights, archives of unknown kind): little to gain,</span>
+        <span class="c1"># and gzipping tens of MB blocks the shared event loop.</span>
+        <span class="s2">"application/octet-stream"</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="p">)</span>
 
@@ -485,7 +489,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=3976325b"></script>
+</div><script src="../../_static/documentation_options.js?v=9036463d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

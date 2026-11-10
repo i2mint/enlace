@@ -25,6 +25,7 @@
 - [enlace.package_page](enlace.package_page.html.md): Serve an app’s page from its Python package: the shell and its &#96;/ui/&#96; assets.
 - [enlace.proxy](enlace.proxy.html.md): Lightweight ASGI reverse proxy for process and external backends.
 - [enlace.ratelimit](enlace.ratelimit.html.md): Opt-in, per-app, per-client rate limits for mounted apps.
+- [enlace.response_headers](enlace.response_headers.html.md): Per-app response headers declared in &#96;app.toml&#96;; cross-origin isolation in a line.
 - [enlace.strategies](enlace.strategies.html.md): Backend-strategy registry and built-in strategies for enlace.
 - [enlace.supervise](enlace.supervise.html.md): Dev-mode process supervisor for enlace.
 - [enlace.util](enlace.util.html.md): Internal helpers for enlace.

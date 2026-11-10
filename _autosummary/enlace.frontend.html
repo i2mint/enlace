@@ -224,6 +224,7 @@
 <li class="toctree-l3"><a class="reference internal" href="enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.ratelimit.html">enlace.ratelimit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="enlace.response_headers.html">enlace.response_headers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="enlace.util.html">enlace.util</a></li>
@@ -283,11 +284,24 @@ from <code class="docutils literal notranslate"><span class="pre">generateStatic
 is served and the client JS can read the real param from the URL.</p>
 <p>Every static mount enlace makes also tells browsers to **revalidate HTML
 documents** (<code class="docutils literal notranslate"><span class="pre">Cache-Control:</span> <span class="pre">no-cache</span></code>) — see <a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles" title="enlace.frontend.RevalidatingStaticFiles"><code class="xref py py-class docutils literal notranslate"><span class="pre">RevalidatingStaticFiles</span></code></a>.</p>
+<p class="rubric">Module Attributes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.frontend.DFLT_MEDIA_TYPES" title="enlace.frontend.DFLT_MEDIA_TYPES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DFLT_MEDIA_TYPES</span></code></a></p></td>
+<td><p>Extensions the standard <code class="docutils literal notranslate"><span class="pre">mimetypes</span></code> table lacks, which would otherwise be served as <code class="docutils literal notranslate"><span class="pre">text/plain</span></code> (and gzipped).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p class="rubric">Functions</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.frontend.is_html_path" title="enlace.frontend.is_html_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_html_path</span></code></a>(path)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.frontend.apply_media_type" title="enlace.frontend.apply_media_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_media_type</span></code></a>(response, path[, media_types])</p></td>
+<td><p>Set <em>response</em>'s content type from <em>media_types</em>, keyed by <em>path</em>'s suffix.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#enlace.frontend.is_html_path" title="enlace.frontend.is_html_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_html_path</span></code></a>(path)</p></td>
 <td><p>Whether <em>path</em> names an HTML document, judged by its file extension.</p></td>
 </tr>
 </tbody>
@@ -303,12 +317,19 @@ documents** (<code class="docutils literal notranslate"><span class="pre">Cache-
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles" title="enlace.frontend.RevalidatingStaticFiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RevalidatingStaticFiles</span></code></a>(*args[, ...])</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">StaticFiles</span></code> that makes browsers revalidate HTML documents.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.frontend.SPAStaticFiles" title="enlace.frontend.SPAStaticFiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SPAStaticFiles</span></code></a>(*args[, html_cache_control])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.frontend.SPAStaticFiles" title="enlace.frontend.SPAStaticFiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SPAStaticFiles</span></code></a>(*args[, html_cache_control, ...])</p></td>
 <td><p>StaticFiles subclass with SPA / Next.js dynamic-route fallback.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.frontend.DFLT_MEDIA_TYPES">
+<span class="sig-prename descclassname"><span class="pre">enlace.frontend.</span></span><span class="sig-name descname"><span class="pre">DFLT_MEDIA_TYPES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'.onnx':</span> <span class="pre">'application/octet-stream'}</span></span><a class="headerlink" href="#enlace.frontend.DFLT_MEDIA_TYPES" title="Link to this definition">¶</a></dt>
+<dd><p>Extensions the standard <code class="docutils literal notranslate"><span class="pre">mimetypes</span></code> table lacks, which would otherwise be served as
+<code class="docutils literal notranslate"><span class="pre">text/plain</span></code> (and gzipped). ONNX models are binary weights (#113).</p>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.frontend.LandingWithUnknownApp404">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.frontend.</span></span><span class="sig-name descname"><span class="pre">LandingWithUnknownApp404</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">landing_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#LandingWithUnknownApp404"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.LandingWithUnknownApp404" title="Link to this definition">¶</a></dt>
@@ -329,7 +350,7 @@ only handles paths that fall through to <code class="docutils literal notranslat
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.frontend.RevalidatingStaticFiles">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.frontend.</span></span><span class="sig-name descname"><span class="pre">RevalidatingStaticFiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">html_cache_control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'no-cache'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#RevalidatingStaticFiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.RevalidatingStaticFiles" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.frontend.</span></span><span class="sig-name descname"><span class="pre">RevalidatingStaticFiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">html_cache_control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'no-cache'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#RevalidatingStaticFiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.RevalidatingStaticFiles" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">StaticFiles</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">StaticFiles</span></code> that makes browsers revalidate HTML documents.</p>
 <p>Starlette sends <code class="docutils literal notranslate"><span class="pre">ETag</span></code> and <code class="docutils literal notranslate"><span class="pre">Last-Modified</span></code> but no <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code>.
@@ -350,7 +371,7 @@ makes a cheap <code class="docutils literal notranslate"><span class="pre">304</
 <dl class="py method">
 <dt class="sig sig-object py" id="enlace.frontend.RevalidatingStaticFiles.file_response">
 <span class="sig-name descname"><span class="pre">file_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scope</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_code</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#RevalidatingStaticFiles.file_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.RevalidatingStaticFiles.file_response" title="Link to this definition">¶</a></dt>
-<dd><p>Build the file response, adding <code class="docutils literal notranslate"><span class="pre">Cache-Control</span></code> for HTML files.</p>
+<dd><p>The file response, with HTML revalidated and <code class="docutils literal notranslate"><span class="pre">media_types</span></code> applied.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -372,7 +393,7 @@ keep showing the old “not found” document.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="enlace.frontend.SPAStaticFiles">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.frontend.</span></span><span class="sig-name descname"><span class="pre">SPAStaticFiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">html_cache_control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'no-cache'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#SPAStaticFiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.SPAStaticFiles" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">enlace.frontend.</span></span><span class="sig-name descname"><span class="pre">SPAStaticFiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">html_cache_control</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'no-cache'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#SPAStaticFiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.SPAStaticFiles" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles" title="enlace.frontend.RevalidatingStaticFiles"><code class="xref py py-class docutils literal notranslate"><span class="pre">RevalidatingStaticFiles</span></code></a></p>
 <p>StaticFiles subclass with SPA / Next.js dynamic-route fallback.</p>
 <p>Resolution order for a request path:</p>
@@ -400,6 +421,17 @@ keep showing the old “not found” document.</p>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="enlace.frontend.apply_media_type">
+<span class="sig-prename descclassname"><span class="pre">enlace.frontend.</span></span><span class="sig-name descname"><span class="pre">apply_media_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'.onnx':</span> <span class="pre">'application/octet-stream'}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/enlace/frontend.html#apply_media_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#enlace.frontend.apply_media_type" title="Link to this definition">¶</a></dt>
+<dd><p>Set <em>response</em>’s content type from <em>media_types</em>, keyed by <em>path</em>’s suffix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><span class="highlight sphinx_autodoc_typehints-value"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><code class="xref py py-obj docutils literal notranslate"><span class="kc"><span class="pre">None</span></span></code></a></span></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -467,6 +499,7 @@ keep showing the old “not found” document.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">enlace.frontend</a><ul>
+<li><a class="reference internal" href="#enlace.frontend.DFLT_MEDIA_TYPES"><code class="docutils literal notranslate"><span class="pre">DFLT_MEDIA_TYPES</span></code></a></li>
 <li><a class="reference internal" href="#enlace.frontend.LandingWithUnknownApp404"><code class="docutils literal notranslate"><span class="pre">LandingWithUnknownApp404</span></code></a></li>
 <li><a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles"><code class="docutils literal notranslate"><span class="pre">RevalidatingStaticFiles</span></code></a><ul>
 <li><a class="reference internal" href="#enlace.frontend.RevalidatingStaticFiles.file_response"><code class="docutils literal notranslate"><span class="pre">RevalidatingStaticFiles.file_response()</span></code></a></li>
@@ -477,6 +510,7 @@ keep showing the old “not found” document.</p>
 <li><a class="reference internal" href="#enlace.frontend.SPAStaticFiles.get_response"><code class="docutils literal notranslate"><span class="pre">SPAStaticFiles.get_response()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#enlace.frontend.apply_media_type"><code class="docutils literal notranslate"><span class="pre">apply_media_type()</span></code></a></li>
 <li><a class="reference internal" href="#enlace.frontend.is_html_path"><code class="docutils literal notranslate"><span class="pre">is_html_path()</span></code></a></li>
 </ul>
 </li>
@@ -489,7 +523,7 @@ keep showing the old “not found” document.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=3976325b"></script>
+</div><script src="../_static/documentation_options.js?v=9036463d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

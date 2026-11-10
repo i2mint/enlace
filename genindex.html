@@ -220,6 +220,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.response_headers.html">enlace.response_headers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/enlace.util.html">enlace.util</a></li>
@@ -273,6 +274,8 @@
 </li>
         <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.add_rate_limits">add_rate_limits() (in module enlace.ratelimit)</a>
 </li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.add_response_headers">add_response_headers() (in module enlace.response_headers)</a>
+</li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.Analytics.add_routes">add_routes() (enlace.analytics.Analytics method)</a>
 </li>
         <li><a href="_autosummary/enlace.base.html#enlace.base.PlatformConfig.all_source_dirs">all_source_dirs (enlace.base.PlatformConfig property)</a>
@@ -299,14 +302,18 @@
         </ul></li>
         <li><a href="_autosummary/enlace.app_identity.html#enlace.app_identity.app_gaps">app_gaps() (in module enlace.app_identity)</a>
 </li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.app_header_table">app_header_table() (in module enlace.response_headers)</a>
+</li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.app_mounts">app_mounts() (in module enlace.response_headers)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.html#enlace.AppAnalyticsConfig">AppAnalyticsConfig (class in enlace)</a>
 
         <ul>
           <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.AppAnalyticsConfig">(class in enlace.analytics)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.html#enlace.AppConfig">AppConfig (class in enlace)</a>
 
         <ul>
@@ -324,6 +331,8 @@
 </li>
         </ul></li>
         <li><a href="_autosummary/enlace.base.html#enlace.base.AppLoadStage">AppLoadStage (in module enlace.base)</a>
+</li>
+        <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.apply_media_type">apply_media_type() (in module enlace.frontend)</a>
 </li>
         <li><a href="_autosummary/enlace.appmeta.html#enlace.appmeta.AppMetaConfig">AppMetaConfig (class in enlace.appmeta)</a>
 </li>
@@ -399,10 +408,10 @@
 </li>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.collect_strategy_field_maps">collect_strategy_field_maps() (in module enlace.strategies)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.compact">compact() (enlace.analytics.PageViewCounter method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.base.html#enlace.base.CONTAINED_LOAD_ERRORS">CONTAINED_LOAD_ERRORS (in module enlace.base)</a>
 </li>
         <li><a href="_autosummary/enlace.degraded.html#enlace.degraded.CONTAINED_MODES">CONTAINED_MODES (in module enlace.degraded)</a>
@@ -425,6 +434,8 @@
           <li><a href="_autosummary/enlace.compose.html#enlace.compose.create_app">(in module enlace.compose)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS">CROSS_ORIGIN_ISOLATION_HEADERS (in module enlace.response_headers)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -492,6 +503,8 @@
         <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.DFLT_ASSETS_ROUTE">DFLT_ASSETS_ROUTE (in module enlace.package_page)</a>
 </li>
         <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.DFLT_CACHE_CONTROL">DFLT_CACHE_CONTROL (in module enlace.package_page)</a>
+</li>
+        <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.DFLT_MEDIA_TYPES">DFLT_MEDIA_TYPES (in module enlace.frontend)</a>
 </li>
         <li><a href="_autosummary/enlace.html#enlace.diagnose_app">diagnose_app() (in module enlace)</a>
 
@@ -632,8 +645,6 @@
           <li><a href="_autosummary/enlace.doctor.html#module-enlace.doctor">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     enlace.frontend
 
@@ -641,6 +652,8 @@
           <li><a href="_autosummary/enlace.frontend.html#module-enlace.frontend">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     enlace.gzip_selective
 
@@ -681,6 +694,13 @@
 
         <ul>
           <li><a href="_autosummary/enlace.ratelimit.html#module-enlace.ratelimit">module</a>
+</li>
+        </ul></li>
+        <li>
+    enlace.response_headers
+
+        <ul>
+          <li><a href="_autosummary/enlace.response_headers.html#module-enlace.response_headers">module</a>
 </li>
         </ul></li>
         <li>
@@ -745,6 +765,8 @@
 </li>
         </ul></li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.PageViewCounter.flush">flush() (enlace.analytics.PageViewCounter method)</a>
+</li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.FORBIDDEN_HEADERS">FORBIDDEN_HEADERS (in module enlace.response_headers)</a>
 </li>
         <li><a href="_autosummary/enlace.discover.html#enlace.discover.forget_partial_imports">forget_partial_imports() (in module enlace.discover)</a>
 </li>
@@ -822,11 +844,13 @@
         </ul></li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.has_opted_out">has_opted_out() (in module enlace.analytics)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.has_own_pages">has_own_pages() (in module enlace.app_icons)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.head_links">head_links() (in module enlace.app_icons)</a>
+</li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.header_rules_for_app">header_rules_for_app() (in module enlace.response_headers)</a>
 </li>
         <li><a href="_autosummary/enlace.html_rewrite.html#enlace.html_rewrite.header_value">header_value() (in module enlace.html_rewrite)</a>
 
@@ -834,6 +858,8 @@
           <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.header_value">(in module enlace.manifest)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.ResponseHeadersMiddleware.headers_for">headers_for() (enlace.response_headers.ResponseHeadersMiddleware method)</a>
+</li>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.home_screen_gaps">home_screen_gaps() (in module enlace.app_icons)</a>
 </li>
     </ul></td>
@@ -998,6 +1024,8 @@
 </li>
         <li><a href="_autosummary/enlace.supervise.html#enlace.supervise.ManagedProcess.maybe_reset_backoff">maybe_reset_backoff() (enlace.supervise.ManagedProcess method)</a>
 </li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.merge_headers">merge_headers() (in module enlace.response_headers)</a>
+</li>
         <li><a href="_autosummary/enlace.analytics.html#enlace.analytics.MERGED">MERGED (in module enlace.analytics)</a>
 </li>
         <li><a href="_autosummary/enlace.app_identity.html#enlace.app_identity.MIN_ICON_PX">MIN_ICON_PX (in module enlace.app_identity)</a>
@@ -1108,6 +1136,8 @@
 </li>
           <li><a href="_autosummary/enlace.ratelimit.html#module-enlace.ratelimit">enlace.ratelimit</a>
 </li>
+          <li><a href="_autosummary/enlace.response_headers.html#module-enlace.response_headers">enlace.response_headers</a>
+</li>
           <li><a href="_autosummary/enlace.strategies.html#module-enlace.strategies">enlace.strategies</a>
 </li>
           <li><a href="_autosummary/enlace.supervise.html#module-enlace.supervise">enlace.supervise</a>
@@ -1129,6 +1159,10 @@
           <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.normalize_path">(in module enlace.ratelimit)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.normalize_subpath">normalize_subpath() (in module enlace.response_headers)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -1182,6 +1216,8 @@
         <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.parse_rate">parse_rate() (in module enlace.ratelimit)</a>
 </li>
         <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.parse_rule_key">parse_rule_key() (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.path_under">path_under() (in module enlace.response_headers)</a>
 </li>
         <li><a href="_autosummary/enlace.proxy.html#enlace.proxy.platform_cookie_filter">platform_cookie_filter() (in module enlace.proxy)</a>
 </li>
@@ -1259,10 +1295,10 @@
 </li>
         <li><a href="_autosummary/enlace.diagnose.html#enlace.diagnose.register_diagnoser">register_diagnoser() (in module enlace.diagnose)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.strategies.html#enlace.strategies.register_strategy">register_strategy() (in module enlace.strategies)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/enlace.doctor.html#enlace.doctor.Report">Report (class in enlace.doctor)</a>
 </li>
         <li><a href="_autosummary/enlace.app_icons.html#enlace.app_icons.resolve_app_icon">resolve_app_icon() (in module enlace.app_icons)</a>
@@ -1274,6 +1310,8 @@
         <li><a href="_autosummary/enlace.manifest.html#enlace.manifest.resolve_manifest_dir">resolve_manifest_dir() (in module enlace.manifest)</a>
 </li>
         <li><a href="_autosummary/enlace.package_page.html#enlace.package_page.resolve_package_page">resolve_package_page() (in module enlace.package_page)</a>
+</li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.ResponseHeadersMiddleware">ResponseHeadersMiddleware (class in enlace.response_headers)</a>
 </li>
         <li><a href="_autosummary/enlace.frontend.html#enlace.frontend.RevalidatingStaticFiles">RevalidatingStaticFiles (class in enlace.frontend)</a>
 </li>
@@ -1415,7 +1453,11 @@
           <li><a href="_autosummary/enlace.build.html#enlace.build.validate_build">(in module enlace.build)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.validate_cross_origin_isolated">validate_cross_origin_isolated() (in module enlace.response_headers)</a>
+</li>
         <li><a href="_autosummary/enlace.ratelimit.html#enlace.ratelimit.validate_rate_limits">validate_rate_limits() (in module enlace.ratelimit)</a>
+</li>
+        <li><a href="_autosummary/enlace.response_headers.html#enlace.response_headers.validate_response_headers">validate_response_headers() (in module enlace.response_headers)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -1467,7 +1509,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=3976325b"></script>
+</div><script src="_static/documentation_options.js?v=9036463d"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

@@ -76,6 +76,7 @@
    package_page
    proxy
    ratelimit
+   response_headers
    strategies
    supervise
    util

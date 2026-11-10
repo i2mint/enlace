@@ -221,6 +221,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.package_page.html">enlace.package_page</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.proxy.html">enlace.proxy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.ratelimit.html">enlace.ratelimit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.response_headers.html">enlace.response_headers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.strategies.html">enlace.strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.supervise.html">enlace.supervise</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/enlace.util.html">enlace.util</a></li>
@@ -315,6 +316,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.responses</span><span class="w"> </span><span class="kn">import</span> <span class="n">Response</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.staticfiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticFiles</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">starlette.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ASGIApp</span><span class="p">,</span> <span class="n">Receive</span><span class="p">,</span> <span class="n">Scope</span><span class="p">,</span> <span class="n">Send</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enlace.frontend</span><span class="w"> </span><span class="kn">import</span> <span class="n">apply_media_type</span>
 
 <span class="c1">#: Where the assets live inside the package, by default.</span>
 <span class="n">DFLT_ASSETS_DIR</span> <span class="o">=</span> <span class="s2">"data/ui"</span>
@@ -694,6 +697,7 @@
 <span class="w">        </span><span class="sd">"""The file, with ``Cache-Control`` so a package upgrade reaches the browser."""</span>
         <span class="n">response</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">file_response</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">"Cache-Control"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_control</span>
+        <span class="n">apply_media_type</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"full_path"</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">response</span></div>
 </div>
 
@@ -725,7 +729,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=3976325b"></script>
+</div><script src="../../_static/documentation_options.js?v=9036463d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

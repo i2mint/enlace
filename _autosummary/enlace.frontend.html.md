@@ -15,17 +15,28 @@ is served and the client JS can read the real param from the URL.
 Every static mount enlace makes also tells browsers to \*\*revalidate HTML
 documents\*\* (`Cache-Control: no-cache`) — see [`RevalidatingStaticFiles`](#enlace.frontend.RevalidatingStaticFiles).
 
+### Module Attributes
+
+| [`DFLT_MEDIA_TYPES`](#enlace.frontend.DFLT_MEDIA_TYPES)   | Extensions the standard `mimetypes` table lacks, which would otherwise be served as `text/plain` (and gzipped).   |
+|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+
 ### Functions
 
-| [`is_html_path`](#enlace.frontend.is_html_path)(path)   | Whether *path* names an HTML document, judged by its file extension.   |
-|-----------------------------------------------------------------------|------------------------------------------------------------------------|
+| [`apply_media_type`](#enlace.frontend.apply_media_type)(response, path[, media_types])   | Set *response*'s content type from *media_types*, keyed by *path*'s suffix.   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| [`is_html_path`](#enlace.frontend.is_html_path)(path)                                | Whether *path* names an HTML document, judged by its file extension.          |
 
 ### Classes
 
-| [`LandingWithUnknownApp404`](#enlace.frontend.LandingWithUnknownApp404)(\*, landing_dir)    | ASGI app that serves the landing frontend at `/` and 404s elsewhere.   |
-|-----------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| [`RevalidatingStaticFiles`](#enlace.frontend.RevalidatingStaticFiles)(\*args[, ...])       | `StaticFiles` that makes browsers revalidate HTML documents.           |
-| [`SPAStaticFiles`](#enlace.frontend.SPAStaticFiles)(\*args[, html_cache_control]) | StaticFiles subclass with SPA / Next.js dynamic-route fallback.        |
+| [`LandingWithUnknownApp404`](#enlace.frontend.LandingWithUnknownApp404)(\*, landing_dir)         | ASGI app that serves the landing frontend at `/` and 404s elsewhere.   |
+|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| [`RevalidatingStaticFiles`](#enlace.frontend.RevalidatingStaticFiles)(\*args[, ...])            | `StaticFiles` that makes browsers revalidate HTML documents.           |
+| [`SPAStaticFiles`](#enlace.frontend.SPAStaticFiles)(\*args[, html_cache_control, ...]) | StaticFiles subclass with SPA / Next.js dynamic-route fallback.        |
+
+### enlace.frontend.DFLT_MEDIA_TYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'.onnx': 'application/octet-stream'}*
+
+Extensions the standard `mimetypes` table lacks, which would otherwise be served as
+`text/plain` (and gzipped). ONNX models are binary weights (#113).
 
 ### *class* enlace.frontend.LandingWithUnknownApp404(, landing_dir)
 
@@ -45,7 +56,7 @@ mounts that are registered earlier and take precedence over this one,
 so SPA client-side routing for known apps still works. This wrapper
 only handles paths that fall through to `/`.
 
-### *class* enlace.frontend.RevalidatingStaticFiles(\*args, html_cache_control='no-cache', \*\*kwargs)
+### *class* enlace.frontend.RevalidatingStaticFiles(\*args, html_cache_control='no-cache', media_types=None, \*\*kwargs)
 
 Bases: `StaticFiles`
 
@@ -68,7 +79,7 @@ makes a cheap `304`. Non-HTML assets are untouched, and a
 
 #### file_response(full_path, stat_result, scope, status_code=200)
 
-Build the file response, adding `Cache-Control` for HTML files.
+The file response, with HTML revalidated and `media_types` applied.
 
 #### *async* get_response(path, scope)
 
@@ -82,7 +93,7 @@ keep showing the old “not found” document.
 * **Return type:**
   `Response`
 
-### *class* enlace.frontend.SPAStaticFiles(\*args, html_cache_control='no-cache', \*\*kwargs)
+### *class* enlace.frontend.SPAStaticFiles(\*args, html_cache_control='no-cache', media_types=None, \*\*kwargs)
 
 Bases: [`RevalidatingStaticFiles`](#enlace.frontend.RevalidatingStaticFiles)
 
@@ -107,6 +118,13 @@ keep showing the old “not found” document.
 
 * **Return type:**
   `Response`
+
+### enlace.frontend.apply_media_type(response, path, media_types={'.onnx': 'application/octet-stream'})
+
+Set *response*’s content type from *media_types*, keyed by *path*’s suffix.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### enlace.frontend.is_html_path(path)
 

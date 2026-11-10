@@ -1,4 +1,4 @@
-> built 2026-10-24 11:30 UTC from 636ad81 (main) · enlace 0.1.64. Details: build_info.json
+> built 2026-11-10 19:27 UTC from 30f69dc (main) · enlace 0.1.65. Details: build_info.json
 
 # index.html.md
 
@@ -420,6 +420,26 @@ trusted_proxies = ["127.0.0.1", "::1"]
 Without `trusted_proxies`, the ASGI peer address is used as is: behind a proxy that is the proxy’s own address (unless the server already resolves forwarded headers), so every client would share one bucket. Paths are normalised before matching, a `GET` rule also covers `HEAD`, CORS preflights are never counted, and a websocket handshake over the limit is closed with code 1008. Buckets live in memory per process, so N workers allow up to N times the declared rate: it bounds abuse rather than enforcing an exact quota. `enlace.ratelimit.RateLimitMiddleware(make_limiter=...)` is the seam for a shared limiter: `make_limiter=lambda rate: RedisLimiter(client, rate)` (with the `enlace[redis]` extra) gives one count across every worker and host, each rule keeping its own count.
 
 The client-address and limiter pieces (`client_address`, `bucket_key`, `TokenBucketLimiter`, `SlidingWindowLimiter`, `RedisLimiter`) import only the standard library and are usable outside enlace’s middleware; heed’s public feedback endpoint uses them.
+
+### Response headers and cross-origin isolation
+
+An app can have enlace add headers to every response under a sub-path of itself, with no code in the app. A page that needs `SharedArrayBuffer` (threaded WebAssembly, memory shared with an `AudioWorklet`) must be cross-origin isolated, and one line in its `app.toml` does it:
+
+```toml
+cross_origin_isolated = ["lab"]   # or true, for the whole app
+```
+
+Responses under `/{name}/lab/` and `{route}/lab/` then carry `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp` and `Cross-Origin-Resource-Policy: same-origin`, and the page reports `crossOriginIsolated === true`. Every other path of the app, and every other app, is unchanged. Any other header, or an override, goes in a table keyed by sub-path (`"/"` for the whole app; the longest matching key wins, header by header):
+
+```toml
+[response_headers]
+"lab" = { "Cross-Origin-Embedder-Policy" = "credentialless" }
+"/" = { "X-Robots-Tag" = "noindex" }
+```
+
+Both are off by default, because isolation has a price on every isolated page: a cross-origin resource loads only if it opts in (CORS, or `Cross-Origin-Resource-Policy: cross-origin`), so third-party iframes (YouTube, maps, payment widgets), analytics and ad scripts, and images or fonts from a CDN that sends no CORP stop loading; pop-ups that report back through `window.opener` (OAuth or payment sign-in on another origin) lose their link to the page; and other sites can no longer embed the isolated files. Keep it on the one route that needs it, and mind three consequences. A dedicated worker started by an isolated page does not start at all unless its own script response carries COEP, so put worker scripts (and the scripts that spawn threads, such as onnxruntime-web’s `.mjs`) under the isolated sub-path; same-origin page scripts, wasm and data elsewhere need nothing. Isolation is fixed when a document loads, so link to the isolated page with a full navigation, not a client-side route change. And an unknown path under the isolated sub-path falls back to the app’s root `index.html`, served isolated, so give the isolated page its own `index.html`.
+
+A request belongs to the app with the longest mount covering it and only that app’s keys apply, so one app’s declaration never reaches another’s paths. Matching is by whole path segments (`"lab"` never covers `/labels/`), and a declared header replaces one of the same name set by the app. Headers that would corrupt the response or reach beyond the app (`Set-Cookie`, `Content-Type`, `Content-Length` and the other framing headers, `Location`, `Clear-Site-Data`, `Strict-Transport-Security`, `Service-Worker-Allowed`) are refused at discovery, as are non-ASCII values. Static files ending in `.onnx` are served as `application/octet-stream`, which enlace never gzips. The middleware is `enlace.response_headers.ResponseHeadersMiddleware`.
 
 ### Deploy manifest (`/_meta`)
 
@@ -1412,7 +1432,7 @@ owned by another tool, and `enlace doctor` reports the same list.
 | [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
 | [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, response_headers=<factory>, cross_origin_isolated=False, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -2396,17 +2416,28 @@ is served and the client JS can read the real param from the URL.
 Every static mount enlace makes also tells browsers to \*\*revalidate HTML
 documents\*\* (`Cache-Control: no-cache`) — see [`RevalidatingStaticFiles`](_autosummary/enlace.frontend.html.md#enlace.frontend.RevalidatingStaticFiles).
 
+### Module Attributes
+
+| [`DFLT_MEDIA_TYPES`](_autosummary/enlace.frontend.html.md#enlace.frontend.DFLT_MEDIA_TYPES)   | Extensions the standard `mimetypes` table lacks, which would otherwise be served as `text/plain` (and gzipped).   |
+|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+
 ### Functions
 
-| [`is_html_path`](_autosummary/enlace.frontend.html.md#enlace.frontend.is_html_path)(path)   | Whether *path* names an HTML document, judged by its file extension.   |
-|-----------------------------------------------------------------------|------------------------------------------------------------------------|
+| [`apply_media_type`](_autosummary/enlace.frontend.html.md#enlace.frontend.apply_media_type)(response, path[, media_types])   | Set *response*'s content type from *media_types*, keyed by *path*'s suffix.   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| [`is_html_path`](_autosummary/enlace.frontend.html.md#enlace.frontend.is_html_path)(path)                                | Whether *path* names an HTML document, judged by its file extension.          |
 
 ### Classes
 
-| [`LandingWithUnknownApp404`](_autosummary/enlace.frontend.html.md#enlace.frontend.LandingWithUnknownApp404)(\*, landing_dir)    | ASGI app that serves the landing frontend at `/` and 404s elsewhere.   |
-|-----------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
-| [`RevalidatingStaticFiles`](_autosummary/enlace.frontend.html.md#enlace.frontend.RevalidatingStaticFiles)(\*args[, ...])       | `StaticFiles` that makes browsers revalidate HTML documents.           |
-| [`SPAStaticFiles`](_autosummary/enlace.frontend.html.md#enlace.frontend.SPAStaticFiles)(\*args[, html_cache_control]) | StaticFiles subclass with SPA / Next.js dynamic-route fallback.        |
+| [`LandingWithUnknownApp404`](_autosummary/enlace.frontend.html.md#enlace.frontend.LandingWithUnknownApp404)(\*, landing_dir)         | ASGI app that serves the landing frontend at `/` and 404s elsewhere.   |
+|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| [`RevalidatingStaticFiles`](_autosummary/enlace.frontend.html.md#enlace.frontend.RevalidatingStaticFiles)(\*args[, ...])            | `StaticFiles` that makes browsers revalidate HTML documents.           |
+| [`SPAStaticFiles`](_autosummary/enlace.frontend.html.md#enlace.frontend.SPAStaticFiles)(\*args[, html_cache_control, ...]) | StaticFiles subclass with SPA / Next.js dynamic-route fallback.        |
+
+### enlace.frontend.DFLT_MEDIA_TYPES *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'.onnx': 'application/octet-stream'}*
+
+Extensions the standard `mimetypes` table lacks, which would otherwise be served as
+`text/plain` (and gzipped). ONNX models are binary weights (#113).
 
 ### *class* enlace.frontend.LandingWithUnknownApp404(, landing_dir)
 
@@ -2426,7 +2457,7 @@ mounts that are registered earlier and take precedence over this one,
 so SPA client-side routing for known apps still works. This wrapper
 only handles paths that fall through to `/`.
 
-### *class* enlace.frontend.RevalidatingStaticFiles(\*args, html_cache_control='no-cache', \*\*kwargs)
+### *class* enlace.frontend.RevalidatingStaticFiles(\*args, html_cache_control='no-cache', media_types=None, \*\*kwargs)
 
 Bases: `StaticFiles`
 
@@ -2449,7 +2480,7 @@ makes a cheap `304`. Non-HTML assets are untouched, and a
 
 #### file_response(full_path, stat_result, scope, status_code=200)
 
-Build the file response, adding `Cache-Control` for HTML files.
+The file response, with HTML revalidated and `media_types` applied.
 
 #### *async* get_response(path, scope)
 
@@ -2463,7 +2494,7 @@ keep showing the old “not found” document.
 * **Return type:**
   `Response`
 
-### *class* enlace.frontend.SPAStaticFiles(\*args, html_cache_control='no-cache', \*\*kwargs)
+### *class* enlace.frontend.SPAStaticFiles(\*args, html_cache_control='no-cache', media_types=None, \*\*kwargs)
 
 Bases: [`RevalidatingStaticFiles`](_autosummary/enlace.frontend.html.md#enlace.frontend.RevalidatingStaticFiles)
 
@@ -2488,6 +2519,13 @@ keep showing the old “not found” document.
 
 * **Return type:**
   `Response`
+
+### enlace.frontend.apply_media_type(response, path, media_types={'.onnx': 'application/octet-stream'})
+
+Set *response*’s content type from *media_types*, keyed by *path*’s suffix.
+
+* **Return type:**
+  [`None`](https://docs.python.org/3/builtins/constants.html#None)
 
 ### enlace.frontend.is_html_path(path)
 
@@ -2638,7 +2676,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, response_headers=<factory>, cross_origin_isolated=False, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -3255,29 +3293,30 @@ present, has a `build` command and that its working directory exists.
 
 ### Modules
 
-| [`access`](_autosummary/enlace.access.html.md#module-enlace.access)                 | Who may reach an app: the one predicate the gate and the launcher both call.         |
-|----------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| [`analytics`](_autosummary/enlace.analytics.html.md#module-enlace.analytics)           | Privacy-first page-view analytics, turned on per app.                                |
-| [`app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)           | One icon per app, served in every form a browser or phone asks for.                  |
-| [`app_identity`](_autosummary/enlace.app_identity.html.md#module-enlace.app_identity)     | The app identity checklist: what every public-facing app's page must carry.          |
-| [`appmeta`](_autosummary/enlace.appmeta.html.md#module-enlace.appmeta)               | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
-| [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                     | Core data structures for enlace platform configuration.                              |
-| [`build`](_autosummary/enlace.build.html.md#module-enlace.build)                   | Run and validate declarative app builds from `app.toml` `[build]`.                   |
-| [`compose`](_autosummary/enlace.compose.html.md#module-enlace.compose)               | ASGI app composition for enlace.                                                     |
-| [`degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)             | Loud-and-local app-load failures: a 500 stub for the one app that broke.             |
-| [`diagnose`](_autosummary/enlace.diagnose.html.md#module-enlace.diagnose)             | Diagnose app compatibility with enlace.                                              |
-| [`discover`](_autosummary/enlace.discover.html.md#module-enlace.discover)             | Convention-based app discovery for enlace.                                           |
-| [`doctor`](_autosummary/enlace.doctor.html.md#module-enlace.doctor)                 | Post-deploy smoke checks for a running enlace gateway.                               |
-| [`frontend`](_autosummary/enlace.frontend.html.md#module-enlace.frontend)             | SPA-aware static file serving for enlace.                                            |
-| [`gzip_selective`](_autosummary/enlace.gzip_selective.html.md#module-enlace.gzip_selective) | Compression that knows what it must not compress.                                    |
-| [`html_rewrite`](_autosummary/enlace.html_rewrite.html.md#module-enlace.html_rewrite)     | Rewrite HTML response bodies from pure-ASGI middleware.                              |
-| [`manifest`](_autosummary/enlace.manifest.html.md#module-enlace.manifest)             | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
-| [`package_page`](_autosummary/enlace.package_page.html.md#module-enlace.package_page)     | Serve an app's page from its Python package: the shell and its `/ui/` assets.        |
-| [`proxy`](_autosummary/enlace.proxy.html.md#module-enlace.proxy)                   | Lightweight ASGI reverse proxy for process and external backends.                    |
-| [`ratelimit`](_autosummary/enlace.ratelimit.html.md#module-enlace.ratelimit)           | Opt-in, per-app, per-client rate limits for mounted apps.                            |
-| [`strategies`](_autosummary/enlace.strategies.html.md#module-enlace.strategies)         | Backend-strategy registry and built-in strategies for enlace.                        |
-| [`supervise`](_autosummary/enlace.supervise.html.md#module-enlace.supervise)           | Dev-mode process supervisor for enlace.                                              |
-| [`util`](_autosummary/enlace.util.html.md#module-enlace.util)                     | Internal helpers for enlace.                                                         |
+| [`access`](_autosummary/enlace.access.html.md#module-enlace.access)                     | Who may reach an app: the one predicate the gate and the launcher both call.         |
+|--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [`analytics`](_autosummary/enlace.analytics.html.md#module-enlace.analytics)               | Privacy-first page-view analytics, turned on per app.                                |
+| [`app_icons`](_autosummary/enlace.app_icons.html.md#module-enlace.app_icons)               | One icon per app, served in every form a browser or phone asks for.                  |
+| [`app_identity`](_autosummary/enlace.app_identity.html.md#module-enlace.app_identity)         | The app identity checklist: what every public-facing app's page must carry.          |
+| [`appmeta`](_autosummary/enlace.appmeta.html.md#module-enlace.appmeta)                   | App metadata: harvest, resolve, and render titles / descriptions / keywords / icons. |
+| [`base`](_autosummary/enlace.base.html.md#module-enlace.base)                         | Core data structures for enlace platform configuration.                              |
+| [`build`](_autosummary/enlace.build.html.md#module-enlace.build)                       | Run and validate declarative app builds from `app.toml` `[build]`.                   |
+| [`compose`](_autosummary/enlace.compose.html.md#module-enlace.compose)                   | ASGI app composition for enlace.                                                     |
+| [`degraded`](_autosummary/enlace.degraded.html.md#module-enlace.degraded)                 | Loud-and-local app-load failures: a 500 stub for the one app that broke.             |
+| [`diagnose`](_autosummary/enlace.diagnose.html.md#module-enlace.diagnose)                 | Diagnose app compatibility with enlace.                                              |
+| [`discover`](_autosummary/enlace.discover.html.md#module-enlace.discover)                 | Convention-based app discovery for enlace.                                           |
+| [`doctor`](_autosummary/enlace.doctor.html.md#module-enlace.doctor)                     | Post-deploy smoke checks for a running enlace gateway.                               |
+| [`frontend`](_autosummary/enlace.frontend.html.md#module-enlace.frontend)                 | SPA-aware static file serving for enlace.                                            |
+| [`gzip_selective`](_autosummary/enlace.gzip_selective.html.md#module-enlace.gzip_selective)     | Compression that knows what it must not compress.                                    |
+| [`html_rewrite`](_autosummary/enlace.html_rewrite.html.md#module-enlace.html_rewrite)         | Rewrite HTML response bodies from pure-ASGI middleware.                              |
+| [`manifest`](_autosummary/enlace.manifest.html.md#module-enlace.manifest)                 | Deploy manifest: build-identity for diagnosing "what is actually deployed".          |
+| [`package_page`](_autosummary/enlace.package_page.html.md#module-enlace.package_page)         | Serve an app's page from its Python package: the shell and its `/ui/` assets.        |
+| [`proxy`](_autosummary/enlace.proxy.html.md#module-enlace.proxy)                       | Lightweight ASGI reverse proxy for process and external backends.                    |
+| [`ratelimit`](_autosummary/enlace.ratelimit.html.md#module-enlace.ratelimit)               | Opt-in, per-app, per-client rate limits for mounted apps.                            |
+| [`response_headers`](_autosummary/enlace.response_headers.html.md#module-enlace.response_headers) | Per-app response headers declared in `app.toml`; cross-origin isolation in a line.   |
+| [`strategies`](_autosummary/enlace.strategies.html.md#module-enlace.strategies)             | Backend-strategy registry and built-in strategies for enlace.                        |
+| [`supervise`](_autosummary/enlace.supervise.html.md#module-enlace.supervise)               | Dev-mode process supervisor for enlace.                                              |
+| [`util`](_autosummary/enlace.util.html.md#module-enlace.util)                         | Internal helpers for enlace.                                                         |
 
 
 # _autosummary/enlace.html_rewrite.html.md
@@ -4303,6 +4342,222 @@ Check an app.toml `[rate_limit]` table, raising ValueError on any bad entry.
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 
+# _autosummary/enlace.response_headers.html.md
+
+# enlace.response_headers
+
+Per-app response headers declared in `app.toml`; cross-origin isolation in a line.
+
+An app names headers for sub-paths of itself, and enlace adds them to every response
+on those paths, whoever produced it (the app’s frontend, its API, the sign-in gate):
+
+```default
+cross_origin_isolated = ["lab"]   # COOP + COEP + CORP on /{name}/lab/...
+
+[response_headers]
+"lab" = { "Cross-Origin-Embedder-Policy" = "credentialless" }  # overrides one
+"/" = { "X-Robots-Tag" = "noindex" }                           # the whole app
+```
+
+Both are off by default: an app that declares neither gets no header from here, and
+the middleware is not even installed when no app declares one.
+
+**Paths.** A key is a sub-path of the app, `"/"` (or `""`) for all of it. It
+applies under each of the app’s mounts: the page at `/{name}/` and the API at its
+`route_prefix` (so `CORP: same-origin` also lands on `{route_prefix}/lab/`,
+harmless for same-origin fetches). Matching is by whole segments: `"lab"` covers
+`/{name}/lab` and `/{name}/lab/...`, never `/{name}/labels`. A request belongs
+to the app with the longest mount covering it, and only that app’s keys apply, so
+one app’s declaration never reaches another app’s paths. When several of its keys
+match, the longest wins header by header. A declared header replaces one of the same
+name already on the response. Headers that would corrupt the response or act on the
+whole origin (`Set-Cookie`, framing headers, `Clear-Site-Data`,
+`Strict-Transport-Security`…) are refused: see [`FORBIDDEN_HEADERS`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.FORBIDDEN_HEADERS).
+
+**Cross-origin isolation.** `cross_origin_isolated = true` (the whole app) or a
+list of sub-paths sends [`CROSS_ORIGIN_ISOLATION_HEADERS`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS). A page served with
+them gets `crossOriginIsolated === true`, hence `SharedArrayBuffer` (threaded
+WebAssembly, memory shared with an `AudioWorklet`) and precise timers. The price,
+on every isolated page: a cross-origin resource loads only if it opts in (CORS, or
+`Cross-Origin-Resource-Policy: cross-origin`), so third-party embeds (YouTube and
+other iframes, analytics and ad scripts, images and fonts from a CDN that sends no
+CORP) stop loading; a window it opens, or that opened it, loses its handle to it
+unless same-origin (OAuth and payment pop-ups that report back through
+`window.opener`); and `CORP: same-origin` stops other sites embedding its files.
+Keep it on the one route that needs it, and mind three consequences:
+
+- **Workers.** A dedicated worker started by an isolated page must have its *script*
+  served with a compatible COEP, or it does not start at all. Put worker scripts
+  (and the scripts that spawn threads, such as onnxruntime-web’s `.mjs`) under the
+  isolated sub-path. Same-origin page scripts, wasm and data elsewhere need nothing.
+- **Navigation.** Isolation is fixed when a document loads: a client-side route
+  change into the isolated path does not isolate the page; link to it with a full
+  navigation.
+- **SPA fallback.** An unknown path under the isolated sub-path falls back to the
+  app’s root `index.html`, served isolated; give the isolated page its own
+  `index.html` and link to that.
+
+The three-callable middleware is pure ASGI, as every enlace middleware is.
+
+### Module Attributes
+
+| [`CROSS_ORIGIN_ISOLATION_HEADERS`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS)   | What `cross_origin_isolated` sends.                                                                                                                                        |
+|-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`FORBIDDEN_HEADERS`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.FORBIDDEN_HEADERS)                | replacing them would corrupt the response (framing, encoding, type), clobber the platform's session and CSRF cookies, or act on the whole origin, i.e. on every other app. |
+
+### Functions
+
+| [`add_response_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.add_response_headers)(parent, config)   | Install [`ResponseHeadersMiddleware`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.ResponseHeadersMiddleware) on *parent* if an app declares any.   |
+|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| [`app_header_table`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.app_header_table)(app)                  | Sub-path -> headers for an app: isolation, then `[response_headers]` on top.                                             |
+| [`app_mounts`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.app_mounts)(app)                        | The path prefixes an app answers under: its page and its API, root excluded.                                             |
+| [`header_rules_for_app`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.header_rules_for_app)(app)              | The app's headers as `(mount, absolute path prefix, headers)` rules.                                                     |
+| [`merge_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.merge_headers)(\*layers)                | Merge header dicts, later layers winning, names compared case-insensitively.                                             |
+| [`normalize_subpath`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.normalize_subpath)(key)                 | A sub-path key made canonical: no slash at either end, `""` for the whole app.                                           |
+| [`path_under`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.path_under)(prefix, path)               | Whether *path* is *prefix* or below it, by whole segments.                                                               |
+| [`validate_cross_origin_isolated`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.validate_cross_origin_isolated)(value)  | Check `cross_origin_isolated`: a bool, or a list of sub-paths (normalised).                                              |
+| [`validate_response_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.validate_response_headers)(table)       | Check an app.toml `[response_headers]` table; keys come back normalised.                                                 |
+
+### Classes
+
+| [`ResponseHeadersMiddleware`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.ResponseHeadersMiddleware)(app, \*, rules[, ...])   | Pure-ASGI middleware adding declared headers to responses under path prefixes.   |
+|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+
+### enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS *: [dict](https://docs.python.org/3/builtins/stdtypes.html#dict)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), [str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= {'Cross-Origin-Embedder-Policy': 'require-corp', 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Resource-Policy': 'same-origin'}*
+
+What `cross_origin_isolated` sends. `require-corp` rather than `credentialless`
+because Safari supports only the former; an app can override it per sub-path.
+
+### enlace.response_headers.FORBIDDEN_HEADERS *: [frozenset](https://docs.python.org/3/builtins/stdtypes.html#frozenset)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= frozenset({'clear-site-data', 'connection', 'content-encoding', 'content-length', 'content-range', 'content-type', 'keep-alive', 'location', 'service-worker-allowed', 'set-cookie', 'strict-transport-security', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'www-authenticate'})*
+
+replacing them would corrupt the
+response (framing, encoding, type), clobber the platform’s session and CSRF
+cookies, or act on the whole origin, i.e. on every other app.
+
+* **Type:**
+  Header names an app may not declare (lower-case)
+
+### *class* enlace.response_headers.ResponseHeadersMiddleware(app, , rules, mounts=())
+
+Bases: [`object`](https://docs.python.org/3/builtins/functions.html#object)
+
+Pure-ASGI middleware adding declared headers to responses under path prefixes.
+
+*rules* are `(mount, prefix, headers)` triples on full request paths. A request
+is owned by the longest of *mounts* covering it (every app’s mounts, so an app
+with a shorter mount never reaches a longer one’s paths); only the rules of that
+mount apply, longer prefixes last, so the most specific wins a header both
+declare. Websockets and lifespan pass through untouched.
+
+```pycon
+>>> import asyncio
+>>> async def app(scope, receive, send):
+...     await send({"type": "http.response.start", "status": 200, "headers": []})
+...     await send({"type": "http.response.body", "body": b""})
+>>> mw = ResponseHeadersMiddleware(app, rules=[("/a", "/a", {"X-A": "1"})])
+>>> sent = []
+>>> async def send(m): sent.append(m)
+>>> asyncio.run(mw({"type": "http", "path": "/a/b"}, None, send))
+>>> sent[0]["headers"]
+[(b'x-a', b'1')]
+```
+
+#### headers_for(path)
+
+The headers a response to *path* gets (empty when no rule covers it).
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.response_headers.add_response_headers(parent, config)
+
+Install [`ResponseHeadersMiddleware`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.ResponseHeadersMiddleware) on *parent* if an app declares any.
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.response_headers.app_header_table(app)
+
+Sub-path -> headers for an app: isolation, then `[response_headers]` on top.
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+
+### enlace.response_headers.app_mounts(app)
+
+The path prefixes an app answers under: its page and its API, root excluded.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.response_headers.header_rules_for_app(app)
+
+The app’s headers as `(mount, absolute path prefix, headers)` rules.
+
+* **Return type:**
+  [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`tuple`](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]]
+
+### enlace.response_headers.merge_headers(\*layers)
+
+Merge header dicts, later layers winning, names compared case-insensitively.
+
+```pycon
+>>> merge_headers({"X-A": "1", "X-B": "2"}, {"x-a": "3"})
+{'X-B': '2', 'x-a': '3'}
+```
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.response_headers.normalize_subpath(key)
+
+A sub-path key made canonical: no slash at either end, `""` for the whole app.
+
+```pycon
+>>> normalize_subpath("/lab/"), normalize_subpath("lab"), normalize_subpath("/")
+('lab', 'lab', '')
+```
+
+* **Return type:**
+  [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)
+
+### enlace.response_headers.path_under(prefix, path)
+
+Whether *path* is *prefix* or below it, by whole segments.
+
+```pycon
+>>> path_under("/a/lab", "/a/lab/x"), path_under("/a/lab", "/a/labels")
+(True, False)
+```
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
+
+### enlace.response_headers.validate_cross_origin_isolated(value)
+
+Check `cross_origin_isolated`: a bool, or a list of sub-paths (normalised).
+
+```pycon
+>>> validate_cross_origin_isolated(["/lab/"])
+['lab']
+```
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool) | [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
+
+### enlace.response_headers.validate_response_headers(table)
+
+Check an app.toml `[response_headers]` table; keys come back normalised.
+
+```pycon
+>>> validate_response_headers({"/lab/": {"X-A": "1"}})
+{'lab': {'X-A': '1'}}
+```
+
+* **Return type:**
+  [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+
+
 # _autosummary/enlace.strategies.html.md
 
 # enlace.strategies
@@ -4750,18 +5005,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-10-24 11:30 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/636ad81ab5f6c618ae9d87be7525ff9e383b41d6"><code>636ad81</code></a> on branch <code>main</code>, for **enlace 0.1.64** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-10 19:27 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/30f69dc8976cd901fcf07cd3ca1072e537fe2b15"><code>30f69dc</code></a> on branch <code>main</code>, for **enlace 0.1.65** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.64) is behind the latest release on PyPI (0.1.65): `pip install enlace` gives newer code than these docs describe.
+- The documented version (0.1.65) is behind the latest release on PyPI (0.1.66): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/636ad81ab5f6c618ae9d87be7525ff9e383b41d6"><code>636ad81ab5f6c618ae9d87be7525ff9e383b41d6</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/30f69dc8976cd901fcf07cd3ca1072e537fe2b15"><code>30f69dc8976cd901fcf07cd3ca1072e537fe2b15</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -4772,9 +5027,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/40090080425">40090080425</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/42885170099">42885170099</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>636ad81ab5f6c618ae9d87be7525ff9e383b41d6</code> (in the history of the built commit) |
+| Event commit | <code>30f69dc8976cd901fcf07cd3ca1072e537fe2b15</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -4783,7 +5038,7 @@ The documentation and the package may be misaligned:
 | epythet  | 0.2.22  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
-| Python   | 3.12.15 |
+| Python   | 3.12.16 |
 
 ## Configuration as resolved
 
@@ -4799,13 +5054,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.65/">0.1.65</a>, newer than the documented version (0.1.64).
+Latest release: <a href="https://pypi.org/project/enlace/0.1.66/">0.1.66</a>, newer than the documented version (0.1.65).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 636ad81ab5f6c618ae9d87be7525ff9e383b41d6
+git checkout 30f69dc8976cd901fcf07cd3ca1072e537fe2b15
 pip install "epythet==0.2.22"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
