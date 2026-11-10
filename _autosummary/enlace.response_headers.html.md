@@ -26,7 +26,8 @@ one app’s declaration never reaches another app’s paths. When several of its
 match, the longest wins header by header. A declared header replaces one of the same
 name already on the response. Headers that would corrupt the response or act on the
 whole origin (`Set-Cookie`, framing headers, `Clear-Site-Data`,
-`Strict-Transport-Security`…) are refused: see [`FORBIDDEN_HEADERS`](#enlace.response_headers.FORBIDDEN_HEADERS).
+`Strict-Transport-Security`…) are refused: see [`FORBIDDEN_HEADERS`](#enlace.response_headers.FORBIDDEN_HEADERS). So is
+`Access-Control-*`, the platform’s CORS answer: see [`FORBIDDEN_HEADER_PREFIXES`](#enlace.response_headers.FORBIDDEN_HEADER_PREFIXES).
 
 **Cross-origin isolation.** `cross_origin_isolated = true` (the whole app) or a
 list of sub-paths sends [`CROSS_ORIGIN_ISOLATION_HEADERS`](#enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS). A page served with
@@ -58,6 +59,7 @@ The three-callable middleware is pure ASGI, as every enlace middleware is.
 | [`CROSS_ORIGIN_ISOLATION_HEADERS`](#enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS)   | What `cross_origin_isolated` sends.                                                                                                                                        |
 |-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [`FORBIDDEN_HEADERS`](#enlace.response_headers.FORBIDDEN_HEADERS)                | replacing them would corrupt the response (framing, encoding, type), clobber the platform's session and CSRF cookies, or act on the whole origin, i.e. on every other app. |
+| [`FORBIDDEN_HEADER_PREFIXES`](#enlace.response_headers.FORBIDDEN_HEADER_PREFIXES)        | Header-name prefixes an app may not declare (lower-case).                                                                                                                  |
 
 ### Functions
 
@@ -82,7 +84,7 @@ The three-callable middleware is pure ASGI, as every enlace middleware is.
 What `cross_origin_isolated` sends. `require-corp` rather than `credentialless`
 because Safari supports only the former; an app can override it per sub-path.
 
-### enlace.response_headers.FORBIDDEN_HEADERS *: [frozenset](https://docs.python.org/3/builtins/stdtypes.html#frozenset)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= frozenset({'clear-site-data', 'connection', 'content-encoding', 'content-length', 'content-range', 'content-type', 'keep-alive', 'location', 'service-worker-allowed', 'set-cookie', 'strict-transport-security', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'www-authenticate'})*
+### enlace.response_headers.FORBIDDEN_HEADERS *: [frozenset](https://docs.python.org/3/builtins/stdtypes.html#frozenset)[[str](https://docs.python.org/3/builtins/stdtypes.html#str)]* *= frozenset({'accept-ch', 'alt-svc', 'clear-site-data', 'connection', 'content-encoding', 'content-length', 'content-range', 'content-type', 'critical-ch', 'keep-alive', 'location', 'nel', 'origin-agent-cluster', 'report-to', 'service-worker-allowed', 'set-cookie', 'strict-transport-security', 'te', 'trailer', 'transfer-encoding', 'upgrade', 'www-authenticate'})*
 
 replacing them would corrupt the
 response (framing, encoding, type), clobber the platform’s session and CSRF
@@ -90,6 +92,12 @@ cookies, or act on the whole origin, i.e. on every other app.
 
 * **Type:**
   Header names an app may not declare (lower-case)
+
+### enlace.response_headers.FORBIDDEN_HEADER_PREFIXES *: [tuple](https://docs.python.org/3/builtins/stdtypes.html#tuple)[[str](https://docs.python.org/3/builtins/stdtypes.html#str), ...]* *= ('access-control-',)*
+
+Header-name prefixes an app may not declare (lower-case). `access-control-*` is
+the platform’s CORS answer: this middleware wraps CORS, so a declared value would
+replace it, e.g. pairing a chosen origin with `Allow-Credentials` on the app’s API.
 
 ### *class* enlace.response_headers.ResponseHeadersMiddleware(app, , rules, mounts=())
 

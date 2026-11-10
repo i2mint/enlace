@@ -295,7 +295,8 @@ one app’s declaration never reaches another app’s paths. When several of its
 match, the longest wins header by header. A declared header replaces one of the same
 name already on the response. Headers that would corrupt the response or act on the
 whole origin (<code class="docutils literal notranslate"><span class="pre">Set-Cookie</span></code>, framing headers, <code class="docutils literal notranslate"><span class="pre">Clear-Site-Data</span></code>,
-<code class="docutils literal notranslate"><span class="pre">Strict-Transport-Security</span></code>…) are refused: see <a class="reference internal" href="#enlace.response_headers.FORBIDDEN_HEADERS" title="enlace.response_headers.FORBIDDEN_HEADERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">FORBIDDEN_HEADERS</span></code></a>.</p>
+<code class="docutils literal notranslate"><span class="pre">Strict-Transport-Security</span></code>…) are refused: see <a class="reference internal" href="#enlace.response_headers.FORBIDDEN_HEADERS" title="enlace.response_headers.FORBIDDEN_HEADERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">FORBIDDEN_HEADERS</span></code></a>. So is
+<code class="docutils literal notranslate"><span class="pre">Access-Control-*</span></code>, the platform’s CORS answer: see <a class="reference internal" href="#enlace.response_headers.FORBIDDEN_HEADER_PREFIXES" title="enlace.response_headers.FORBIDDEN_HEADER_PREFIXES"><code class="xref py py-data docutils literal notranslate"><span class="pre">FORBIDDEN_HEADER_PREFIXES</span></code></a>.</p>
 <p><strong>Cross-origin isolation.</strong> <code class="docutils literal notranslate"><span class="pre">cross_origin_isolated</span> <span class="pre">=</span> <span class="pre">true</span></code> (the whole app) or a
 list of sub-paths sends <a class="reference internal" href="#enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS" title="enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS"><code class="xref py py-data docutils literal notranslate"><span class="pre">CROSS_ORIGIN_ISOLATION_HEADERS</span></code></a>. A page served with
 them gets <code class="docutils literal notranslate"><span class="pre">crossOriginIsolated</span> <span class="pre">===</span> <span class="pre">true</span></code>, hence <code class="docutils literal notranslate"><span class="pre">SharedArrayBuffer</span></code> (threaded
@@ -329,6 +330,9 @@ app’s root <code class="docutils literal notranslate"><span class="pre">index.
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#enlace.response_headers.FORBIDDEN_HEADERS" title="enlace.response_headers.FORBIDDEN_HEADERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FORBIDDEN_HEADERS</span></code></a></p></td>
 <td><p>replacing them would corrupt the response (framing, encoding, type), clobber the platform's session and CSRF cookies, or act on the whole origin, i.e. on every other app.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#enlace.response_headers.FORBIDDEN_HEADER_PREFIXES" title="enlace.response_headers.FORBIDDEN_HEADER_PREFIXES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FORBIDDEN_HEADER_PREFIXES</span></code></a></p></td>
+<td><p>Header-name prefixes an app may not declare (lower-case).</p></td>
 </tr>
 </tbody>
 </table>
@@ -386,7 +390,7 @@ because Safari supports only the former; an app can override it per sub-path.</p
 
 <dl class="py data">
 <dt class="sig sig-object py" id="enlace.response_headers.FORBIDDEN_HEADERS">
-<span class="sig-prename descclassname"><span class="pre">enlace.response_headers.</span></span><span class="sig-name descname"><span class="pre">FORBIDDEN_HEADERS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#frozenset" title="(in Python v3.15)"><span class="pre">frozenset</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'clear-site-data',</span> <span class="pre">'connection',</span> <span class="pre">'content-encoding',</span> <span class="pre">'content-length',</span> <span class="pre">'content-range',</span> <span class="pre">'content-type',</span> <span class="pre">'keep-alive',</span> <span class="pre">'location',</span> <span class="pre">'service-worker-allowed',</span> <span class="pre">'set-cookie',</span> <span class="pre">'strict-transport-security',</span> <span class="pre">'te',</span> <span class="pre">'trailer',</span> <span class="pre">'transfer-encoding',</span> <span class="pre">'upgrade',</span> <span class="pre">'www-authenticate'})</span></span><a class="headerlink" href="#enlace.response_headers.FORBIDDEN_HEADERS" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">enlace.response_headers.</span></span><span class="sig-name descname"><span class="pre">FORBIDDEN_HEADERS</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#frozenset" title="(in Python v3.15)"><span class="pre">frozenset</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'accept-ch',</span> <span class="pre">'alt-svc',</span> <span class="pre">'clear-site-data',</span> <span class="pre">'connection',</span> <span class="pre">'content-encoding',</span> <span class="pre">'content-length',</span> <span class="pre">'content-range',</span> <span class="pre">'content-type',</span> <span class="pre">'critical-ch',</span> <span class="pre">'keep-alive',</span> <span class="pre">'location',</span> <span class="pre">'nel',</span> <span class="pre">'origin-agent-cluster',</span> <span class="pre">'report-to',</span> <span class="pre">'service-worker-allowed',</span> <span class="pre">'set-cookie',</span> <span class="pre">'strict-transport-security',</span> <span class="pre">'te',</span> <span class="pre">'trailer',</span> <span class="pre">'transfer-encoding',</span> <span class="pre">'upgrade',</span> <span class="pre">'www-authenticate'})</span></span><a class="headerlink" href="#enlace.response_headers.FORBIDDEN_HEADERS" title="Link to this definition">¶</a></dt>
 <dd><p>replacing them would corrupt the
 response (framing, encoding, type), clobber the platform’s session and CSRF
 cookies, or act on the whole origin, i.e. on every other app.</p>
@@ -395,6 +399,14 @@ cookies, or act on the whole origin, i.e. on every other app.</p>
 <dd class="field-odd"><p>Header names an app may not declare (lower-case)</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="enlace.response_headers.FORBIDDEN_HEADER_PREFIXES">
+<span class="sig-prename descclassname"><span class="pre">enlace.response_headers.</span></span><span class="sig-name descname"><span class="pre">FORBIDDEN_HEADER_PREFIXES</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#tuple" title="(in Python v3.15)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('access-control-',)</span></span><a class="headerlink" href="#enlace.response_headers.FORBIDDEN_HEADER_PREFIXES" title="Link to this definition">¶</a></dt>
+<dd><p>Header-name prefixes an app may not declare (lower-case). <code class="docutils literal notranslate"><span class="pre">access-control-*</span></code> is
+the platform’s CORS answer: this middleware wraps CORS, so a declared value would
+replace it, e.g. pairing a chosen origin with <code class="docutils literal notranslate"><span class="pre">Allow-Credentials</span></code> on the app’s API.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -609,6 +621,7 @@ declare. Websockets and lifespan pass through untouched.</p>
 <li><a class="reference internal" href="#">enlace.response_headers</a><ul>
 <li><a class="reference internal" href="#enlace.response_headers.CROSS_ORIGIN_ISOLATION_HEADERS"><code class="docutils literal notranslate"><span class="pre">CROSS_ORIGIN_ISOLATION_HEADERS</span></code></a></li>
 <li><a class="reference internal" href="#enlace.response_headers.FORBIDDEN_HEADERS"><code class="docutils literal notranslate"><span class="pre">FORBIDDEN_HEADERS</span></code></a></li>
+<li><a class="reference internal" href="#enlace.response_headers.FORBIDDEN_HEADER_PREFIXES"><code class="docutils literal notranslate"><span class="pre">FORBIDDEN_HEADER_PREFIXES</span></code></a></li>
 <li><a class="reference internal" href="#enlace.response_headers.ResponseHeadersMiddleware"><code class="docutils literal notranslate"><span class="pre">ResponseHeadersMiddleware</span></code></a><ul>
 <li><a class="reference internal" href="#enlace.response_headers.ResponseHeadersMiddleware.headers_for"><code class="docutils literal notranslate"><span class="pre">ResponseHeadersMiddleware.headers_for()</span></code></a></li>
 </ul>
@@ -633,7 +646,7 @@ declare. Websockets and lifespan pass through untouched.</p>
       
     </aside>
   </div>
-</div><script src="../_static/documentation_options.js?v=9036463d"></script>
+</div><script src="../_static/documentation_options.js?v=b087dcd6"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>

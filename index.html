@@ -652,7 +652,7 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 </div>
 </section>
 <section id="auth-sessions-plugins">
-<h3>Auth, sessions &amp; plugins<a class="headerlink" href="#auth-sessions-plugins" title="Link to this heading">¶</a></h3>
+<span id="auth-sessions--plugins"></span><h3>Auth, sessions &amp; plugins<a class="headerlink" href="#auth-sessions-plugins" title="Link to this heading">¶</a></h3>
 <p>enlace itself is auth-agnostic. Cross-cutting concerns like authentication, sessions, and per-user storage are added by <strong>plugins</strong> — callables <code class="docutils literal notranslate"><span class="pre">(parent:</span> <span class="pre">FastAPI,</span> <span class="pre">config:</span> <span class="pre">PlatformConfig)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code> invoked once after sub-apps are mounted:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">enlace</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_backend</span><span class="p">,</span> <span class="n">discover_apps</span>
 
@@ -741,7 +741,7 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 <p>A request belongs to the app with the longest mount covering it and only that app’s keys apply, so one app’s declaration never reaches another’s paths. Matching is by whole path segments (<code class="docutils literal notranslate"><span class="pre">&quot;lab&quot;</span></code> never covers <code class="docutils literal notranslate"><span class="pre">/labels/</span></code>), and a declared header replaces one of the same name set by the app. Headers that would corrupt the response or reach beyond the app (<code class="docutils literal notranslate"><span class="pre">Set-Cookie</span></code>, <code class="docutils literal notranslate"><span class="pre">Content-Type</span></code>, <code class="docutils literal notranslate"><span class="pre">Content-Length</span></code> and the other framing headers, <code class="docutils literal notranslate"><span class="pre">Location</span></code>, <code class="docutils literal notranslate"><span class="pre">Clear-Site-Data</span></code>, <code class="docutils literal notranslate"><span class="pre">Strict-Transport-Security</span></code>, <code class="docutils literal notranslate"><span class="pre">Service-Worker-Allowed</span></code>) are refused at discovery, as are non-ASCII values. Static files ending in <code class="docutils literal notranslate"><span class="pre">.onnx</span></code> are served as <code class="docutils literal notranslate"><span class="pre">application/octet-stream</span></code>, which enlace never gzips. The middleware is <code class="docutils literal notranslate"><span class="pre">enlace.response_headers.ResponseHeadersMiddleware</span></code>.</p>
 </section>
 <section id="deploy-manifest-meta">
-<h3>Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)<a class="headerlink" href="#deploy-manifest-meta" title="Link to this heading">¶</a></h3>
+<span id="deploy-manifest-_meta"></span><h3>Deploy manifest (<code class="docutils literal notranslate"><span class="pre">/_meta</span></code>)<a class="headerlink" href="#deploy-manifest-meta" title="Link to this heading">¶</a></h3>
 <p>enlace answers “what is actually deployed?” via an always-on, cheap manifest layer. Every mounted app gets a <code class="docutils literal notranslate"><span class="pre">/_meta</span></code> endpoint (plus a platform-level <code class="docutils literal notranslate"><span class="pre">/_meta</span></code>), and every response carries <code class="docutils literal notranslate"><span class="pre">X-Deploy-*</span></code> headers. A deploy tool snapshots build identity (git SHA, deploy time, externals) at deploy time into <code class="docutils literal notranslate"><span class="pre">{manifest_dir}/{app}.json</span></code>; enlace owns the read paths and schema. This lets you tell whether the server is serving the SHA you think it is and whether the browser rendered the current build or a stale cache.</p>
 <p><code class="docutils literal notranslate"><span class="pre">enlace_version</span></code> is what the deploy recorded (or, when the manifest records none, the running version); <code class="docutils literal notranslate"><span class="pre">enlace_runtime_version</span></code> is always the enlace actually running, added at serve time. They differ after an engine-only upgrade (a new wheel and a restart, no redeploy), and <code class="docutils literal notranslate"><span class="pre">enlace</span> <span class="pre">doctor</span></code> warns when they do.</p>
 </section>
@@ -766,7 +766,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-10 19:27 UTC from <a href="https://github.com/i2mint/enlace/commit/30f69dc8976cd901fcf07cd3ca1072e537fe2b15">30f69dc</a> (main) · enlace 0.1.65 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-10 21:20 UTC from <a href="https://github.com/i2mint/enlace/commit/79c5eb78f8212540218623bee622aa9d328b4a67">79c5eb7</a> (main) · enlace 0.1.66 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -848,7 +848,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=9036463d"></script>
+</div><script src="_static/documentation_options.js?v=b087dcd6"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

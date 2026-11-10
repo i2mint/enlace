@@ -287,7 +287,8 @@
 <span class="sd">match, the longest wins header by header. A declared header replaces one of the same</span>
 <span class="sd">name already on the response. Headers that would corrupt the response or act on the</span>
 <span class="sd">whole origin (``Set-Cookie``, framing headers, ``Clear-Site-Data``,</span>
-<span class="sd">``Strict-Transport-Security``...) are refused: see :data:`FORBIDDEN_HEADERS`.</span>
+<span class="sd">``Strict-Transport-Security``...) are refused: see :data:`FORBIDDEN_HEADERS`. So is</span>
+<span class="sd">``Access-Control-*``, the platform's CORS answer: see :data:`FORBIDDEN_HEADER_PREFIXES`.</span>
 
 <span class="sd">**Cross-origin isolation.** ``cross_origin_isolated = true`` (the whole app) or a</span>
 <span class="sd">list of sub-paths sends :data:`CROSS_ORIGIN_ISOLATION_HEADERS`. A page served with</span>
@@ -356,8 +357,19 @@
         <span class="s2">"clear-site-data"</span><span class="p">,</span>
         <span class="s2">"strict-transport-security"</span><span class="p">,</span>
         <span class="s2">"service-worker-allowed"</span><span class="p">,</span>
+        <span class="s2">"nel"</span><span class="p">,</span>
+        <span class="s2">"report-to"</span><span class="p">,</span>
+        <span class="s2">"alt-svc"</span><span class="p">,</span>
+        <span class="s2">"origin-agent-cluster"</span><span class="p">,</span>
+        <span class="s2">"accept-ch"</span><span class="p">,</span>
+        <span class="s2">"critical-ch"</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="p">)</span>
+
+<span class="c1">#: Header-name prefixes an app may not declare (lower-case). ``access-control-*`` is</span>
+<span class="c1">#: the platform's CORS answer: this middleware wraps CORS, so a declared value would</span>
+<span class="c1">#: replace it, e.g. pairing a chosen origin with ``Allow-Credentials`` on the app's API.</span>
+<span class="n">FORBIDDEN_HEADER_PREFIXES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"access-control-"</span><span class="p">,)</span>
 
 <span class="n">_TOKEN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[!#$%&amp;'*+.^_`|~0-9A-Za-z-]+"</span><span class="p">)</span>  <span class="c1"># RFC 9110 field-name</span>
 <span class="n">_VALUE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[\t\x20-\x7e]*"</span><span class="p">)</span>  <span class="c1"># visible ASCII, space and tab</span>
@@ -394,10 +406,12 @@
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">headers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_TOKEN</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"[response_headers] </span><span class="si">{</span><span class="n">where</span><span class="si">!r}</span><span class="s2">: bad header name </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">FORBIDDEN_HEADERS</span><span class="p">:</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">low</span> <span class="ow">in</span> <span class="n">FORBIDDEN_HEADERS</span> <span class="ow">or</span> <span class="n">low</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">FORBIDDEN_HEADER_PREFIXES</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">"[response_headers] </span><span class="si">{</span><span class="n">where</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> cannot be declared (it would "</span>
-                <span class="s2">"corrupt the response, the platform's cookies, or other apps)"</span>
+                <span class="s2">"corrupt the response, the platform's cookies or CORS answer, or "</span>
+                <span class="s2">"other apps)"</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_VALUE</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -635,7 +649,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=9036463d"></script>
+</div><script src="../../_static/documentation_options.js?v=b087dcd6"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

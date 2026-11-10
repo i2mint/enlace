@@ -10,6 +10,7 @@ enlace.response\_headers
    
       CROSS_ORIGIN_ISOLATION_HEADERS
       FORBIDDEN_HEADERS
+      FORBIDDEN_HEADER_PREFIXES
    
    .. rubric:: Functions
 
