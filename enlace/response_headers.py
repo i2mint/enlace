@@ -22,7 +22,8 @@ one app's declaration never reaches another app's paths. When several of its key
 match, the longest wins header by header. A declared header replaces one of the same
 name already on the response. Headers that would corrupt the response or act on the
 whole origin (``Set-Cookie``, framing headers, ``Clear-Site-Data``,
-``Strict-Transport-Security``...) are refused: see :data:`FORBIDDEN_HEADERS`.
+``Strict-Transport-Security``...) are refused: see :data:`FORBIDDEN_HEADERS`. So is
+``Access-Control-*``, the platform's CORS answer: see :data:`FORBIDDEN_HEADER_PREFIXES`.
 
 **Cross-origin isolation.** ``cross_origin_isolated = true`` (the whole app) or a
 list of sub-paths sends :data:`CROSS_ORIGIN_ISOLATION_HEADERS`. A page served with
@@ -93,7 +94,7 @@ FORBIDDEN_HEADERS: frozenset[str] = frozenset(
         "service-worker-allowed",
         "nel",
         "report-to",
-        "reporting-endpoints",
+        "alt-svc",
         "origin-agent-cluster",
         "accept-ch",
         "critical-ch",
@@ -137,12 +138,12 @@ def _validate_headers(where: str, headers) -> dict[str, str]:
     for name, value in headers.items():
         if not isinstance(name, str) or not _TOKEN.fullmatch(name):
             raise ValueError(f"[response_headers] {where!r}: bad header name {name!r}")
-        if name.lower() in FORBIDDEN_HEADERS or name.lower().startswith(
-            FORBIDDEN_HEADER_PREFIXES
-        ):
+        low = name.lower()
+        if low in FORBIDDEN_HEADERS or low.startswith(FORBIDDEN_HEADER_PREFIXES):
             raise ValueError(
                 f"[response_headers] {where!r}: {name} cannot be declared (it would "
-                "corrupt the response, the platform's cookies, or other apps)"
+                "corrupt the response, the platform's cookies or CORS answer, or "
+                "other apps)"
             )
         if not isinstance(value, str) or not _VALUE.fullmatch(value):
             raise ValueError(

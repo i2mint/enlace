@@ -184,8 +184,6 @@ def test_defaults_declare_nothing():
         ("response_headers", {"lab": {"Content-Length": "0"}}),
         ("response_headers", {"/": {"Clear-Site-Data": '"*"'}}),
         ("response_headers", {"/": {"strict-transport-security": "max-age=1"}}),
-        ("response_headers", {"/": {"Access-Control-Allow-Credentials": "true"}}),
-        ("response_headers", {"/": {"NEL": '{"report_to":"x","max_age":1}'}}),
         ("cross_origin_isolated", ["../up"]),
         ("cross_origin_isolated", ["lab", "/lab/"]),  # the same path twice
         ("response_headers", {"lab": {"Bad Name": "x"}}),
@@ -286,7 +284,7 @@ def test_media_types_extend_the_defaults(tmp_path):
 
 @pytest.mark.parametrize(
     "name", ["Access-Control-Allow-Origin", "access-control-allow-credentials", "NEL",
-             "Reporting-Endpoints", "Origin-Agent-Cluster", "Accept-CH"]
+             "Alt-Svc", "Origin-Agent-Cluster", "Accept-CH"]
 )
 def test_cors_and_origin_wide_headers_are_refused_by_name(name):
     """Pinned on the module's own message: pydantic's type errors are ValueErrors too."""
