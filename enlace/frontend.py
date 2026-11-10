@@ -30,6 +30,14 @@ DFLT_MEDIA_TYPES: dict[str, str] = {".onnx": "application/octet-stream"}
 HTML_MEDIA_TYPES = frozenset({"text/html", "application/xhtml+xml"})
 
 
+def apply_media_type(response: Response, path, media_types=DFLT_MEDIA_TYPES) -> None:
+    """Set *response*'s content type from *media_types*, keyed by *path*'s suffix."""
+    media_type = media_types.get(Path(path).suffix.lower())
+    if media_type is not None:
+        response.media_type = media_type
+        response.headers["content-type"] = media_type
+
+
 def is_html_path(path) -> bool:
     """Whether *path* names an HTML document, judged by its file extension."""
     media_type, _ = mimetypes.guess_type(os.fspath(path))
@@ -64,7 +72,7 @@ class RevalidatingStaticFiles(StaticFiles):
     ):
         super().__init__(*args, **kwargs)
         self.html_cache_control = html_cache_control
-        self.media_types = DFLT_MEDIA_TYPES if media_types is None else media_types
+        self.media_types = {**DFLT_MEDIA_TYPES, **(media_types or {})}
 
     def _revalidate_if_html(self, response: Response, full_path) -> Response:
         if (
@@ -78,10 +86,7 @@ class RevalidatingStaticFiles(StaticFiles):
     def file_response(self, full_path, stat_result, scope, status_code=200):
         """The file response, with HTML revalidated and ``media_types`` applied."""
         response = super().file_response(full_path, stat_result, scope, status_code)
-        media_type = self.media_types.get(Path(full_path).suffix.lower())
-        if media_type is not None:
-            response.media_type = media_type
-            response.headers["content-type"] = media_type
+        apply_media_type(response, full_path, self.media_types)
         return self._revalidate_if_html(response, full_path)
 
     async def get_response(self, path: str, scope: Scope) -> Response:

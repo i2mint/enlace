@@ -149,7 +149,7 @@ def test_websocket_and_lifespan_pass_through():
 
     import asyncio
 
-    mw = ResponseHeadersMiddleware(inner, rules=[("/a", {"X-A": "1"})])
+    mw = ResponseHeadersMiddleware(inner, rules=[("/a", "/a", {"X-A": "1"})])
     asyncio.run(mw({"type": "websocket", "path": "/a"}, None, None))
     asyncio.run(mw({"type": "lifespan"}, None, None))
     assert seen == ["websocket", "lifespan"]
@@ -162,9 +162,9 @@ def _config(**fields):
 
 def test_rules_cover_both_mounts_and_skip_a_root_route():
     app = _config(cross_origin_isolated=["lab"])
-    assert [p for p, _ in header_rules_for_app(app)] == ["/x/lab", "/api/x/lab"]
+    assert [p for _, p, _ in header_rules_for_app(app)] == ["/x/lab", "/api/x/lab"]
     rooted = _config(route_prefix="/", response_headers={"/": {"X-A": "1"}})
-    assert [p for p, _ in header_rules_for_app(rooted)] == ["/x"]
+    assert [p for _, p, _ in header_rules_for_app(rooted)] == ["/x"]
 
 
 def test_defaults_declare_nothing():
@@ -178,6 +178,12 @@ def test_defaults_declare_nothing():
     "field, value",
     [
         ("cross_origin_isolated", "lab"),  # a string, not a list
+        ("cross_origin_isolated", {"lab": 1}),  # a TOML inline table
+        ("response_headers", {"lab": {"X-A": "café"}}),  # not ASCII: 500s later
+        ("response_headers", {"lab": {"Set-Cookie": "enlace_session=x"}}),
+        ("response_headers", {"lab": {"Content-Length": "0"}}),
+        ("response_headers", {"/": {"Clear-Site-Data": '"*"'}}),
+        ("response_headers", {"/": {"strict-transport-security": "max-age=1"}}),
         ("cross_origin_isolated", ["../up"]),
         ("cross_origin_isolated", ["lab", "/lab/"]),  # the same path twice
         ("response_headers", {"lab": {"Bad Name": "x"}}),
@@ -212,3 +218,65 @@ def test_app_toml_maps_onto_app_config(tmp_path):
     assert app.cross_origin_isolated == ["lab"]
     assert app.response_headers == {"lab/models": {"X-A": "1"}}
     assert app.provenance["cross_origin_isolated"] == "override: app.toml"
+
+
+def test_one_apps_rules_never_reach_another_apps_paths(tmp_path):
+    """An app whose mount is a prefix of another's (``api`` vs ``/api/other``)."""
+    apps = tmp_path / "apps"
+    apps.mkdir()
+    _app(apps, "api", "cross_origin_isolated = true\n")
+    _app(apps, "other")
+    c = TestClient(build_backend(discover_apps(PlatformConfig(apps_dir=apps))))
+    assert _coi(c.get("/api/")) == COI  # its own page
+    assert _coi(c.get("/api/other/other")) == {}  # the other app's API
+    assert _coi(c.get("/other/lab/")) == {}
+
+
+def test_the_sign_in_gate_response_carries_the_headers(tmp_path):
+    """Outside the plugins: a gated route's refusal is isolated too, so a smoke check
+    can read the headers without signing in."""
+    from starlette.responses import RedirectResponse
+
+    class Gate:
+        def __init__(self, app):
+            self.app = app
+
+        async def __call__(self, scope, receive, send):
+            if scope["type"] == "http" and scope["path"].startswith("/iso/"):
+                await RedirectResponse("/auth/login", 303)(scope, receive, send)
+                return
+            await self.app(scope, receive, send)
+
+    def gate_plugin(parent, cfg):
+        parent.add_middleware(Gate)
+
+    apps = tmp_path / "apps"
+    apps.mkdir()
+    _app(apps, "iso", 'cross_origin_isolated = ["lab"]\n')
+    config = discover_apps(PlatformConfig(apps_dir=apps))
+    c = TestClient(build_backend(config, plugins=[gate_plugin]))
+    r = c.get("/iso/lab/", follow_redirects=False)
+    assert r.status_code == 303
+    assert _coi(r) == COI
+    assert _coi(c.get("/iso/", follow_redirects=False)) == {}
+
+
+def test_a_root_route_is_warned_about(caplog):
+    with caplog.at_level("WARNING", logger="enlace.response_headers"):
+        header_rules_for_app(_config(route_prefix="/", cross_origin_isolated=True))
+    assert "site root" in caplog.text
+
+
+def test_media_types_extend_the_defaults(tmp_path):
+    from enlace.frontend import RevalidatingStaticFiles
+
+    d = tmp_path / "f"
+    d.mkdir()
+    (d / "m.onnx").write_bytes(b"x")
+    (d / "w.gguf").write_bytes(b"x")
+    files = RevalidatingStaticFiles(
+        directory=str(d), media_types={".gguf": "application/octet-stream"}
+    )
+    c = TestClient(files)
+    assert c.get("/m.onnx").headers["content-type"] == "application/octet-stream"
+    assert c.get("/w.gguf").headers["content-type"] == "application/octet-stream"
