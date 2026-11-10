@@ -287,6 +287,6 @@ def test_media_types_extend_the_defaults(tmp_path):
              "Alt-Svc", "Origin-Agent-Cluster", "Accept-CH"]
 )
 def test_cors_and_origin_wide_headers_are_refused_by_name(name):
-    """Pinned on the module's own message: pydantic's type errors are ValueErrors too."""
+    """Pinned on the module's own message: pydantic type errors are ValueErrors."""
     with pytest.raises(ValueError, match="cannot be declared"):
         _config(response_headers={"/": {name: "x"}})
