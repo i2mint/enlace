@@ -22,7 +22,8 @@ one app's declaration never reaches another app's paths. When several of its key
 match, the longest wins header by header. A declared header replaces one of the same
 name already on the response. Headers that would corrupt the response or act on the
 whole origin (``Set-Cookie``, framing headers, ``Clear-Site-Data``,
-``Strict-Transport-Security``...) are refused: see :data:`FORBIDDEN_HEADERS`.
+``Strict-Transport-Security``...) are refused: see :data:`FORBIDDEN_HEADERS`. So is
+``Access-Control-*``, the platform's CORS answer: see :data:`FORBIDDEN_HEADER_PREFIXES`.
 
 **Cross-origin isolation.** ``cross_origin_isolated = true`` (the whole app) or a
 list of sub-paths sends :data:`CROSS_ORIGIN_ISOLATION_HEADERS`. A page served with
@@ -91,8 +92,19 @@ FORBIDDEN_HEADERS: frozenset[str] = frozenset(
         "clear-site-data",
         "strict-transport-security",
         "service-worker-allowed",
+        "nel",
+        "report-to",
+        "alt-svc",
+        "origin-agent-cluster",
+        "accept-ch",
+        "critical-ch",
     }
 )
+
+#: Header-name prefixes an app may not declare (lower-case). ``access-control-*`` is
+#: the platform's CORS answer: this middleware wraps CORS, so a declared value would
+#: replace it, e.g. pairing a chosen origin with ``Allow-Credentials`` on the app's API.
+FORBIDDEN_HEADER_PREFIXES: tuple[str, ...] = ("access-control-",)
 
 _TOKEN = re.compile(r"[!#$%&'*+.^_`|~0-9A-Za-z-]+")  # RFC 9110 field-name
 _VALUE = re.compile(r"[\t\x20-\x7e]*")  # visible ASCII, space and tab
@@ -126,10 +138,12 @@ def _validate_headers(where: str, headers) -> dict[str, str]:
     for name, value in headers.items():
         if not isinstance(name, str) or not _TOKEN.fullmatch(name):
             raise ValueError(f"[response_headers] {where!r}: bad header name {name!r}")
-        if name.lower() in FORBIDDEN_HEADERS:
+        low = name.lower()
+        if low in FORBIDDEN_HEADERS or low.startswith(FORBIDDEN_HEADER_PREFIXES):
             raise ValueError(
                 f"[response_headers] {where!r}: {name} cannot be declared (it would "
-                "corrupt the response, the platform's cookies, or other apps)"
+                "corrupt the response, the platform's cookies or CORS answer, or "
+                "other apps)"
             )
         if not isinstance(value, str) or not _VALUE.fullmatch(value):
             raise ValueError(

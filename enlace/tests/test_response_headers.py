@@ -280,3 +280,13 @@ def test_media_types_extend_the_defaults(tmp_path):
     c = TestClient(files)
     assert c.get("/m.onnx").headers["content-type"] == "application/octet-stream"
     assert c.get("/w.gguf").headers["content-type"] == "application/octet-stream"
+
+
+@pytest.mark.parametrize(
+    "name", ["Access-Control-Allow-Origin", "access-control-allow-credentials", "NEL",
+             "Alt-Svc", "Origin-Agent-Cluster", "Accept-CH"]
+)
+def test_cors_and_origin_wide_headers_are_refused_by_name(name):
+    """Pinned on the module's own message: pydantic type errors are ValueErrors."""
+    with pytest.raises(ValueError, match="cannot be declared"):
+        _config(response_headers={"/": {name: "x"}})
