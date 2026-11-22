@@ -47,5 +47,10 @@ Checklist codes this one app misses (empty: complete).
 
 `{app name: missing codes}` for apps whose HTML the platform serves.
 
+Unlisted apps are checked too: `listed = false` only keeps an app off the
+launcher, and its pages still open in a browser tab (favicon), get added to a
+home screen (icon) and get shared as links (og:image). Exempting them let a new
+app ship unlisted with no icon at all, then fail the gate only when listed.
+
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]

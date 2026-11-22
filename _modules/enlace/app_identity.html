@@ -373,10 +373,16 @@
 <div class="viewcode-block" id="identity_gaps">
 <a class="viewcode-back" href="../../_autosummary/enlace.app_identity.html#enlace.app_identity.identity_gaps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">identity_gaps</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""``{app name: missing codes}`` for apps whose HTML the platform serves."""</span>
+<span class="w">    </span><span class="sd">"""``{app name: missing codes}`` for apps whose HTML the platform serves.</span>
+
+<span class="sd">    Unlisted apps are checked too: ``listed = false`` only keeps an app off the</span>
+<span class="sd">    launcher, and its pages still open in a browser tab (favicon), get added to a</span>
+<span class="sd">    home screen (icon) and get shared as links (og:image). Exempting them let a new</span>
+<span class="sd">    app ship unlisted with no icon at all, then fail the gate only when listed.</span>
+<span class="sd">    """</span>
     <span class="n">out</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">app</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">apps</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_own_pages</span><span class="p">(</span><span class="n">app</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="s2">"listed"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_own_pages</span><span class="p">(</span><span class="n">app</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="n">gaps</span> <span class="o">=</span> <span class="n">app_gaps</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">gaps</span><span class="p">:</span>
@@ -411,7 +417,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=b087dcd6"></script>
+</div><script src="../../_static/documentation_options.js?v=19c7a8b0"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
