@@ -37,7 +37,7 @@ def test_bare_app_lists_every_gap(tmp_path):
 
 
 def test_unlisted_app_is_checked_too(tmp_path):
-    """Off the launcher, still in a browser tab, on a home screen and in shared links."""
+    """Off the launcher, but still in tabs, on home screens and in shared links."""
     app = _app(tmp_path).model_copy(update={"listed": False})
     assert "icon-png" in identity_gaps(PlatformConfig(apps=[app]))["demo"]
 
