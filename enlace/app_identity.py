@@ -103,10 +103,16 @@ def _png_px(body: Optional[bytes]) -> int:
 
 
 def identity_gaps(config) -> dict[str, list[str]]:
-    """``{app name: missing codes}`` for apps whose HTML the platform serves."""
+    """``{app name: missing codes}`` for apps whose HTML the platform serves.
+
+    Unlisted apps are checked too: ``listed = false`` only keeps an app off the
+    launcher, and its pages still open in a browser tab (favicon), get added to a
+    home screen (icon) and get shared as links (og:image). Exempting them let a new
+    app ship unlisted with no icon at all, then fail the gate only when listed.
+    """
     out = {}
     for app in config.apps:
-        if not has_own_pages(app) or not getattr(app, "listed", True):
+        if not has_own_pages(app):
             continue
         gaps = app_gaps(app, config)
         if gaps:
