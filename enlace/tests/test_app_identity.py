@@ -36,6 +36,12 @@ def test_bare_app_lists_every_gap(tmp_path):
     assert {"description", "theme-color", "og-image", "icon-png"} <= set(gaps)
 
 
+def test_unlisted_app_is_checked_too(tmp_path):
+    """Off the launcher, but still in tabs, on home screens and in shared links."""
+    app = _app(tmp_path).model_copy(update={"listed": False})
+    assert "icon-png" in identity_gaps(PlatformConfig(apps=[app]))["demo"]
+
+
 def test_small_png_source_misses_512(tmp_path):
     app = _full_app(tmp_path, px=180)
     assert identity_gaps(PlatformConfig(apps=[app])) == {"demo": ["icon-512"]}
