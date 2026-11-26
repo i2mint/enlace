@@ -454,35 +454,48 @@ def _resolved_field_map() -> tuple[dict[str, str], set[str]]:
     return field_map, path_keys
 
 
-def _refuse_misplaced_security_keys(toml_data: dict, *, names=("csrf",)) -> None:
+# app.toml tables whose keys are the app's own data (env var names, paths,
+# header names), never enlace keys: a near-miss check must not look inside.
+_FREE_FORM_TABLES = frozenset({"env", "rate_limit", "response_headers"})
+
+
+def _refuse_misplaced_security_keys(toml_data: dict, *, name: str = "csrf") -> None:
     """Fail on a near miss of a security switch, which would otherwise read as off.
 
     app.toml drops keys it does not know, so ``CSRF = true``, ``csrf_paths``, or
     a ``csrf`` that TOML put inside a table (written after a ``[build]`` header)
-    would silently leave the check off. Only the exact top-level key counts.
+    would silently leave the check off. Refused: a top-level key starting with
+    *name* in any case, other than *name* itself, and a key equal to *name* in
+    any case inside a table. Free-form tables (``[env]``...) are not looked at.
 
-    >>> _refuse_misplaced_security_keys({"csrf": True, "build": {"cmd": "x"}})
+    >>> _refuse_misplaced_security_keys(
+    ...     {"csrf": True, "env": {"DJANGO_CSRF_TRUSTED_ORIGINS": "x"}}
+    ... )
     >>> _refuse_misplaced_security_keys({"build": {"csrf": True}})
     Traceback (most recent call last):
     ...
     ValueError: app.toml key 'build.csrf' looks like 'csrf' but is not it: ...
     """
 
+    def refuse(dotted: str):
+        raise ValueError(
+            f"app.toml key {dotted!r} looks like {name!r} but is not it: write "
+            f"`{name} = ...` at the top of app.toml, before any [table]"
+        )
+
     def walk(table: dict, where: str):
         for key, value in table.items():
-            dotted = f"{where}.{key}" if where else str(key)
-            low = str(key).lower()
-            for name in names:
-                if name in low and dotted != name:
-                    raise ValueError(
-                        f"app.toml key {dotted!r} looks like {name!r} but is not "
-                        f"it: write `{name} = ...` at the top of app.toml, before "
-                        "any [table]"
-                    )
+            if str(key).lower() == name:
+                refuse(f"{where}.{key}")
             if isinstance(value, dict):
-                walk(value, dotted)
+                walk(value, f"{where}.{key}")
 
-    walk(toml_data, "")
+    for key, value in toml_data.items():
+        low = str(key).lower()
+        if low.startswith(name) and key != name:
+            refuse(str(key))
+        if isinstance(value, dict) and low not in _FREE_FORM_TABLES:
+            walk(value, str(key))
 
 
 def _overlay_toml_fields(

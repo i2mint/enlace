@@ -159,6 +159,23 @@ def test_discover_refuses_a_near_miss_of_csrf(single_app_dir, toml):
         _make_discoverer().discover(single_app_dir)
 
 
+@pytest.mark.parametrize(
+    "toml",
+    [
+        '[env]\nDJANGO_CSRF_TRUSTED_ORIGINS = "https://x.io"\n',
+        '[env]\ncsrf = "1"\n',
+        '[rate_limit]\n"POST /csrf" = "10/minute"\n',
+        '[response_headers."/"]\n"X-CSRF-Policy" = "strict"\n',
+        'description = "has a csrf form"\n',
+    ],
+)
+def test_csrf_in_an_apps_own_data_is_not_a_near_miss(single_app_dir, toml):
+    """The near-miss check never looks at free-form tables or values."""
+    (single_app_dir / "foo" / "app.toml").write_text(toml)
+    (app,) = _make_discoverer().discover(single_app_dir)
+    assert app.csrf is False
+
+
 def test_discover_conflict_detection(tmp_apps_dir):
     """Two apps resolving to the same route trigger a conflict."""
     for name in ["app_a", "app_b"]:
