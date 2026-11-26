@@ -557,6 +557,11 @@
     <span class="c1"># cross-origin isolated: COOP + COEP + CORP, so its pages get</span>
     <span class="c1"># SharedArrayBuffer. Off by default: it stops third-party embeds loading.</span>
     <span class="n">cross_origin_isolated</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="c1"># CSRF enforcement on the app's own write paths (app.toml ``csrf``): true</span>
+    <span class="c1"># for the whole app, or a list of sub-paths (e.g. ["edit"]). Consumed by</span>
+    <span class="c1"># enlace_auth, like ``access``; enlace itself only validates the shape.</span>
+    <span class="c1"># Off by default: requests to the app's API are then CSRF-exempt.</span>
+    <span class="n">csrf</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># The app's page ships inside a Python package (app.toml's</span>
     <span class="c1"># ``page_from_package``): enlace serves the shell at /{name}/ and the</span>
@@ -665,6 +670,13 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.response_headers</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_cross_origin_isolated</span>
 
         <span class="k">return</span> <span class="n">validate_cross_origin_isolated</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"csrf"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_csrf</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">enlace.response_headers</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_subpath_switch</span>
+
+        <span class="k">return</span> <span class="n">validate_subpath_switch</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">"csrf"</span><span class="p">)</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_default_display_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1058,7 +1070,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=19c7a8b0"></script>
+</div><script src="../../_static/documentation_options.js?v=bbb059f7"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

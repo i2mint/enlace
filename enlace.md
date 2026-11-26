@@ -1,4 +1,4 @@
-> built 2026-11-22 20:56 UTC from 0904fb8 (main) · enlace 0.1.67. Details: build_info.json
+> built 2026-11-26 15:01 UTC from 5c5bbb7 (main) · enlace 0.1.68. Details: build_info.json
 
 # index.html.md
 
@@ -340,6 +340,8 @@ app = build_backend(discover_apps(), plugins=[my_plugin])
 ```
 
 Plugins can also be loaded by name from the `ENLACE_PLUGINS` env var (comma-separated). The canonical example is `enlace_auth.plugin`, which adds auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps without coupling: services are injected into the ASGI scope, so apps read `request.state.store` rather than importing anything from enlace. Apps can also condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but never have to.
+
+Some `app.toml` keys are auth policy that enlace validates and carries but does not interpret: `access`, `allowed_users`, `user_store`, and `csrf` (`true`, or a list of sub-paths such as `["edit"]`), which asks the auth plugin to require a CSRF token on the app’s own state-changing requests. `enlace_auth` documents what each one does.
 
 ### Pages from a package
 
@@ -1437,7 +1439,7 @@ owned by another tool, and `enlace doctor` reports the same list.
 | [`ConventionsConfig`](_autosummary/enlace.base.html.md#enlace.base.ConventionsConfig)(\*[, entry_points, ...])         | Meta-conventions controlling how apps are discovered.          |
 | [`PlatformConfig`](_autosummary/enlace.base.html.md#enlace.base.PlatformConfig)(\*[, apps_dir, apps_dirs, ...])     | Resolved configuration for the entire platform.                |
 
-### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, response_headers=<factory>, cross_origin_isolated=False, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.base.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, response_headers=<factory>, cross_origin_isolated=False, csrf=False, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -2681,7 +2683,7 @@ Whether this app’s page views are counted.
 
 Configuration for the model, should be a dictionary conforming to [`ConfigDict`][pydantic.config.ConfigDict].
 
-### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, response_headers=<factory>, cross_origin_isolated=False, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
+### *class* enlace.AppConfig(\*, name, route_prefix, entry_module_path=None, app_type, app_attr='app', frontend_dir=None, source_dir=None, build=None, access='local', shared_password_env=None, allowed_users=<factory>, user_store=False, display_name='', provenance=<factory>, analytics=<factory>, rate_limit=<factory>, response_headers=<factory>, cross_origin_isolated=False, csrf=False, page_from_package=None, import_error=None, fail_hard=False, description='', keywords=<factory>, icon='', launchable=None, listed=True, updated_at=None, mode='asgi', command=None, port=None, socket=None, env=<factory>, health_check_path='/health', ready_timeout=30.0, restart_policy='on-failure', max_retries=5, restart_delay_ms=100, forward_platform_credentials=False, upstream_url=None, public_dir=None, \*\*extra_data)
 
 Bases: `BaseModel`
 
@@ -4414,16 +4416,17 @@ The three-callable middleware is pure ASGI, as every enlace middleware is.
 
 ### Functions
 
-| [`add_response_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.add_response_headers)(parent, config)   | Install [`ResponseHeadersMiddleware`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.ResponseHeadersMiddleware) on *parent* if an app declares any.   |
-|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| [`app_header_table`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.app_header_table)(app)                  | Sub-path -> headers for an app: isolation, then `[response_headers]` on top.                                             |
-| [`app_mounts`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.app_mounts)(app)                        | The path prefixes an app answers under: its page and its API, root excluded.                                             |
-| [`header_rules_for_app`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.header_rules_for_app)(app)              | The app's headers as `(mount, absolute path prefix, headers)` rules.                                                     |
-| [`merge_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.merge_headers)(\*layers)                | Merge header dicts, later layers winning, names compared case-insensitively.                                             |
-| [`normalize_subpath`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.normalize_subpath)(key)                 | A sub-path key made canonical: no slash at either end, `""` for the whole app.                                           |
-| [`path_under`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.path_under)(prefix, path)               | Whether *path* is *prefix* or below it, by whole segments.                                                               |
-| [`validate_cross_origin_isolated`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.validate_cross_origin_isolated)(value)  | Check `cross_origin_isolated`: a bool, or a list of sub-paths (normalised).                                              |
-| [`validate_response_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.validate_response_headers)(table)       | Check an app.toml `[response_headers]` table; keys come back normalised.                                                 |
+| [`add_response_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.add_response_headers)(parent, config)    | Install [`ResponseHeadersMiddleware`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.ResponseHeadersMiddleware) on *parent* if an app declares any.   |
+|------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| [`app_header_table`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.app_header_table)(app)                   | Sub-path -> headers for an app: isolation, then `[response_headers]` on top.                                             |
+| [`app_mounts`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.app_mounts)(app)                         | The path prefixes an app answers under: its page and its API, root excluded.                                             |
+| [`header_rules_for_app`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.header_rules_for_app)(app)               | The app's headers as `(mount, absolute path prefix, headers)` rules.                                                     |
+| [`merge_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.merge_headers)(\*layers)                 | Merge header dicts, later layers winning, names compared case-insensitively.                                             |
+| [`normalize_subpath`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.normalize_subpath)(key)                  | A sub-path key made canonical: no slash at either end, `""` for the whole app.                                           |
+| [`path_under`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.path_under)(prefix, path)                | Whether *path* is *prefix* or below it, by whole segments.                                                               |
+| [`validate_cross_origin_isolated`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.validate_cross_origin_isolated)(value)   | Check `cross_origin_isolated`: a bool, or a list of sub-paths (normalised).                                              |
+| [`validate_response_headers`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.validate_response_headers)(table)        | Check an app.toml `[response_headers]` table; keys come back normalised.                                                 |
+| [`validate_subpath_switch`](_autosummary/enlace.response_headers.html.md#enlace.response_headers.validate_subpath_switch)(value, \*, key) | Check an app.toml switch that is a bool or a list of sub-paths (normalised).                                             |
 
 ### Classes
 
@@ -4569,6 +4572,23 @@ Check an app.toml `[response_headers]` table; keys come back normalised.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+
+### enlace.response_headers.validate_subpath_switch(value, , key)
+
+Check an app.toml switch that is a bool or a list of sub-paths (normalised).
+
+The shape of `cross_origin_isolated` and `csrf`: `true` for the whole
+app, or the sub-paths it applies to. *key* names the switch in errors.
+
+```pycon
+>>> validate_subpath_switch(["/edit/", "notes"], key="csrf")
+['edit', 'notes']
+>>> validate_subpath_switch(True, key="csrf")
+True
+```
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool) | [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]
 
 
 # _autosummary/enlace.strategies.html.md
@@ -5018,16 +5038,18 @@ names apps actually use (letters, digits, `_ - . ~`) are returned unchanged.
 
 # About this build
 
-This documentation was built on **2026-11-22 20:56 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/0904fb81f9bcc331a306c5cd707571853dd6a3c8"><code>0904fb8</code></a> on branch <code>main</code>, for **enlace 0.1.67** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-26 15:01 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/5c5bbb7b35098935eeb1fd66e8798a92afbb6478"><code>5c5bbb7</code></a> on branch <code>main</code>, for **enlace 0.1.68** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.68) is behind the latest release on PyPI (0.1.69): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/0904fb81f9bcc331a306c5cd707571853dd6a3c8"><code>0904fb81f9bcc331a306c5cd707571853dd6a3c8</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/5c5bbb7b35098935eeb1fd66e8798a92afbb6478"><code>5c5bbb7b35098935eeb1fd66e8798a92afbb6478</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -5038,15 +5060,15 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/45069089251">45069089251</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/45844536302">45844536302</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>0904fb81f9bcc331a306c5cd707571853dd6a3c8</code> (in the history of the built commit) |
+| Event commit | <code>5c5bbb7b35098935eeb1fd66e8798a92afbb6478</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.23  |
+| epythet  | 0.2.25  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.16 |
@@ -5065,14 +5087,14 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.67/">0.1.67</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.69/">0.1.69</a>, newer than the documented version (0.1.68).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 0904fb81f9bcc331a306c5cd707571853dd6a3c8
-pip install "epythet==0.2.23"
+git checkout 5c5bbb7b35098935eeb1fd66e8798a92afbb6478
+pip install "epythet==0.2.25"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

@@ -450,6 +450,33 @@
 
 
 
+<div class="viewcode-block" id="validate_subpath_switch">
+<a class="viewcode-back" href="../../_autosummary/enlace.response_headers.html#enlace.response_headers.validate_subpath_switch">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_subpath_switch</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Check an app.toml switch that is a bool or a list of sub-paths (normalised).</span>
+
+<span class="sd">    The shape of ``cross_origin_isolated`` and ``csrf``: ``true`` for the whole</span>
+<span class="sd">    app, or the sub-paths it applies to. *key* names the switch in errors.</span>
+
+<span class="sd">    &gt;&gt;&gt; validate_subpath_switch(["/edit/", "notes"], key="csrf")</span>
+<span class="sd">    ['edit', 'notes']</span>
+<span class="sd">    &gt;&gt;&gt; validate_subpath_switch(True, key="csrf")</span>
+<span class="sd">    True</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be true, false, or a list of sub-paths "</span>
+            <span class="sa">f</span><span class="s2">"(e.g. ['lab']), not </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">subs</span> <span class="o">=</span> <span class="p">[</span><span class="n">normalize_subpath</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">subs</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">subs</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> lists a path twice: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">subs</span></div>
+
+
+
 <div class="viewcode-block" id="validate_cross_origin_isolated">
 <a class="viewcode-back" href="../../_autosummary/enlace.response_headers.html#enlace.response_headers.validate_cross_origin_isolated">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_cross_origin_isolated</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -458,17 +485,7 @@
 <span class="sd">    &gt;&gt;&gt; validate_cross_origin_isolated(["/lab/"])</span>
 <span class="sd">    ['lab']</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">value</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"cross_origin_isolated must be true, false, or a list of sub-paths "</span>
-            <span class="sa">f</span><span class="s2">"(e.g. ['lab']), not </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
-        <span class="p">)</span>
-    <span class="n">subs</span> <span class="o">=</span> <span class="p">[</span><span class="n">normalize_subpath</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">subs</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">subs</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cross_origin_isolated lists a path twice: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">subs</span></div>
+    <span class="k">return</span> <span class="n">validate_subpath_switch</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s2">"cross_origin_isolated"</span><span class="p">)</span></div>
 
 
 
@@ -649,7 +666,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=19c7a8b0"></script>
+</div><script src="../../_static/documentation_options.js?v=bbb059f7"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>

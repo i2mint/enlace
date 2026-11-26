@@ -2,16 +2,18 @@
 
 # About this build
 
-This documentation was built on **2026-11-22 20:56 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/0904fb81f9bcc331a306c5cd707571853dd6a3c8"><code>0904fb8</code></a> on branch <code>main</code>, for **enlace 0.1.67** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-26 15:01 UTC** from commit <a href="https://github.com/i2mint/enlace/commit/5c5bbb7b35098935eeb1fd66e8798a92afbb6478"><code>5c5bbb7</code></a> on branch <code>main</code>, for **enlace 0.1.68** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.68) is behind the latest release on PyPI (0.1.69): `pip install enlace` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                      |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/enlace/commit/0904fb81f9bcc331a306c5cd707571853dd6a3c8"><code>0904fb81f9bcc331a306c5cd707571853dd6a3c8</code></a> |
+| Commit              | <a href="https://github.com/i2mint/enlace/commit/5c5bbb7b35098935eeb1fd66e8798a92afbb6478"><code>5c5bbb7b35098935eeb1fd66e8798a92afbb6478</code></a> |
 | Branch              | <code>main</code>                                                                                                                                    |
 | Tags at this commit | none                                                                                                                                                 |
 | Working tree        | clean                                                                                                                                                |
@@ -22,15 +24,15 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/enlace</code>                                                                 |
-| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/45069089251">45069089251</a>        |
+| Run          | <a href="https://github.com/i2mint/enlace/actions/runs/45844536302">45844536302</a>        |
 | Ref          | <code>refs/heads/main</code>                                                               |
-| Event commit | <code>0904fb81f9bcc331a306c5cd707571853dd6a3c8</code> (in the history of the built commit) |
+| Event commit | <code>5c5bbb7b35098935eeb1fd66e8798a92afbb6478</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.23  |
+| epythet  | 0.2.25  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.16 |
@@ -49,14 +51,14 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/enlace/0.1.67/">0.1.67</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/enlace/0.1.69/">0.1.69</a>, newer than the documented version (0.1.68).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/enlace && cd enlace
-git checkout 0904fb81f9bcc331a306c5cd707571853dd6a3c8
-pip install "epythet==0.2.23"
+git checkout 5c5bbb7b35098935eeb1fd66e8798a92afbb6478
+pip install "epythet==0.2.25"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

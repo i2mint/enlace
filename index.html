@@ -280,7 +280,7 @@
 <h2>For AI agents<a class="headerlink" href="#for-ai-agents" title="Link to this heading">¶</a></h2>
 <section id="skills">
 <h3>Skills<a class="headerlink" href="#skills" title="Link to this heading">¶</a></h3>
-<p>enlace ships three agent skills. The real files live in <a class="reference internal" href="#enlace/data/skills"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">enlace/data/skills/</span></code></span></a>, so they come with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">enlace</span></code>, and <code class="docutils literal notranslate"><span class="pre">gh</span> <span class="pre">skill</span></code> (which looks for any <code class="docutils literal notranslate"><span class="pre">skills/*/SKILL.md</span></code> in a repo) can install them from GitHub.</p>
+<p>enlace ships three agent skills. The real files live in <a class="reference external" href="https://github.com/i2mint/enlace/tree/HEAD/enlace/data/skills"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">enlace/data/skills/</span></code></span></a>, so they come with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">enlace</span></code>, and <code class="docutils literal notranslate"><span class="pre">gh</span> <span class="pre">skill</span></code> (which looks for any <code class="docutils literal notranslate"><span class="pre">skills/*/SKILL.md</span></code> in a repo) can install them from GitHub.</p>
 <div class="table-wrapper colwidths-auto docutils container">
 <table class="docutils align-default">
 <thead>
@@ -323,7 +323,7 @@ mkdir<span class="w"> </span>-p<span class="w"> </span>.claude/skills
 ln<span class="w"> </span>-s<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">'from enlace import skills_dir; print(skills_dir())'</span><span class="k">)</span><span class="s2">"</span>/*<span class="w"> </span>.claude/skills/
 </pre></div>
 </div>
-<p>Working on enlace itself? Read <a class="reference internal" href="#.claude/CLAUDE.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">.claude/CLAUDE.md</span></code></span></a> first: it holds the two core principles, the architecture, and the critical rules (pure ASGI middleware only, loud-and-local load failures, CORS on the parent only). In a checkout, <code class="docutils literal notranslate"><span class="pre">.claude/skills/</span></code> already links to the three skills.</p>
+<p>Working on enlace itself? Read <a class="reference external" href="https://github.com/i2mint/enlace/blob/HEAD/.claude/CLAUDE.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">.claude/CLAUDE.md</span></code></span></a> first: it holds the two core principles, the architecture, and the critical rules (pure ASGI middleware only, loud-and-local load failures, CORS on the parent only). In a checkout, <code class="docutils literal notranslate"><span class="pre">.claude/skills/</span></code> already links to the three skills.</p>
 </section>
 <section id="what-an-agent-can-do-with-enlace">
 <h3>What an agent can do with enlace<a class="headerlink" href="#what-an-agent-can-do-with-enlace" title="Link to this heading">¶</a></h3>
@@ -525,7 +525,7 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 <span class="n">app_load_failure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"raise"</span>
 </pre></div>
 </div>
-<p>The decision and its limits are in <a class="reference internal" href="#misc/docs/decisions/0001-loud-and-local-app-load-failures.md"><span class="xref myst">ADR-0001</span></a>.</p>
+<p>The decision and its limits are in <a class="reference external" href="https://github.com/i2mint/enlace/blob/HEAD/misc/docs/decisions/0001-loud-and-local-app-load-failures.md"><span class="xref myst">ADR-0001</span></a>.</p>
 </section>
 </section>
 <section id="configuration">
@@ -660,6 +660,7 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 </pre></div>
 </div>
 <p>Plugins can also be loaded by name from the <code class="docutils literal notranslate"><span class="pre">ENLACE_PLUGINS</span></code> env var (comma-separated). The canonical example is <code class="docutils literal notranslate"><span class="pre">enlace_auth.plugin</span></code>, which adds auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps without coupling: services are injected into the ASGI scope, so apps read <code class="docutils literal notranslate"><span class="pre">request.state.store</span></code> rather than importing anything from enlace. Apps can also condition on the <code class="docutils literal notranslate"><span class="pre">ENLACE_MANAGED=1</span></code> env var (set by <code class="docutils literal notranslate"><span class="pre">build_backend()</span></code>), but never have to.</p>
+<p>Some <code class="docutils literal notranslate"><span class="pre">app.toml</span></code> keys are auth policy that enlace validates and carries but does not interpret: <code class="docutils literal notranslate"><span class="pre">access</span></code>, <code class="docutils literal notranslate"><span class="pre">allowed_users</span></code>, <code class="docutils literal notranslate"><span class="pre">user_store</span></code>, and <code class="docutils literal notranslate"><span class="pre">csrf</span></code> (<code class="docutils literal notranslate"><span class="pre">true</span></code>, or a list of sub-paths such as <code class="docutils literal notranslate"><span class="pre">[&quot;edit&quot;]</span></code>), which asks the auth plugin to require a CSRF token on the app’s own state-changing requests. <code class="docutils literal notranslate"><span class="pre">enlace_auth</span></code> documents what each one does.</p>
 </section>
 <section id="pages-from-a-package">
 <h3>Pages from a package<a class="headerlink" href="#pages-from-a-package" title="Link to this heading">¶</a></h3>
@@ -706,7 +707,7 @@ enlace<span class="w"> </span>analytics<span class="w"> </span><span class="o">[
 <span class="n">timezone</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Europe/Paris"</span><span class="w">   </span><span class="c1"># whose midnight starts a new day</span>
 </pre></div>
 </div>
-<p>The design and how it maps onto the CNIL’s consent exemption for audience measurement are in <a class="reference internal" href="#misc/docs/privacy_analytics.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/privacy_analytics.md</span></code></span></a>. That doc also lists what a site operator still has to do: a privacy-notice entry, and handling their own access logs.</p>
+<p>The design and how it maps onto the CNIL’s consent exemption for audience measurement are in <a class="reference external" href="https://github.com/i2mint/enlace/blob/HEAD/misc/docs/privacy_analytics.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/privacy_analytics.md</span></code></span></a>. That doc also lists what a site operator still has to do: a privacy-notice entry, and handling their own access logs.</p>
 </section>
 <section id="per-client-rate-limits">
 <h3>Per-client rate limits<a class="headerlink" href="#per-client-rate-limits" title="Link to this heading">¶</a></h3>
@@ -756,7 +757,7 @@ python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> <
 ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>.
 </pre></div>
 </div>
-<p><strong>Where the reasoning lives.</strong> <a class="reference internal" href="#misc/docs/enlace_spec.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/enlace_spec.md</span></code></span></a> is the architecture. The research documents in <a class="reference internal" href="#misc/docs"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/</span></code></span></a> explain each subsystem (ASGI composition, auth, discovery, frontend serving, process orchestration), and <a class="reference internal" href="#misc/docs/decisions"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/decisions/</span></code></span></a> holds the ADRs. Read the relevant one before changing a subsystem; the table in <a class="reference internal" href="#.claude/CLAUDE.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">.claude/CLAUDE.md</span></code></span></a> maps modules to documents.</p>
+<p><strong>Where the reasoning lives.</strong> <a class="reference external" href="https://github.com/i2mint/enlace/blob/HEAD/misc/docs/enlace_spec.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/enlace_spec.md</span></code></span></a> is the architecture. The research documents in <a class="reference external" href="https://github.com/i2mint/enlace/tree/HEAD/misc/docs"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/</span></code></span></a> explain each subsystem (ASGI composition, auth, discovery, frontend serving, process orchestration), and <a class="reference external" href="https://github.com/i2mint/enlace/tree/HEAD/misc/docs/decisions"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">misc/docs/decisions/</span></code></span></a> holds the ADRs. Read the relevant one before changing a subsystem; the table in <a class="reference external" href="https://github.com/i2mint/enlace/blob/HEAD/.claude/CLAUDE.md"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">.claude/CLAUDE.md</span></code></span></a> maps modules to documents.</p>
 <p><strong>House rules that bite.</strong> Middleware is pure ASGI, never <code class="docutils literal notranslate"><span class="pre">BaseHTTPMiddleware</span></code>. Sub-apps mount on <code class="docutils literal notranslate"><span class="pre">FastAPI()</span></code> directly, never on an <code class="docutils literal notranslate"><span class="pre">APIRouter</span></code>. Any suggestion to an app author must keep the app runnable on its own (the env-var-with-default pattern). The CLI surface is the <code class="docutils literal notranslate"><span class="pre">COMMANDS</span></code> list at the bottom of <code class="docutils literal notranslate"><span class="pre">enlace/__main__.py</span></code>, and the <code class="docutils literal notranslate"><span class="pre">cw</span></code> dispatcher keeps its default convention on purpose.</p>
 <p><strong>Skills.</strong> Edit the real files under <code class="docutils literal notranslate"><span class="pre">enlace/data/skills/</span></code>. The entries in <code class="docutils literal notranslate"><span class="pre">.claude/skills/</span></code> are symlinks to them, and a test fails if one turns back into a copy.</p>
 <p><strong>Releases.</strong> CI (the reusable wads workflow) runs on every push and publishes to PyPI when a change lands on <code class="docutils literal notranslate"><span class="pre">main</span></code>; it also bumps the version, so don’t edit it by hand. Questions and proposals go to <a class="reference external" href="https://github.com/i2mint/enlace/issues">the issue tracker</a>.</p>
@@ -766,7 +767,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
 </section>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-22 20:56 UTC from <a href="https://github.com/i2mint/enlace/commit/0904fb81f9bcc331a306c5cd707571853dd6a3c8">0904fb8</a> (main) · enlace 0.1.67 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-26 15:01 UTC from <a href="https://github.com/i2mint/enlace/commit/5c5bbb7b35098935eeb1fd66e8798a92afbb6478">5c5bbb7</a> (main) · enlace 0.1.68 · <a href="about-this-build.html">about this build</a></p>
         </article>
       </div>
       <footer>
@@ -848,7 +849,7 @@ ruff<span class="w"> </span>check<span class="w"> </span>.<span class="w"> </spa
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=19c7a8b0"></script>
+</div><script src="_static/documentation_options.js?v=bbb059f7"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

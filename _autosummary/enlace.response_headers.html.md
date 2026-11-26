@@ -63,16 +63,17 @@ The three-callable middleware is pure ASGI, as every enlace middleware is.
 
 ### Functions
 
-| [`add_response_headers`](#enlace.response_headers.add_response_headers)(parent, config)   | Install [`ResponseHeadersMiddleware`](#enlace.response_headers.ResponseHeadersMiddleware) on *parent* if an app declares any.   |
-|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| [`app_header_table`](#enlace.response_headers.app_header_table)(app)                  | Sub-path -> headers for an app: isolation, then `[response_headers]` on top.                                             |
-| [`app_mounts`](#enlace.response_headers.app_mounts)(app)                        | The path prefixes an app answers under: its page and its API, root excluded.                                             |
-| [`header_rules_for_app`](#enlace.response_headers.header_rules_for_app)(app)              | The app's headers as `(mount, absolute path prefix, headers)` rules.                                                     |
-| [`merge_headers`](#enlace.response_headers.merge_headers)(\*layers)                | Merge header dicts, later layers winning, names compared case-insensitively.                                             |
-| [`normalize_subpath`](#enlace.response_headers.normalize_subpath)(key)                 | A sub-path key made canonical: no slash at either end, `""` for the whole app.                                           |
-| [`path_under`](#enlace.response_headers.path_under)(prefix, path)               | Whether *path* is *prefix* or below it, by whole segments.                                                               |
-| [`validate_cross_origin_isolated`](#enlace.response_headers.validate_cross_origin_isolated)(value)  | Check `cross_origin_isolated`: a bool, or a list of sub-paths (normalised).                                              |
-| [`validate_response_headers`](#enlace.response_headers.validate_response_headers)(table)       | Check an app.toml `[response_headers]` table; keys come back normalised.                                                 |
+| [`add_response_headers`](#enlace.response_headers.add_response_headers)(parent, config)    | Install [`ResponseHeadersMiddleware`](#enlace.response_headers.ResponseHeadersMiddleware) on *parent* if an app declares any.   |
+|------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| [`app_header_table`](#enlace.response_headers.app_header_table)(app)                   | Sub-path -> headers for an app: isolation, then `[response_headers]` on top.                                             |
+| [`app_mounts`](#enlace.response_headers.app_mounts)(app)                         | The path prefixes an app answers under: its page and its API, root excluded.                                             |
+| [`header_rules_for_app`](#enlace.response_headers.header_rules_for_app)(app)               | The app's headers as `(mount, absolute path prefix, headers)` rules.                                                     |
+| [`merge_headers`](#enlace.response_headers.merge_headers)(\*layers)                 | Merge header dicts, later layers winning, names compared case-insensitively.                                             |
+| [`normalize_subpath`](#enlace.response_headers.normalize_subpath)(key)                  | A sub-path key made canonical: no slash at either end, `""` for the whole app.                                           |
+| [`path_under`](#enlace.response_headers.path_under)(prefix, path)                | Whether *path* is *prefix* or below it, by whole segments.                                                               |
+| [`validate_cross_origin_isolated`](#enlace.response_headers.validate_cross_origin_isolated)(value)   | Check `cross_origin_isolated`: a bool, or a list of sub-paths (normalised).                                              |
+| [`validate_response_headers`](#enlace.response_headers.validate_response_headers)(table)        | Check an app.toml `[response_headers]` table; keys come back normalised.                                                 |
+| [`validate_subpath_switch`](#enlace.response_headers.validate_subpath_switch)(value, \*, key) | Check an app.toml switch that is a bool or a list of sub-paths (normalised).                                             |
 
 ### Classes
 
@@ -218,3 +219,20 @@ Check an app.toml `[response_headers]` table; keys come back normalised.
 
 * **Return type:**
   [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`dict`](https://docs.python.org/3/builtins/stdtypes.html#dict)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str), [`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]]
+
+### enlace.response_headers.validate_subpath_switch(value, , key)
+
+Check an app.toml switch that is a bool or a list of sub-paths (normalised).
+
+The shape of `cross_origin_isolated` and `csrf`: `true` for the whole
+app, or the sub-paths it applies to. *key* names the switch in errors.
+
+```pycon
+>>> validate_subpath_switch(["/edit/", "notes"], key="csrf")
+['edit', 'notes']
+>>> validate_subpath_switch(True, key="csrf")
+True
+```
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool) | [`list`](https://docs.python.org/3/builtins/stdtypes.html#list)[[`str`](https://docs.python.org/3/builtins/stdtypes.html#str)]

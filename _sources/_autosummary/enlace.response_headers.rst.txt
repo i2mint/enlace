@@ -25,6 +25,7 @@ enlace.response\_headers
       path_under
       validate_cross_origin_isolated
       validate_response_headers
+      validate_subpath_switch
    
    .. rubric:: Classes
 

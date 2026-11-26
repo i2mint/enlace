@@ -688,6 +688,8 @@
     <span class="s2">"shared_password_env"</span><span class="p">:</span> <span class="s2">"shared_password_env"</span><span class="p">,</span>
     <span class="s2">"allowed_users"</span><span class="p">:</span> <span class="s2">"allowed_users"</span><span class="p">,</span>
     <span class="s2">"user_store"</span><span class="p">:</span> <span class="s2">"user_store"</span><span class="p">,</span>
+    <span class="c1"># CSRF on the app's own write paths; consumed by enlace_auth, like access.</span>
+    <span class="s2">"csrf"</span><span class="p">:</span> <span class="s2">"csrf"</span><span class="p">,</span>
     <span class="s2">"display_name"</span><span class="p">:</span> <span class="s2">"display_name"</span><span class="p">,</span>
     <span class="c1"># `title` is an alias for `display_name`. If an app.toml sets BOTH, the</span>
     <span class="c1"># later key in this map wins (dict-insertion order in _overlay_toml_fields)</span>
@@ -729,6 +731,50 @@
     <span class="k">return</span> <span class="n">field_map</span><span class="p">,</span> <span class="n">path_keys</span>
 
 
+<span class="c1"># app.toml tables whose keys are the app's own data (env var names, paths,</span>
+<span class="c1"># header names), never enlace keys: a near-miss check must not look inside.</span>
+<span class="n">_FREE_FORM_TABLES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"env"</span><span class="p">,</span> <span class="s2">"rate_limit"</span><span class="p">,</span> <span class="s2">"response_headers"</span><span class="p">})</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_refuse_misplaced_security_keys</span><span class="p">(</span><span class="n">toml_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"csrf"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fail on a near miss of a security switch, which would otherwise read as off.</span>
+
+<span class="sd">    app.toml drops keys it does not know, so ``CSRF = true``, ``csrf_paths``, or</span>
+<span class="sd">    a ``csrf`` that TOML put inside a table (written after a ``[build]`` header)</span>
+<span class="sd">    would silently leave the check off. Refused: a top-level key starting with</span>
+<span class="sd">    *name* in any case, other than *name* itself, and a key equal to *name* in</span>
+<span class="sd">    any case inside a table. Free-form tables (``[env]``...) are not looked at.</span>
+
+<span class="sd">    &gt;&gt;&gt; _refuse_misplaced_security_keys(</span>
+<span class="sd">    ...     {"csrf": True, "env": {"DJANGO_CSRF_TRUSTED_ORIGINS": "x"}}</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt; _refuse_misplaced_security_keys({"build": {"csrf": True}})</span>
+<span class="sd">    Traceback (most recent call last):</span>
+<span class="sd">    ...</span>
+<span class="sd">    ValueError: app.toml key 'build.csrf' looks like 'csrf' but is not it: ...</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">refuse</span><span class="p">(</span><span class="n">dotted</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"app.toml key </span><span class="si">{</span><span class="n">dotted</span><span class="si">!r}</span><span class="s2"> looks like </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> but is not it: write "</span>
+            <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> = ...` at the top of app.toml, before any [table]"</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">table</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                <span class="n">refuse</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">walk</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">where</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">toml_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">low</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">!=</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">refuse</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">low</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_FREE_FORM_TABLES</span><span class="p">:</span>
+            <span class="n">walk</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_overlay_toml_fields</span><span class="p">(</span>
     <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
@@ -739,6 +785,7 @@
 
 <span class="sd">    Returns the updated (fields, provenance) pair.</span>
 <span class="sd">    """</span>
+    <span class="n">_refuse_misplaced_security_keys</span><span class="p">(</span><span class="n">toml_data</span><span class="p">)</span>
     <span class="n">field_map</span><span class="p">,</span> <span class="n">path_keys</span> <span class="o">=</span> <span class="n">_resolved_field_map</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">toml_key</span><span class="p">,</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">field_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">toml_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">toml_data</span><span class="p">:</span>
@@ -960,7 +1007,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=19c7a8b0"></script>
+</div><script src="../../_static/documentation_options.js?v=bbb059f7"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
