@@ -179,23 +179,37 @@ def validate_response_headers(table) -> dict[str, dict[str, str]]:
     return out
 
 
+def validate_subpath_switch(value, *, key: str) -> bool | list[str]:
+    """Check an app.toml switch that is a bool or a list of sub-paths (normalised).
+
+    The shape of ``cross_origin_isolated`` and ``csrf``: ``true`` for the whole
+    app, or the sub-paths it applies to. *key* names the switch in errors.
+
+    >>> validate_subpath_switch(["/edit/", "notes"], key="csrf")
+    ['edit', 'notes']
+    >>> validate_subpath_switch(True, key="csrf")
+    True
+    """
+    if isinstance(value, bool):
+        return value
+    if not isinstance(value, (list, tuple)):
+        raise ValueError(
+            f"{key} must be true, false, or a list of sub-paths "
+            f"(e.g. ['lab']), not {value!r}"
+        )
+    subs = [normalize_subpath(v) for v in value]
+    if len(set(subs)) != len(subs):
+        raise ValueError(f"{key} lists a path twice: {list(value)!r}")
+    return subs
+
+
 def validate_cross_origin_isolated(value) -> bool | list[str]:
     """Check ``cross_origin_isolated``: a bool, or a list of sub-paths (normalised).
 
     >>> validate_cross_origin_isolated(["/lab/"])
     ['lab']
     """
-    if isinstance(value, bool):
-        return value
-    if not isinstance(value, (list, tuple)):
-        raise ValueError(
-            "cross_origin_isolated must be true, false, or a list of sub-paths "
-            f"(e.g. ['lab']), not {value!r}"
-        )
-    subs = [normalize_subpath(v) for v in value]
-    if len(set(subs)) != len(subs):
-        raise ValueError(f"cross_origin_isolated lists a path twice: {list(value)!r}")
-    return subs
+    return validate_subpath_switch(value, key="cross_origin_isolated")
 
 
 def merge_headers(*layers: Mapping[str, str]) -> dict[str, str]:

@@ -411,6 +411,8 @@ _CORE_TOML_FIELD_MAP = {
     "shared_password_env": "shared_password_env",
     "allowed_users": "allowed_users",
     "user_store": "user_store",
+    # CSRF on the app's own write paths; consumed by enlace_auth, like access.
+    "csrf": "csrf",
     "display_name": "display_name",
     # `title` is an alias for `display_name`. If an app.toml sets BOTH, the
     # later key in this map wins (dict-insertion order in _overlay_toml_fields)
@@ -452,6 +454,50 @@ def _resolved_field_map() -> tuple[dict[str, str], set[str]]:
     return field_map, path_keys
 
 
+# app.toml tables whose keys are the app's own data (env var names, paths,
+# header names), never enlace keys: a near-miss check must not look inside.
+_FREE_FORM_TABLES = frozenset({"env", "rate_limit", "response_headers"})
+
+
+def _refuse_misplaced_security_keys(toml_data: dict, *, name: str = "csrf") -> None:
+    """Fail on a near miss of a security switch, which would otherwise read as off.
+
+    app.toml drops keys it does not know, so ``CSRF = true``, ``csrf_paths``, or
+    a ``csrf`` that TOML put inside a table (written after a ``[build]`` header)
+    would silently leave the check off. Refused: a top-level key starting with
+    *name* in any case, other than *name* itself, and a key equal to *name* in
+    any case inside a table. Free-form tables (``[env]``...) are not looked at.
+
+    >>> _refuse_misplaced_security_keys(
+    ...     {"csrf": True, "env": {"DJANGO_CSRF_TRUSTED_ORIGINS": "x"}}
+    ... )
+    >>> _refuse_misplaced_security_keys({"build": {"csrf": True}})
+    Traceback (most recent call last):
+    ...
+    ValueError: app.toml key 'build.csrf' looks like 'csrf' but is not it: ...
+    """
+
+    def refuse(dotted: str):
+        raise ValueError(
+            f"app.toml key {dotted!r} looks like {name!r} but is not it: write "
+            f"`{name} = ...` at the top of app.toml, before any [table]"
+        )
+
+    def walk(table: dict, where: str):
+        for key, value in table.items():
+            if str(key).lower() == name:
+                refuse(f"{where}.{key}")
+            if isinstance(value, dict):
+                walk(value, f"{where}.{key}")
+
+    for key, value in toml_data.items():
+        low = str(key).lower()
+        if low.startswith(name) and key != name:
+            refuse(str(key))
+        if isinstance(value, dict) and low not in _FREE_FORM_TABLES:
+            walk(value, str(key))
+
+
 def _overlay_toml_fields(
     fields: dict,
     provenance: dict,
@@ -462,6 +508,7 @@ def _overlay_toml_fields(
 
     Returns the updated (fields, provenance) pair.
     """
+    _refuse_misplaced_security_keys(toml_data)
     field_map, path_keys = _resolved_field_map()
     for toml_key, field_name in field_map.items():
         if toml_key not in toml_data:
