@@ -335,6 +335,8 @@ app = build_backend(discover_apps(), plugins=[my_plugin])
 
 Plugins can also be loaded by name from the `ENLACE_PLUGINS` env var (comma-separated). The canonical example is `enlace_auth.plugin`, which adds auth, sessions, the admin dashboard, and per-user stores. Plugins reach apps without coupling: services are injected into the ASGI scope, so apps read `request.state.store` rather than importing anything from enlace. Apps can also condition on the `ENLACE_MANAGED=1` env var (set by `build_backend()`), but never have to.
 
+Some `app.toml` keys are auth policy that enlace validates and carries but does not interpret: `access`, `allowed_users`, `user_store`, and `csrf` (`true`, or a list of sub-paths such as `["edit"]`), which asks the auth plugin to require a CSRF token on the app's own state-changing requests. `enlace_auth` documents what each one does.
+
 ### Pages from a package
 
 Some apps ship their whole page inside their Python package: a script, a stylesheet and maybe vendored files in a data directory, plus a small HTML shell that tells the script where the API is. One `app.toml` key makes enlace serve both, so the host commits no generated `frontend/index.html` and a UI change ships by upgrading the package:

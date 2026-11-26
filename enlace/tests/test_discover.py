@@ -122,6 +122,27 @@ def test_discover_user_store_flag(single_app_dir, tmp_apps_dir):
     assert apps["site"].user_store is True
 
 
+def test_discover_csrf_switch(single_app_dir):
+    """``csrf`` reaches AppConfig as a bool or normalised sub-paths; default off."""
+    discoverer = _make_discoverer()
+    assert discoverer.discover(single_app_dir)[0].csrf is False
+    toml_path = single_app_dir / "foo" / "app.toml"
+    toml_path.write_text("csrf = true\n")
+    assert discoverer.discover(single_app_dir)[0].csrf is True
+    toml_path.write_text('csrf = ["/edit/", "notes"]\n')
+    assert discoverer.discover(single_app_dir)[0].csrf == ["edit", "notes"]
+
+
+@pytest.mark.parametrize(
+    "value", ['"yes"', '"/edit"', '["../x"]', '["a", "/a/"]', "1", '["a//b"]']
+)
+def test_discover_csrf_switch_refuses_bad_values(single_app_dir, value):
+    """A mistyped ``csrf`` fails discovery: it must never be silently off."""
+    (single_app_dir / "foo" / "app.toml").write_text(f"csrf = {value}\n")
+    with pytest.raises(Exception, match="csrf|path"):
+        _make_discoverer().discover(single_app_dir)
+
+
 def test_discover_conflict_detection(tmp_apps_dir):
     """Two apps resolving to the same route trigger a conflict."""
     for name in ["app_a", "app_b"]:

@@ -411,6 +411,8 @@ _CORE_TOML_FIELD_MAP = {
     "shared_password_env": "shared_password_env",
     "allowed_users": "allowed_users",
     "user_store": "user_store",
+    # CSRF on the app's own write paths; consumed by enlace_auth, like access.
+    "csrf": "csrf",
     "display_name": "display_name",
     # `title` is an alias for `display_name`. If an app.toml sets BOTH, the
     # later key in this map wins (dict-insertion order in _overlay_toml_fields)

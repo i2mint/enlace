@@ -272,6 +272,11 @@ class AppConfig(BaseModel):
     # cross-origin isolated: COOP + COEP + CORP, so its pages get
     # SharedArrayBuffer. Off by default: it stops third-party embeds loading.
     cross_origin_isolated: Union[bool, list[str]] = False
+    # CSRF enforcement on the app's own write paths (app.toml ``csrf``): true
+    # for the whole app, or a list of sub-paths (e.g. ["edit"]). Consumed by
+    # enlace_auth, like ``access``; enlace itself only validates the shape.
+    # Off by default: requests to the app's API are then CSRF-exempt.
+    csrf: Union[bool, list[str]] = False
 
     # The app's page ships inside a Python package (app.toml's
     # ``page_from_package``): enlace serves the shell at /{name}/ and the
@@ -380,6 +385,13 @@ class AppConfig(BaseModel):
         from enlace.response_headers import validate_cross_origin_isolated
 
         return validate_cross_origin_isolated(v)
+
+    @field_validator("csrf", mode="before")
+    @classmethod
+    def _validate_csrf(cls, v):
+        from enlace.response_headers import validate_subpath_switch
+
+        return validate_subpath_switch(v, key="csrf")
 
     @model_validator(mode="after")
     def _default_display_name(self):
