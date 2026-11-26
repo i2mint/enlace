@@ -143,6 +143,22 @@ def test_discover_csrf_switch_refuses_bad_values(single_app_dir, value):
         _make_discoverer().discover(single_app_dir)
 
 
+@pytest.mark.parametrize(
+    "toml",
+    [
+        'csrf_paths = ["edit"]\n',
+        "CSRF = true\n",
+        '[build]\ncommand = "true"\ncsrf = true\n',
+        "[auth]\ncsrf = true\n",
+    ],
+)
+def test_discover_refuses_a_near_miss_of_csrf(single_app_dir, toml):
+    """A misspelt or misplaced ``csrf`` must not read as off (enlace_auth#110)."""
+    (single_app_dir / "foo" / "app.toml").write_text(toml)
+    with pytest.raises(Exception, match="looks like 'csrf'"):
+        _make_discoverer().discover(single_app_dir)
+
+
 def test_discover_conflict_detection(tmp_apps_dir):
     """Two apps resolving to the same route trigger a conflict."""
     for name in ["app_a", "app_b"]:

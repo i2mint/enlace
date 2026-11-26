@@ -454,6 +454,37 @@ def _resolved_field_map() -> tuple[dict[str, str], set[str]]:
     return field_map, path_keys
 
 
+def _refuse_misplaced_security_keys(toml_data: dict, *, names=("csrf",)) -> None:
+    """Fail on a near miss of a security switch, which would otherwise read as off.
+
+    app.toml drops keys it does not know, so ``CSRF = true``, ``csrf_paths``, or
+    a ``csrf`` that TOML put inside a table (written after a ``[build]`` header)
+    would silently leave the check off. Only the exact top-level key counts.
+
+    >>> _refuse_misplaced_security_keys({"csrf": True, "build": {"cmd": "x"}})
+    >>> _refuse_misplaced_security_keys({"build": {"csrf": True}})
+    Traceback (most recent call last):
+    ...
+    ValueError: app.toml key 'build.csrf' looks like 'csrf' but is not it: ...
+    """
+
+    def walk(table: dict, where: str):
+        for key, value in table.items():
+            dotted = f"{where}.{key}" if where else str(key)
+            low = str(key).lower()
+            for name in names:
+                if name in low and dotted != name:
+                    raise ValueError(
+                        f"app.toml key {dotted!r} looks like {name!r} but is not "
+                        f"it: write `{name} = ...` at the top of app.toml, before "
+                        "any [table]"
+                    )
+            if isinstance(value, dict):
+                walk(value, dotted)
+
+    walk(toml_data, "")
+
+
 def _overlay_toml_fields(
     fields: dict,
     provenance: dict,
@@ -464,6 +495,7 @@ def _overlay_toml_fields(
 
     Returns the updated (fields, provenance) pair.
     """
+    _refuse_misplaced_security_keys(toml_data)
     field_map, path_keys = _resolved_field_map()
     for toml_key, field_name in field_map.items():
         if toml_key not in toml_data:
